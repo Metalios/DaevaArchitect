@@ -19,7 +19,7 @@ Object.assign(STIGMAS.templar,{
   "Empyrean Lord's Punishment":{base:'High stagger damage and manual burst window',perks:{}},
   "Nezekan's Shield":{base:'Short protective shield for self or group survival',perks:{}}
 });
-const DEFAULT_ACCOUNT = (cls='templar') => ({...FRESH_45,azphel:0,context:'party',gear:{},currentRanks:{},titlesOwned:{},faction:'elyos',macroBind:'RMB',goalTarget:['cleric','chanter'].includes(cls)?0:cls==='templar'?60000:100000,goalObserved:0});
+const DEFAULT_ACCOUNT = (cls='templar') => ({...FRESH_45,azphel:0,context:'party',gear:{},currentRanks:{},obtainedNodes:[],titlesOwned:{},faction:'elyos',macroBind:'RMB',goalTarget:['cleric','chanter'].includes(cls)?0:cls==='templar'?60000:100000,goalObserved:0});
 let saved = {};
 try { saved = JSON.parse(localStorage.getItem('aion2-pathfinder-all-v3') || '{}') || {}; } catch (_) {}
 let state = {class:CLASS_ORDER.includes(saved.class)?saved.class:null,accounts:saved.accounts||{},tab:'overview',board:'Nezekan',preview:FRESH_45.crystals,node:null,titleSearch:'',titleSlot:'all',titleOwnership:'all',titleFaction:'all'};
@@ -32,6 +32,8 @@ function save(){try{localStorage.setItem('aion2-pathfinder-all-v3',JSON.stringif
 function skillNames(){return Object.values(data().skills).map(s=>s.name)}
 function allBoards(){return [...data().boards,AZPHEL[state.class]]}
 function nodeMap(){return new Map(allBoards().flatMap(b=>b.nodes.map(n=>[n[0],{board:b.name,node:n}]))) }
+function obtainedNodes(){const valid=nodeMap();return new Set((account().obtainedNodes||[]).filter(id=>valid.has(id)))}
+function storeObtained(nodes){account().obtainedNodes=[...nodes];save()}
 function activeRoute(){return ROUTES[state.class][account().context]||data().route}
 function activeWeights(){return ROUTES[state.class].weights[account().context]}
 function activeStigmas(){
@@ -62,6 +64,16 @@ function boardPlan(budget,azphel=false){
   const route=azphel?ROUTES[state.class].azphel:activeRoute();
   for(const item of route){const n=nodes.get(item.id).node;if(spent+n[5]>budget){next={...item,cost:n[5],need:spent+n[5]-budget};break}spent+=n[5];owned.add(item.id);perBoard[item.board]+=n[5]}
   return {spent,owned,perBoard,next};
+}
+function routeSteps(route,nodes){let total=0;return route.map((item,index)=>{const node=nodes.get(item.id).node;total+=node[5];return {...item,number:index+1,total,cost:node[5],node}})}
+function renderGlobalBoardRoute(m,nodes){
+  const a=account(),actual=obtainedNodes(),steps=routeSteps(activeRoute(),nodes),upcoming=steps.filter(x=>!actual.has(x.id)),first=upcoming[0],switchBoard=first&&upcoming.find(x=>x.board!==first.board);
+  const marked=steps.filter(x=>actual.has(x.id)),markedCost=marked.reduce((sum,x)=>sum+x.cost,0),unmarkedWithinBudget=upcoming.filter(x=>x.total<=a.crystals).length;
+  $('global-route-budget').textContent=`${m.boards.spent} / ${a.crystals} crystals planned`;
+  $('obtained-status').textContent=`${markedCost} crystals marked obtained across ${marked.length} nodes · ${unmarkedWithinBudget} planned clicks still unmarked at this budget`;
+  $('global-route-caption').textContent=first?`Your obtained marks are skipped in the shared four-board route. ${first.board} is the first unmarked node at ${first.total} planned crystals${switchBoard?`; the next unmarked board switch is ${switchBoard.board} at ${switchBoard.total}`:''}.${markedCost>a.crystals?` Marked nodes cost ${markedCost}, above the entered ${a.crystals} crystals; check your total.`:''}`:'All nodes on the four PvE boards are marked obtained.';
+  $('global-board-allocation').innerHTML=BOARD_NAMES.map(name=>{const spent=m.boards.perBoard[name],share=m.boards.spent?Math.round(spent/m.boards.spent*100):0,next=upcoming.find(x=>x.board===name),obtained=marked.filter(x=>x.board===name).reduce((sum,x)=>sum+x.cost,0);return `<button type="button" data-board-jump="${name}" class="global-board-card ${state.board===name?'active':''}"><span>${name}</span><b>${spent} planned · ${obtained} obtained</b><small>${share}% of planned PvE crystals</small><em>${next?`Next unmarked at ${next.total} ✧`:'Board complete'}</em><i style="width:${share}%"></i></button>`}).join('');
+  $('global-route-next').innerHTML=upcoming.length?`<div class="global-next-label">Next 16 unmarked clicks across all four boards · tap to open its board</div><div class="global-next-grid">${upcoming.slice(0,16).map(x=>`<button type="button" data-route-node="${x.id}" data-route-board="${x.board}" class="global-next-step ${x.total<=a.crystals?'affordable':'later'}"><span class="global-step-number">${x.number}</span><span class="global-step-detail"><b>${x.board}${x.total<=a.crystals?' · within budget':' · later'}</b><small>${esc(effectText(x.node))} · r${x.node[1]} c${x.node[2]}</small></span><span class="global-step-total">${x.total} ✧</span></button>`).join('')}</div>`:'<p>Every PvE node is marked obtained.</p>';
 }
 function effects(owned){const skills={},stats={},nodes=nodeMap();for(const id of owned){const n=nodes.get(id).node;for(const [key,v] of n[6]){if(typeof key==='number'){const name=data().skills[key]?.name||String(key);skills[name]=(skills[name]||0)+v}else stats[key]=(stats[key]||0)+v}}return {skills,stats}}
 function effectText(n){if(!n||!n[6]?.length)return 'Start node';return n[6].map(([key,v])=>{if(typeof key==='number')return `${data().skills[key]?.name||key} +${v} level`;const meta=data().stats[key];return `${meta?.name||key} +${v/(meta?.div||1)}${meta?.pct?'%':''}`}).join(' · ')}
@@ -163,7 +175,8 @@ function renderRotation(m){
   $('manual-keys').innerHTML=p.manual.map(v=>`<div class="manual-key"><b>${esc(v.split(' — ')[0])}</b><small>${esc(v.split(' — ')[1]||'Manual timing')}</small></div>`).join('');
 }
 function renderBoards(m){
-  const a=account(),nodes=nodeMap(),isAz=state.board==='Azphel',budget=isAz?(a.azphel||0):a.crystals,route=isAz?ROUTES[state.class].azphel:activeRoute(),plan=isAz?m.azphel:m.boards;
+  const a=account(),nodes=nodeMap(),actual=obtainedNodes(),isAz=state.board==='Azphel',budget=isAz?(a.azphel||0):a.crystals,route=isAz?ROUTES[state.class].azphel:activeRoute(),plan=isAz?m.azphel:m.boards,boardNext=routeSteps(route,nodes).find(x=>x.board===state.board&&!actual.has(x.id));
+  renderGlobalBoardRoute(m,nodes);
   $('board-spent').textContent=a.context==='pvp'?`${m.boards.spent}/${a.crystals} PvE · ${m.azphel.spent}/${a.azphel||0} Azphel`:`${m.boards.spent} / ${a.crystals} PvE crystals`;
   const wanted=isAz?[['PvPAmplifyDamage','PvP Damage Boost'],['PvPDecreaseDamage','PvP Damage Tolerance'],['AbnormalResistance','Status Resist'],['PvPAddDamage','PvP Attack']]:profile().kind==='healer'?[['Defense','Defense'],['HPMax','Max HP'],['CombatSpeed','Combat Speed'],['CoolTimeDecrease','Cooldown Reduction']]:[['AmplifyAllDamage','Damage Boost'],['DecreaseDamage','Damage Tolerance'],['CombatSpeed','Combat Speed'],['CoolTimeDecrease','Cooldown Reduction']];
   const shownEffects=isAz?m.azphelEffects:m.effects;
@@ -172,21 +185,23 @@ function renderBoards(m){
   $('board-tabs').innerHTML=available.map(b=>`<button type="button" data-board="${b.name}" class="${state.board===b.name?'active':''}">${b.name}<small>${(b.name==='Azphel'?m.azphel:m.boards).perBoard[b.name]} / ${b.totalCost}</small></button>`).join('');
   $('route-slider').max=budget;state.preview=Math.min(state.preview,budget);$('route-slider').value=state.preview;$('route-slider-value').textContent=state.preview;
   const preview=boardPlan(state.preview,isAz),board=available.find(b=>b.name===state.board),grid=new Map(board.nodes.map(n=>[`${n[1]}:${n[2]}`,n]));let html='';
-  for(let r=1;r<=15;r++)for(let c=1;c<=15;c++){const n=grid.get(`${r}:${c}`);if(!n){html+='<span></span>';continue}const owned=preview.owned.has(n[0])||n[5]===0,kind=n[5]===0?'start':n[5]===4?'unique':typeof n[6]?.[0]?.[0]==='number'?'skill':'stat';html+=`<button type="button" class="node ${kind} ${owned?'owned':''} ${preview.next?.id===n[0]?'next':''} ${state.node===n[0]?'selected':''}" data-node="${n[0]}" title="${esc(effectText(n))}" aria-label="${esc(effectText(n))}; row ${r}, column ${c}; ${owned?'owned':'future'}"><span>${nodeShort(n)}</span></button>`}
+  for(let r=1;r<=15;r++)for(let c=1;c<=15;c++){const n=grid.get(`${r}:${c}`);if(!n){html+='<span></span>';continue}const planned=preview.owned.has(n[0])||n[5]===0,obtained=actual.has(n[0]),kind=n[5]===0?'start':n[5]===4?'unique':typeof n[6]?.[0]?.[0]==='number'?'skill':'stat';html+=`<button type="button" class="node ${kind} ${planned?'planned':''} ${obtained?'obtained':''} ${boardNext?.id===n[0]?'next':''} ${state.node===n[0]?'selected':''}" data-node="${n[0]}" title="${esc(effectText(n))}${n[5]?' · click to mark obtained':''}" aria-label="${esc(effectText(n))}; row ${r}, column ${c}; ${obtained?'obtained':planned?'planned':'later'}" aria-pressed="${obtained}"><span>${nodeShort(n)}</span></button>`}
   $('board-grid').innerHTML=html;const selected=state.node&&nodes.get(state.node)?.board===state.board?nodes.get(state.node).node:null;
-  $('selected-node').innerHTML=selected?`<strong>${esc(effectText(selected))}</strong><small>Row ${selected[1]}, column ${selected[2]} · ${selected[5]} crystal${selected[5]===1?'':'s'} · ${preview.owned.has(selected[0])||selected[5]===0?'In preview':'Future'}</small>`:`<strong>${state.board}</strong><small>Tap any node. Green and gold nodes are in the route; the outlined node is next.</small>`;
+  $('selected-node').innerHTML=selected?`<strong>${esc(effectText(selected))}</strong><small>Row ${selected[1]}, column ${selected[2]} · ${selected[5]} crystal${selected[5]===1?'':'s'} · ${selected[5]===0?'Start node':actual.has(selected[0])?'Obtained':preview.owned.has(selected[0])?'Planned within budget':'Planned later'}. ${selected[5]?'Click again to '+(actual.has(selected[0])?'unmark':'mark obtained')+'.':''}</small>`:`<strong>${state.board}</strong><small>Teal = planned path · gold fill = marked obtained · outlined = next unmarked node on this board. Click a node to mark or unmark it.</small>`;
   const boardSkills={},boardStats={};for(const n of board.nodes){if(!preview.owned.has(n[0]))continue;for(const [key,value] of n[6]){if(typeof key==='number'){const name=data().skills[key]?.name||String(key);boardSkills[name]=(boardSkills[name]||0)+value}else boardStats[key]=(boardStats[key]||0)+value}}
-  $('board-effect-intro').textContent=`${state.board} totals from the selected route at ${state.preview} crystals.`;
+  $('board-effect-intro').textContent=`${state.board} projected totals from the planned route at ${state.preview} crystals. Gold nodes are those you marked obtained.`;
   const statLabel={FixingDamage:'Attack Bonus',Defense:'Defense Bonus',HPMax:'HP',MPMax:'MP'};
-  const effectRows=[...Object.entries(boardSkills).map(([name,value])=>[name,`+${value}`]),...Object.entries(boardStats).map(([key,value])=>{const meta=data().stats[key];return [statLabel[key]||meta?.name||key,`+${value/(meta?.div||1)}${meta?.pct?'%':''}`]})];
-  $('board-effect-list').innerHTML=effectRows.length?effectRows.map(([name,value])=>`<div><span>${esc(name)}</span><b>${esc(value)}</b></div>`).join(''):'<span class="empty">No purchased effects yet.</span>';
+  const skillRows=Object.entries(boardSkills).map(([name,value])=>[name,`+${value}`]);
+  const statRows=Object.entries(boardStats).map(([key,value])=>{const meta=data().stats[key];return [statLabel[key]||meta?.name||key,`+${value/(meta?.div||1)}${meta?.pct?'%':''}`]});
+  const effectGroup=(label,rows)=>rows.length?`<h4>${label}</h4>${rows.map(([name,value])=>`<div><span>${esc(name)}</span><b>${esc(value)}</b></div>`).join('')}`:'';
+  $('board-effect-list').innerHTML=skillRows.length||statRows.length?effectGroup('Skill levels',skillRows)+effectGroup('Stats',statRows):'<span class="empty">No planned effects yet.</span>';
   let spent=0,number=0,boardSpent=0;const rows=[];for(const x of route){const n=nodes.get(x.id).node;spent+=n[5];if(x.board!==state.board)continue;number++;if(spent<=state.preview)boardSpent+=n[5];rows.push({number,spent,cost:n[5],label:effectText(n),id:x.id,row:n[1],col:n[2]})}
   $('purchase-intro').textContent=`${boardSpent} ${isAz?'Azphel':'PvE'} crystals on ${state.board} at preview ${state.preview}. Click a purchase to locate it on the grid.`;
-  $('purchase-list').innerHTML=rows.map(x=>`<button type="button" data-purchase="${x.id}" class="purchase ${x.spent<=state.preview?'current':''}"><span class="n">${x.number}.</span><span>${esc(x.label)}<small>r${x.row} · c${x.col} · total ${x.spent}</small></span><span class="c">${x.cost} ✧</span></button>`).join('');
+  $('purchase-list').innerHTML=rows.map(x=>`<button type="button" data-purchase="${x.id}" class="purchase ${x.spent<=state.preview?'current':''} ${actual.has(x.id)?'obtained':''}"><span class="n">${x.number}.</span><span>${esc(x.label)}<small>r${x.row} · c${x.col} · total ${x.spent}${actual.has(x.id)?' · obtained':''}</small></span><span class="c">${x.cost} ✧</span></button>`).join('');
   const priority=new Set(masteryStages().slice(0,12).map(x=>x[0]));let total=0;const upcoming=[];for(const x of route){const n=nodes.get(x.id).node;total+=n[5];if(total<=plan.spent)continue;if(n[5]===4||typeof n[6]?.[0]?.[0]==='number'&&priority.has(data().skills[n[6][0][0]]?.name))upcoming.push({total,board:x.board,label:effectText(n)});if(upcoming.length>=5)break}
   $('board-next').innerHTML=upcoming.length?upcoming.map(x=>`<div class="next-unlock"><strong>${x.total} total</strong><span>${x.board}: ${esc(x.label)}</span></div>`).join(''):'<p>All key nodes on this route are funded.</p>';
   const method=isAz?ROUTES[state.class].methods.azphel:ROUTES[state.class].methods[a.context];
-  $('route-footnote').textContent=`${method}. Each step touches an owned node. The generated order is a weighted recommendation, not a measured damage, healing or survival optimum. Azphel has its own currency and no skill levels.`;
+  $('route-footnote').textContent=`${method}. PvE crystal totals follow one precomputed, connected route across all four boards; increasing the total extends its planned prefix. Obtained marks skip completed steps in the next-click list, but do not re-optimize the route if you buy different nodes or switch play context. The weighted order is a recommendation, not a measured combat optimum. Azphel has its own currency and no skill levels.`;
   const weights=isAz?{skills:{},stats:activeWeights()?.stats||{}}:activeWeights();
   const topSkills=Object.entries(weights.skills||{}).sort((x,y)=>y[1]-x[1]).slice(0,3).map(x=>x[0]);
   const topStats=Object.entries(weights.stats||{}).filter(([key])=>isAz?key.startsWith('PvP')||key.startsWith('Abnormal'):!key.startsWith('PvP')).sort((x,y)=>y[1]-x[1]).slice(0,3).map(([key])=>data().stats[key]?.name||key);
@@ -264,7 +279,7 @@ $('class-buttons').addEventListener('click',e=>{const b=e.target.closest('[data-
 function useBudget(values){Object.assign(account(),values);state.preview=account().crystals;state.node=null;render()}
 $('fresh-45-button').addEventListener('click',()=>useBudget({...FRESH_45,azphel:0}));
 for(const [id,key,max] of [['mastery-input','mastery',462],['stigma-input','stigma',300],['crystal-input','crystals',570]]){
-  $(id).addEventListener('input',e=>{account()[key]=clamp(e.target.value,0,max);if(key==='crystals'&&state.board!=='Azphel')state.preview=account().crystals;save()});
+  $(id).addEventListener('input',e=>{account()[key]=clamp(e.target.value,0,max);if(key==='crystals'&&state.board!=='Azphel')state.preview=account().crystals;if(key==='crystals'&&e.target.value!=='')render();else save()});
   $(id).addEventListener('change',e=>{account()[key]=clamp(e.target.value,0,max);if(key==='crystals'&&state.board!=='Azphel')state.preview=account().crystals;render()});
 }
 $('azphel-input').addEventListener('input',e=>{account().azphel=clamp(e.target.value,0,232);if(state.board==='Azphel')state.preview=account().azphel;save()});
@@ -292,7 +307,11 @@ $('skill-grid').addEventListener('change',e=>{
   }
 });
 $('board-tabs').addEventListener('click',e=>{const b=e.target.closest('[data-board]');if(b){state.board=b.dataset.board;state.preview=state.board==='Azphel'?(account().azphel||0):account().crystals;state.node=null;renderBoards(model())}});
-$('board-grid').addEventListener('click',e=>{const b=e.target.closest('[data-node]');if(b){state.node=Number(b.dataset.node);renderBoards(model())}});
+$('global-board-allocation').addEventListener('click',e=>{const b=e.target.closest('[data-board-jump]');if(!b)return;state.board=b.dataset.boardJump;state.preview=account().crystals;state.node=null;renderBoards(model())});
+$('global-route-next').addEventListener('click',e=>{const b=e.target.closest('[data-route-node]');if(!b)return;state.board=b.dataset.routeBoard;state.preview=account().crystals;state.node=Number(b.dataset.routeNode);renderBoards(model());document.querySelector('.node.selected')?.scrollIntoView({behavior:'smooth',block:'center',inline:'center'})});
+$('board-grid').addEventListener('click',e=>{const b=e.target.closest('[data-node]');if(!b)return;const id=Number(b.dataset.node),node=nodeMap().get(id)?.node;state.node=id;if(node?.[5]>0){const marked=obtainedNodes();if(marked.has(id))marked.delete(id);else marked.add(id);storeObtained(marked)}renderBoards(model())});
+$('mark-planned-button').addEventListener('click',()=>{const marked=obtainedNodes(),nodes=nodeMap();for(const step of routeSteps(activeRoute(),nodes))if(step.total<=account().crystals)marked.add(step.id);storeObtained(marked);renderBoards(model())});
+$('clear-obtained-button').addEventListener('click',()=>{const nodes=nodeMap();storeObtained(new Set([...obtainedNodes()].filter(id=>nodes.get(id).board==='Azphel')));renderBoards(model())});
 $('purchase-list').addEventListener('click',e=>{const b=e.target.closest('[data-purchase]');if(b){state.node=Number(b.dataset.purchase);renderBoards(model())}});
 $('route-slider').addEventListener('input',e=>{state.preview=clamp(e.target.value,0,state.board==='Azphel'?(account().azphel||0):account().crystals);renderBoards(model())});
 state.preview=state.class?account().crystals:FRESH_45.crystals;render();

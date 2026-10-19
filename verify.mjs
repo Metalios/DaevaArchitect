@@ -101,6 +101,11 @@ for(const slug of classes){
       }
     }
     assert(spent===218,'templar: 218-crystal route does not spend full budget');
+    const spentByBoard=Object.fromEntries(['Nezekan','Zikel','Vaizel','Triniel'].map(name=>[name,0]));
+    let totalAtStep=0;const nextAfter218=[];
+    for(const item of d.route){const node=nodes[item.board].get(item.id);totalAtStep+=node[5];if(totalAtStep<=218)spentByBoard[item.board]+=node[5];else if(nextAfter218.length<8)nextAfter218.push([item.board,totalAtStep]);}
+    assert(JSON.stringify(spentByBoard)===JSON.stringify({Nezekan:67,Zikel:77,Vaizel:30,Triniel:44}),'templar: 218-crystal route must span all four boards');
+    assert(nextAfter218[0][0]==='Vaizel'&&nextAfter218[0][1]===219&&nextAfter218[7][0]==='Nezekan'&&nextAfter218[7][1]===233,'templar: cross-board continuation at 218 is wrong');
     assert(bonuses['Insulting Roar']===4,'templar: board bonus for Insulting Roar should be +4 at 218 crystals');
     assert(bonuses['Impact Hit']===3,'templar: board bonus for Impact Hit should be +3 at 218 crystals');
     assert(byBoard.Nezekan.CombatSpeed===300&&byBoard.Nezekan.CoolTimeDecrease===300,'templar: Nezekan route disagrees with game screenshot');
