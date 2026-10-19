@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#071016">
-  <meta name="description" content="Interactive AION 2 Global PvE build planner for all eight classes: mastery, specialties, stigmas, Daevanion boards, rotations and macros.">
+  <meta name="description" content="Interactive AION 2 Global PvE build planner for all eight classes: mastery, specialties, stigmas, Daevanion boards, titles, rotations and macros.">
   <title>AION 2 Pathfinder · All-class Global PvE planner</title>
   <style>/*STYLES*/</style>
 </head>
@@ -12,7 +12,7 @@
   <header class="hero"><div class="hero-inner">
     <div class="eyebrow">AION 2 · Global PvE · NA East</div>
     <h1>Pathfinder</h1>
-    <p id="hero-description">Choose a class, enter your points, and follow a connected board route alongside mastery, specialty, stigma, rotation and macro choices.</p>
+    <p id="hero-description">Choose a class, enter your points, and follow a connected board route alongside mastery, specialty, stigma, title, rotation and macro choices.</p>
     <div class="hero-tags"><span>Eight classes</span><span>Point-by-point progression</span><span>Role-based power goals</span><span>Healer support paths</span><span>Saved in this browser</span></div>
   </div></header>
   <main>
@@ -33,6 +33,7 @@
       <button type="button" data-tab="stigma">Stigmas</button>
       <button type="button" data-tab="rotation">Rotation & macro</button>
       <button type="button" data-tab="boards">Daevanion boards</button>
+      <button type="button" data-tab="titles">Titles</button>
       <button type="button" data-tab="sources">Research notes</button>
     </nav>
     <section id="overview" class="tab-panel active" aria-label="Build now">
@@ -40,6 +41,7 @@
       <div id="kpis" class="kpi-grid"></div>
       <div class="panel goal-panel"><div><span class="eyebrow">Progress goal</span><h3 id="goal-title"></h3><p id="goal-explainer"></p></div><div class="goal-inputs"><label><span id="target-label">Target Combat Power</span><input id="goal-target" type="number" min="0" step="1000"></label><label><span id="observed-label">Current Combat Power</span><input id="goal-observed" type="number" min="0" step="1000"></label></div><div id="goal-status" class="goal-status"></div></div>
       <div class="two-col"><div class="panel"><h3>Put these in first</h3><ol id="now-steps" class="steps"></ol></div><div class="panel"><h3>Next points to earn</h3><div id="next-unlocks"></div><div class="notice">Effective skill level = mastery rank + board nodes + any gear or Arcana levels you enter. Specialty slots open at effective 8, 12 and 20; option 5 opens at 16.</div></div></div>
+      <div class="panel title-preview-panel"><div><span class="eyebrow">Collection path</span><h3>Titles to earn and equip</h3><p id="title-preview"></p></div><button type="button" id="title-open" class="title-open">View title path</button></div>
     </section>
     <section id="mastery" class="tab-panel" aria-label="Mastery and specialties">
       <div class="section-title"><div><h2>Mastery & specialties</h2><p>Recommended reset targets, exact point costs and projected in-game levels for this class.</p></div><span id="mastery-spent" class="tag blue"></span></div>
@@ -59,7 +61,7 @@
       <div class="weave-setup panel"><div class="weave-keys"><span class="keycap" id="weave-basic-key">LMB</span><b>+</b><span class="keycap" id="weave-macro-key">RMB</span></div><p id="weave-guide"></p><label for="macro-bind">Bind Macro to <select id="macro-bind"><option value="RMB">Right mouse (RMB)</option><option value="Mouse 4">Side mouse (Mouse 4)</option><option value="MMB">Middle mouse (MMB)</option><option value="M">Keyboard M</option></select></label></div>
       <div class="rhythm-heading"><h3>How to play the loop</h3><p>Keep the damage engine held, then add manual decisions on top.</p></div>
       <div class="rhythm-grid"><div class="rhythm-card"><span>01 / BASE</span><strong id="rhythm-base-keys"></strong><p id="rhythm-base-note"></p></div><div class="rhythm-card"><span>02 / WEAVE</span><strong>Press 1–8 over it</strong><p id="rhythm-weave-note"></p></div><div class="rhythm-card"><span>03 / PAUSE</span><strong>Stop auto casts on purpose</strong><p id="rhythm-pause-note"></p></div></div>
-      <div class="hotbar-heading"><div><h3>Suggested 1–8 combat bar</h3><p>These are manual decisions during the held loop, not a 1 → 8 sequence. Each key shows when to press it; grouped skills share a manual stack.</p></div><span class="tag blue">Class-specific</span></div>
+      <div class="hotbar-heading"><div><h3>Suggested 1–8 combat bar</h3><p>These are manual decisions during the held loop, not a 1 → 8 sequence. Defiance shares Space with jump/glide by default. Some classes have a free flex slot.</p></div><span class="tag blue">Class-specific</span></div>
       <div id="hotbar-grid" class="hotbar-grid" aria-label="Suggested number key layout"></div>
       <div id="hotbar-note" class="hotbar-note"></div>
       <div id="macro-stacks" class="macro-layout"></div>
@@ -71,8 +73,15 @@
       <div id="board-summary" class="board-summary"></div><div class="board-tabs" id="board-tabs"></div>
       <div class="board-layout"><div><div class="board-scroll"><div id="board-grid" class="board-grid" role="group" aria-label="Daevanion board nodes"></div></div><div class="timeline"><label for="route-slider">Preview crystals</label><input id="route-slider" type="range" min="0" max="136" value="136"><b id="route-slider-value">136</b></div><p id="route-footnote" class="footnote"></p></div><aside class="board-side"><div><div id="selected-node" class="selected-node"></div><div class="panel board-effects-panel"><h3>Board effects at preview</h3><p id="board-effect-intro"></p><div id="board-effect-list" class="board-effect-list"></div></div><div class="panel"><h3>Purchase order</h3><p id="purchase-intro"></p><div id="purchase-list" class="purchase-list"></div></div></div><div class="panel"><h3>Next key nodes</h3><div id="board-next"></div></div></aside></div>
     </section>
+    <section id="titles" class="tab-panel" aria-label="Titles to earn and equip">
+      <div class="section-title"><div><h2>Titles to earn & equip</h2><p>Track what this character has earned. Recommendations update for its role and your available titles.</p></div><span id="titles-count" class="tag gold"></span></div>
+      <div class="title-controls panel"><label for="faction-select">Character faction <select id="faction-select"><option value="elyos">Elyos</option><option value="asmodian">Asmodian</option></select></label><p id="titles-role-note"></p></div>
+      <div class="notice">Equip one title in each of the Attack, Defense and Other slots. Every title you earn also adds its collection effect permanently, even after you equip another. Check only titles you actually own; this is a focused progression list, not the full catalog.</div>
+      <div id="title-grid" class="title-grid"></div>
+      <div class="panel title-path"><h3>Fast collection wins</h3><ol><li>Finish the Hero Episode story and join a Legion for easy owned effects.</li><li>Use the Spacetime Rift 3 times for Hello There; 50 uses earns Nice to Meet You.</li><li>Find Empyrean Traces to raise your faction's Monolith to 20 for Guardian and 30 for Saint.</li><li>Clear the Sealed Dungeon Ruins of the Ancient City of Roah for Through Hell and Back.</li></ol><p>Longer goals: all Genus Insight at level 10 for Unbound by Genus; 200 pets for Rule All Creation; 25 wings for Dominator of Dimensions; 700 skins for Empty Closet.</p></div>
+    </section>
     <section id="sources" class="tab-panel" aria-label="Research notes"><div class="section-title"><div><h2>Research & limits</h2><p>Live links for the selected class and the assumptions behind the route.</p></div></div><div id="source-cards" class="sources"></div><div class="notice">This is a PvE starting recommendation, not a combat simulator. The 1–8 hotbar placements are ergonomic suggestions, not a measured DPS optimum. The 60k Templar tank and 100k damage Combat Power goals are editable planning benchmarks, not official dungeon requirements. Gear, boards, skills and other systems affect the in-game score; the game calculates the final number. Healers should measure effective healing, avoid overhealing, and keep the party alive. Azphel PvP currency is separate.</div></section>
     </div>
   </main>
-  <script>/*DATA*/</script><script>/*PROFILES*/</script><script>/*APP*/</script>
+  <script>/*DATA*/</script><script>/*PROFILES*/</script><script>/*TITLES*/</script><script>/*APP*/</script>
 </body></html>

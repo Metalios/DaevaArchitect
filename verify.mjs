@@ -6,6 +6,7 @@ const data = JSON.parse(fs.readFileSync(new URL('classes_data.json', root), 'utf
 const specs = JSON.parse(fs.readFileSync(new URL('specialties.json', root), 'utf8'));
 const stigmas = JSON.parse(fs.readFileSync(new URL('stigmas.json', root), 'utf8'));
 const profiles = vm.runInNewContext(fs.readFileSync(new URL('profiles.js', root), 'utf8')+'\nPROFILES');
+const titles = vm.runInNewContext(fs.readFileSync(new URL('titles.js', root), 'utf8')+'\nTITLES');
 const classes = ['templar','gladiator','assassin','ranger','sorcerer','spiritmaster','cleric','chanter'];
 const assert = (okay, message) => {if(!okay) throw new Error(message)};
 
@@ -23,16 +24,22 @@ for(const slug of classes){
   const available=new Set([...Object.values(d.skills).slice(0,12).map(s=>s.name),...p.stigmas]);
   const automatic=new Set(p.stacks.filter(s=>!s.manual).flatMap(s=>s.skills));
   for(const [index,[skills,cue,tone]] of p.hotbar.entries()){
-    assert(skills.length>0&&skills.length<=4&&typeof cue==='string'&&cue.length>0,`${slug}: incomplete key ${index+1}`);
+    assert(skills.length<=4&&typeof cue==='string'&&cue.length>0,`${slug}: incomplete key ${index+1}`);
+    if(!skills.length)assert(index===7&&['sorcerer','spiritmaster'].includes(slug),`${slug}: unexpected empty key ${index+1}`);
     assert(['attack','buff','heal','defense','movement','utility','emergency'].includes(tone),`${slug}: invalid key ${index+1} role`);
     for(const skill of skills){
       assert(available.has(skill),`${slug}: key ${index+1} uses unavailable ${skill}`);
-      assert(skill==='Defiance'||!automatic.has(skill),`${slug}: key ${index+1} duplicates automatic ${skill}`);
+      assert(skill!=='Defiance'&&!automatic.has(skill),`${slug}: key ${index+1} duplicates automatic or Space-bound ${skill}`);
     }
     const stack=p.stacks.find(s=>s.key===String(index+1));
     if(stack)assert(stack.manual&&JSON.stringify(stack.skills)===JSON.stringify(skills),`${slug}: key ${index+1} disagrees with its manual stack`);
   }
-  assert(p.hotbar[7][0][0]==='Defiance',`${slug}: key 8 should show the emergency break`);
+  assert(p.manual.some(x=>x.includes('Defiance (Space)')),`${slug}: default Space Defiance bind is missing`);
+  if(slug==='templar'){
+    assert(JSON.stringify(p.macro)===JSON.stringify(['Q','E']),'templar: macro step order should be Q then E');
+    assert(JSON.stringify(p.stacks.find(s=>s.key==='E').skills)===JSON.stringify(['Judgment','Shield Smite','Warding Strike','Pummel']),'templar: Judgment stack must include last-row Pummel');
+    assert(JSON.stringify(p.stacks.find(s=>s.key==='Q').skills)===JSON.stringify(['Annihilate','Debilitating Smash']),'templar: Q must not steal Pummel casts from Judgment');
+  }
   assert(p.stigmas.length===4&&new Set(p.stigmas).size===4,`${slug}: stigma slots`);
   for(const name of p.stigmas) assert(stigmas[slug][name],`${slug}: missing stigma ${name}`);
   for(const name of Object.keys(specs[slug])) assert(names.has(name),`${slug}: unknown specialty skill ${name}`);
@@ -80,3 +87,10 @@ for(const slug of classes){
   }
   console.log(`${slug}: 22 skills, 4 stigmas, ${d.route.length} connected purchases, 570 crystals`);
 }
+assert(titles.length===12&&new Set(titles.map(t=>t.id)).size===titles.length,'titles: expected 12 unique curated titles');
+for(const t of titles){
+  assert(['Attack','Defense','Other'].includes(t.slot),`titles: invalid slot for ${t.id}`);
+  assert(typeof t.equip==='string'&&typeof t.owned==='string'&&typeof t.earn==='string'&&t.url.startsWith('https://'),`titles: incomplete ${t.id}`);
+  assert(typeof t.name==='string'||t.name.elyos&&t.name.asmodian,`titles: missing faction variant for ${t.id}`);
+}
+console.log('titles: 12 curated, faction-aware progression entries');

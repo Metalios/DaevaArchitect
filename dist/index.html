@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#071016">
-  <meta name="description" content="Interactive AION 2 Global PvE build planner for all eight classes: mastery, specialties, stigmas, Daevanion boards, rotations and macros.">
+  <meta name="description" content="Interactive AION 2 Global PvE build planner for all eight classes: mastery, specialties, stigmas, Daevanion boards, titles, rotations and macros.">
   <title>AION 2 Pathfinder · All-class Global PvE planner</title>
   <style>:root{color-scheme:dark;--bg:#071016;--panel:#0d1b23;--panel2:#10242e;--line:#29404a;--muted:#95aab3;--text:#edf5f5;--gold:#e2bc72;--gold2:#a6793c;--aqua:#7be2de;--blue:#81b9ff;--green:#89d7a1;--red:#f0a995;--shadow:0 18px 54px #0006;font-family:Inter,Segoe UI,Arial,sans-serif}
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 80% -4%,#14323b 0,transparent 30%),radial-gradient(circle at 0% 35%,#14272a 0,transparent 25%),var(--bg);color:var(--text);line-height:1.5}button,input,select{font:inherit}button{cursor:pointer}a{color:var(--aqua)}a:hover{color:#d2ffff}button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--gold);outline-offset:3px}main{max-width:1460px;margin:auto;padding:0 28px 76px}.hero{position:relative;overflow:hidden;border-bottom:1px solid #43616a;background:linear-gradient(115deg,#09171f 0%,#102a34 54%,#09171d 100%)}.hero:before{content:"";position:absolute;right:-100px;top:-80px;width:590px;height:590px;border:1px solid #d4b47321;border-radius:50%;box-shadow:0 0 0 62px #d4b4730b,0 0 0 126px #d4b47308}.hero:after{content:"✦";position:absolute;right:12%;top:60px;color:#d4b47321;font-size:330px;line-height:1}.hero-inner{position:relative;z-index:1;max-width:1460px;margin:auto;padding:50px 28px 55px}.eyebrow{color:var(--gold);text-transform:uppercase;letter-spacing:.21em;font-size:12px;font-weight:800}.hero h1{font:normal clamp(39px,5vw,73px)/1.04 Georgia,Cambria,serif;letter-spacing:-.035em;max-width:780px;margin:13px 0 15px}.hero p{font-size:17px;max-width:675px;color:#c1d3d7;margin:0}.hero-tags{display:flex;gap:9px;flex-wrap:wrap;margin-top:24px}.hero-tags span{font-size:12px;color:#d8e4e3;border:1px solid #517074;border-radius:999px;padding:6px 11px;background:#0b2027aa}.controls{margin-top:-28px;position:relative;z-index:2;display:grid;grid-template-columns:repeat(3,1fr) 1.25fr;gap:12px;background:#0a1a22;border:1px solid #405860;border-radius:18px;padding:15px;box-shadow:var(--shadow)}.control{background:#0e252e;border:1px solid #26424c;border-radius:12px;padding:12px 15px}.control label,.control .label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.13em;font-weight:800;color:var(--muted);margin-bottom:5px}.control .inputrow{display:flex;align-items:center;gap:7px}.control input[type=number]{border:0;background:transparent;color:var(--text);font:700 25px/1.1 Georgia,serif;width:100%;min-width:0;outline:none}.control .unit{font-size:12px;color:var(--muted)}.seg{display:flex;gap:5px}.seg button{flex:1;min-width:0;background:#10232b;color:#b6cbcf;border:1px solid #34525b;border-radius:9px;padding:9px 5px;font-size:12px;font-weight:750}.seg button.active{color:#0a171e;background:var(--gold);border-color:var(--gold)}.control small{display:block;color:#91a9b1;font-size:11px;margin-top:5px}.introline{display:flex;justify-content:space-between;gap:16px;align-items:center;margin:18px 0 6px;color:#a9bfc5;font-size:12px}.text-button{border:0;background:transparent;color:var(--aqua);font-weight:700;padding:4px}.tabs{display:flex;gap:5px;overflow:auto;border-bottom:1px solid var(--line);margin-top:26px}.tabs button{border:0;border-bottom:2px solid transparent;background:transparent;color:#a9bdc2;padding:13px 18px;white-space:nowrap;font-weight:750}.tabs button.active{border-color:var(--gold);color:var(--gold)}.tab-panel{display:none;padding-top:27px}.tab-panel.active{display:block}.section-title{display:flex;align-items:end;justify-content:space-between;gap:16px;margin:0 0 17px}.section-title h2{font:normal 30px Georgia,serif;margin:0}.section-title p{color:var(--muted);margin:5px 0 0;font-size:14px}.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:13px}.kpi{background:linear-gradient(145deg,#112a32,#0d1b23);border:1px solid #2a4650;border-radius:15px;padding:20px;min-height:126px}.kpi .k-label{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#b2c3c7;font-weight:800}.kpi strong{display:block;font:normal 32px Georgia,serif;color:var(--gold);margin:8px 0 2px}.kpi small{font-size:12px;color:var(--muted)}.two-col{display:grid;grid-template-columns:1.2fr .8fr;gap:15px;margin-top:15px}.panel{background:linear-gradient(160deg,#0f222b,#0b1921);border:1px solid #2d4650;border-radius:15px;padding:21px;box-shadow:0 10px 27px #0002}.panel h3{font:normal 21px Georgia,serif;margin:0 0 12px;color:#f1e3c8}.panel p{font-size:14px;color:#bad0d2;margin:0 0 12px}.steps{list-style:none;padding:0;margin:0}.steps li{display:flex;gap:12px;padding:12px 0;border-top:1px solid #25414a;font-size:14px}.steps li:first-child{border-top:0}.step-num{display:grid;place-items:center;flex:0 0 25px;height:25px;border-radius:50%;background:#3c3425;color:var(--gold);font-size:11px;font-weight:900}.steps b{color:#eef6f5}.muted{color:var(--muted)}.tag{display:inline-block;border:1px solid #3d5960;background:#17313a;color:#c9e4e3;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:700}.tag.gold{color:var(--gold);border-color:#745c39;background:#352a1d}.tag.green{color:var(--green);border-color:#3d654e;background:#1c382b}.tag.blue{color:var(--blue);border-color:#3b5679;background:#1b2a3b}.notice{border-left:3px solid var(--gold);background:#2a24182b;padding:12px 15px;border-radius:0 8px 8px 0;color:#d6d2c2;font-size:13px;margin-top:16px}.progress{height:7px;background:#203740;border-radius:10px;overflow:hidden;margin:9px 0}.progress span{display:block;height:100%;background:linear-gradient(90deg,#aa7d3e,var(--gold))}.skill-grid,.stigma-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.skill-card,.stigma-card{border:1px solid #2d4852;border-radius:14px;background:#10232c;padding:17px}.skill-card.highlight{border-color:#8e784d;box-shadow:inset 0 0 0 1px #8e784d55}.skill-head,.stigma-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}.skill-card h3,.stigma-card h3{font:normal 19px Georgia,serif;margin:0}.skill-card .sub,.stigma-card .sub{color:#9cb3b9;font-size:12px}.lv{font:normal 23px Georgia,serif;color:var(--gold);white-space:nowrap}.build-parts{display:flex;gap:6px;flex-wrap:wrap;margin:13px 0}.build-parts span{font-size:11px;border:1px solid #38515a;border-radius:6px;padding:3px 6px;color:#b9d0d1}.specs{margin-top:11px}.specs-title{color:#90adb2;text-transform:uppercase;letter-spacing:.11em;font-size:10px;font-weight:900;margin-bottom:7px}.spec-row{display:flex;gap:6px;flex-wrap:wrap}.spec{font-size:11px;border-radius:7px;padding:5px 7px;border:1px solid #38515a;color:#9bb3b8;background:#11232b}.spec.on{background:#1d463f;border-color:#3d786d;color:#d7fff2}.spec.future{border-style:dashed}.gear-row{margin-top:13px;display:flex;align-items:center;justify-content:space-between;gap:10px;border-top:1px solid #29434c;padding-top:12px;color:#a9c3c8;font-size:12px}.gear-row input{width:60px;background:#091921;border:1px solid #3c5862;border-radius:6px;padding:4px 5px;color:#fff;text-align:center}.stigma-card .milestone{margin-top:10px;font-size:12px;color:#a9c2c7}.board-layout{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px}.board-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:15px}.board-tabs button{background:#12262e;color:#bed2d4;border:1px solid #35515a;border-radius:8px;padding:9px 12px;font-weight:750}.board-tabs button.active{background:#3e3221;color:var(--gold);border-color:#9a7540}.board-tabs small{display:block;color:#9eb4b6;font-weight:500}.board-scroll{overflow:auto;max-width:100%;padding:16px;background:radial-gradient(circle at center,#123440,#0c1b25 70%);border:1px solid #34505a;border-radius:14px}.board-grid{display:grid;grid-template-columns:repeat(15,34px);grid-template-rows:repeat(15,34px);width:max-content;gap:3px;margin:auto}.node{display:grid;place-items:center;width:32px;height:32px;border:1px solid #3c5860;border-radius:50%;font-size:9px;font-weight:900;color:#647a82;background:#0c1d25;padding:0;position:relative}.node.stat{border-radius:5px}.node.skill{border-radius:8px;transform:rotate(45deg)}.node.skill span{transform:rotate(-45deg)}.node.unique{border-color:#66532c}.node.owned{background:#1c6a69;border-color:#a1eddd;color:#e9fff8;box-shadow:0 0 14px #6bccc077}.node.owned.unique{background:#68502a;border-color:#f2cc79;color:#ffe7ad;box-shadow:0 0 17px #d6a45077}.node.next{border:2px solid #fff5d9;color:white;box-shadow:0 0 0 3px #d0a75388,0 0 16px #f0c373}.node.selected{outline:2px solid var(--gold);outline-offset:3px}.node.start{background:#af8342;color:#06131c;font-size:15px;border-color:#e9cc89}.board-side .selected-node{min-height:114px;border:1px solid #42616a;border-radius:10px;padding:13px;margin-bottom:15px;background:#102b34}.selected-node strong{display:block;color:var(--gold);font:normal 19px Georgia,serif}.selected-node small{display:block;color:#b5cbd0;margin-top:4px}.timeline{display:flex;align-items:center;gap:12px;margin:15px 0}.timeline input{width:100%;accent-color:#d5aa62}.timeline label{font-size:12px;white-space:nowrap;color:#c5d3d0}.purchase-list{max-height:380px;overflow:auto;padding-right:5px}.purchase{display:flex;gap:8px;align-items:flex-start;border-top:1px solid #29424a;padding:7px 0;font-size:12px}.purchase .n{color:#e1b56c;font-weight:800;width:30px;flex:0 0 30px}.purchase .c{margin-left:auto;color:#9cb5ba;white-space:nowrap}.purchase.current{background:#203e42;border-radius:5px}.board-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:0 0 15px}.board-summary div{border:1px solid #344b54;border-radius:9px;padding:9px;background:#10242d}.board-summary b{display:block;color:var(--gold);font-size:18px}.board-summary span{font-size:11px;color:#b3c7c9}.sources{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.source-card{padding:16px;border:1px solid #36505a;border-radius:12px;background:#10232b}.source-card b{display:block;color:#f0e2c6;margin-bottom:6px}.source-card p{font-size:12px;color:#aec2c6;margin:0}.footnote{color:#9bb0b4;font-size:12px;margin-top:22px}.empty{color:#a8bdc1;font-size:13px}.next-unlock{display:flex;gap:10px;align-items:center;border-top:1px solid #314852;padding:10px 0;font-size:13px}.next-unlock strong{color:var(--gold);white-space:nowrap}.mobile-quiet{display:none}@media(max-width:1000px){.controls{grid-template-columns:repeat(3,1fr)}.controls .control:last-child{grid-column:1/-1}.board-layout{grid-template-columns:1fr}.board-side{display:grid;grid-template-columns:1fr 1fr;gap:12px}.purchase-list{max-height:320px}.kpi-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:660px){main{padding:0 16px 54px}.hero-inner{padding:37px 16px 55px}.hero h1{font-size:45px}.hero:after{right:-130px;top:90px;font-size:270px}.controls{grid-template-columns:1fr 1fr;padding:9px;gap:7px}.controls .control:last-child{grid-column:1/-1}.control{padding:10px}.control input[type=number]{font-size:22px}.introline{align-items:flex-start}.tabs button{padding:11px 12px}.two-col,.skill-grid,.stigma-grid,.sources{grid-template-columns:1fr}.board-side{display:block}.kpi-grid{gap:8px}.kpi{padding:14px;min-height:100px}.kpi strong{font-size:26px}.section-title h2{font-size:27px}.mobile-quiet{display:inline}}
@@ -119,6 +119,12 @@
 .hotbar-skills strong{font-size:13px;line-height:1.25;color:#edf6f5;overflow-wrap:anywhere}
 .hotbar-card p{margin:9px 0 0;font-size:11px;color:#afc2c5;line-height:1.35}
 .hotbar-note{margin:10px 0 16px;padding:11px 14px;border-left:3px solid #7abdb6;background:#153039;border-radius:0 8px 8px 0;color:#c3d8d8;font-size:12px}
+.title-preview-panel{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-top:15px;border-color:#766248;background:linear-gradient(115deg,#262920,#10252b)}
+.title-preview-panel h3{margin:4px 0 5px}.title-preview-panel p{margin:0;font-size:13px}.title-open{flex:none;padding:10px 14px;border:1px solid #c39860;border-radius:8px;background:#604624;color:#fff1d8;font-size:12px;font-weight:800}
+.title-controls{display:flex;align-items:center;gap:18px;flex-wrap:wrap}.title-controls label{display:grid;gap:5px;flex:none;color:#a9c6c8;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em}.title-controls select{min-width:155px;padding:9px;background:#0a1d25;color:#fff;border:1px solid #54747b;border-radius:8px;text-transform:none;letter-spacing:0}.title-controls p{flex:1 1 300px;margin:0}
+.title-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px}.title-column{min-width:0;padding:19px;border:1px solid #486469;border-radius:14px;background:linear-gradient(145deg,#15313a,#0d1d26)}.title-slot{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-weight:900}.title-column h3{font:normal 23px Georgia,serif;color:#f2e5ce;margin:8px 0 4px}.title-current{font-size:12px;color:#b9d3cf;min-height:36px;margin:0}.title-next{display:grid;gap:3px;padding:11px;margin:15px 0;background:#2c2b20;border-left:3px solid var(--gold);border-radius:0 7px 7px 0;font-size:12px}.title-next b{color:var(--gold)}.title-next span{color:#e2d8c6}.title-options{display:grid;gap:8px}.title-option{padding:11px;border:1px solid #36515a;border-radius:9px;background:#11262e}.title-option.earned{border-color:#4d947b;background:#193a36}.title-option label{display:flex;align-items:center;gap:8px;color:#eef5ef;cursor:pointer}.title-option input{accent-color:#7cdbb2;width:17px;height:17px;flex:none}.title-option strong{font-size:13px}.title-option small{display:block;font-size:11px;color:#b2c7c7;margin:4px 0 0 25px}.title-option small b{color:#d7e9e4}.title-option a{display:inline-block;font-size:11px;margin:7px 0 0 25px}.title-path{margin-top:15px}.title-path ol{margin:5px 0 12px;padding-left:21px;color:#c9d9d8;font-size:13px}.title-path li{padding:3px 0}.title-path p{margin:0;font-size:12px}
+@media(max-width:980px){.title-grid{grid-template-columns:1fr 1fr}.title-column:last-child{grid-column:1/-1}}
+@media(max-width:660px){.title-grid{grid-template-columns:1fr}.title-column:last-child{grid-column:auto}.title-preview-panel{align-items:stretch;flex-direction:column}.title-open{align-self:flex-start}}
 @media(max-width:750px){.hotbar-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:500px){.hotbar-heading{align-items:start}.hotbar-heading .tag{display:none}.hotbar-card{min-height:0}}
 </style>
@@ -127,7 +133,7 @@
   <header class="hero"><div class="hero-inner">
     <div class="eyebrow">AION 2 · Global PvE · NA East</div>
     <h1>Pathfinder</h1>
-    <p id="hero-description">Choose a class, enter your points, and follow a connected board route alongside mastery, specialty, stigma, rotation and macro choices.</p>
+    <p id="hero-description">Choose a class, enter your points, and follow a connected board route alongside mastery, specialty, stigma, title, rotation and macro choices.</p>
     <div class="hero-tags"><span>Eight classes</span><span>Point-by-point progression</span><span>Role-based power goals</span><span>Healer support paths</span><span>Saved in this browser</span></div>
   </div></header>
   <main>
@@ -148,6 +154,7 @@
       <button type="button" data-tab="stigma">Stigmas</button>
       <button type="button" data-tab="rotation">Rotation & macro</button>
       <button type="button" data-tab="boards">Daevanion boards</button>
+      <button type="button" data-tab="titles">Titles</button>
       <button type="button" data-tab="sources">Research notes</button>
     </nav>
     <section id="overview" class="tab-panel active" aria-label="Build now">
@@ -155,6 +162,7 @@
       <div id="kpis" class="kpi-grid"></div>
       <div class="panel goal-panel"><div><span class="eyebrow">Progress goal</span><h3 id="goal-title"></h3><p id="goal-explainer"></p></div><div class="goal-inputs"><label><span id="target-label">Target Combat Power</span><input id="goal-target" type="number" min="0" step="1000"></label><label><span id="observed-label">Current Combat Power</span><input id="goal-observed" type="number" min="0" step="1000"></label></div><div id="goal-status" class="goal-status"></div></div>
       <div class="two-col"><div class="panel"><h3>Put these in first</h3><ol id="now-steps" class="steps"></ol></div><div class="panel"><h3>Next points to earn</h3><div id="next-unlocks"></div><div class="notice">Effective skill level = mastery rank + board nodes + any gear or Arcana levels you enter. Specialty slots open at effective 8, 12 and 20; option 5 opens at 16.</div></div></div>
+      <div class="panel title-preview-panel"><div><span class="eyebrow">Collection path</span><h3>Titles to earn and equip</h3><p id="title-preview"></p></div><button type="button" id="title-open" class="title-open">View title path</button></div>
     </section>
     <section id="mastery" class="tab-panel" aria-label="Mastery and specialties">
       <div class="section-title"><div><h2>Mastery & specialties</h2><p>Recommended reset targets, exact point costs and projected in-game levels for this class.</p></div><span id="mastery-spent" class="tag blue"></span></div>
@@ -174,7 +182,7 @@
       <div class="weave-setup panel"><div class="weave-keys"><span class="keycap" id="weave-basic-key">LMB</span><b>+</b><span class="keycap" id="weave-macro-key">RMB</span></div><p id="weave-guide"></p><label for="macro-bind">Bind Macro to <select id="macro-bind"><option value="RMB">Right mouse (RMB)</option><option value="Mouse 4">Side mouse (Mouse 4)</option><option value="MMB">Middle mouse (MMB)</option><option value="M">Keyboard M</option></select></label></div>
       <div class="rhythm-heading"><h3>How to play the loop</h3><p>Keep the damage engine held, then add manual decisions on top.</p></div>
       <div class="rhythm-grid"><div class="rhythm-card"><span>01 / BASE</span><strong id="rhythm-base-keys"></strong><p id="rhythm-base-note"></p></div><div class="rhythm-card"><span>02 / WEAVE</span><strong>Press 1–8 over it</strong><p id="rhythm-weave-note"></p></div><div class="rhythm-card"><span>03 / PAUSE</span><strong>Stop auto casts on purpose</strong><p id="rhythm-pause-note"></p></div></div>
-      <div class="hotbar-heading"><div><h3>Suggested 1–8 combat bar</h3><p>These are manual decisions during the held loop, not a 1 → 8 sequence. Each key shows when to press it; grouped skills share a manual stack.</p></div><span class="tag blue">Class-specific</span></div>
+      <div class="hotbar-heading"><div><h3>Suggested 1–8 combat bar</h3><p>These are manual decisions during the held loop, not a 1 → 8 sequence. Defiance shares Space with jump/glide by default. Some classes have a free flex slot.</p></div><span class="tag blue">Class-specific</span></div>
       <div id="hotbar-grid" class="hotbar-grid" aria-label="Suggested number key layout"></div>
       <div id="hotbar-note" class="hotbar-note"></div>
       <div id="macro-stacks" class="macro-layout"></div>
@@ -185,6 +193,13 @@
       <div class="section-title"><div><h2>Daevanion route</h2><p>A legal connected click order on the Global PvE grids. Select a board and tap a node for its effect.</p></div><span id="board-spent" class="tag gold"></span></div>
       <div id="board-summary" class="board-summary"></div><div class="board-tabs" id="board-tabs"></div>
       <div class="board-layout"><div><div class="board-scroll"><div id="board-grid" class="board-grid" role="group" aria-label="Daevanion board nodes"></div></div><div class="timeline"><label for="route-slider">Preview crystals</label><input id="route-slider" type="range" min="0" max="136" value="136"><b id="route-slider-value">136</b></div><p id="route-footnote" class="footnote"></p></div><aside class="board-side"><div><div id="selected-node" class="selected-node"></div><div class="panel board-effects-panel"><h3>Board effects at preview</h3><p id="board-effect-intro"></p><div id="board-effect-list" class="board-effect-list"></div></div><div class="panel"><h3>Purchase order</h3><p id="purchase-intro"></p><div id="purchase-list" class="purchase-list"></div></div></div><div class="panel"><h3>Next key nodes</h3><div id="board-next"></div></div></aside></div>
+    </section>
+    <section id="titles" class="tab-panel" aria-label="Titles to earn and equip">
+      <div class="section-title"><div><h2>Titles to earn & equip</h2><p>Track what this character has earned. Recommendations update for its role and your available titles.</p></div><span id="titles-count" class="tag gold"></span></div>
+      <div class="title-controls panel"><label for="faction-select">Character faction <select id="faction-select"><option value="elyos">Elyos</option><option value="asmodian">Asmodian</option></select></label><p id="titles-role-note"></p></div>
+      <div class="notice">Equip one title in each of the Attack, Defense and Other slots. Every title you earn also adds its collection effect permanently, even after you equip another. Check only titles you actually own; this is a focused progression list, not the full catalog.</div>
+      <div id="title-grid" class="title-grid"></div>
+      <div class="panel title-path"><h3>Fast collection wins</h3><ol><li>Finish the Hero Episode story and join a Legion for easy owned effects.</li><li>Use the Spacetime Rift 3 times for Hello There; 50 uses earns Nice to Meet You.</li><li>Find Empyrean Traces to raise your faction's Monolith to 20 for Guardian and 30 for Saint.</li><li>Clear the Sealed Dungeon Ruins of the Ancient City of Roah for Through Hell and Back.</li></ol><p>Longer goals: all Genus Insight at level 10 for Unbound by Genus; 200 pets for Rule All Creation; 25 wings for Dominator of Dimensions; 700 skins for Empty Closet.</p></div>
     </section>
     <section id="sources" class="tab-panel" aria-label="Research notes"><div class="section-title"><div><h2>Research & limits</h2><p>Live links for the selected class and the assumptions behind the route.</p></div></div><div id="source-cards" class="sources"></div><div class="notice">This is a PvE starting recommendation, not a combat simulator. The 1–8 hotbar placements are ergonomic suggestions, not a measured DPS optimum. The 60k Templar tank and 100k damage Combat Power goals are editable planning benchmarks, not official dungeon requirements. Gear, boards, skills and other systems affect the in-game score; the game calculates the final number. Healers should measure effective healing, avoid overhealing, and keep the party alive. Azphel PvP currency is separate.</div></section>
     </div>
@@ -201,7 +216,7 @@
     weave:'Keen Strike',
     stacks:[{key:'Q',title:'Main line',skills:['Rage Burst','Overhead Slam','Rending Blow']},{key:'E',title:'Ruinous line',skills:['Ruinous Blow','Lifestealing Blade']},{key:'1',title:'Buff line, manual',skills:['Lunge Stance',"Zikel's Blessing"],manual:true}],
     macro:['Q','E'], hold:'Hold Keen Strike alongside the Macro key while leveling; use buffs by hand.',
-    manual:['1 buff line — use before burst','Focused Block — replace a slot if equipped','Leaping Slam — movement','Defiance — emergency'],
+    manual:['1 buff line — use before burst','Focused Block — replace a slot if equipped','Leaping Slam — movement','Defiance (Space) — break control'],
     hotbar:[
       [['Lunge Stance',"Zikel's Blessing"],'Activate before the pull or burst','buff'],
       [['Leaping Slam'],'Engage or reposition by hand','movement'],
@@ -210,7 +225,7 @@
       [['Mocking Blade'],'Take threat when off-tanking','utility'],
       [['Rush Strike'],'Close a gap','movement'],
       [['Ankle Slice'],'Control a moving target','utility'],
-      [['Defiance'],'Break control immediately','emergency']
+      [['Aerial Snare'],'Manual control when a target needs to stay close','utility']
     ],
     hotbarNote:'If you equip Focused Block, replace a less-used control slot and press it for a planned blockable hit.',
   },
@@ -219,13 +234,13 @@
     summary:'Hold threat while converting shield windows and blocks into damage and party buffs.',
     stigmas:['Noble Armor','Shield of Protection','Taunt','Doom Shield'],
     swap:'Battlefield Banner for more damage when active block or Taunt is unnecessary.',
-    rule:'A shield attack opens Judgment briefly. Spend Judgment before the next shield trigger.',
-    opener:['Use Noble Armor before the pull.','Taunt and face the boss away from your party.','Doom Shield or Shield Smite → Judgment.','Fully charge Punishment when the boss is stable.'],
-    loop:['Shield Smite / Warding Strike → Judgment; do not overwrite the window.','Charge Punishment on cooldown when safe.','Block a heavy hit with Shield of Protection to trigger Fury.','Use Annihilate after knockdown; keep Taunt for threat.'],
+    rule:'The Judgment stack checks Judgment first, then opens its next window with a shield attack.',
+    opener:['Use Noble Armor before the pull.','Taunt and face the boss away from your party.','Fully charge Punishment while the boss is stable, then hold Vicious Strike + Macro.','Use manual Doom Shield to start a new Judgment window only after the current one ends.'],
+    loop:['Hold Vicious Strike + Macro. The E stack prioritizes Judgment, then Shield Smite / Warding Strike, with Pummel as its last-row filler.','Wait for an active Judgment window to finish before manually charging Punishment or using Doom Shield / Shield Rush.','Block a heavy hit with Shield of Protection to trigger Fury.','Use Annihilate after knockdown; keep Taunt for threat.'],
     weave:'Vicious Strike',
-    stacks:[{key:'E',title:'Judgment line',skills:['Judgment','Shield Smite','Warding Strike']},{key:'Q',title:'Damage filler',skills:['Annihilate','Debilitating Smash','Pummel']}],
-    macro:['E','Q'], hold:'Hold Vicious Strike and the Macro key together; charge Punishment by hand.',
-    manual:['Taunt — threat','Doom Shield — movement / Judgment trigger','Punishment — fully charge','Shield of Protection — timed block','Defiance — emergency'],
+    stacks:[{key:'E',title:'Judgment line',skills:['Judgment','Shield Smite','Warding Strike','Pummel']},{key:'Q',title:'Conditional damage',skills:['Annihilate','Debilitating Smash']}],
+    macro:['Q','E'], hold:'Hold Vicious Strike and the Macro key together. Judgment has priority within E; charge Punishment between Judgment windows.',
+    manual:['Taunt — threat','Doom Shield — use after Judgment window','Punishment — fully charge between windows','Shield of Protection — timed block','Defiance (Space) — break control'],
     hotbar:[
       [['Punishment'],'Fully charge during a safe boss window','attack'],
       [['Doom Shield'],'Manual knockdown and gap close','movement'],
@@ -234,7 +249,7 @@
       [['Noble Armor'],'Activate before the pull','buff'],
       [['Poach'],'Reposition without turning the boss','movement'],
       [['Shield Rush'],'Gap close when safe','movement'],
-      [['Defiance'],'Break control immediately','emergency']
+      [['Flash Rampage'],'Manual stagger or situational attack','attack']
     ],
     hotbarNote:'Keep Doom Shield manual when boss facing matters. Battlefield Banner can replace a situational slot if you equip it.',
   },
@@ -249,7 +264,7 @@
     weave:'Quick Slice',
     stacks:[{key:'E',title:'Damage line',skills:['Insignia Explosion','Heart Gore','Savage Roar']},{key:'1',title:'Manual buff stack',skills:['Swift Contract','Illusive Clone','Savage Fang',"Triniel's Dagger"],manual:true}],
     macro:['E'], hold:'Hold Quick Slice alongside the Macro key; use Ambush for positioning by hand.',
-    manual:['1 buff stack — line up burst','Ambush / Shadowstrike / Flash Slice — position','Storm Rampage — stagger window','Defiance — emergency'],
+    manual:['1 buff stack — line up burst','Ambush / Shadowstrike / Flash Slice — position','Storm Rampage — stagger window','Defiance (Space) — break control'],
     hotbar:[
       [['Swift Contract','Illusive Clone','Savage Fang',"Triniel's Dagger"],'Manual buff stack before burst','buff'],
       [['Ambush'],'Enter behind the boss','movement'],
@@ -258,7 +273,7 @@
       [['Flash Slice'],'Use movement deliberately','movement'],
       [['Infiltrate'],'Approach or escape','movement'],
       [['Shadow Fall'],'Follow a stun window','utility'],
-      [['Defiance'],'Break control immediately','emergency']
+      [['Whirlwind Slice'],'Manual area attack for packs','attack']
     ],
     hotbarNote:'Keep Whirlwind Slice on a secondary row for packs; do not automate your positioning skills.',
   },
@@ -273,7 +288,7 @@
     weave:'Snipe',
     stacks:[{key:'E',title:'Gale line',skills:['Gale Arrow','Griffon Arrow','Snare Shot']},{key:'Q',title:'Drill Dart line',skills:['Drill Dart','Burst Arrow','Tempest Shot']}],
     macro:['E','Q'], hold:'Hold Snipe with the Macro key; charge Deadshot on its own key.',
-    manual:['Deadshot — fully charged under Precision','Arrow Scattershot — stagger, separate key','Marking Shot — movement','Vaizel’s Authority / Bow of Blessing — buff timing','Defiance — emergency'],
+    manual:['Deadshot — fully charged under Precision','Arrow Scattershot — stagger, separate key','Marking Shot — movement','Vaizel’s Authority / Bow of Blessing — buff timing','Defiance (Space) — break control'],
     hotbar:[
       [['Deadshot'],'Fully charge while Precision is active','attack'],
       [['Arrow Scattershot'],'Use during stagger instead of Snipe','attack'],
@@ -282,7 +297,7 @@
       [['Bow of Blessing'],'Activate before the pull','buff'],
       [['Supporting Fire'],'Activate before the pull','buff'],
       [['Explosion Trap'],'Use for packs','utility'],
-      [['Defiance'],'Break control immediately','emergency']
+      [['Suppressing Arrow'],'Manual control when needed','utility']
     ],
     hotbarNote:'Keep Deadshot separate from the macro so you can complete the charge under Precision.',
   },
@@ -297,7 +312,7 @@
     weave:'Flame Arrow',weaveKey:'R',
     stacks:[{key:'E',title:'Short damage line',skills:["Winter's Shackles",'Bittercold Wind','Blaze','Firestorm']},{key:'4',title:'Buff line, manual',skills:['Element Enhancement','Delayed Explosion'],manual:true},{key:'5',title:'Ground damage, manual',skills:['Wish of Concentration','Cold Storm','Fire Wall'],manual:true}],
     macro:['E'], hold:'Hold Flame Arrow on R with the Macro key; charge Hellfire separately.',
-    manual:['Hellfire — full charge','4 and 5 — buffs and ground damage when the boss is stable','Flame Scattershot — separate key','Steel Barrier / Arctic Armor — survival','Defiance — emergency'],
+    manual:['Hellfire — full charge','4 and 5 — buffs and ground damage when the boss is stable','Flame Scattershot — separate key','Steel Barrier / Arctic Armor — survival','Defiance (Space) — break control'],
     hotbar:[
       [['Hellfire'],'Fully charge during a safe burst window','attack'],
       [['Flame Scattershot'],'Manual damage between casts','attack'],
@@ -306,9 +321,9 @@
       [['Wish of Concentration','Cold Storm','Fire Wall'],'Place on a stable boss position','attack'],
       [['Ice Chain'],'Manual control','utility'],
       [['Frost'],'Manual filler or control','utility'],
-      [['Defiance'],'Break control immediately','emergency']
+      [[], 'Free slot for a situational skill or stigma swap','utility']
     ],
-    hotbarNote:'Keys 4 and 5 are manual stacks. Keep Hellfire on 1 so the macro never cuts its charge.',
+    hotbarNote:'Keys 4 and 5 are manual stacks. Keep Hellfire on 1 so the macro never cuts its charge. Key 8 is available for Steel Barrier or Arctic Armor if you swap one into your stigma loadout.',
   },
   spiritmaster: {
     name:'Spiritmaster', role:'Summon damage', kind:'dps',
@@ -321,7 +336,7 @@
     weave:'Cold Shock',
     stacks:[{key:'E',title:'Fusion',skills:['Elemental Fusion']},{key:'Q',title:'Jointstrike line',skills:['Jointstrike: Corrode','Jointstrike: Curse','Dimensional Control','Combustion']},{key:'1',title:'Summons, manual',skills:['Summon: Water Spirit','Summon: Earth Spirit','Summon: Fire Spirit'],manual:true}],
     macro:['E','Q'], hold:'Hold Cold Shock with the Macro key. If Fusion is charged, take it out of the macro.',
-    manual:['Spirit summons and buffs — before Ancient Spirit','Elemental Fusion — manual if charge specialty is selected','Jointstrike: Destructive Attack — charge only if equipped','Defiance — emergency'],
+    manual:['Spirit summons and buffs — before Ancient Spirit','Elemental Fusion — manual if charge specialty is selected','Jointstrike: Destructive Attack — charge only if equipped','Defiance (Space) — break control'],
     hotbar:[
       [['Summon: Water Spirit','Summon: Earth Spirit','Summon: Fire Spirit'],'Choose the spirit for this fight','utility'],
       [['Summon: Ancient Spirit'],'Use after spirit buffs','attack'],
@@ -330,9 +345,9 @@
       [['Rapid Scattershot'],'Use during stagger','attack'],
       [["Soul's Cry"],'Manual control','utility'],
       [['Summon: Wind Spirit'],'Alternate spirit; swap for charged Fusion','utility'],
-      [['Defiance'],'Break control immediately','emergency']
+      [[], 'Free slot for a situational skill or stigma swap','utility']
     ],
-    hotbarNote:'If your Elemental Fusion specialty adds a charge, move Fusion from macro E to key 7 and charge it by hand.',
+    hotbarNote:'If your Elemental Fusion specialty adds a charge, move Fusion from macro E to key 7 and charge it by hand. Key 8 is free for a situational swap.',
   },
   cleric: {
     name:'Cleric', role:'Primary healer', kind:'healer',
@@ -345,7 +360,7 @@
     weave:"Earth's Retribution",
     stacks:[{key:'E',title:'Safe damage line',skills:['Chain of Torment','Condemnation']},{key:'Q',title:'Aura line',skills:['Divine Aura','Judgment Thunder']}],
     macro:['E','Q'], hold:'Hold Earth’s Retribution with the Macro key only while the party is stable.',
-    manual:['Healing Light / Radiant Recovery — direct heals','Absolution / Yustiel’s Power / Benevolence — group recovery','Light of Protection — toggle once','Salvation if equipped / Defiance — emergencies'],
+    manual:['Healing Light / Radiant Recovery — direct heals','Absolution / Yustiel’s Power / Benevolence — group recovery','Light of Protection — toggle once','Salvation if equipped / Defiance (Space) — emergencies'],
     hotbar:[
       [['Healing Light'],'Routine direct heal','heal'],
       [['Light of Regeneration'],'Apply before predictable damage','heal'],
@@ -354,7 +369,7 @@
       [["Yustiel's Power"],'Planned group damage','heal'],
       [['Benevolence'],'Layer for group pressure','heal'],
       [['Light of Protection'],'Toggle on before the pull','buff'],
-      [['Defiance'],'Break control immediately','emergency']
+      [['Bolt'],'Fully charge for damage when the party is safe','attack']
     ],
     hotbarNote:'Heals are on separate keys so you choose the right response. Use the damage macro only while the group is safe.',
   },
@@ -369,7 +384,7 @@
     weave:'Onslaught',
     stacks:[{key:'E',title:'Dark Crush line',skills:['Dark Crush','Spinning Strike','Impactful Crush','Incandescent Blow']}],
     macro:['E'], hold:'Hold Onslaught with the Macro key during safe damage; release for healing.',
-    manual:['Undefeated / Sprint Mantra — toggle once','Recuperation / Healing Touch — healing','Protection Circle — passive shield from hits','Power of the Storm — group burst','Defiance — emergency'],
+    manual:['Undefeated / Sprint Mantra — toggle once','Recuperation / Healing Touch — healing','Protection Circle — passive shield from hits','Power of the Storm — group burst','Defiance (Space) — break control'],
     hotbar:[
       [['Recuperation'],'Refresh the recovery effect','heal'],
       [['Healing Touch'],'Direct heal when needed','heal'],
@@ -378,11 +393,26 @@
       [['Undefeated Mantra'],'Toggle on before the pull','buff'],
       [['Sprint Mantra'],'Toggle on before the pull','buff'],
       [['Rushing Smash'],'Reposition by hand','movement'],
-      [['Defiance'],'Break control immediately','emergency']
+      [['Heat Wave Blow'],'Manual damage during a safe window','attack']
     ],
     hotbarNote:'Protection Circle is passive and needs no key. After both mantras are active, keys 5 and 6 can hold situational skills on a second preset.',
   },
 };
+</script><script>// Curated Global title progression. Source: linked Global client title entries and MetaBot title guide, reviewed 2026-10-18.
+const TITLES = [
+  {id:'cube',slot:'Attack',name:'Everything Has Its Use',equip:'Critical Hit +15',owned:'HP Potion Recovery increase +1%',earn:'Shugo-of-All-Trades regional quest (Verteron or Altgard)',url:'https://metabot.gg/en/aion-2/titles/everything-has-its-use'},
+  {id:'nice',slot:'Attack',name:'Nice to Meet You',equip:'PvE Damage Boost +2.9%',owned:'PvE Defense +10',earn:'Use the Spacetime Rift 50 times',url:'https://metabot.gg/en/aion-2/titles/nice-to-meet-you'},
+  {id:'guardian',slot:'Attack',name:{elyos:'Guardian of Verteron',asmodian:'Guardian of Altgard'},equip:'PvE Damage Boost +3% · Penetration +210',owned:'PvE Attack +4',earn:'Raise your faction Monolith to level 20',url:'https://metabot.gg/en/aion-2/guides/titles-guide'},
+  {id:'unbound',slot:'Attack',name:'Unbound by Genus',equip:'PvE Damage Boost +4.5% · Attack Bonus +34 · Critical Hit +68',owned:'PvE Damage Boost +1%',earn:'Raise every Genus Insight to level 10',url:'https://metabot.gg/en/aion-2/guides/titles-guide'},
+  {id:'hello',slot:'Defense',name:'Hello There',equip:'PvE Damage Tolerance +1.9%',owned:'Critical Hit Resist +5',earn:'Use the Spacetime Rift 3 times',url:'https://metabot.gg/en/aion-2/titles/hello-there'},
+  {id:'saint',slot:'Defense',name:{elyos:'Saint of Verteron',asmodian:'Saint of Altgard'},equip:'Defense Bonus +300 · Damage Tolerance +3% · Block +100',owned:'MP +20',earn:'Raise your faction Monolith to level 30',url:'https://metabot.gg/en/aion-2/guides/titles-guide'},
+  {id:'rule',slot:'Defense',name:'Rule All Creation',equip:'Defense Bonus +320 · Back Attack Damage Tolerance +3% · Boss Damage Tolerance +4%',owned:'Move Speed +1%',earn:'Collect 200 pets',url:'https://metabot.gg/en/aion-2/guides/titles-guide'},
+  {id:'dominator',slot:'Defense',name:'Dominator of Dimensions',equip:'Defense Bonus +340 · HP +1,000 · PvE Damage Tolerance +4.5%',owned:'PvE Damage Tolerance +1%',earn:'Collect 25 wings',url:'https://metabot.gg/en/aion-2/guides/titles-guide'},
+  {id:'legion',slot:'Other',name:'There\'s No "I" in Team',equip:'HP +270',owned:'PvE Attack +2',earn:'Join a Legion',url:'https://metabot.gg/en/aion-2/titles/theres-no-i-in-team'},
+  {id:'episode',slot:'Other',name:{elyos:'Encountering Kaisinel\'s Core',asmodian:'Encountering Zikel\'s Core'},equip:'HP Potion Recovery +400 · Move Speed +3% · HP +900',owned:'HP +120',earn:'Complete Hero Episode 6',url:'https://metabot.gg/en/aion-2/guides/titles-guide'},
+  {id:'through',slot:'Other',name:'Through Hell and Back',equip:'Cooldown Reduction +3% · HP +900 · Stamina +225',owned:'Block +10',earn:'Clear Sealed Dungeon: Ruins of the Ancient City of Roah',url:'https://metabot.gg/en/aion-2/titles/through-hell-and-back'},
+  {id:'closet',slot:'Other',name:'Empty Closet',equip:'Combat Speed +3.5% · Cooldown Reduction +3.5% · Natural HP Regen +42',owned:'HP +120',earn:'Collect 700 skins',url:'https://metabot.gg/en/aion-2/guides/titles-guide'}
+];
 </script><script>const $ = id => document.getElementById(id);
 const CLASS_ORDER = ['templar','gladiator','assassin','ranger','sorcerer','spiritmaster','cleric','chanter'];
 const BOARD_NAMES = ['Nezekan','Zikel','Vaizel','Triniel'];
@@ -397,7 +427,7 @@ const TEMPLAR_STAGES = [
   ['Block Pain',8],['Warding Shield',8],['Guarding Seal',8],['Survival Willpower',8],['Flash Rampage',8],
   ['Poach',10],['Defiance',10],['Debilitating Smash',10],['Shield Rush',10],['Block Pain',10],['Warding Shield',10],['Guarding Seal',10],['Survival Willpower',10],['Flash Rampage',10]
 ];
-const DEFAULT_ACCOUNT = (cls='templar') => ({...FRESH_45,context:'party',gear:{},currentRanks:{},macroBind:'RMB',goalTarget:['cleric','chanter'].includes(cls)?0:cls==='templar'?60000:100000,goalObserved:0});
+const DEFAULT_ACCOUNT = (cls='templar') => ({...FRESH_45,context:'party',gear:{},currentRanks:{},titlesOwned:{},faction:'elyos',macroBind:'RMB',goalTarget:['cleric','chanter'].includes(cls)?0:cls==='templar'?60000:100000,goalObserved:0});
 let saved = {};
 try { saved = JSON.parse(localStorage.getItem('aion2-pathfinder-all-v3') || '{}') || {}; } catch (_) {}
 let state = {class:CLASS_ORDER.includes(saved.class)?saved.class:null,accounts:saved.accounts||{},tab:'overview',board:'Nezekan',preview:FRESH_45.crystals,node:null};
@@ -440,7 +470,7 @@ function render(){
   $('class-buttons').innerHTML=CLASS_ORDER.map(c=>`<button type="button" data-class="${c}" class="${state.class===c?'active':''}" aria-pressed="${state.class===c}"><span>${PROFILES[c].name}</span><small>${PROFILES[c].role}</small></button>`).join('');
   $('welcome-panel').hidden=selected;$('planner-content').hidden=!selected;
   $('class-role').textContent=selected?profile().role:'Select a class';
-  if(!selected){$('hero-description').textContent='Choose a class to plan Mastery, Stigmas, Daevanion boards, specialties and rotation from a fresh Global level 45.';save();return}
+  if(!selected){$('hero-description').textContent='Choose a class to plan Mastery, Stigmas, Daevanion boards, titles, specialties and rotation from a fresh Global level 45.';save();return}
   const a=account(),m=model(),p=profile();
   $('hero-description').textContent=p.summary+' Change your point totals to see what to buy now and next.';
   $('class-role').textContent=p.role;$('overview-role').textContent=p.role;
@@ -449,7 +479,7 @@ function render(){
   for(const [id,ctx] of [['party-button','party'],['solo-button','solo']]){$(id).classList.toggle('active',a.context===ctx);$(id).setAttribute('aria-pressed',a.context===ctx)}
   document.querySelectorAll('[data-tab]').forEach(b=>{b.classList.toggle('active',b.dataset.tab===state.tab);b.setAttribute('aria-current',b.dataset.tab===state.tab?'page':'false')});
   document.querySelectorAll('.tab-panel').forEach(el=>el.classList.toggle('active',el.id===state.tab));
-  renderOverview(m);renderMastery(m);renderStigma(m);renderRotation(m);renderBoards(m);renderSources();save();
+  renderOverview(m);renderMastery(m);renderStigma(m);renderRotation(m);renderBoards(m);renderTitles();renderSources();save();
 }
 function renderOverview(m){
   const a=account(),p=profile(),ordered=masteryStages().map(x=>x[0]).filter((v,i,s)=>s.indexOf(v)===i),top=ordered.slice(0,4);
@@ -503,20 +533,20 @@ function renderRotation(m){
   const macroSteps=fusionCharged?p.macro.filter(key=>key!=='E'):p.macro;
   const hotbar=p.hotbar.map(([skills,cue,tone])=>[skills,cue,tone]);
   if(fusionCharged)hotbar[6]=[['Elemental Fusion'],'Fully charge when Four Elements is ready','attack'];
-  $('rotation-gate').textContent=p.kind==='healer'?'Heals, toggles and emergency buttons remain manual. Use the macro only while the group is stable.':`Current first priority: ${main} effective Lv ${effective(main,m)}. Keep charged and movement skills on their own keys.`;
+  $('rotation-gate').textContent=state.class==='templar'?`Judgment is effective Lv ${effective('Judgment',m)}. ${effective('Judgment',m)>=16?'With its cooldown-removal Specialty selected, the E stack can spend repeated casts during one proc.':'Before its Lv 16 cooldown-removal Specialty, expect one Judgment cast per available proc and space manual Doom Shield around its cooldown.'} The macro spends Judgment first within E. The timing caution applies to extra manual Punishment or shield-trigger casts, which can interrupt or overlap that proc.`:p.kind==='healer'?'Heals, toggles and emergency buttons remain manual. Use the macro only while the group is stable.':`Current first priority: ${main} effective Lv ${effective(main,m)}. Keep charged and movement skills on their own keys.`;
   $('rotation-opener-title').textContent=a.context==='party'?'Group opener':'Solo opener';$('rotation-opener').innerHTML=numbered(p.opener);$('rotation-loop').innerHTML=numbered(p.loop);
   $('macro-bind').value=macroKey;$('weave-basic-key').textContent=weaveKey;$('weave-macro-key').textContent=macroKey;
   $('weave-guide').textContent=`Hold ${weaveKey} (${p.weave}) with ${macroKey} (the in-game Macro bind) as your default safe-damage state. Press manual keys over the held loop; they take priority.`;
   $('rhythm-base-keys').textContent=`${weaveKey} + ${macroKey}`;
   $('rhythm-base-note').textContent=`Keep ${p.weave} held while Macro attempts ${macroSteps.join(' and ')}. Maintain this through safe damage uptime.`;
-  $('rhythm-weave-note').textContent=p.kind==='healer'?'Press the needed 1–8 heal or support key; manual input wins. Shift fully to healing when the group is in danger.':'Press or hold a 1–8 skill at its cue. During safe uptime, keep the base held; manual input wins over the macro.';
+  $('rhythm-weave-note').textContent=state.class==='templar'?'E handles Judgment and Pummel automatically. Time Punishment, Doom Shield and Shield of Protection by hand between Judgment windows or for boss mechanics.':p.kind==='healer'?'Press the needed 1–8 heal or support key; manual input wins. Shift fully to healing when the group is in danger.':'Press or hold a 1–8 skill at its cue. During safe uptime, keep the base held; manual input wins over the macro.';
   $('rhythm-pause-note').textContent=p.kind==='healer'?`Release ${macroKey} and ${weaveKey} for healing triage or mechanics. Restart both when damage is safe.`:`Release ${macroKey} to stop Macro; release ${weaveKey} too when all attacks must stop. Pause Macro if a charge gets clipped.`;
-  $('hotbar-grid').innerHTML=hotbar.map(([skills,cue,tone],i)=>`<article class="hotbar-card tone-${esc(tone)}"><div class="hotbar-top"><span class="hotbar-number">${i+1}</span><small>${esc(tone)}</small></div><div class="hotbar-skills">${skills.map(name=>`<strong>${esc(name)}</strong>`).join('')}</div><p>${esc(cue)}</p></article>`).join('');
-  $('hotbar-note').textContent=`${fusionCharged?'Elemental Fusion has a charge specialty at this level, so put it on 7 and remove it from macro E. Keep Wind Spirit on a secondary row.':p.hotbarNote} Enable Separate Defiance Hotkey and give it a nearby backup key if 8 is hard to reach. Other situational skills can go on a secondary row.`;
+  $('hotbar-grid').innerHTML=hotbar.map(([skills,cue,tone],i)=>`<article class="hotbar-card tone-${esc(tone)}"><div class="hotbar-top"><span class="hotbar-number">${i+1}</span><small>${esc(tone)}</small></div><div class="hotbar-skills">${skills.length?skills.map(name=>`<strong>${esc(name)}</strong>`).join(''):'<strong>Flex slot</strong>'}</div><p>${esc(cue)}</p></article>`).join('');
+  $('hotbar-note').textContent=`Defiance shares Space with jump/glide by default for every class; it does not consume a number-bar slot. Optional: turn on Separate Defiance Hotkey and give it a dedicated nearby key to avoid accidental glides. ${fusionCharged?'Elemental Fusion has a charge specialty at this level, so put it on 7 and remove it from macro E. Keep Wind Spirit on a secondary row.':p.hotbarNote}`;
   const stackHtml=stacks.map(s=>`<div class="macro-stack"><div class="stack-heading"><span class="keycap">${esc(s.key)}</span><div><strong>${esc(s.title)}</strong><small>${s.manual?'Manual key':'Macro hotbar key'}</small></div></div>${s.skills.map((name,i)=>`<div class="stack-row"><b>Row ${i}</b><span>${esc(name)}</span></div>`).join('')}</div>`).join('');
   const script=`<div class="macro-stack macro-script"><div class="stack-heading"><span class="keycap">${esc(macroKey)}</span><div><strong>In-game Macro steps</strong><small>Bind Macro to ${esc(macroKey)}</small></div></div>${macroSteps.map((key,i)=>`<div class="stack-row"><b>Step ${i+1}</b><span>${esc(key)} · 10 ms</span></div>`).join('')}<div class="stack-row"><b>Hold</b><span>${esc(fusionCharged?'Hold Cold Shock with the Macro key; charge Elemental Fusion on 7 by hand.':p.hold)}</span></div></div>`;
   $('macro-stacks').innerHTML=stackHtml+script;
-  $('setup-list').innerHTML=[`Settings (O) → Key Settings → General → Gameplay → Macro: bind ${macroKey}. In AION 1 control mode, use a keyboard key instead of a mouse button.`,`Put ${p.weave} on ${weaveKey}. Set manual powers on 1–8 as shown, and keep ${macroKey} free for Macro.`,`Skills (K): make the labeled stacks. Then add only the listed hotbar keys to Macro, in order, starting each step at 10 ms.`,`Hold ${weaveKey} and ${macroKey} through safe damage, pressing or holding 1–8 without releasing them. Manual input takes priority. Release ${macroKey} to stop Macro, and ${weaveKey} too when all attacks must stop.`].map(x=>`<li>${esc(x)}</li>`).join('');
+  $('setup-list').innerHTML=[`Settings (O) → Key Settings → General → Macro: bind ${macroKey}; it is unbound by default. In AION 1 control mode, use a keyboard key instead of a mouse button.`,`Put ${p.weave} on ${weaveKey}. Set manual powers on 1–8 as shown. Defiance is on Space by default, shared with jump/glide; a separate Defiance key is optional.`,`Skills (K): make the labeled stacks. Then add only the listed hotbar keys to Macro, in order, starting each step at 10 ms.`,`Hold ${weaveKey} and ${macroKey} through safe damage, pressing or holding 1–8 at their cues. Manual input takes priority. Release ${macroKey} to stop Macro, and ${weaveKey} too when all attacks must stop.`].map(x=>`<li>${esc(x)}</li>`).join('');
   $('manual-keys').innerHTML=p.manual.map(v=>`<div class="manual-key"><b>${esc(v.split(' — ')[0])}</b><small>${esc(v.split(' — ')[1]||'Manual timing')}</small></div>`).join('');
 }
 function renderBoards(m){
@@ -541,6 +571,29 @@ function renderBoards(m){
   $('board-next').innerHTML=upcoming.length?upcoming.map(x=>`<div class="next-unlock"><strong>${x.total} total</strong><span>${x.board}: ${esc(x.label)}</span></div>`).join(''):'<p>All key nodes on this route are funded.</p>';
   const starter=data().starterCost;$('route-footnote').textContent=starter?`The first ${starter} crystals follow a published connected ${profile().name} PvE path. Later clicks are generated using that guide’s skill and stat priorities. This is a recommended route, not a measured performance optimum.`:'This Chanter route is generated from published healer skill and stat priorities. It is a connected recommendation, not the source’s published damage route or a measured healing optimum.';
 }
+function titleName(t,faction){return typeof t.name==='string'?t.name:t.name[faction]}
+function titlePriority(slot){
+  if(slot==='Attack')return ['unbound','guardian','nice','cube'];
+  if(slot==='Defense')return state.class==='templar'?['rule','dominator','saint','hello']:['dominator','saint','rule','hello'];
+  return state.class==='templar'||profile().kind==='healer'?['through','closet','episode','legion']:['closet','through','episode','legion'];
+}
+function renderTitles(){
+  const a=account(),owned=a.titlesOwned ||= {},faction=a.faction==='asmodian'?'asmodian':'elyos';
+  $('faction-select').value=faction;
+  const count=TITLES.filter(t=>owned[t.id]).length;
+  $('titles-count').textContent=`${count} / ${TITLES.length} tracked earned`;
+  $('titles-role-note').textContent=state.class==='templar'?'Templar: prioritize boss tolerance and a cooldown/HP Other title while retaining an Attack title for threat and damage.':profile().kind==='healer'?'Healer: the Attack title supports damage between heals; Defense and Other improve survival and cooldown uptime. These titles do not directly add a verified heal multiplier.':'Damage class: the Attack slot is your PvE damage title; Defense and Other preserve uptime and survivability.';
+  const previews=[];
+  $('title-grid').innerHTML=['Attack','Defense','Other'].map(slot=>{
+    const priority=titlePriority(slot),items=priority.map(id=>TITLES.find(t=>t.id===id)),pick=items.find(t=>owned[t.id]),pickIndex=pick?priority.indexOf(pick.id):priority.length;
+    const upgrade=items.slice(0,pickIndex).reverse().find(t=>!owned[t.id]);
+    const collection=items.slice().reverse().find(t=>!owned[t.id]);
+    const next=upgrade||collection;
+    previews.push(`${slot}: ${pick?titleName(pick,faction):'none marked earned'}`);
+    return `<article class="title-column"><div class="title-slot">${slot} slot</div><h3>${pick?esc(titleName(pick,faction)):'No earned title marked'}</h3><p class="title-current">${pick?`Equip now · ${esc(pick.equip)}`:'Mark a title below when your character earns it.'}</p><div class="title-next"><b>${upgrade?pick?'Next upgrade':'First title to earn':next?'Next collection':'Path complete'}</b><span>${next?`${esc(titleName(next,faction))} · ${esc(next.earn)}`:'Every title on this curated path is marked earned.'}</span></div><div class="title-options">${items.slice().reverse().map(t=>`<div class="title-option ${owned[t.id]?'earned':''}"><label><input type="checkbox" data-title="${t.id}" ${owned[t.id]?'checked':''}><strong>${esc(titleName(t,faction))}</strong></label><small><b>Equipped:</b> ${esc(t.equip)}</small><small><b>Owned:</b> ${esc(t.owned)}</small><small><b>Earn:</b> ${esc(t.earn)}</small><a href="${esc(t.url)}" target="_blank" rel="noopener noreferrer">Check source ↗</a></div>`).join('')}</div></article>`
+  }).join('');
+  $('title-preview').textContent=`${previews.join(' · ')}. Owned effects from all earned titles stay active after a swap. Open the path to mark what this character owns.`;
+}
 function renderSources(){
   const d=data(),p=profile();const cards=[
     ['Fresh Global 45 totals','The Global client leveling tables give 203 Mastery points, 29 Stigma points, four slots and 136 Daevanion crystals by level 45. Other rewards are additional.',`https://metabot.gg/en/aion-2/leveling`,'Open level table'],
@@ -549,8 +602,9 @@ function renderSources(){
     ['Connected route & weights',state.class==='chanter'?'Healer skill and stat weights guide the generated connected route.':'The published early route is preserved; the continuation follows class skill and stat priorities.',d.sources.route,'Open class route'],
     ['Specialty choices','Aion2Codex class guide PvE picks and option text; gear or Arcana can unlock later choices. Compare live tooltips.',`https://aion2codex.com/guides/${state.class}`,'Open specialties'],
     ['Stigmas and skills','Global class skill and stigma effects; the four chosen slots prioritize this planner’s role.',`https://aion2.grimvane.app/companion/wiki/${state.class}-skills/`,'Open class skills'],
-    ['Macro setup','The in-game macro uses hotbar keys, up to four skills per stack and delays per step. The layouts are starting points.',`https://aion2.grimvane.app/companion/wiki/macros-guide/`,'Open macro guide'],
-    ['1–8 key layout','The number-key placement is this planner’s ergonomic recommendation. Keep frequent manual actions close, and bind a separate accessible Defiance key.',`https://couga54.github.io/aion2-guides/en/settings/`,'Open control settings'],
+    ['Macro setup','The in-game macro uses hotbar keys, up to four skills per stack and delays per step. The layouts are starting points.',state.class==='templar'?`https://mobalytics.gg/gamebase/guides/aion-2-templar-pve-build`:`https://aion2.grimvane.app/companion/wiki/macros-guide/`,'Open macro guide'],
+    ['1–8 key layout','The number-key placement is this planner’s ergonomic recommendation. Defiance shares Space with jump/glide by default; the separate Defiance key setting is optional.',`https://couga54.github.io/aion2-guides/en/settings/`,'Open control settings'],
+    ['Titles to earn and equip','Global title equip and collection effects, acquisition paths, and the three title slots. The curated title path uses owned checkboxes; it does not assume a fresh 45 already owns any title.',`https://metabot.gg/en/aion-2/guides/titles-guide`,'Open Global title guide'],
     ['Class build context',`${p.name} is planned as ${p.role.toLowerCase()}. Compare alternate damage or support presets before swapping roles.`,`https://metabot.gg/en/aion-2/guides/class-builds-guide`,'Open all-class guide']
   ];$('source-cards').innerHTML=cards.map(([title,body,url,label])=>`<div class="source-card"><b>${esc(title)}</b><p>${esc(body)}</p><a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(label)} ↗</a></div>`).join('');
 }
@@ -561,6 +615,9 @@ $('fresh-45-button').addEventListener('click',()=>useBudget(FRESH_45));
 for(const [id,key,max] of [['mastery-input','mastery',462],['stigma-input','stigma',300],['crystal-input','crystals',570]])$(id).addEventListener('change',e=>{account()[key]=clamp(e.target.value,0,max);if(key==='crystals')state.preview=account().crystals;render()});
 for(const [id,ctx] of [['party-button','party'],['solo-button','solo']])$(id).addEventListener('click',()=>{account().context=ctx;render()});
 $('macro-bind').addEventListener('change',e=>{account().macroBind=e.target.value;render()});
+$('title-open').addEventListener('click',()=>{state.tab='titles';render();document.querySelector('.tabs').scrollIntoView({behavior:'smooth',block:'start'})});
+$('faction-select').addEventListener('change',e=>{account().faction=e.target.value==='asmodian'?'asmodian':'elyos';render()});
+$('title-grid').addEventListener('change',e=>{const id=e.target.dataset.title;if(!id||!TITLES.some(t=>t.id===id))return;account().titlesOwned ||= {};account().titlesOwned[id]=e.target.checked;render()});
 $('reset-button').addEventListener('click',()=>{state.accounts[state.class]=DEFAULT_ACCOUNT(state.class);state.preview=FRESH_45.crystals;state.node=null;render()});
 for(const [id,key] of [['goal-target','goalTarget'],['goal-observed','goalObserved']])$(id).addEventListener('change',e=>{account()[key]=clamp(e.target.value,0,1000000000);render()});
 $('skill-grid').addEventListener('change',e=>{

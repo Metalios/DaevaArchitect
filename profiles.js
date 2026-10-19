@@ -10,7 +10,7 @@ const PROFILES = {
     weave:'Keen Strike',
     stacks:[{key:'Q',title:'Main line',skills:['Rage Burst','Overhead Slam','Rending Blow']},{key:'E',title:'Ruinous line',skills:['Ruinous Blow','Lifestealing Blade']},{key:'1',title:'Buff line, manual',skills:['Lunge Stance',"Zikel's Blessing"],manual:true}],
     macro:['Q','E'], hold:'Hold Keen Strike alongside the Macro key while leveling; use buffs by hand.',
-    manual:['1 buff line — use before burst','Focused Block — replace a slot if equipped','Leaping Slam — movement','Defiance — emergency'],
+    manual:['1 buff line — use before burst','Focused Block — replace a slot if equipped','Leaping Slam — movement','Defiance (Space) — break control'],
     hotbar:[
       [['Lunge Stance',"Zikel's Blessing"],'Activate before the pull or burst','buff'],
       [['Leaping Slam'],'Engage or reposition by hand','movement'],
@@ -19,7 +19,7 @@ const PROFILES = {
       [['Mocking Blade'],'Take threat when off-tanking','utility'],
       [['Rush Strike'],'Close a gap','movement'],
       [['Ankle Slice'],'Control a moving target','utility'],
-      [['Defiance'],'Break control immediately','emergency']
+      [['Aerial Snare'],'Manual control when a target needs to stay close','utility']
     ],
     hotbarNote:'If you equip Focused Block, replace a less-used control slot and press it for a planned blockable hit.',
   },
@@ -28,13 +28,13 @@ const PROFILES = {
     summary:'Hold threat while converting shield windows and blocks into damage and party buffs.',
     stigmas:['Noble Armor','Shield of Protection','Taunt','Doom Shield'],
     swap:'Battlefield Banner for more damage when active block or Taunt is unnecessary.',
-    rule:'A shield attack opens Judgment briefly. Spend Judgment before the next shield trigger.',
-    opener:['Use Noble Armor before the pull.','Taunt and face the boss away from your party.','Doom Shield or Shield Smite → Judgment.','Fully charge Punishment when the boss is stable.'],
-    loop:['Shield Smite / Warding Strike → Judgment; do not overwrite the window.','Charge Punishment on cooldown when safe.','Block a heavy hit with Shield of Protection to trigger Fury.','Use Annihilate after knockdown; keep Taunt for threat.'],
+    rule:'The Judgment stack checks Judgment first, then opens its next window with a shield attack.',
+    opener:['Use Noble Armor before the pull.','Taunt and face the boss away from your party.','Fully charge Punishment while the boss is stable, then hold Vicious Strike + Macro.','Use manual Doom Shield to start a new Judgment window only after the current one ends.'],
+    loop:['Hold Vicious Strike + Macro. The E stack prioritizes Judgment, then Shield Smite / Warding Strike, with Pummel as its last-row filler.','Wait for an active Judgment window to finish before manually charging Punishment or using Doom Shield / Shield Rush.','Block a heavy hit with Shield of Protection to trigger Fury.','Use Annihilate after knockdown; keep Taunt for threat.'],
     weave:'Vicious Strike',
-    stacks:[{key:'E',title:'Judgment line',skills:['Judgment','Shield Smite','Warding Strike']},{key:'Q',title:'Damage filler',skills:['Annihilate','Debilitating Smash','Pummel']}],
-    macro:['E','Q'], hold:'Hold Vicious Strike and the Macro key together; charge Punishment by hand.',
-    manual:['Taunt — threat','Doom Shield — movement / Judgment trigger','Punishment — fully charge','Shield of Protection — timed block','Defiance — emergency'],
+    stacks:[{key:'E',title:'Judgment line',skills:['Judgment','Shield Smite','Warding Strike','Pummel']},{key:'Q',title:'Conditional damage',skills:['Annihilate','Debilitating Smash']}],
+    macro:['Q','E'], hold:'Hold Vicious Strike and the Macro key together. Judgment has priority within E; charge Punishment between Judgment windows.',
+    manual:['Taunt — threat','Doom Shield — use after Judgment window','Punishment — fully charge between windows','Shield of Protection — timed block','Defiance (Space) — break control'],
     hotbar:[
       [['Punishment'],'Fully charge during a safe boss window','attack'],
       [['Doom Shield'],'Manual knockdown and gap close','movement'],
@@ -43,7 +43,7 @@ const PROFILES = {
       [['Noble Armor'],'Activate before the pull','buff'],
       [['Poach'],'Reposition without turning the boss','movement'],
       [['Shield Rush'],'Gap close when safe','movement'],
-      [['Defiance'],'Break control immediately','emergency']
+      [['Flash Rampage'],'Manual stagger or situational attack','attack']
     ],
     hotbarNote:'Keep Doom Shield manual when boss facing matters. Battlefield Banner can replace a situational slot if you equip it.',
   },
@@ -58,7 +58,7 @@ const PROFILES = {
     weave:'Quick Slice',
     stacks:[{key:'E',title:'Damage line',skills:['Insignia Explosion','Heart Gore','Savage Roar']},{key:'1',title:'Manual buff stack',skills:['Swift Contract','Illusive Clone','Savage Fang',"Triniel's Dagger"],manual:true}],
     macro:['E'], hold:'Hold Quick Slice alongside the Macro key; use Ambush for positioning by hand.',
-    manual:['1 buff stack — line up burst','Ambush / Shadowstrike / Flash Slice — position','Storm Rampage — stagger window','Defiance — emergency'],
+    manual:['1 buff stack — line up burst','Ambush / Shadowstrike / Flash Slice — position','Storm Rampage — stagger window','Defiance (Space) — break control'],
     hotbar:[
       [['Swift Contract','Illusive Clone','Savage Fang',"Triniel's Dagger"],'Manual buff stack before burst','buff'],
       [['Ambush'],'Enter behind the boss','movement'],
@@ -67,7 +67,7 @@ const PROFILES = {
       [['Flash Slice'],'Use movement deliberately','movement'],
       [['Infiltrate'],'Approach or escape','movement'],
       [['Shadow Fall'],'Follow a stun window','utility'],
-      [['Defiance'],'Break control immediately','emergency']
+      [['Whirlwind Slice'],'Manual area attack for packs','attack']
     ],
     hotbarNote:'Keep Whirlwind Slice on a secondary row for packs; do not automate your positioning skills.',
   },
@@ -82,7 +82,7 @@ const PROFILES = {
     weave:'Snipe',
     stacks:[{key:'E',title:'Gale line',skills:['Gale Arrow','Griffon Arrow','Snare Shot']},{key:'Q',title:'Drill Dart line',skills:['Drill Dart','Burst Arrow','Tempest Shot']}],
     macro:['E','Q'], hold:'Hold Snipe with the Macro key; charge Deadshot on its own key.',
-    manual:['Deadshot — fully charged under Precision','Arrow Scattershot — stagger, separate key','Marking Shot — movement','Vaizel’s Authority / Bow of Blessing — buff timing','Defiance — emergency'],
+    manual:['Deadshot — fully charged under Precision','Arrow Scattershot — stagger, separate key','Marking Shot — movement','Vaizel’s Authority / Bow of Blessing — buff timing','Defiance (Space) — break control'],
     hotbar:[
       [['Deadshot'],'Fully charge while Precision is active','attack'],
       [['Arrow Scattershot'],'Use during stagger instead of Snipe','attack'],
@@ -91,7 +91,7 @@ const PROFILES = {
       [['Bow of Blessing'],'Activate before the pull','buff'],
       [['Supporting Fire'],'Activate before the pull','buff'],
       [['Explosion Trap'],'Use for packs','utility'],
-      [['Defiance'],'Break control immediately','emergency']
+      [['Suppressing Arrow'],'Manual control when needed','utility']
     ],
     hotbarNote:'Keep Deadshot separate from the macro so you can complete the charge under Precision.',
   },
@@ -106,7 +106,7 @@ const PROFILES = {
     weave:'Flame Arrow',weaveKey:'R',
     stacks:[{key:'E',title:'Short damage line',skills:["Winter's Shackles",'Bittercold Wind','Blaze','Firestorm']},{key:'4',title:'Buff line, manual',skills:['Element Enhancement','Delayed Explosion'],manual:true},{key:'5',title:'Ground damage, manual',skills:['Wish of Concentration','Cold Storm','Fire Wall'],manual:true}],
     macro:['E'], hold:'Hold Flame Arrow on R with the Macro key; charge Hellfire separately.',
-    manual:['Hellfire — full charge','4 and 5 — buffs and ground damage when the boss is stable','Flame Scattershot — separate key','Steel Barrier / Arctic Armor — survival','Defiance — emergency'],
+    manual:['Hellfire — full charge','4 and 5 — buffs and ground damage when the boss is stable','Flame Scattershot — separate key','Steel Barrier / Arctic Armor — survival','Defiance (Space) — break control'],
     hotbar:[
       [['Hellfire'],'Fully charge during a safe burst window','attack'],
       [['Flame Scattershot'],'Manual damage between casts','attack'],
@@ -115,9 +115,9 @@ const PROFILES = {
       [['Wish of Concentration','Cold Storm','Fire Wall'],'Place on a stable boss position','attack'],
       [['Ice Chain'],'Manual control','utility'],
       [['Frost'],'Manual filler or control','utility'],
-      [['Defiance'],'Break control immediately','emergency']
+      [[], 'Free slot for a situational skill or stigma swap','utility']
     ],
-    hotbarNote:'Keys 4 and 5 are manual stacks. Keep Hellfire on 1 so the macro never cuts its charge.',
+    hotbarNote:'Keys 4 and 5 are manual stacks. Keep Hellfire on 1 so the macro never cuts its charge. Key 8 is available for Steel Barrier or Arctic Armor if you swap one into your stigma loadout.',
   },
   spiritmaster: {
     name:'Spiritmaster', role:'Summon damage', kind:'dps',
@@ -130,7 +130,7 @@ const PROFILES = {
     weave:'Cold Shock',
     stacks:[{key:'E',title:'Fusion',skills:['Elemental Fusion']},{key:'Q',title:'Jointstrike line',skills:['Jointstrike: Corrode','Jointstrike: Curse','Dimensional Control','Combustion']},{key:'1',title:'Summons, manual',skills:['Summon: Water Spirit','Summon: Earth Spirit','Summon: Fire Spirit'],manual:true}],
     macro:['E','Q'], hold:'Hold Cold Shock with the Macro key. If Fusion is charged, take it out of the macro.',
-    manual:['Spirit summons and buffs — before Ancient Spirit','Elemental Fusion — manual if charge specialty is selected','Jointstrike: Destructive Attack — charge only if equipped','Defiance — emergency'],
+    manual:['Spirit summons and buffs — before Ancient Spirit','Elemental Fusion — manual if charge specialty is selected','Jointstrike: Destructive Attack — charge only if equipped','Defiance (Space) — break control'],
     hotbar:[
       [['Summon: Water Spirit','Summon: Earth Spirit','Summon: Fire Spirit'],'Choose the spirit for this fight','utility'],
       [['Summon: Ancient Spirit'],'Use after spirit buffs','attack'],
@@ -139,9 +139,9 @@ const PROFILES = {
       [['Rapid Scattershot'],'Use during stagger','attack'],
       [["Soul's Cry"],'Manual control','utility'],
       [['Summon: Wind Spirit'],'Alternate spirit; swap for charged Fusion','utility'],
-      [['Defiance'],'Break control immediately','emergency']
+      [[], 'Free slot for a situational skill or stigma swap','utility']
     ],
-    hotbarNote:'If your Elemental Fusion specialty adds a charge, move Fusion from macro E to key 7 and charge it by hand.',
+    hotbarNote:'If your Elemental Fusion specialty adds a charge, move Fusion from macro E to key 7 and charge it by hand. Key 8 is free for a situational swap.',
   },
   cleric: {
     name:'Cleric', role:'Primary healer', kind:'healer',
@@ -154,7 +154,7 @@ const PROFILES = {
     weave:"Earth's Retribution",
     stacks:[{key:'E',title:'Safe damage line',skills:['Chain of Torment','Condemnation']},{key:'Q',title:'Aura line',skills:['Divine Aura','Judgment Thunder']}],
     macro:['E','Q'], hold:'Hold Earth’s Retribution with the Macro key only while the party is stable.',
-    manual:['Healing Light / Radiant Recovery — direct heals','Absolution / Yustiel’s Power / Benevolence — group recovery','Light of Protection — toggle once','Salvation if equipped / Defiance — emergencies'],
+    manual:['Healing Light / Radiant Recovery — direct heals','Absolution / Yustiel’s Power / Benevolence — group recovery','Light of Protection — toggle once','Salvation if equipped / Defiance (Space) — emergencies'],
     hotbar:[
       [['Healing Light'],'Routine direct heal','heal'],
       [['Light of Regeneration'],'Apply before predictable damage','heal'],
@@ -163,7 +163,7 @@ const PROFILES = {
       [["Yustiel's Power"],'Planned group damage','heal'],
       [['Benevolence'],'Layer for group pressure','heal'],
       [['Light of Protection'],'Toggle on before the pull','buff'],
-      [['Defiance'],'Break control immediately','emergency']
+      [['Bolt'],'Fully charge for damage when the party is safe','attack']
     ],
     hotbarNote:'Heals are on separate keys so you choose the right response. Use the damage macro only while the group is safe.',
   },
@@ -178,7 +178,7 @@ const PROFILES = {
     weave:'Onslaught',
     stacks:[{key:'E',title:'Dark Crush line',skills:['Dark Crush','Spinning Strike','Impactful Crush','Incandescent Blow']}],
     macro:['E'], hold:'Hold Onslaught with the Macro key during safe damage; release for healing.',
-    manual:['Undefeated / Sprint Mantra — toggle once','Recuperation / Healing Touch — healing','Protection Circle — passive shield from hits','Power of the Storm — group burst','Defiance — emergency'],
+    manual:['Undefeated / Sprint Mantra — toggle once','Recuperation / Healing Touch — healing','Protection Circle — passive shield from hits','Power of the Storm — group burst','Defiance (Space) — break control'],
     hotbar:[
       [['Recuperation'],'Refresh the recovery effect','heal'],
       [['Healing Touch'],'Direct heal when needed','heal'],
@@ -187,7 +187,7 @@ const PROFILES = {
       [['Undefeated Mantra'],'Toggle on before the pull','buff'],
       [['Sprint Mantra'],'Toggle on before the pull','buff'],
       [['Rushing Smash'],'Reposition by hand','movement'],
-      [['Defiance'],'Break control immediately','emergency']
+      [['Heat Wave Blow'],'Manual damage during a safe window','attack']
     ],
     hotbarNote:'Protection Circle is passive and needs no key. After both mantras are active, keys 5 and 6 can hold situational skills on a second preset.',
   },

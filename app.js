@@ -12,7 +12,7 @@ const TEMPLAR_STAGES = [
   ['Block Pain',8],['Warding Shield',8],['Guarding Seal',8],['Survival Willpower',8],['Flash Rampage',8],
   ['Poach',10],['Defiance',10],['Debilitating Smash',10],['Shield Rush',10],['Block Pain',10],['Warding Shield',10],['Guarding Seal',10],['Survival Willpower',10],['Flash Rampage',10]
 ];
-const DEFAULT_ACCOUNT = (cls='templar') => ({...FRESH_45,context:'party',gear:{},currentRanks:{},macroBind:'RMB',goalTarget:['cleric','chanter'].includes(cls)?0:cls==='templar'?60000:100000,goalObserved:0});
+const DEFAULT_ACCOUNT = (cls='templar') => ({...FRESH_45,context:'party',gear:{},currentRanks:{},titlesOwned:{},faction:'elyos',macroBind:'RMB',goalTarget:['cleric','chanter'].includes(cls)?0:cls==='templar'?60000:100000,goalObserved:0});
 let saved = {};
 try { saved = JSON.parse(localStorage.getItem('aion2-pathfinder-all-v3') || '{}') || {}; } catch (_) {}
 let state = {class:CLASS_ORDER.includes(saved.class)?saved.class:null,accounts:saved.accounts||{},tab:'overview',board:'Nezekan',preview:FRESH_45.crystals,node:null};
@@ -55,7 +55,7 @@ function render(){
   $('class-buttons').innerHTML=CLASS_ORDER.map(c=>`<button type="button" data-class="${c}" class="${state.class===c?'active':''}" aria-pressed="${state.class===c}"><span>${PROFILES[c].name}</span><small>${PROFILES[c].role}</small></button>`).join('');
   $('welcome-panel').hidden=selected;$('planner-content').hidden=!selected;
   $('class-role').textContent=selected?profile().role:'Select a class';
-  if(!selected){$('hero-description').textContent='Choose a class to plan Mastery, Stigmas, Daevanion boards, specialties and rotation from a fresh Global level 45.';save();return}
+  if(!selected){$('hero-description').textContent='Choose a class to plan Mastery, Stigmas, Daevanion boards, titles, specialties and rotation from a fresh Global level 45.';save();return}
   const a=account(),m=model(),p=profile();
   $('hero-description').textContent=p.summary+' Change your point totals to see what to buy now and next.';
   $('class-role').textContent=p.role;$('overview-role').textContent=p.role;
@@ -64,7 +64,7 @@ function render(){
   for(const [id,ctx] of [['party-button','party'],['solo-button','solo']]){$(id).classList.toggle('active',a.context===ctx);$(id).setAttribute('aria-pressed',a.context===ctx)}
   document.querySelectorAll('[data-tab]').forEach(b=>{b.classList.toggle('active',b.dataset.tab===state.tab);b.setAttribute('aria-current',b.dataset.tab===state.tab?'page':'false')});
   document.querySelectorAll('.tab-panel').forEach(el=>el.classList.toggle('active',el.id===state.tab));
-  renderOverview(m);renderMastery(m);renderStigma(m);renderRotation(m);renderBoards(m);renderSources();save();
+  renderOverview(m);renderMastery(m);renderStigma(m);renderRotation(m);renderBoards(m);renderTitles();renderSources();save();
 }
 function renderOverview(m){
   const a=account(),p=profile(),ordered=masteryStages().map(x=>x[0]).filter((v,i,s)=>s.indexOf(v)===i),top=ordered.slice(0,4);
@@ -118,20 +118,20 @@ function renderRotation(m){
   const macroSteps=fusionCharged?p.macro.filter(key=>key!=='E'):p.macro;
   const hotbar=p.hotbar.map(([skills,cue,tone])=>[skills,cue,tone]);
   if(fusionCharged)hotbar[6]=[['Elemental Fusion'],'Fully charge when Four Elements is ready','attack'];
-  $('rotation-gate').textContent=p.kind==='healer'?'Heals, toggles and emergency buttons remain manual. Use the macro only while the group is stable.':`Current first priority: ${main} effective Lv ${effective(main,m)}. Keep charged and movement skills on their own keys.`;
+  $('rotation-gate').textContent=state.class==='templar'?`Judgment is effective Lv ${effective('Judgment',m)}. ${effective('Judgment',m)>=16?'With its cooldown-removal Specialty selected, the E stack can spend repeated casts during one proc.':'Before its Lv 16 cooldown-removal Specialty, expect one Judgment cast per available proc and space manual Doom Shield around its cooldown.'} The macro spends Judgment first within E. The timing caution applies to extra manual Punishment or shield-trigger casts, which can interrupt or overlap that proc.`:p.kind==='healer'?'Heals, toggles and emergency buttons remain manual. Use the macro only while the group is stable.':`Current first priority: ${main} effective Lv ${effective(main,m)}. Keep charged and movement skills on their own keys.`;
   $('rotation-opener-title').textContent=a.context==='party'?'Group opener':'Solo opener';$('rotation-opener').innerHTML=numbered(p.opener);$('rotation-loop').innerHTML=numbered(p.loop);
   $('macro-bind').value=macroKey;$('weave-basic-key').textContent=weaveKey;$('weave-macro-key').textContent=macroKey;
   $('weave-guide').textContent=`Hold ${weaveKey} (${p.weave}) with ${macroKey} (the in-game Macro bind) as your default safe-damage state. Press manual keys over the held loop; they take priority.`;
   $('rhythm-base-keys').textContent=`${weaveKey} + ${macroKey}`;
   $('rhythm-base-note').textContent=`Keep ${p.weave} held while Macro attempts ${macroSteps.join(' and ')}. Maintain this through safe damage uptime.`;
-  $('rhythm-weave-note').textContent=p.kind==='healer'?'Press the needed 1–8 heal or support key; manual input wins. Shift fully to healing when the group is in danger.':'Press or hold a 1–8 skill at its cue. During safe uptime, keep the base held; manual input wins over the macro.';
+  $('rhythm-weave-note').textContent=state.class==='templar'?'E handles Judgment and Pummel automatically. Time Punishment, Doom Shield and Shield of Protection by hand between Judgment windows or for boss mechanics.':p.kind==='healer'?'Press the needed 1–8 heal or support key; manual input wins. Shift fully to healing when the group is in danger.':'Press or hold a 1–8 skill at its cue. During safe uptime, keep the base held; manual input wins over the macro.';
   $('rhythm-pause-note').textContent=p.kind==='healer'?`Release ${macroKey} and ${weaveKey} for healing triage or mechanics. Restart both when damage is safe.`:`Release ${macroKey} to stop Macro; release ${weaveKey} too when all attacks must stop. Pause Macro if a charge gets clipped.`;
-  $('hotbar-grid').innerHTML=hotbar.map(([skills,cue,tone],i)=>`<article class="hotbar-card tone-${esc(tone)}"><div class="hotbar-top"><span class="hotbar-number">${i+1}</span><small>${esc(tone)}</small></div><div class="hotbar-skills">${skills.map(name=>`<strong>${esc(name)}</strong>`).join('')}</div><p>${esc(cue)}</p></article>`).join('');
-  $('hotbar-note').textContent=`${fusionCharged?'Elemental Fusion has a charge specialty at this level, so put it on 7 and remove it from macro E. Keep Wind Spirit on a secondary row.':p.hotbarNote} Enable Separate Defiance Hotkey and give it a nearby backup key if 8 is hard to reach. Other situational skills can go on a secondary row.`;
+  $('hotbar-grid').innerHTML=hotbar.map(([skills,cue,tone],i)=>`<article class="hotbar-card tone-${esc(tone)}"><div class="hotbar-top"><span class="hotbar-number">${i+1}</span><small>${esc(tone)}</small></div><div class="hotbar-skills">${skills.length?skills.map(name=>`<strong>${esc(name)}</strong>`).join(''):'<strong>Flex slot</strong>'}</div><p>${esc(cue)}</p></article>`).join('');
+  $('hotbar-note').textContent=`Defiance shares Space with jump/glide by default for every class; it does not consume a number-bar slot. Optional: turn on Separate Defiance Hotkey and give it a dedicated nearby key to avoid accidental glides. ${fusionCharged?'Elemental Fusion has a charge specialty at this level, so put it on 7 and remove it from macro E. Keep Wind Spirit on a secondary row.':p.hotbarNote}`;
   const stackHtml=stacks.map(s=>`<div class="macro-stack"><div class="stack-heading"><span class="keycap">${esc(s.key)}</span><div><strong>${esc(s.title)}</strong><small>${s.manual?'Manual key':'Macro hotbar key'}</small></div></div>${s.skills.map((name,i)=>`<div class="stack-row"><b>Row ${i}</b><span>${esc(name)}</span></div>`).join('')}</div>`).join('');
   const script=`<div class="macro-stack macro-script"><div class="stack-heading"><span class="keycap">${esc(macroKey)}</span><div><strong>In-game Macro steps</strong><small>Bind Macro to ${esc(macroKey)}</small></div></div>${macroSteps.map((key,i)=>`<div class="stack-row"><b>Step ${i+1}</b><span>${esc(key)} · 10 ms</span></div>`).join('')}<div class="stack-row"><b>Hold</b><span>${esc(fusionCharged?'Hold Cold Shock with the Macro key; charge Elemental Fusion on 7 by hand.':p.hold)}</span></div></div>`;
   $('macro-stacks').innerHTML=stackHtml+script;
-  $('setup-list').innerHTML=[`Settings (O) → Key Settings → General → Gameplay → Macro: bind ${macroKey}. In AION 1 control mode, use a keyboard key instead of a mouse button.`,`Put ${p.weave} on ${weaveKey}. Set manual powers on 1–8 as shown, and keep ${macroKey} free for Macro.`,`Skills (K): make the labeled stacks. Then add only the listed hotbar keys to Macro, in order, starting each step at 10 ms.`,`Hold ${weaveKey} and ${macroKey} through safe damage, pressing or holding 1–8 without releasing them. Manual input takes priority. Release ${macroKey} to stop Macro, and ${weaveKey} too when all attacks must stop.`].map(x=>`<li>${esc(x)}</li>`).join('');
+  $('setup-list').innerHTML=[`Settings (O) → Key Settings → General → Macro: bind ${macroKey}; it is unbound by default. In AION 1 control mode, use a keyboard key instead of a mouse button.`,`Put ${p.weave} on ${weaveKey}. Set manual powers on 1–8 as shown. Defiance is on Space by default, shared with jump/glide; a separate Defiance key is optional.`,`Skills (K): make the labeled stacks. Then add only the listed hotbar keys to Macro, in order, starting each step at 10 ms.`,`Hold ${weaveKey} and ${macroKey} through safe damage, pressing or holding 1–8 at their cues. Manual input takes priority. Release ${macroKey} to stop Macro, and ${weaveKey} too when all attacks must stop.`].map(x=>`<li>${esc(x)}</li>`).join('');
   $('manual-keys').innerHTML=p.manual.map(v=>`<div class="manual-key"><b>${esc(v.split(' — ')[0])}</b><small>${esc(v.split(' — ')[1]||'Manual timing')}</small></div>`).join('');
 }
 function renderBoards(m){
@@ -156,6 +156,29 @@ function renderBoards(m){
   $('board-next').innerHTML=upcoming.length?upcoming.map(x=>`<div class="next-unlock"><strong>${x.total} total</strong><span>${x.board}: ${esc(x.label)}</span></div>`).join(''):'<p>All key nodes on this route are funded.</p>';
   const starter=data().starterCost;$('route-footnote').textContent=starter?`The first ${starter} crystals follow a published connected ${profile().name} PvE path. Later clicks are generated using that guide’s skill and stat priorities. This is a recommended route, not a measured performance optimum.`:'This Chanter route is generated from published healer skill and stat priorities. It is a connected recommendation, not the source’s published damage route or a measured healing optimum.';
 }
+function titleName(t,faction){return typeof t.name==='string'?t.name:t.name[faction]}
+function titlePriority(slot){
+  if(slot==='Attack')return ['unbound','guardian','nice','cube'];
+  if(slot==='Defense')return state.class==='templar'?['rule','dominator','saint','hello']:['dominator','saint','rule','hello'];
+  return state.class==='templar'||profile().kind==='healer'?['through','closet','episode','legion']:['closet','through','episode','legion'];
+}
+function renderTitles(){
+  const a=account(),owned=a.titlesOwned ||= {},faction=a.faction==='asmodian'?'asmodian':'elyos';
+  $('faction-select').value=faction;
+  const count=TITLES.filter(t=>owned[t.id]).length;
+  $('titles-count').textContent=`${count} / ${TITLES.length} tracked earned`;
+  $('titles-role-note').textContent=state.class==='templar'?'Templar: prioritize boss tolerance and a cooldown/HP Other title while retaining an Attack title for threat and damage.':profile().kind==='healer'?'Healer: the Attack title supports damage between heals; Defense and Other improve survival and cooldown uptime. These titles do not directly add a verified heal multiplier.':'Damage class: the Attack slot is your PvE damage title; Defense and Other preserve uptime and survivability.';
+  const previews=[];
+  $('title-grid').innerHTML=['Attack','Defense','Other'].map(slot=>{
+    const priority=titlePriority(slot),items=priority.map(id=>TITLES.find(t=>t.id===id)),pick=items.find(t=>owned[t.id]),pickIndex=pick?priority.indexOf(pick.id):priority.length;
+    const upgrade=items.slice(0,pickIndex).reverse().find(t=>!owned[t.id]);
+    const collection=items.slice().reverse().find(t=>!owned[t.id]);
+    const next=upgrade||collection;
+    previews.push(`${slot}: ${pick?titleName(pick,faction):'none marked earned'}`);
+    return `<article class="title-column"><div class="title-slot">${slot} slot</div><h3>${pick?esc(titleName(pick,faction)):'No earned title marked'}</h3><p class="title-current">${pick?`Equip now · ${esc(pick.equip)}`:'Mark a title below when your character earns it.'}</p><div class="title-next"><b>${upgrade?pick?'Next upgrade':'First title to earn':next?'Next collection':'Path complete'}</b><span>${next?`${esc(titleName(next,faction))} · ${esc(next.earn)}`:'Every title on this curated path is marked earned.'}</span></div><div class="title-options">${items.slice().reverse().map(t=>`<div class="title-option ${owned[t.id]?'earned':''}"><label><input type="checkbox" data-title="${t.id}" ${owned[t.id]?'checked':''}><strong>${esc(titleName(t,faction))}</strong></label><small><b>Equipped:</b> ${esc(t.equip)}</small><small><b>Owned:</b> ${esc(t.owned)}</small><small><b>Earn:</b> ${esc(t.earn)}</small><a href="${esc(t.url)}" target="_blank" rel="noopener noreferrer">Check source ↗</a></div>`).join('')}</div></article>`
+  }).join('');
+  $('title-preview').textContent=`${previews.join(' · ')}. Owned effects from all earned titles stay active after a swap. Open the path to mark what this character owns.`;
+}
 function renderSources(){
   const d=data(),p=profile();const cards=[
     ['Fresh Global 45 totals','The Global client leveling tables give 203 Mastery points, 29 Stigma points, four slots and 136 Daevanion crystals by level 45. Other rewards are additional.',`https://metabot.gg/en/aion-2/leveling`,'Open level table'],
@@ -164,8 +187,9 @@ function renderSources(){
     ['Connected route & weights',state.class==='chanter'?'Healer skill and stat weights guide the generated connected route.':'The published early route is preserved; the continuation follows class skill and stat priorities.',d.sources.route,'Open class route'],
     ['Specialty choices','Aion2Codex class guide PvE picks and option text; gear or Arcana can unlock later choices. Compare live tooltips.',`https://aion2codex.com/guides/${state.class}`,'Open specialties'],
     ['Stigmas and skills','Global class skill and stigma effects; the four chosen slots prioritize this planner’s role.',`https://aion2.grimvane.app/companion/wiki/${state.class}-skills/`,'Open class skills'],
-    ['Macro setup','The in-game macro uses hotbar keys, up to four skills per stack and delays per step. The layouts are starting points.',`https://aion2.grimvane.app/companion/wiki/macros-guide/`,'Open macro guide'],
-    ['1–8 key layout','The number-key placement is this planner’s ergonomic recommendation. Keep frequent manual actions close, and bind a separate accessible Defiance key.',`https://couga54.github.io/aion2-guides/en/settings/`,'Open control settings'],
+    ['Macro setup','The in-game macro uses hotbar keys, up to four skills per stack and delays per step. The layouts are starting points.',state.class==='templar'?`https://mobalytics.gg/gamebase/guides/aion-2-templar-pve-build`:`https://aion2.grimvane.app/companion/wiki/macros-guide/`,'Open macro guide'],
+    ['1–8 key layout','The number-key placement is this planner’s ergonomic recommendation. Defiance shares Space with jump/glide by default; the separate Defiance key setting is optional.',`https://couga54.github.io/aion2-guides/en/settings/`,'Open control settings'],
+    ['Titles to earn and equip','Global title equip and collection effects, acquisition paths, and the three title slots. The curated title path uses owned checkboxes; it does not assume a fresh 45 already owns any title.',`https://metabot.gg/en/aion-2/guides/titles-guide`,'Open Global title guide'],
     ['Class build context',`${p.name} is planned as ${p.role.toLowerCase()}. Compare alternate damage or support presets before swapping roles.`,`https://metabot.gg/en/aion-2/guides/class-builds-guide`,'Open all-class guide']
   ];$('source-cards').innerHTML=cards.map(([title,body,url,label])=>`<div class="source-card"><b>${esc(title)}</b><p>${esc(body)}</p><a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(label)} ↗</a></div>`).join('');
 }
@@ -176,6 +200,9 @@ $('fresh-45-button').addEventListener('click',()=>useBudget(FRESH_45));
 for(const [id,key,max] of [['mastery-input','mastery',462],['stigma-input','stigma',300],['crystal-input','crystals',570]])$(id).addEventListener('change',e=>{account()[key]=clamp(e.target.value,0,max);if(key==='crystals')state.preview=account().crystals;render()});
 for(const [id,ctx] of [['party-button','party'],['solo-button','solo']])$(id).addEventListener('click',()=>{account().context=ctx;render()});
 $('macro-bind').addEventListener('change',e=>{account().macroBind=e.target.value;render()});
+$('title-open').addEventListener('click',()=>{state.tab='titles';render();document.querySelector('.tabs').scrollIntoView({behavior:'smooth',block:'start'})});
+$('faction-select').addEventListener('change',e=>{account().faction=e.target.value==='asmodian'?'asmodian':'elyos';render()});
+$('title-grid').addEventListener('change',e=>{const id=e.target.dataset.title;if(!id||!TITLES.some(t=>t.id===id))return;account().titlesOwned ||= {};account().titlesOwned[id]=e.target.checked;render()});
 $('reset-button').addEventListener('click',()=>{state.accounts[state.class]=DEFAULT_ACCOUNT(state.class);state.preview=FRESH_45.crystals;state.node=null;render()});
 for(const [id,key] of [['goal-target','goalTarget'],['goal-observed','goalObserved']])$(id).addEventListener('change',e=>{account()[key]=clamp(e.target.value,0,1000000000);render()});
 $('skill-grid').addEventListener('change',e=>{
