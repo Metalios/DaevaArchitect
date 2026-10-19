@@ -145,7 +145,7 @@
 .global-next-step.affordable{border-left:3px solid #6ac2ae}
 @media(min-width:1001px){.board-layout{grid-template-columns:minmax(0,1fr) 400px;gap:20px}}
 .board-effects-panel{margin-bottom:16px}
-.board-effect-list{max-height:560px;overflow-y:auto;scrollbar-gutter:stable;padding-right:18px}
+.board-effect-list{max-height:none;overflow:visible;scrollbar-gutter:auto;padding-right:0}
 .board-effect-list h4{margin:17px 0 5px;color:#edcc8c;font-size:11px;letter-spacing:.12em;text-transform:uppercase}
 .board-effect-list h4:first-child{margin-top:4px}
 .board-effect-list>div{display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:8px 0;line-height:1.45;font-size:13px}
