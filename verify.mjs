@@ -15,6 +15,7 @@ const unlocks = JSON.parse(fs.readFileSync(new URL('skill_unlocks.json', root), 
 const rewards = JSON.parse(fs.readFileSync(new URL('level_rewards.json', root), 'utf8'));
 const classes = ['templar','gladiator','assassin','ranger','sorcerer','spiritmaster','cleric','chanter'];
 const assert = (okay, message) => {if(!okay) throw new Error(message)};
+assert(!fs.readFileSync(new URL('dist/js/data.js', root), 'utf8').includes('"skillWeights"'),'published bundle still contains borrowed guide weights');
 assert(gearCatalog.items.length>3000,'gear: incomplete Global equipment snapshot');
 const gearTypes=new Set(gearCatalog.items.map(item=>item.type));
 for(const type of ['Longsword','Greatsword','Dagger','Bow','Spellbook','Orb','Mace','Staff','Guard','Top','Legs','Ring','Rune','Chalice','Parchment','Compass','Bell','Mirror','Wing'])assert(gearTypes.has(type),`gear: missing ${type}`);
@@ -70,6 +71,8 @@ for(const slug of classes){
       for(const pick of picks) assert(spec.options[pick]&&pick<=(Number(level)>=16?5:Number(level)>=12?4:3),`${slug}: locked ${name} option ${pick} at ${level}`);
     }
   }
+  if(slug==='templar')assert(specs.templar.Judgment.picks['16'].includes(5),'templar: cooldown-removal specialty must be available at rank 16');
+  if(slug==='spiritmaster')assert(specs.spiritmaster['Elemental Fusion'].picks['12'].includes(4),'spiritmaster: charged Fusion macro gate is missing');
   const boards=Object.fromEntries(d.boards.map(b=>[b.name,b]));
   const owned=Object.fromEntries(d.boards.map(b=>[b.name,new Set(b.nodes.filter(n=>n[5]===0).map(n=>n[0]))]));
   const positions=Object.fromEntries(d.boards.map(b=>[b.name,new Map(b.nodes.map(n=>[`${n[1]}:${n[2]}`,n]))]));
@@ -99,36 +102,38 @@ for(const slug of classes){
     assert(route.length===Object.values(boardMap).reduce((n,b)=>n+b.nodes.filter(x=>x[5]>0).length,0),`${slug} ${mode}: incomplete route`);
   }
   for(const mode of ['party','solo','pvp'])checkRoute(d.boards,routes[slug][mode],570,mode);
-  if(slug==='templar')assert(JSON.stringify(routes[slug].party)===JSON.stringify(d.route),'templar: Group route must preserve screenshot-reviewed hybrid');
+  assert(JSON.stringify(routes[slug].party)!==JSON.stringify(d.route),`${slug}: planner must calculate its own route`);
+  if(slug==='templar'){
+    assert(Object.keys(stigmas.templar).length===13,'templar: expected all Global Stigmas');
+  }
   assert(azphel[slug].name==='Azphel'&&azphel[slug].totalCost===232,`${slug}: missing Azphel`);
   checkRoute([azphel[slug]],routes[slug].azphel,232,'Azphel');
   assert(JSON.stringify(routes[slug].party.slice(0,100))!==JSON.stringify(routes[slug].solo.slice(0,100)),`${slug}: group/solo route unchanged`);
+  for(const mode of ['party','solo','pvp']){
+    const totals=[];let total=0;
+    for(const item of routes[slug][mode]){total+=nodes[item.board].get(item.id)[5];totals.push(total)}
+    for(let budget=0;budget<=570;budget++){
+      const next=totals.findIndex(points=>points>budget);
+      const funded=next<0?totals.length:next;
+      const spent=funded?totals[funded-1]:0;
+      assert(spent<=budget&&budget-spent<=3,`${slug} ${mode}: invalid progression at ${budget} crystals`);
+      if(funded<totals.length)assert(totals[funded]>budget,`${slug} ${mode}: next tile already affordable at ${budget}`);
+    }
+  }
   if(slug==='templar'){
-    let spent=0;
-    const bonuses={},byBoard={};
-    for(const item of d.route){
+    let spent=0;const skillBonus={},stats={};
+    for(const item of routes.templar.party){
       const node=nodes[item.board].get(item.id);
-      if(spent+node[5]>218) break;
+      if(spent+node[5]>240)break;
       spent+=node[5];
-      const board=byBoard[item.board] ||= {};
       for(const [key,value] of node[6]){
+        const target=typeof key==='number'?skillBonus:stats;
         const name=typeof key==='number'?d.skills[key].name:key;
-        board[name]=(board[name]||0)+value;
-        if(typeof key==='number')bonuses[name]=(bonuses[name]||0)+value;
+        target[name]=(target[name]||0)+value;
       }
     }
-    assert(spent===218,'templar: 218-crystal route does not spend full budget');
-    const spentByBoard=Object.fromEntries(['Nezekan','Zikel','Vaizel','Triniel'].map(name=>[name,0]));
-    let totalAtStep=0;const nextAfter218=[];
-    for(const item of d.route){const node=nodes[item.board].get(item.id);totalAtStep+=node[5];if(totalAtStep<=218)spentByBoard[item.board]+=node[5];else if(nextAfter218.length<8)nextAfter218.push([item.board,totalAtStep]);}
-    assert(JSON.stringify(spentByBoard)===JSON.stringify({Nezekan:67,Zikel:77,Vaizel:30,Triniel:44}),'templar: 218-crystal route must span all four boards');
-    assert(nextAfter218[0][0]==='Vaizel'&&nextAfter218[0][1]===219&&nextAfter218[7][0]==='Nezekan'&&nextAfter218[7][1]===233,'templar: cross-board continuation at 218 is wrong');
-    assert(bonuses['Insulting Roar']===4,'templar: board bonus for Insulting Roar should be +4 at 218 crystals');
-    assert(bonuses['Impact Hit']===3,'templar: board bonus for Impact Hit should be +3 at 218 crystals');
-    assert(byBoard.Nezekan.CombatSpeed===300&&byBoard.Nezekan.CoolTimeDecrease===300,'templar: Nezekan route disagrees with game screenshot');
-    assert(byBoard.Zikel['Insulting Roar']===2&&byBoard.Zikel.Fury===2&&byBoard.Zikel.DecreaseDamage===300,'templar: Zikel route disagrees with game screenshot');
-    assert(byBoard.Vaizel['Impact Hit']===1&&byBoard.Vaizel.HPMax===100,'templar: Vaizel route disagrees with game screenshot');
-    assert(byBoard.Triniel.AdditionalHitRate===300&&byBoard.Triniel['Insulting Roar']===1,'templar: Triniel route disagrees with game screenshot');
+    for(const skill of ['Judgment','Pummel','Vicious Strike','Punishment'])assert(skillBonus[skill]===4,`templar: calculated path delays ${skill} too far`);
+    for(const stat of ['AmplifyAllDamage','DecreaseDamage','CombatSpeed','CoolTimeDecrease'])assert(stats[stat]>=150,`templar: calculated path skips ${stat}`);
   }
   console.log(`${slug}: 22 skills, 4 stigmas, ${d.route.length} connected purchases, 570 crystals`);
 }

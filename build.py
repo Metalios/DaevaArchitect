@@ -5,6 +5,12 @@ import shutil
 root = Path(__file__).parent
 template = (root / 'index.template.html').read_text(encoding='utf8')
 data = json.loads((root / 'classes_data.json').read_text(encoding='utf8'))
+for class_data in data.values():
+    # Legacy third-party paths and weights are retained only in the source
+    # snapshot for migration audits. The shipped planner uses calculated routes.
+    for obsolete in ('route', 'skillWeights', 'statWeights'):
+        class_data.pop(obsolete, None)
+    class_data['sources'].pop('route', None)
 specialties = json.loads((root / 'specialties.json').read_text(encoding='utf8'))
 stigmas = json.loads((root / 'stigmas.json').read_text(encoding='utf8'))
 title_catalog = json.loads((root / 'titles_catalog.json').read_text(encoding='utf8'))
@@ -27,7 +33,7 @@ out_dir = root / 'dist'
 (out_dir / 'js').mkdir(parents=True, exist_ok=True)
 (out_dir / 'css').mkdir(parents=True, exist_ok=True)
 (out_dir / 'assets').mkdir(parents=True, exist_ok=True)
-for name in ('profiles.js', 'titles.js', 'gear.js', 'cp.js', 'app.js', 'share.js'):
+for name in ('profiles.js', 'titles.js', 'gear.js', 'cp.js', 'board_optimizer.js', 'app.js', 'share.js'):
     shutil.copy2(root / 'js' / name, out_dir / 'js' / name)
 shutil.copy2(root / 'css' / 'styles.css', out_dir / 'css' / 'styles.css')
 for asset in (root / 'assets').rglob('*'):

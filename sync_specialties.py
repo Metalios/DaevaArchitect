@@ -1,14 +1,15 @@
-"""Extract the five active-skill options and editorial PvE picks by class.
+"""Extract Global skill options and calculate default PvE choices locally.
 
-Names are reconciled to the Global board tables. These picks are recommendations,
-while option text and unlock levels should be checked against the live tooltip.
+Names are reconciled to the Global board tables. Option text and unlock levels
+should be checked against the live tooltip after a patch.
 """
 from pathlib import Path
 import json
-import re
 
 from bs4 import BeautifulSoup
 import requests
+from optimize_specialties import recommend_all
+from optimize_board_progression import load_profiles
 
 
 ROOT = Path(__file__).parent
@@ -23,7 +24,6 @@ RENAMES = {
     'cleric': {'Thunderbolt': 'Judgment Thunder', 'Judgment': 'Bolt', 'Lightning Barrage': 'Lightning Strike Scattershot', 'Shock Release': 'Defiance'},
     'chanter': {'Slaughter': 'Onslaught', 'Inexorable Blow': 'Incandescent Blow', 'Backdraft Crush': 'Impactful Crush', 'Headlong Blow': 'Heat Wave Blow', 'Tremor Crash': 'Tremor Crush', 'Shock Release': 'Defiance'},
 }
-
 
 def main():
     result = {}
@@ -46,16 +46,12 @@ def main():
                 text_span = option.find_all('span')[-1]
                 text = ''.join(text_span.find_all(string=True, recursive=False)).strip()
                 options[number] = text
-            picks = {}
-            for milestone in card.select('.guide-milestones [data-guide-rank]'):
-                rank = milestone.get('data-guide-rank')
-                picks[rank] = [int(value) for value in re.findall(r'\b[1-5]\b', milestone.find('strong').get_text(' ', strip=True))]
-            assert len(options) == 5 and set(picks) == {'8', '12', '16', '20'}, (slug, name, options, picks)
-            assert all(len(picks[level]) == slots for level, slots in [('8', 1), ('12', 2), ('16', 2), ('20', 3)])
-            specs[name] = {'options': options, 'picks': picks}
+            assert len(options) == 5, (slug, name, options)
+            specs[name] = {'options': options}
         assert len(specs) == 12, (slug, len(specs))
         result[slug] = specs
         print(slug, len(specs), 'active specialties')
+    recommend_all(result, load_profiles())
     (ROOT / 'specialties.json').write_text(json.dumps(result, separators=(',', ':'), ensure_ascii=False), encoding='utf8')
 
 

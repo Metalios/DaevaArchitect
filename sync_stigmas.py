@@ -1,23 +1,47 @@
 """Extract current stigma descriptions and 5/10/15/20 breakpoints."""
 from pathlib import Path
 import json
+import re
+from concurrent.futures import ThreadPoolExecutor
 
 from bs4 import BeautifulSoup
 import requests
 
 ROOT = Path(__file__).parent
 CLASSES = ('gladiator', 'assassin', 'ranger', 'sorcerer', 'spiritmaster', 'cleric', 'chanter')
-TEMPLAR = {
-    'Noble Armor': {'base': 'HP and Defense buff; amplifies the tank support loop', 'perks': {'5': '+5% Defense', '10': 'Insulting Roar ×1.5', '15': 'Fury ×1.5', '20': '+10% Incoming Heal'}},
-    'Shield of Protection': {'base': 'Active Block for a planned heavy hit and Fury trigger', 'perks': {'5': '+1 consecutive use', '10': 'Move while active', '15': '+20% Move Speed after Block', '20': 'Restore 10% HP on Block'}},
-    'Taunt': {'base': 'Threat and Shrink debuff', 'perks': {'5': 'Shrink cuts PvE Damage Tolerance 10%', '10': 'Shrink cuts Attack 10% more', '15': '-5s cooldown', '20': 'Longer Taunt and Shrink'}},
-    'Doom Shield': {'base': 'Shield charge, knockdown and Judgment trigger', 'perks': {'5': 'Resets Annihilate on hit', '10': '+200 Block for 5s on hit', '15': 'Resets cooldown on kill', '20': '+25% Knockdown Chance'}},
-    'Battlefield Banner': {'base': 'Damage buff converting Defense into Attack', 'perks': {'5': '+10% Multi-Hit Chance', '10': '+10% Weapon Damage Boost', '15': '+20% Attack from Defense', '20': '-30s cooldown'}},
-}
+
+
+def fetch_templar_stigmas():
+    """Read all 13 Stigmas and their level perks from Global client tables."""
+    root = 'https://aion2data.com'
+    page = BeautifulSoup(requests.get(f'{root}/classes/templar', timeout=30).text, 'html.parser')
+    links = [(a.get_text(' ', strip=True).removesuffix(' Stigma'), root + a['href'])
+             for a in page.select('a[href^="/skills/"]')
+             if a.get_text(' ', strip=True).endswith('Stigma')]
+    assert len(links) == 13 and len({name for name, _ in links}) == 13, links
+
+    def read_skill(item):
+        name, url = item
+        response = requests.get(url, timeout=30)
+        response.raise_for_status()
+        soup = BeautifulSoup(response.text, 'html.parser')
+        sections = {h.get_text(' ', strip=True).split(' (')[0]: h.parent for h in soup.select('h2')}
+        description = sections['Description'].find('div', recursive=False).find('div').get_text(' ', strip=True)
+        description = re.sub(r'^Skill level \d+ / \d+ ', '', description)
+        description = re.sub(r'\s+', ' ', description).replace('Ã—', '×').strip()
+        cards = sections['Specializations'].find('div', recursive=False).find('div').find_all('div', recursive=False)
+        assert len(cards) == 4, (name, len(cards))
+        perks = {str(rank): re.sub(r'^Skill level \d+ ', '', card.get_text(' ', strip=True))
+                 for rank, card in zip((5, 10, 15, 20), cards)}
+        return name, {'base': description, 'perks': perks}
+
+    with ThreadPoolExecutor(max_workers=5) as pool:
+        result = dict(pool.map(read_skill, links))
+    return result
 
 
 def main():
-    result = {'templar': TEMPLAR}
+    result = {'templar': fetch_templar_stigmas()}
     for slug in CLASSES:
         response = requests.get(f'https://aion2.grimvane.app/companion/wiki/{slug}-skills/', timeout=30)
         response.raise_for_status()

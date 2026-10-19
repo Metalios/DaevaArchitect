@@ -10,12 +10,14 @@ await page.locator('[data-class="templar"]').click();
 await page.locator('[data-tab="boards"]').click();
 if(await page.locator('.global-next-step').count())throw Error('Old click list remains above the board');
 if(await page.locator('#global-route-next button').count()!==1)throw Error('Expected one next-tile jump');
-if(await page.locator('#board-grid .node.queued').count()<10)throw Error('Upcoming clicks are not highlighted in the board');
+await page.locator('#global-route-next button').click();
+if(await page.locator('#board-grid .node.queued').count()<1)throw Error('Upcoming clicks are not highlighted in the selected board');
 if(!await page.locator('#board-grid .node.queued .queue-badge').count())throw Error('Board click order is missing');
 if(process.env.BOARD_SCREENSHOT)await page.locator('#boards').screenshot({path:process.env.BOARD_SCREENSHOT});
 if(process.env.BOARD_MOBILE_SCREENSHOT){await page.setViewportSize({width:390,height:844});await page.locator('#boards').screenshot({path:process.env.BOARD_MOBILE_SCREENSHOT});await page.setViewportSize({width:1360,height:900})}
 await page.locator('#board-grid .node.queued').first().click();
 if(!await page.locator('#board-grid .node.obtained').count())throw Error('Recommended tile click did not mark obtained');
+await page.locator('[data-board="Nezekan"]').click();
 await page.locator('#board-mode-custom').click();
 if(await page.locator('#custom-board-tools').isHidden())throw Error('Custom tools are hidden');
 if(await page.locator('#global-route-budget').textContent()!=='0 / 136 crystals planned')throw Error('Custom board should start empty');
@@ -33,6 +35,7 @@ if(await page.evaluate(()=>model().boards.spent)!==1)throw Error('Custom tile di
 await page.locator('#selected-node-obtained').click();
 if(!await page.locator(`[data-node="${adjacent}"].obtained`).count())throw Error('Custom tile was not marked obtained');
 await page.locator('#board-mode-recommended').click();
+await page.locator('#global-route-next button').click();
 if(!await page.locator('#board-grid .node.queued').count())throw Error('Recommended route did not return');
 const recommendedEffects=await page.evaluate(()=>JSON.stringify(model().effects));
 await page.locator('#board-mode-custom').click();

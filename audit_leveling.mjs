@@ -25,8 +25,8 @@ globalThis.inspect = (cls,level,mode) => {
   a.context=mode;
   a.leveling.level=level;
   a.leveling.extra={mastery:0,stigma:0,crystals:0};
-  const m=model();
-  return {budget:budget('mastery'),spent:m.mastery.spent,levels:m.mastery.levels,next:m.mastery.next,cap:Object.fromEntries(skillNames().map(n=>[n,masteryRankCap(n)]))};
+  const mastery=allocate(masteryStages(),budget('mastery'),masteryCost,skillNames(),1,masteryRankCap);
+  return {budget:budget('mastery'),spent:mastery.spent,levels:mastery.levels,next:mastery.next,cap:Object.fromEntries(skillNames().map(n=>[n,masteryRankCap(n)]))};
 };`,context);
 
 for(const cls of Object.keys(context.DATA)){
