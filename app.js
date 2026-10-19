@@ -43,12 +43,12 @@ Object.assign(STIGMAS.templar,{
   "Empyrean Lord's Punishment":{base:'High stagger damage and manual burst window',perks:{}},
   "Nezekan's Shield":{base:'Short protective shield for self or group survival',perks:{}}
 });
-const DEFAULT_ACCOUNT = (cls='templar') => ({...FRESH_45,azphel:0,context:'party',journey:'endgame',endgameContext:'party',levelingContext:'solo',leveling:{level:1,extraByLevel:{}},gear:{},currentRanks:{},obtainedNodes:[],titlesOwned:{},faction:'elyos',macroBind:'RMB',goalTarget:['cleric','chanter'].includes(cls)?0:cls==='templar'?60000:100000,goalObserved:0});
+const DEFAULT_ACCOUNT = (cls='templar') => ({...FRESH_45,azphel:0,context:'party',journey:'endgame',endgameContext:'party',levelingContext:'solo',leveling:{level:1,extraByLevel:{}},gear:{},equipment:{},currentRanks:{},obtainedNodes:[],titlesOwned:{},faction:'elyos',macroBind:'RMB',goalTarget:['cleric','chanter'].includes(cls)?0:cls==='templar'?60000:100000,goalObserved:0});
 let saved = {};
-try { saved = JSON.parse(localStorage.getItem('aion2-pathfinder-all-v3') || '{}') || {}; } catch (_) {}
+try { saved = JSON.parse(localStorage.getItem('daeva-architect-all-v1') || localStorage.getItem('aion2-pathfinder-all-v3') || '{}') || {}; } catch (_) {}
 let state = {class:CLASS_ORDER.includes(saved.class)?saved.class:null,accounts:saved.accounts||{},tab:'overview',board:'Nezekan',preview:FRESH_45.crystals,node:null,titleSearch:'',titleSlot:'all',titleOwnership:'all',titleFaction:'all'};
 let theme = 'aether';
-try { const storedTheme=localStorage.getItem('aion2-pathfinder-theme');if(['aether','sanctum','abyss'].includes(storedTheme))theme=storedTheme; } catch (_) {}
+try { const storedTheme=localStorage.getItem('daeva-architect-theme')||localStorage.getItem('aion2-pathfinder-theme');if(['aether','sanctum','abyss'].includes(storedTheme))theme=storedTheme; } catch (_) {}
 function applyTheme(){document.body.dataset.theme=theme;document.querySelectorAll('.theme-picker [data-theme]').forEach(b=>{b.classList.toggle('active',b.dataset.theme===theme);b.setAttribute('aria-pressed',b.dataset.theme===theme)});document.querySelector('meta[name="theme-color"]').content=theme==='sanctum'?'#eaf2f0':theme==='abyss'?'#160f25':'#0b1c2c'}
 function account(){ if(!state.accounts[state.class]) state.accounts[state.class]=DEFAULT_ACCOUNT(state.class); return state.accounts[state.class]; }
 function isLeveling(){return account().journey==='leveling'}
@@ -81,7 +81,7 @@ function data(){return DATA[state.class]}
 function profile(){return PROFILES[state.class]}
 function esc(value){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function clamp(v,min,max){v=Number(v);return Number.isFinite(v)?Math.max(min,Math.min(max,Math.floor(v))):min}
-function save(){try{localStorage.setItem('aion2-pathfinder-all-v3',JSON.stringify({class:state.class,accounts:state.accounts}))}catch(_){}}
+function save(){try{localStorage.setItem('daeva-architect-all-v1',JSON.stringify({class:state.class,accounts:state.accounts}))}catch(_){}}
 function skillNames(){return Object.values(data().skills).map(s=>s.name)}
 function allBoards(){return [...data().boards,AZPHEL[state.class]]}
 function nodeMap(){return new Map(allBoards().flatMap(b=>b.nodes.map(n=>[n[0],{board:b.name,node:n}]))) }
@@ -159,7 +159,7 @@ function nodeVisual(n){
   return icon&&icon.startsWith('/game/skills/')?`<img class="node-game-icon" src="https://aion2data.com${esc(icon)}" alt="" loading="lazy">`:`<span>${nodeShort(n)}</span>`;
 }
 function model(){const a=account(),mastery=allocate(masteryStages(),budget('mastery'),masteryCost,skillNames(),1,isLeveling()?masteryRankCap:null),stigma=allocate(stigmaStages(),budget('stigma'),stigmaCost,activeStigmas(),0),boards=boardPlan(budget('crystals')),azphel=boardPlan(isLeveling()?0:a.azphel||0,true);return {mastery,stigma,boards,azphel,effects:effects(boards.owned),azphelEffects:effects(azphel.owned)}}
-function effective(name,m){return Math.min(40,(m.mastery.levels[name]||1)+(m.effects.skills[name]||0)+(account().gear[name]||0))}
+function effective(name,m){return Math.min(40,(m.mastery.levels[name]||1)+(m.effects.skills[name]||0)+(account().gear[name]||0)+(gearSkillLevels()[name]||0))}
 function render(){
   applyTheme();
   const selected=CLASS_ORDER.includes(state.class);
@@ -183,7 +183,7 @@ function render(){
   document.querySelectorAll('[data-tab]').forEach(b=>{b.classList.toggle('active',b.dataset.tab===state.tab);b.setAttribute('aria-current',b.dataset.tab===state.tab?'page':'false')});
   $('mobile-more-button').classList.toggle('active',['stigma','rotation','titles','sources'].includes(state.tab));
   document.querySelectorAll('.tab-panel').forEach(el=>el.classList.toggle('active',el.id===state.tab));
-  renderOverview(m);renderMobileNext(m);renderMastery(m);renderStigma(m);renderRotation(m);renderBoards(m);renderTitles();renderSources();save();
+  renderOverview(m);renderMobileNext(m);renderMastery(m);renderStigma(m);renderRotation(m);renderBoards(m);renderGear();renderTitles();renderSources();save();
 }
 function renderMobileNext(m){
   const el=$('mobile-next');el.hidden=false;
@@ -257,14 +257,14 @@ function renderMastery(m){
   }
   $('mastery-icon-source').href=`https://aion2data.com/classes/${state.class}`;
   $('skill-grid').innerHTML=shown.map(({name,i})=>{
-    const base=m.mastery.levels[name]||1,board=m.effects.skills[name]||0,gear=a.gear[name]||0,bonus=board+gear,eff=effective(name,m),current=a.currentRanks?.[name],currentEffectiveLevel=current?Math.min(40,current+bonus):null,spec=SPECS[state.class]?.[name],picks=specPicks(name,eff);
+    const base=m.mastery.levels[name]||1,board=m.effects.skills[name]||0,manualGear=a.gear[name]||0,itemGear=gearSkillLevels()[name]||0,gear=manualGear+itemGear,bonus=board+gear,eff=effective(name,m),current=a.currentRanks?.[name],currentEffectiveLevel=current?Math.min(40,current+bonus):null,spec=SPECS[state.class]?.[name],picks=specPicks(name,eff);
     const icon=Object.values(data().skills).find(skill=>skill.name===name)?.icon;
     const skillIcon=icon?.startsWith('/game/skills/')?`<img src="https://aion2data.com${esc(icon)}" alt="" loading="lazy">`:'✦';
     const cap=masteryRankCap(name),nextGate=cap<10?(SKILL_UNLOCKS[state.class][name]||1)+3*(cap-1):null;
     const choices=spec?Object.entries(spec.options):[];
     const selected=picks.filter(num=>spec?.options[num]);
     const specialty=spec?`<div class="mastery-specialty"><div class="mastery-specialty-head"><span>Recommended specialties</span><small>${eff<8?`Unlocks at effective Lv 8`:`${selected.length} ${selected.length===1?'pick':'picks'} at effective Lv ${eff}`}</small></div>${selected.length?`<ul class="mastery-picked">${selected.map(num=>`<li><span>${num}</span><b>${esc(spec.options[num])}</b></li>`).join('')}</ul>`:`<p class="mastery-pick-empty">${eff<8?'Raise the effective level to 8 to unlock the first specialty.':'No verified specialty picks for this level. Check the skill tooltip in game.'}</p>`}<details class="mastery-disclosure" data-detail-id="${esc(name)}:options" ${opened.has(name+':options')?'open':''}><summary>Compare all ${choices.length} options</summary><ol class="mastery-option-list">${choices.map(([num,label])=>{const required=+num<=3?8:+num===4?12:16,chosen=selected.includes(+num);return `<li class="${chosen?'chosen':''} ${eff<required?'locked':''}"><span class="mastery-option-number">${num}</span><span>${esc(label)}</span><em>${chosen?'Selected':eff<required?`Lv ${required}`:'Available'}</em></li>`}).join('')}</ol></details></div>`:`<div class="mastery-specialty mastery-specialty-none"><span>Specialty guidance</span><p>No verified specialty options for this skill. Check its tooltip in game.</p></div>`;
-    return `<article class="skill-card ${i<4?'highlight':''}"><div class="mastery-card-head"><div class="mastery-identity"><span class="mastery-skill-icon">${skillIcon}</span><div><div class="mastery-priority">Priority ${String(i+1).padStart(2,'0')}${isLeveling()?` · Unlocked Lv ${SKILL_UNLOCKS[state.class][name]||1}`:''}</div><h3>${esc(name)}</h3></div></div><div class="mastery-target"><span>Target rank</span><strong>${base}</strong><small>In-game Lv ${eff}</small></div></div><div class="mastery-rank-track" role="meter" aria-label="${esc(name)} target Mastery rank" aria-valuemin="1" aria-valuemax="10" aria-valuenow="${base}"><span style="width:${base*10}%"></span></div><div class="mastery-numbers"><div><span>Mastery cost</span><strong>${masteryTotal(base)} <small>pts total</small></strong></div><div><span>Daevanion board</span><strong>+${board}</strong></div><div><span>Gear / Arcana</span><strong>+${gear}</strong></div><div class="mastery-green"><span>Green bonus in game</span><strong>(+${bonus})</strong></div></div>${isLeveling()?`<p class="mastery-gate">Rank cap at level ${currentLevel()}: ${cap}${nextGate?` · rank ${cap+1} opens at character Lv ${nextGate}`:''}</p>`:''}${specialty}<details class="mastery-disclosure mastery-adjust" data-detail-id="${esc(name)}:adjust" ${opened.has(name+':adjust')?'open':''}><summary>Adjust bonuses & compare your rank</summary><div class="mastery-adjust-fields"><label>Other bonus levels <small>Gear / Arcana</small><input type="number" data-gear="${esc(name)}" min="0" max="30" value="${gear}" aria-label="Other bonus levels for ${esc(name)}"></label><label>Your current Mastery rank <small>Optional</small><input type="number" data-current-rank="${esc(name)}" min="1" max="10" placeholder="—" value="${current||''}" aria-label="Current Mastery rank for ${esc(name)}"></label></div>${currentEffectiveLevel?`<p class="mastery-comparison">Your rank ${current} + green bonus (+${bonus}) = Lv ${currentEffectiveLevel}. Target rank ${base} + green bonus (+${bonus}) = Lv ${eff}.</p>`:''}</details></article>`;
+    return `<article class="skill-card ${i<4?'highlight':''}"><div class="mastery-card-head"><div class="mastery-identity"><span class="mastery-skill-icon">${skillIcon}</span><div><div class="mastery-priority">Priority ${String(i+1).padStart(2,'0')}${isLeveling()?` · Unlocked Lv ${SKILL_UNLOCKS[state.class][name]||1}`:''}</div><h3>${esc(name)}</h3></div></div><div class="mastery-target"><span>Target rank</span><strong>${base}</strong><small>In-game Lv ${eff}</small></div></div><div class="mastery-rank-track" role="meter" aria-label="${esc(name)} target Mastery rank" aria-valuemin="1" aria-valuemax="10" aria-valuenow="${base}"><span style="width:${base*10}%"></span></div><div class="mastery-numbers"><div><span>Mastery cost</span><strong>${masteryTotal(base)} <small>pts total</small></strong></div><div><span>Daevanion board</span><strong>+${board}</strong></div><div><span>Gear / Arcana</span><strong>+${gear}</strong></div><div class="mastery-green"><span>Green bonus in game</span><strong>(+${bonus})</strong></div></div>${isLeveling()?`<p class="mastery-gate">Rank cap at level ${currentLevel()}: ${cap}${nextGate?` · rank ${cap+1} opens at character Lv ${nextGate}`:''}</p>`:''}${specialty}<details class="mastery-disclosure mastery-adjust" data-detail-id="${esc(name)}:adjust" ${opened.has(name+':adjust')?'open':''}><summary>Adjust bonuses & compare your rank</summary><div class="mastery-adjust-fields"><label>Other bonus levels <small>Manual adjustment; slotted gear adds +${itemGear}</small><input type="number" data-gear="${esc(name)}" min="0" max="30" value="${manualGear}" aria-label="Other bonus levels for ${esc(name)}"></label><label>Your current Mastery rank <small>Optional</small><input type="number" data-current-rank="${esc(name)}" min="1" max="10" placeholder="—" value="${current||''}" aria-label="Current Mastery rank for ${esc(name)}"></label></div>${currentEffectiveLevel?`<p class="mastery-comparison">Your rank ${current} + green bonus (+${bonus}) = Lv ${currentEffectiveLevel}. Target rank ${base} + green bonus (+${bonus}) = Lv ${eff}.</p>`:''}</details></article>`;
   }).join('')||(query?`<div class="mastery-empty">No unlocked skills match “${esc(state.masterySearch)}” at level ${currentLevel()}. Clear the search or choose a higher level.</div>`:isLeveling()?`<div class="mastery-empty">No Mastery upgrades are available at level ${currentLevel()}. Mastery points begin at level 4; your unlocked skills start at rank 1.</div>`:'');
 }
 function renderStigma(m){
@@ -402,6 +402,8 @@ function renderTitleCatalog(){
 }
 function renderSources(){
   const d=data(),p=profile(),firstSkill=Object.values(d.skills)[0];const cards=[
+    ['Global service scope','Daeva Architect uses Global client data across Global regions. Taiwan and Korea have separate clients and progression rules; their items and point tables are outside this planner.',`https://aion2.gg/guides/global-vs-asia`,'Compare client rules'],
+    ['Searchable Global equipment',`${GEAR_CATALOG.items.length} equipment, Arcana and wing entries from Aion2Data Global client ${GEAR_CATALOG.clientVersion}, retrieved ${GEAR_CATALOG.retrieved}. Item icons use game asset paths; live tooltips show base values. Newer Global patch items may be absent until the index is refreshed. Record your own soul binding and skill rolls. Game art © NCSOFT.`,`https://aion2data.com/creators`,'Open reuse and data source'],
     ['Levels 1–45 point table','The Global client level table supplies the level-only Mastery, Stigma, slot and crystal baseline. Quest, Sealed Dungeon and other rewards are additional. This planner carries user-entered extras forward as the level changes.',`https://aion2data.com/leveling`,'Open level table'],
     ['Skill and board level gates',`The Global class table supplies each ${p.name} skill's unlock level. Nezekan, Zikel, Vaizel and Triniel open at 12, 20, 30 and 40; Stigma slots open at 22, 27, 32 and 37.`, `https://aion2data.com/classes/${state.class}`,'Open class unlocks'],
     ['Mastery rank gates','SkillAcquireData limits rank 2 to the unlock level, then adds one purchasable rank every three character levels. The leveling plan respects that gate and buys usable early skills before chasing rank 8. Point costs are 1 for ranks 2–4, 2 for 5–7, and 4 for 8–10.',`https://aion2data.com/skills/${firstSkill.slug}`,'Open skill rank table'],
@@ -417,7 +419,7 @@ function renderSources(){
   ];$('source-cards').innerHTML=cards.map(([title,body,url,label])=>`<div class="source-card"><b>${esc(title)}</b><p>${esc(body)}</p><a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(label)} ↗</a></div>`).join('');
 }
 document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{state.tab=b.dataset.tab;$('mobile-more-menu').hidden=true;$('mobile-more-button').setAttribute('aria-expanded','false');render()}));
-document.querySelectorAll('.theme-picker [data-theme]').forEach(b=>b.addEventListener('click',()=>{theme=b.dataset.theme;try{localStorage.setItem('aion2-pathfinder-theme',theme)}catch(_){}applyTheme()}));
+document.querySelectorAll('.theme-picker [data-theme]').forEach(b=>b.addEventListener('click',()=>{theme=b.dataset.theme;try{localStorage.setItem('daeva-architect-theme',theme)}catch(_){}applyTheme()}));
 $('mobile-more-button').addEventListener('click',()=>{const open=$('mobile-more-menu').hidden;$('mobile-more-menu').hidden=!open;$('mobile-more-button').setAttribute('aria-expanded',String(open))});
 $('mobile-more-menu').addEventListener('click',e=>{const b=e.target.closest('[data-more-tab]');if(!b)return;state.tab=b.dataset.moreTab;$('mobile-more-menu').hidden=true;$('mobile-more-button').setAttribute('aria-expanded','false');render()});
 $('mobile-next-action').addEventListener('click',()=>{state.tab=$('mobile-next').dataset.targetTab||'mastery';render();document.querySelector('.tab-panel.active')?.scrollIntoView({behavior:'smooth',block:'start'})});
@@ -474,4 +476,4 @@ $('mark-planned-button').addEventListener('click',()=>{const marked=obtainedNode
 $('clear-obtained-button').addEventListener('click',()=>{const nodes=nodeMap();storeObtained(new Set([...obtainedNodes()].filter(id=>nodes.get(id).board==='Azphel')));renderBoards(model())});
 $('purchase-list').addEventListener('click',e=>{const b=e.target.closest('[data-purchase]');if(b){state.node=Number(b.dataset.purchase);renderBoards(model())}});
 $('route-slider').addEventListener('input',e=>{state.preview=clamp(e.target.value,0,state.board==='Azphel'?(account().azphel||0):budget('crystals'));renderBoards(model())});
-state.preview=state.class?budget('crystals'):FRESH_45.crystals;render();
+initGear();state.preview=state.class?budget('crystals'):FRESH_45.crystals;render();

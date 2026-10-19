@@ -4,15 +4,15 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#0a1324">
-  <meta name="description" content="Interactive AION 2 Global build planner for all eight classes: Group PvE, Solo and PvP mastery, stigmas, Daevanion boards, titles, rotations and macros.">
-  <title>AION 2 Pathfinder · All-class Global build planner</title>
+  <meta name="description" content="Daeva Architect: an interactive AION 2 Global build planner for all eight classes, with searchable gear, skills, Daevanion boards, titles and rotations.">
+  <title>Daeva Architect · AION 2 Global build planner</title>
   <style>/*STYLES*/</style>
 </head>
 <body>
   <header class="hero"><div class="hero-inner">
-    <div class="eyebrow">AION 2 · Global · NA East</div>
-    <h1>Pathfinder</h1>
-    <p id="hero-description">Choose a class, enter your points, and follow a connected board route alongside mastery, specialty, stigma, title, rotation and macro choices.</p>
+    <div class="eyebrow">AION 2 · Global client · All regions</div>
+    <h1>Daeva Architect</h1>
+    <p id="hero-description">Choose a class, enter your points, equip your gear, and follow connected board, skill, specialty, title, rotation and macro choices.</p>
     <div class="hero-tags"><span>Eight classes</span><span>Levels 1–45</span><span>Solo or group</span><span>Saved in this browser</span></div>
     <div class="theme-picker" role="group" aria-label="Color theme"><span>Theme</span><button type="button" data-theme="aether">Aether Sky</button><button type="button" data-theme="sanctum">Sanctum Light</button><button type="button" data-theme="abyss">Abyss Night</button></div>
   </div></header>
@@ -38,6 +38,7 @@
       <button type="button" data-tab="stigma">Stigmas</button>
       <button type="button" data-tab="rotation">Rotation & macro</button>
       <button type="button" data-tab="boards"><span class="tab-icon" aria-hidden="true">◇</span>Daevanion boards</button>
+      <button type="button" data-tab="gear"><span class="tab-icon" aria-hidden="true">◈</span>Equipment</button>
       <button type="button" data-tab="titles">Titles</button>
       <button type="button" data-tab="sources">Research notes</button>
       <button type="button" id="mobile-more-button" class="mobile-more-button" aria-expanded="false" aria-controls="mobile-more-menu"><span class="tab-icon" aria-hidden="true">☰</span>More</button>
@@ -87,6 +88,13 @@
       <div id="board-summary" class="board-summary"></div><div class="board-tabs" id="board-tabs"></div>
       <div class="board-layout"><div><div class="board-scroll"><div id="board-grid" class="board-grid" role="group" aria-label="Daevanion board nodes"></div></div><p class="board-icon-credit">Skill icon images from <a id="board-icon-source" href="https://aion2data.com/daevanion/templar" target="_blank" rel="noopener noreferrer">Aion2Data</a>; game art © NCSOFT. Select a node to read its exact effect.</p><div class="timeline"><label for="route-slider">Preview crystals</label><input id="route-slider" type="range" min="0" max="136" value="136"><b id="route-slider-value">136</b></div><p id="route-footnote" class="footnote"></p></div><aside class="board-side"><div><div id="selected-node" class="selected-node"></div><div class="panel board-effects-panel"><h3>Board effects at preview</h3><p id="board-effect-intro"></p><div id="board-effect-list" class="board-effect-list"></div></div><div class="panel"><h3>Purchase order</h3><p id="purchase-intro"></p><div id="purchase-list" class="purchase-list"></div></div></div><div class="panel"><h3>Next key nodes</h3><div id="board-next"></div></div></aside></div>
     </section>
+    <section id="gear" class="tab-panel" aria-label="Equipment and Arcana loadout">
+      <div class="section-title"><div><h2>Equipment & Arcana</h2><p>Slot your current Global gear. Search game items, then record your own enhancement and skill bonus rolls.</p></div><span id="gear-count" class="tag gold"></span></div>
+      <div class="gear-intro panel"><div><span class="eyebrow">Character equipment</span><h3 id="gear-class-heading"></h3><p>Tap a slot to search. Item images and base tooltips come from the Global client index. A soul bound item can roll different effects, so enter the skill levels you actually see in game.</p></div><div class="gear-summary" id="gear-summary"></div></div>
+      <div class="gear-main"><div class="gear-paperdoll panel"><div class="gear-paperdoll-head"><span class="eyebrow">Equipped slots</span><span id="gear-level-note"></span></div><div class="gear-doll-grid" id="gear-doll-grid"></div></div><div class="gear-side"><div class="panel"><h3>Arcana</h3><p>Five Arcana slots open at level 45. Their skill bonuses count in Mastery only when the slot is available.</p><div class="gear-side-grid" id="gear-arcana-grid"></div></div><div class="panel"><h3>Wings</h3><div id="gear-wing-slot"></div></div><div class="panel"><h3>Tracked skill levels</h3><div id="gear-skill-summary"></div></div></div></div>
+      <div class="notice">The selected item's base tooltip does not include your personal soul binding rolls, enhancement, manastones or potential. Record those in the slot editor. Combat Power comes from the in-game character sheet; enter it in Build now rather than treating a sum of item levels as Combat Power.</div>
+      <p class="gear-credit">Global item index, item icons and tooltip data: <a href="https://aion2data.com/creators" target="_blank" rel="noopener noreferrer">Aion2Data</a>. Game art © NCSOFT. Snapshot <span id="gear-snapshot"></span>; refresh the catalog after Global patches.</p>
+    </section>
     <section id="titles" class="tab-panel" aria-label="Titles to earn and equip">
       <div class="section-title"><div><h2>Titles to earn & equip</h2><p>Track what this character has earned. Recommendations update for its role and your available titles.</p></div><span id="titles-count" class="tag gold"></span></div>
       <div class="title-controls panel"><label for="faction-select">Character faction <select id="faction-select"><option value="elyos">Elyos</option><option value="asmodian">Asmodian</option></select></label><p id="titles-role-note"></p></div>
@@ -100,5 +108,6 @@
     <section id="sources" class="tab-panel" aria-label="Research notes"><div class="section-title"><div><h2>Research & limits</h2><p>Live links for the selected class and the assumptions behind the route.</p></div></div><div id="source-cards" class="sources"></div><div class="notice">These are context-specific starting recommendations, not combat simulations or measured optima. The 1–8 hotbar placements are ergonomic suggestions. Specialty options were sourced from PvE guides; verify them before using a PvP preset. The 60k Templar tank and 100k damage Combat Power goals are editable planning benchmarks, not official dungeon requirements. Gear, boards, skills and other systems affect the in-game score; the game calculates the final number. Healers should measure effective healing and keep the party alive. Azphel PvP currency is separate.</div></section>
     </div>
   </main>
-  <script>/*DATA*/</script><script>/*PROFILES*/</script><script>/*TITLES*/</script><script>/*APP*/</script>
+  <dialog id="gear-dialog" class="gear-dialog" aria-labelledby="gear-dialog-title"><form id="gear-form"><div class="gear-dialog-head"><div><span class="eyebrow">Configure slot</span><h2 id="gear-dialog-title"></h2></div><button type="button" id="gear-dialog-close" aria-label="Close equipment editor">✕</button></div><div class="gear-dialog-grid"><div class="gear-search-pane"><label for="gear-query">Search Global items</label><input id="gear-query" type="search" placeholder="Item name or ID" autocomplete="off"><div id="gear-results" class="gear-results" aria-live="polite"></div></div><div id="gear-editor" class="gear-editor"></div></div><div class="gear-dialog-actions"><button type="button" id="gear-remove">Unequip slot</button><button type="submit" class="gear-save">Save equipment</button></div></form></dialog>
+  <script>/*DATA*/</script><script>/*PROFILES*/</script><script>/*TITLES*/</script><script>/*GEAR*/</script><script>/*APP*/</script>
 </body></html>

@@ -8,12 +8,18 @@ const stigmas = JSON.parse(fs.readFileSync(new URL('stigmas.json', root), 'utf8'
 const profiles = vm.runInNewContext(fs.readFileSync(new URL('profiles.js', root), 'utf8')+'\nPROFILES');
 const titles = vm.runInNewContext(fs.readFileSync(new URL('titles.js', root), 'utf8')+'\nTITLES');
 const catalog = JSON.parse(fs.readFileSync(new URL('titles_catalog.json', root), 'utf8'));
+const gearCatalog = JSON.parse(fs.readFileSync(new URL('gear_catalog.json', root), 'utf8'));
 const routes = JSON.parse(fs.readFileSync(new URL('context_routes.json', root), 'utf8'));
 const azphel = JSON.parse(fs.readFileSync(new URL('azphel_data.json', root), 'utf8'));
 const unlocks = JSON.parse(fs.readFileSync(new URL('skill_unlocks.json', root), 'utf8'));
 const rewards = JSON.parse(fs.readFileSync(new URL('level_rewards.json', root), 'utf8'));
 const classes = ['templar','gladiator','assassin','ranger','sorcerer','spiritmaster','cleric','chanter'];
 const assert = (okay, message) => {if(!okay) throw new Error(message)};
+assert(gearCatalog.items.length>3000,'gear: incomplete Global equipment snapshot');
+const gearTypes=new Set(gearCatalog.items.map(item=>item.type));
+for(const type of ['Longsword','Greatsword','Dagger','Bow','Spellbook','Orb','Mace','Staff','Guard','Top','Legs','Ring','Rune','Chalice','Parchment','Compass','Bell','Mirror','Wing'])assert(gearTypes.has(type),`gear: missing ${type}`);
+const gearHrefs=new Set();
+for(const item of gearCatalog.items){assert(item.href.startsWith(item.type==='Wing'?'/wings/':'/items/'),`gear: invalid ${item.href}`);assert(!item.icon||item.icon.startsWith('/game/'),`gear: invalid game icon for ${item.href}`);assert(!gearHrefs.has(item.href),`gear: duplicate ${item.href}`);gearHrefs.add(item.href)}
 assert(Object.keys(rewards).length===45,'leveling: expected rewards for every level');
 for(let level=1;level<=45;level++){
   const row=rewards[level],prior=rewards[level-1]||{mastery:0,stigma:0,slots:0,crystals:0};
