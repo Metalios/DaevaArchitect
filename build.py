@@ -1,13 +1,9 @@
 from pathlib import Path
 import json
+import shutil
 
 root = Path(__file__).parent
 template = (root / 'index.template.html').read_text(encoding='utf8')
-styles = (root / 'styles.css').read_text(encoding='utf8')
-app = (root / 'app.js').read_text(encoding='utf8')
-gear = (root / 'gear.js').read_text(encoding='utf8')
-profiles = (root / 'profiles.js').read_text(encoding='utf8')
-titles = (root / 'titles.js').read_text(encoding='utf8')
 data = json.loads((root / 'classes_data.json').read_text(encoding='utf8'))
 specialties = json.loads((root / 'specialties.json').read_text(encoding='utf8'))
 stigmas = json.loads((root / 'stigmas.json').read_text(encoding='utf8'))
@@ -26,7 +22,20 @@ js_data += 'const AZPHEL=' + json.dumps(azphel_data, separators=(',',':'), ensur
 js_data += 'const SKILL_UNLOCKS=' + json.dumps(skill_unlocks, separators=(',',':'), ensure_ascii=False).replace('</','<\\/') + ';'
 js_data += 'const LEVEL_REWARDS=' + json.dumps(level_rewards, separators=(',',':'), ensure_ascii=False).replace('</','<\\/') + ';'
 js_data += 'const GEAR_CATALOG=' + json.dumps(gear_catalog, separators=(',',':'), ensure_ascii=False).replace('</','<\\/') + ';'
-page = template.replace('/*STYLES*/', styles).replace('/*DATA*/', js_data).replace('/*PROFILES*/', profiles).replace('/*TITLES*/', titles).replace('/*GEAR*/', gear).replace('/*APP*/', app)
-out = root / 'dist' / 'index.html'
-out.write_text(page, encoding='utf8')
-print(out, len(page), 'chars')
+
+out_dir = root / 'dist'
+(out_dir / 'js').mkdir(parents=True, exist_ok=True)
+(out_dir / 'css').mkdir(parents=True, exist_ok=True)
+(out_dir / 'assets').mkdir(parents=True, exist_ok=True)
+for name in ('profiles.js', 'titles.js', 'gear.js', 'app.js'):
+    shutil.copy2(root / 'js' / name, out_dir / 'js' / name)
+shutil.copy2(root / 'css' / 'styles.css', out_dir / 'css' / 'styles.css')
+for asset in (root / 'assets').rglob('*'):
+    if asset.is_file():
+        destination = out_dir / 'assets' / asset.relative_to(root / 'assets')
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(asset, destination)
+(out_dir / 'js' / 'data.js').write_text(js_data, encoding='utf8')
+out = out_dir / 'index.html'
+out.write_text(template, encoding='utf8')
+print(out, len(template), 'chars; external CSS and JavaScript copied to dist')

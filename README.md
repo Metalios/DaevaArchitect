@@ -12,9 +12,9 @@ The item index was extracted from [Aion2Data](https://aion2data.com/creators)'s 
 
 ## Build and publish
 
-Run `python build.py` to generate `dist/index.html`. The site has no runtime server or build dependencies. `node verify.mjs` and `node audit_leveling.mjs` check the class and progression data. `python sync_gear.py` refreshes the searchable Global equipment snapshot from Aion2Data. For a browser interaction check, install Playwright and run `node gear_smoke.mjs`.
+Run `python build.py` to generate the static `dist/` site. Source scripts live in `js/`, styles in `css/`, and static image assets belong in `assets/`. The build writes the bundled Global data to `dist/js/data.js` and copies the source scripts, styles, and static assets into matching folders. The site has no runtime server or build dependencies. `node verify.mjs` and `node audit_leveling.mjs` check the class and progression data. `python sync_gear.py` refreshes the searchable Global equipment snapshot from Aion2Data. For a browser interaction check, install Playwright and run `node gear_smoke.mjs`.
 
-Push to `main` to build and deploy through `.github/workflows/pages.yml`. GitHub Pages must be configured with **GitHub Actions** as its publishing source. All data and app code ship in the generated HTML, while game icons and optional live tooltips load from Aion2Data.
+Push to `main` to build and deploy through `.github/workflows/pages.yml`. GitHub Pages must be configured with **GitHub Actions** as its publishing source. The HTML links to relative CSS and JavaScript files, so it also works at the `/DaevaArchitect/` project path. Game icons and optional live tooltips load from Aion2Data.
 
 Existing Pathfinder browser saves migrate on first open. New saves use Daeva Architect storage keys.
 

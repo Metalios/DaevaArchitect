@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 
 const root = new URL('.', import.meta.url);
 const read = name => JSON.parse(fs.readFileSync(new URL(name, root), 'utf8'));
-const source = fs.readFileSync(new URL('app.js', root), 'utf8');
+const source = fs.readFileSync(new URL('js/app.js', root), 'utf8');
 const context = {
   DATA: read('classes_data.json'),
   ROUTES: read('context_routes.json'),
@@ -12,7 +12,7 @@ const context = {
   SKILL_UNLOCKS: read('skill_unlocks.json'),
   LEVEL_REWARDS: read('level_rewards.json'),
   STIGMAS: read('stigmas.json'),
-  PROFILES: vm.runInNewContext(fs.readFileSync(new URL('profiles.js', root), 'utf8')+'\nPROFILES'),
+  PROFILES: vm.runInNewContext(fs.readFileSync(new URL('js/profiles.js', root), 'utf8')+'\nPROFILES'),
   localStorage: {getItem:()=>null},
   console
 };
