@@ -58,3 +58,20 @@ for(const cls of Object.keys(context.DATA)){
   console.log(`${cls} Lv 45 leveling: ${finish.spent}/${finish.budget} Mastery planned`);
 }
 console.log('Checked 720 class, mode, and level combinations against skill unlocks, rank gates, and point budgets.');
+
+// Point totals entered later in the journey must never inflate an earlier build.
+vm.runInContext(`
+  state.class='sorcerer';
+  account().journey='leveling';
+  account().leveling={level:11,extraByLevel:{}};
+  setLevelingBudget('mastery',25);
+`,context);
+assert.equal(vm.runInContext("budget('mastery')",context),25);
+assert.equal(vm.runInContext("account().leveling.level=12;budget('mastery')",context),29);
+vm.runInContext("account().leveling.level=45;setLevelingBudget('mastery',400)",context);
+assert.equal(vm.runInContext("account().leveling.level=11;budget('mastery')",context),25);
+assert.equal(vm.runInContext("account().leveling.level=45;budget('mastery')",context),400);
+vm.runInContext("account().leveling={level:11,extra:{mastery:200,stigma:0,crystals:0}}",context);
+assert.equal(vm.runInContext("budget('mastery')",context),20);
+assert.equal(vm.runInContext("account().leveling.level=45;budget('mastery')",context),403);
+console.log('Checked earned-point history and migration from older saved accounts.');
