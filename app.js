@@ -1,6 +1,7 @@
 const $ = id => document.getElementById(id);
 const CLASS_ORDER = ['templar','gladiator','assassin','ranger','sorcerer','spiritmaster','cleric','chanter'];
 const BOARD_NAMES = ['Nezekan','Zikel','Vaizel','Triniel'];
+const ALL_BOARD_NAMES = [...BOARD_NAMES,'Azphel'];
 const FRESH_45 = {mastery:203,stigma:29,crystals:136};
 const TEMPLAR_STAGES = [
   ['Vicious Strike',10],['Pummel',10],
@@ -12,10 +13,16 @@ const TEMPLAR_STAGES = [
   ['Block Pain',8],['Warding Shield',8],['Guarding Seal',8],['Survival Willpower',8],['Flash Rampage',8],
   ['Poach',10],['Defiance',10],['Debilitating Smash',10],['Shield Rush',10],['Block Pain',10],['Warding Shield',10],['Guarding Seal',10],['Survival Willpower',10],['Flash Rampage',10]
 ];
-const DEFAULT_ACCOUNT = (cls='templar') => ({...FRESH_45,context:'party',gear:{},currentRanks:{},titlesOwned:{},faction:'elyos',macroBind:'RMB',goalTarget:['cleric','chanter'].includes(cls)?0:cls==='templar'?60000:100000,goalObserved:0});
+const TEMPLAR_GROUP_STAGES = [['Judgment',10],['Vicious Strike',10],['Insulting Roar',10],['Fury',10],['Punishing Benediction',10],['Enhance Health',8],['Warding Strike',8],['Shield Smite',8],...TEMPLAR_STAGES];
+Object.assign(STIGMAS.templar,{
+  'Executing Blade':{base:'Manual PvP pressure and stagger; pair with control openings',perks:{}},
+  "Empyrean Lord's Punishment":{base:'High stagger damage and manual burst window',perks:{}},
+  "Nezekan's Shield":{base:'Short protective shield for self or group survival',perks:{}}
+});
+const DEFAULT_ACCOUNT = (cls='templar') => ({...FRESH_45,azphel:0,context:'party',gear:{},currentRanks:{},titlesOwned:{},faction:'elyos',macroBind:'RMB',goalTarget:['cleric','chanter'].includes(cls)?0:cls==='templar'?60000:100000,goalObserved:0});
 let saved = {};
 try { saved = JSON.parse(localStorage.getItem('aion2-pathfinder-all-v3') || '{}') || {}; } catch (_) {}
-let state = {class:CLASS_ORDER.includes(saved.class)?saved.class:null,accounts:saved.accounts||{},tab:'overview',board:'Nezekan',preview:FRESH_45.crystals,node:null};
+let state = {class:CLASS_ORDER.includes(saved.class)?saved.class:null,accounts:saved.accounts||{},tab:'overview',board:'Nezekan',preview:FRESH_45.crystals,node:null,titleSearch:'',titleSlot:'all',titleOwnership:'all',titleFaction:'all'};
 function account(){ if(!state.accounts[state.class]) state.accounts[state.class]=DEFAULT_ACCOUNT(state.class); return state.accounts[state.class]; }
 function data(){return DATA[state.class]}
 function profile(){return PROFILES[state.class]}
@@ -23,32 +30,43 @@ function esc(value){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<'
 function clamp(v,min,max){v=Number(v);return Number.isFinite(v)?Math.max(min,Math.min(max,Math.floor(v))):min}
 function save(){try{localStorage.setItem('aion2-pathfinder-all-v3',JSON.stringify({class:state.class,accounts:state.accounts}))}catch(_){}}
 function skillNames(){return Object.values(data().skills).map(s=>s.name)}
-function nodeMap(){return new Map(data().boards.flatMap(b=>b.nodes.map(n=>[n[0],{board:b.name,node:n}]))) }
+function allBoards(){return [...data().boards,AZPHEL[state.class]]}
+function nodeMap(){return new Map(allBoards().flatMap(b=>b.nodes.map(n=>[n[0],{board:b.name,node:n}]))) }
+function activeRoute(){return ROUTES[state.class][account().context]||data().route}
+function activeWeights(){return ROUTES[state.class].weights[account().context]}
+function activeStigmas(){
+  const standard=profile().stigmas;
+  const variants={templar:{solo:['Noble Armor','Battlefield Banner','Doom Shield',"Empyrean Lord's Punishment"],pvp:['Executing Blade',"Empyrean Lord's Punishment",'Doom Shield',"Nezekan's Shield"]},cleric:{solo:['Earth Punishment','Noble Aura','Prayer of Amplification','Light of Protection'],pvp:['Prayer of Amplification','Light of Protection',"Yustiel's Power",'Absolution']},sorcerer:{pvp:['Element Enhancement','Steel Barrier','Soul Freeze','Hibernation']},gladiator:{pvp:["Zikel's Blessing",'Focused Block','Lifestealing Blade','Armor of Balance']},assassin:{pvp:['Evasion Contract','Smoke Bomb','Swift Contract','Illusive Clone']},ranger:{pvp:["Vaizel's Authority",'Mother Nature\'s Breath','Ensnaring Trap','Stealth']},spiritmaster:{pvp:['Summon: Ancient Spirit',"Enhance: Spirit's Benediction",'Seize Magic','Cry of Terror']},chanter:{solo:['Undefeated Mantra','Sprint Mantra','Power of the Storm',"Marchutan's Wrath"],pvp:['Undefeated Mantra','Barrier Spell','Healing Touch','Focused Defense']}};
+  const result=variants[state.class]?.[account().context]||standard;
+  return result.every(name=>STIGMAS[state.class]?.[name])?result:standard;
+}
 function masteryCost(rank){return rank<=4?1:rank<=7?2:4}
 function masteryTotal(rank){let points=0;for(let n=2;n<=rank;n++)points+=masteryCost(n);return points}
 function stigmaCost(rank){return rank<=5?1:rank<=10?2:rank<=15?4:8}
 function masteryStages(){
-  if(state.class==='templar') return TEMPLAR_STAGES;
-  const names=skillNames(); const weights=data().skillWeights;
+  if(state.class==='templar'&&account().context==='party') return TEMPLAR_GROUP_STAGES;
+  if(state.class==='templar'&&account().context==='solo') return TEMPLAR_STAGES;
+  const names=skillNames(); const weights=activeWeights()?.skills||data().skillWeights;
   const order=names.map((name,i)=>({name,i,weight:weights[name]||0})).sort((a,b)=>b.weight-a.weight||a.i-b.i).map(x=>x.name);
   const first=order.slice(0,8), second=order.slice(8,16), third=order.slice(16);
   return [...first.map(n=>[n,8]),...first.map(n=>[n,10]),...second.map(n=>[n,8]),...second.map(n=>[n,10]),...third.map(n=>[n,8]),...third.map(n=>[n,10])];
 }
-function stigmaStages(){const s=profile().stigmas;return [5,10,15,20].flatMap(rank=>s.map(name=>[name,rank]))}
+function stigmaStages(){const s=activeStigmas();return [5,10,15,20].flatMap(rank=>s.map(name=>[name,rank]))}
 function allocate(stages,budget,costFn,names,base){
   const levels=Object.fromEntries(names.map(n=>[n,base]));let spent=0,next=null;
   for(const [name,target] of stages){if(!(name in levels))continue;while(levels[name]<target){const cost=costFn(levels[name]+1);if(spent+cost>budget){next={name,rank:levels[name]+1,cost,need:spent+cost-budget};return {levels,spent,next}}levels[name]++;spent+=cost}}
   return {levels,spent,next};
 }
-function boardPlan(budget){
-  const nodes=nodeMap(), owned=new Set(),perBoard=Object.fromEntries(BOARD_NAMES.map(n=>[n,0]));let spent=0,next=null;
-  for(const item of data().route){const n=nodes.get(item.id).node;if(spent+n[5]>budget){next={...item,cost:n[5],need:spent+n[5]-budget};break}spent+=n[5];owned.add(item.id);perBoard[item.board]+=n[5]}
+function boardPlan(budget,azphel=false){
+  const nodes=nodeMap(), owned=new Set(),perBoard=Object.fromEntries(ALL_BOARD_NAMES.map(n=>[n,0]));let spent=0,next=null;
+  const route=azphel?ROUTES[state.class].azphel:activeRoute();
+  for(const item of route){const n=nodes.get(item.id).node;if(spent+n[5]>budget){next={...item,cost:n[5],need:spent+n[5]-budget};break}spent+=n[5];owned.add(item.id);perBoard[item.board]+=n[5]}
   return {spent,owned,perBoard,next};
 }
 function effects(owned){const skills={},stats={},nodes=nodeMap();for(const id of owned){const n=nodes.get(id).node;for(const [key,v] of n[6]){if(typeof key==='number'){const name=data().skills[key]?.name||String(key);skills[name]=(skills[name]||0)+v}else stats[key]=(stats[key]||0)+v}}return {skills,stats}}
 function effectText(n){if(!n||!n[6]?.length)return 'Start node';return n[6].map(([key,v])=>{if(typeof key==='number')return `${data().skills[key]?.name||key} +${v} level`;const meta=data().stats[key];return `${meta?.name||key} +${v/(meta?.div||1)}${meta?.pct?'%':''}`}).join(' · ')}
 function nodeShort(n){if(n[5]===0||n[5]===4)return '✦';if(typeof n[6]?.[0]?.[0]==='number')return n[5]===2?'P':'S';return ({FixingDamage:'ATK',Critical:'CR',Defense:'DEF',HPMax:'HP',MPMax:'MP',HealBoost:'HEAL'})[n[6]?.[0]?.[0]]||'·'}
-function model(){const a=account(),mastery=allocate(masteryStages(),a.mastery,masteryCost,skillNames(),1),stigma=allocate(stigmaStages(),a.stigma,stigmaCost,profile().stigmas,0),boards=boardPlan(a.crystals);return {mastery,stigma,boards,effects:effects(boards.owned)}}
+function model(){const a=account(),mastery=allocate(masteryStages(),a.mastery,masteryCost,skillNames(),1),stigma=allocate(stigmaStages(),a.stigma,stigmaCost,activeStigmas(),0),boards=boardPlan(a.crystals),azphel=boardPlan(a.azphel||0,true);return {mastery,stigma,boards,azphel,effects:effects(boards.owned),azphelEffects:effects(azphel.owned)}}
 function effective(name,m){return Math.min(40,(m.mastery.levels[name]||1)+(m.effects.skills[name]||0)+(account().gear[name]||0))}
 function render(){
   const selected=CLASS_ORDER.includes(state.class);
@@ -60,8 +78,9 @@ function render(){
   $('hero-description').textContent=p.summary+' Change your point totals to see what to buy now and next.';
   $('class-role').textContent=p.role;$('overview-role').textContent=p.role;
   $('mastery-input').value=a.mastery;$('stigma-input').value=a.stigma;$('crystal-input').value=a.crystals;
-  $('fresh-45-button').classList.toggle('active',Object.entries(FRESH_45).every(([key,value])=>a[key]===value));
-  for(const [id,ctx] of [['party-button','party'],['solo-button','solo']]){$(id).classList.toggle('active',a.context===ctx);$(id).setAttribute('aria-pressed',a.context===ctx)}
+  $('fresh-45-button').classList.toggle('active',Object.entries(FRESH_45).every(([key,value])=>a[key]===value)&&!(a.azphel||0));
+  for(const [id,ctx] of [['party-button','party'],['solo-button','solo'],['pvp-button','pvp']]){$(id).classList.toggle('active',a.context===ctx);$(id).setAttribute('aria-pressed',a.context===ctx)}
+  $('azphel-input').value=a.azphel||0;
   document.querySelectorAll('[data-tab]').forEach(b=>{b.classList.toggle('active',b.dataset.tab===state.tab);b.setAttribute('aria-current',b.dataset.tab===state.tab?'page':'false')});
   document.querySelectorAll('.tab-panel').forEach(el=>el.classList.toggle('active',el.id===state.tab));
   renderOverview(m);renderMastery(m);renderStigma(m);renderRotation(m);renderBoards(m);renderTitles();renderSources();save();
@@ -69,16 +88,17 @@ function render(){
 function renderOverview(m){
   const a=account(),p=profile(),ordered=masteryStages().map(x=>x[0]).filter((v,i,s)=>s.indexOf(v)===i),top=ordered.slice(0,4);
   $('overview-title').textContent=`${p.name}: recommended path`;$('overview-subtitle').textContent=p.summary;
-  const kpis=[['Top target',top[0]?`Lv ${effective(top[0],m)}`:'—',top[0]||''],['Board crystals',`${m.boards.spent} / ${a.crystals}`,`${m.boards.perBoard.Nezekan} Nezekan · ${m.boards.perBoard.Zikel} Zikel`],['Stigma bar',`${m.stigma.spent} / ${a.stigma}`,'Four class-specific slots'],['Ready points',`${a.mastery-m.mastery.spent} · ${a.stigma-m.stigma.spent} · ${a.crystals-m.boards.spent}`,'Unspent in recommended plan']];
+  const kpis=[['Top target',top[0]?`Lv ${effective(top[0],m)}`:'—',top[0]||''],['PvE crystals',`${m.boards.spent} / ${a.crystals}`,`${m.boards.perBoard.Nezekan} Nezekan · ${m.boards.perBoard.Zikel} Zikel`],['Stigma bar',`${m.stigma.spent} / ${a.stigma}`,'Four context-specific slots'],['Ready points',`${a.mastery-m.mastery.spent} · ${a.stigma-m.stigma.spent} · ${a.crystals-m.boards.spent}`,'Unspent Mastery · Stigma · PvE crystals']];
   $('kpis').innerHTML=kpis.map(([label,value,detail])=>`<div class="kpi"><div class="k-label">${esc(label)}</div><strong>${esc(value)}</strong><small>${esc(detail)}</small></div>`).join('');
   const mode=p.kind==='healer'?'healing':'damage';
   const steps=[`<b>Mastery:</b> ${top.map(n=>`${esc(n)} Lv ${m.mastery.levels[n]||1}`).join(' · ')}. Open the Mastery tab for every rank and specialty.`,
-    `<b>Stigmas:</b> ${p.stigmas.map(n=>`${esc(n)} Lv ${m.stigma.levels[n]||0}`).join(' · ')}. ${esc(p.swap)}`,
-    `<b>Boards:</b> ${BOARD_NAMES.map(n=>`${n} ${m.boards.perBoard[n]}`).join(' · ')}. The grid gives the connected click order at ${a.crystals} crystals.`,
+    `<b>Stigmas:</b> ${activeStigmas().map(n=>`${esc(n)} Lv ${m.stigma.levels[n]||0}`).join(' · ')}. ${esc(p.swap)}`,
+    `<b>PvE boards:</b> ${BOARD_NAMES.map(n=>`${n} ${m.boards.perBoard[n]}`).join(' · ')}. The grid gives a connected ${a.context==='pvp'?'PvP-oriented':'PvE'} click order at ${a.crystals} crystals.`,
     `<b>${mode==='healing'?'Healing':'Fight'} priority:</b> ${esc(p.rule)}`];
-  if(a.context==='solo')steps.push(`<b>Solo adjustment:</b> Keep recovery and defensives available. Use the damage loop only when safe; the board route is the same PvE path.`);
+  if(a.context==='solo')steps.push(`<b>Solo route:</b> Mastery, Stigmas and the board order favor personal damage and self-sustain. The board route differs from Group PvE.`);
+  if(a.context==='pvp')steps.push(`<b>PvP route:</b> Mastery, Stigmas and PvE crystal clicks prioritize control, escape and survival. Azphel uses a separate ${a.azphel||0}-crystal budget; it has no skill-level nodes.`);
   $('now-steps').innerHTML=steps.map((v,i)=>`<li><span class="step-num">${i+1}</span><span>${v}</span></li>`).join('');
-  const next=[];if(m.mastery.next)next.push([`+${m.mastery.next.need} mastery`,`${m.mastery.next.name} rank ${m.mastery.next.rank}`]);if(m.stigma.next)next.push([`+${m.stigma.next.need} stigma`,`${m.stigma.next.name} rank ${m.stigma.next.rank}`]);if(m.boards.next)next.push([`+${m.boards.next.need} crystals`,`${m.boards.next.board}: ${effectText(nodeMap().get(m.boards.next.id).node)}`]);
+  const next=[];if(m.mastery.next)next.push([`+${m.mastery.next.need} mastery`,`${m.mastery.next.name} rank ${m.mastery.next.rank}`]);if(m.stigma.next)next.push([`+${m.stigma.next.need} stigma`,`${m.stigma.next.name} rank ${m.stigma.next.rank}`]);if(m.boards.next)next.push([`+${m.boards.next.need} PvE crystals`,`${m.boards.next.board}: ${effectText(nodeMap().get(m.boards.next.id).node)}`]);if(a.context==='pvp'&&m.azphel.next)next.push([`+${m.azphel.next.need} Azphel crystals`,effectText(nodeMap().get(m.azphel.next.id).node)]);
   const needs=top.map(n=>({name:n,level:effective(n,m)})).find(x=>x.level<16);if(needs)next.push(['Lv 16 specialty',`${needs.name}: ${16-needs.level} more effective levels from mastery, board or gear`]);
   $('next-unlocks').innerHTML=next.length?next.map(([label,detail])=>`<div class="next-unlock"><strong>${esc(label)}</strong><span>${esc(detail)}</span></div>`).join(''):'<p>All planned ranks and nodes are funded.</p>';
   renderGoal();
@@ -105,10 +125,10 @@ function renderMastery(m){
   }).join('');
 }
 function renderStigma(m){
-  const p=profile(),a=account();$('stigma-spent').textContent=`${m.stigma.spent} / ${a.stigma} spent`;$('loadout-title').textContent=`${p.name} ${p.kind==='healer'?'support':'PvE'} bar`;$('loadout-text').textContent=p.swap;
-  $('loadout-tags').innerHTML=p.stigmas.map(n=>`<span class="tag ${m.stigma.levels[n]>=5?'green':''}">${esc(n)} · Lv ${m.stigma.levels[n]||0}</span>`).join('');
-  $('stigma-grid').innerHTML=p.stigmas.map(name=>{const info=STIGMAS[state.class]?.[name],lv=m.stigma.levels[name]||0,perks=info?.perks||{};
-    return `<article class="stigma-card"><div class="stigma-head"><div><h3>${esc(name)}</h3><div class="sub">Equipped · ${esc(info?.base||'Class stigma')}</div></div><div class="lv">Lv ${lv}</div></div><div class="spec-row">${Object.entries(perks).map(([rank,label])=>`<span class="spec ${lv>=+rank?'on':'future'}">Lv ${rank}: ${esc(label)}</span>`).join('')}</div><div class="milestone">${lv<20?`Next perk at Lv ${[5,10,15,20].find(x=>x>lv)}`:'All four perks unlocked'}</div></article>`}).join('');
+  const p=profile(),a=account(),selected=activeStigmas(),mode={party:'Group PvE',solo:'Solo',pvp:'PvP'}[a.context];$('stigma-spent').textContent=`${m.stigma.spent} / ${a.stigma} spent`;$('loadout-title').textContent=`${p.name} ${mode} bar`;$('loadout-text').textContent=selected.join(', ')+'. '+(a.context==='party'?p.swap:'This is a context-specific starting set; compare your live tooltips and matchups.');
+  $('loadout-tags').innerHTML=selected.map(n=>`<span class="tag ${m.stigma.levels[n]>=5?'green':''}">${esc(n)} · Lv ${m.stigma.levels[n]||0}</span>`).join('');
+  $('stigma-grid').innerHTML=selected.map(name=>{const info=STIGMAS[state.class]?.[name],lv=m.stigma.levels[name]||0,perks=info?.perks||{};
+    return `<article class="stigma-card"><div class="stigma-head"><div><h3>${esc(name)}</h3><div class="sub">Equipped · ${esc(info?.base||'Class stigma')}</div></div><div class="lv">Lv ${lv}</div></div><div class="spec-row">${Object.entries(perks).map(([rank,label])=>`<span class="spec ${lv>=+rank?'on':'future'}">Lv ${rank}: ${esc(label)}</span>`).join('')}</div><div class="milestone">${Object.keys(perks).length?lv<20?`Next perk at Lv ${[5,10,15,20].find(x=>x>lv)}`:'All four perks unlocked':'Compare the level perks in game; this planner has not verified their text.'}</div></article>`}).join('');
 }
 function numbered(items){return items.map((v,i)=>`<li><span class="rotation-num">${String(i+1).padStart(2,'0')}</span><span>${esc(v)}</span></li>`).join('')}
 function renderRotation(m){
@@ -117,17 +137,25 @@ function renderRotation(m){
   const stacks=fusionCharged?p.stacks.filter(s=>s.key!=='E'):p.stacks;
   const macroSteps=fusionCharged?p.macro.filter(key=>key!=='E'):p.macro;
   const hotbar=p.hotbar.map(([skills,cue,tone])=>[skills,cue,tone]);
+  if(a.context!=='party'){
+    const chosen=activeStigmas(),missing=chosen.filter(name=>!p.stigmas.includes(name)&&!hotbar.some(([skills])=>skills.includes(name)));
+    for(const slot of hotbar){const replaced=slot[0].some(name=>p.stigmas.includes(name)&&!chosen.includes(name));slot[0]=slot[0].map(name=>p.stigmas.includes(name)&&!chosen.includes(name)?missing.shift()||null:name).filter(Boolean);if(replaced){slot[1]=`${a.context==='pvp'?'PvP':'Solo'} Stigma · use manually`;slot[2]='defense'}if(!slot[0].length){slot[1]='Available for a matchup-specific skill';slot[2]='utility'}}
+    for(const name of missing){const index=hotbar.findLastIndex(([skills])=>skills.length===0);const target=index>=0?index:hotbar.length-1;hotbar[target]=[[name],`${a.context==='pvp'?'PvP':'Solo'} Stigma · use manually`,'defense']}
+  }
   if(fusionCharged)hotbar[6]=[['Elemental Fusion'],'Fully charge when Four Elements is ready','attack'];
   $('rotation-gate').textContent=state.class==='templar'?`Judgment is effective Lv ${effective('Judgment',m)}. ${effective('Judgment',m)>=16?'With its cooldown-removal Specialty selected, the E stack can spend repeated casts during one proc.':'Before its Lv 16 cooldown-removal Specialty, expect one Judgment cast per available proc and space manual Doom Shield around its cooldown.'} The macro spends Judgment first within E. The timing caution applies to extra manual Punishment or shield-trigger casts, which can interrupt or overlap that proc.`:p.kind==='healer'?'Heals, toggles and emergency buttons remain manual. Use the macro only while the group is stable.':`Current first priority: ${main} effective Lv ${effective(main,m)}. Keep charged and movement skills on their own keys.`;
-  $('rotation-opener-title').textContent=a.context==='party'?'Group opener':'Solo opener';$('rotation-opener').innerHTML=numbered(p.opener);$('rotation-loop').innerHTML=numbered(p.loop);
+  $('rotation-opener-title').textContent={party:'Group opener',solo:'Solo opener',pvp:'PvP engage'}[a.context];
+  const opener=a.context==='pvp'?['Approach with cover and keep your escape or control break available.','Open with a manual control or gap close after the opponent commits.','Use the damage macro only while your target is in range and you can safely finish the cast.']:p.opener;
+  const loop=a.context==='pvp'?['Use manual control, defensive Stigmas and Defiance (Space) around enemy burst.','Weave your safe damage skills when the target is in range; stop the macro during a chase or disengage.','Keep a mobility or peel skill ready instead of spending every cooldown for damage.']:p.loop;
+  $('rotation-opener').innerHTML=numbered(opener);$('rotation-loop').innerHTML=numbered(loop);
   $('macro-bind').value=macroKey;$('weave-basic-key').textContent=weaveKey;$('weave-macro-key').textContent=macroKey;
-  $('weave-guide').textContent=`Hold ${weaveKey} (${p.weave}) with ${macroKey} (the in-game Macro bind) as your default safe-damage state. Press manual keys over the held loop; they take priority.`;
+  $('weave-guide').textContent=a.context==='pvp'?`Tap ${weaveKey} + ${macroKey} only during safe pressure windows. Release the macro to move, peel, or answer an opponent's burst; manual control takes priority.`:`Hold ${weaveKey} (${p.weave}) with ${macroKey} (the in-game Macro bind) as your default safe-damage state. Press manual keys over the held loop; they take priority.`;
   $('rhythm-base-keys').textContent=`${weaveKey} + ${macroKey}`;
   $('rhythm-base-note').textContent=`Keep ${p.weave} held while Macro attempts ${macroSteps.join(' and ')}. Maintain this through safe damage uptime.`;
-  $('rhythm-weave-note').textContent=state.class==='templar'?'E handles Judgment and Pummel automatically. Time Punishment, Doom Shield and Shield of Protection by hand between Judgment windows or for boss mechanics.':p.kind==='healer'?'Press the needed 1–8 heal or support key; manual input wins. Shift fully to healing when the group is in danger.':'Press or hold a 1–8 skill at its cue. During safe uptime, keep the base held; manual input wins over the macro.';
+  $('rhythm-weave-note').textContent=a.context==='pvp'?'Keep control, escape and defensive keys manual. Use the Stigmas tab for this PvP loadout; press the macro only for safe pressure.':state.class==='templar'?'E handles Judgment and Pummel automatically. Time Punishment, Doom Shield and Shield of Protection by hand between Judgment windows or for boss mechanics.':p.kind==='healer'?'Press the needed 1–8 heal or support key; manual input wins. Shift fully to healing when the group is in danger.':'Press or hold a 1–8 skill at its cue. During safe uptime, keep the base held; manual input wins over the macro.';
   $('rhythm-pause-note').textContent=p.kind==='healer'?`Release ${macroKey} and ${weaveKey} for healing triage or mechanics. Restart both when damage is safe.`:`Release ${macroKey} to stop Macro; release ${weaveKey} too when all attacks must stop. Pause Macro if a charge gets clipped.`;
   $('hotbar-grid').innerHTML=hotbar.map(([skills,cue,tone],i)=>`<article class="hotbar-card tone-${esc(tone)}"><div class="hotbar-top"><span class="hotbar-number">${i+1}</span><small>${esc(tone)}</small></div><div class="hotbar-skills">${skills.length?skills.map(name=>`<strong>${esc(name)}</strong>`).join(''):'<strong>Flex slot</strong>'}</div><p>${esc(cue)}</p></article>`).join('');
-  $('hotbar-note').textContent=`Defiance shares Space with jump/glide by default for every class; it does not consume a number-bar slot. Optional: turn on Separate Defiance Hotkey and give it a dedicated nearby key to avoid accidental glides. ${fusionCharged?'Elemental Fusion has a charge specialty at this level, so put it on 7 and remove it from macro E. Keep Wind Spirit on a secondary row.':p.hotbarNote}`;
+  $('hotbar-note').textContent=`Defiance shares Space with jump/glide by default for every class; it does not consume a number-bar slot. Optional: turn on Separate Defiance Hotkey and give it a dedicated nearby key to avoid accidental glides. ${a.context==='pvp'?'The 1–8 bar includes this PvP Stigma set. Place matchup-specific control and defense where your hand can reach them.':a.context==='solo'?'The 1–8 bar includes the Solo Stigma set; keep its recovery and movement keys manual.':fusionCharged?'Elemental Fusion has a charge specialty at this level, so put it on 7 and remove it from macro E. Keep Wind Spirit on a secondary row.':p.hotbarNote}`;
   const stackHtml=stacks.map(s=>`<div class="macro-stack"><div class="stack-heading"><span class="keycap">${esc(s.key)}</span><div><strong>${esc(s.title)}</strong><small>${s.manual?'Manual key':'Macro hotbar key'}</small></div></div>${s.skills.map((name,i)=>`<div class="stack-row"><b>Row ${i}</b><span>${esc(name)}</span></div>`).join('')}</div>`).join('');
   const script=`<div class="macro-stack macro-script"><div class="stack-heading"><span class="keycap">${esc(macroKey)}</span><div><strong>In-game Macro steps</strong><small>Bind Macro to ${esc(macroKey)}</small></div></div>${macroSteps.map((key,i)=>`<div class="stack-row"><b>Step ${i+1}</b><span>${esc(key)} · 10 ms</span></div>`).join('')}<div class="stack-row"><b>Hold</b><span>${esc(fusionCharged?'Hold Cold Shock with the Macro key; charge Elemental Fusion on 7 by hand.':p.hold)}</span></div></div>`;
   $('macro-stacks').innerHTML=stackHtml+script;
@@ -135,12 +163,15 @@ function renderRotation(m){
   $('manual-keys').innerHTML=p.manual.map(v=>`<div class="manual-key"><b>${esc(v.split(' — ')[0])}</b><small>${esc(v.split(' — ')[1]||'Manual timing')}</small></div>`).join('');
 }
 function renderBoards(m){
-  const a=account(),nodes=nodeMap();$('board-spent').textContent=`${m.boards.spent} / ${a.crystals} spent`;
-  const wanted=profile().kind==='healer'?[['Defense','Defense'],['HPMax','Max HP'],['CombatSpeed','Combat Speed'],['CoolTimeDecrease','Cooldown Reduction']]:[['AmplifyAllDamage','Damage Boost'],['DecreaseDamage','Damage Tolerance'],['CombatSpeed','Combat Speed'],['CoolTimeDecrease','Cooldown Reduction']];
-  $('board-summary').innerHTML=wanted.map(([key,label])=>{const meta=data().stats[key],v=m.effects.stats[key]||0;return `<div><b>+${v/(meta?.div||1)}${meta?.pct?'%':''}</b><span>${label}</span></div>`}).join('');
-  $('board-tabs').innerHTML=data().boards.map(b=>`<button type="button" data-board="${b.name}" class="${state.board===b.name?'active':''}">${b.name}<small>${m.boards.perBoard[b.name]} / ${b.totalCost}</small></button>`).join('');
-  $('route-slider').max=a.crystals;state.preview=Math.min(state.preview,a.crystals);$('route-slider').value=state.preview;$('route-slider-value').textContent=state.preview;
-  const preview=boardPlan(state.preview),board=data().boards.find(b=>b.name===state.board),grid=new Map(board.nodes.map(n=>[`${n[1]}:${n[2]}`,n]));let html='';
+  const a=account(),nodes=nodeMap(),isAz=state.board==='Azphel',budget=isAz?(a.azphel||0):a.crystals,route=isAz?ROUTES[state.class].azphel:activeRoute(),plan=isAz?m.azphel:m.boards;
+  $('board-spent').textContent=a.context==='pvp'?`${m.boards.spent}/${a.crystals} PvE · ${m.azphel.spent}/${a.azphel||0} Azphel`:`${m.boards.spent} / ${a.crystals} PvE crystals`;
+  const wanted=isAz?[['PvPAmplifyDamage','PvP Damage Boost'],['PvPDecreaseDamage','PvP Damage Tolerance'],['AbnormalResistance','Status Resist'],['PvPAddDamage','PvP Attack']]:profile().kind==='healer'?[['Defense','Defense'],['HPMax','Max HP'],['CombatSpeed','Combat Speed'],['CoolTimeDecrease','Cooldown Reduction']]:[['AmplifyAllDamage','Damage Boost'],['DecreaseDamage','Damage Tolerance'],['CombatSpeed','Combat Speed'],['CoolTimeDecrease','Cooldown Reduction']];
+  const shownEffects=isAz?m.azphelEffects:m.effects;
+  $('board-summary').innerHTML=wanted.map(([key,label])=>{const meta=data().stats[key],v=shownEffects.stats[key]||0;return `<div><b>+${v/(meta?.div||1)}${meta?.pct?'%':''}</b><span>${label}</span></div>`}).join('');
+  const available=a.context==='pvp'?allBoards():data().boards;
+  $('board-tabs').innerHTML=available.map(b=>`<button type="button" data-board="${b.name}" class="${state.board===b.name?'active':''}">${b.name}<small>${(b.name==='Azphel'?m.azphel:m.boards).perBoard[b.name]} / ${b.totalCost}</small></button>`).join('');
+  $('route-slider').max=budget;state.preview=Math.min(state.preview,budget);$('route-slider').value=state.preview;$('route-slider-value').textContent=state.preview;
+  const preview=boardPlan(state.preview,isAz),board=available.find(b=>b.name===state.board),grid=new Map(board.nodes.map(n=>[`${n[1]}:${n[2]}`,n]));let html='';
   for(let r=1;r<=15;r++)for(let c=1;c<=15;c++){const n=grid.get(`${r}:${c}`);if(!n){html+='<span></span>';continue}const owned=preview.owned.has(n[0])||n[5]===0,kind=n[5]===0?'start':n[5]===4?'unique':typeof n[6]?.[0]?.[0]==='number'?'skill':'stat';html+=`<button type="button" class="node ${kind} ${owned?'owned':''} ${preview.next?.id===n[0]?'next':''} ${state.node===n[0]?'selected':''}" data-node="${n[0]}" title="${esc(effectText(n))}" aria-label="${esc(effectText(n))}; row ${r}, column ${c}; ${owned?'owned':'future'}"><span>${nodeShort(n)}</span></button>`}
   $('board-grid').innerHTML=html;const selected=state.node&&nodes.get(state.node)?.board===state.board?nodes.get(state.node).node:null;
   $('selected-node').innerHTML=selected?`<strong>${esc(effectText(selected))}</strong><small>Row ${selected[1]}, column ${selected[2]} · ${selected[5]} crystal${selected[5]===1?'':'s'} · ${preview.owned.has(selected[0])||selected[5]===0?'In preview':'Future'}</small>`:`<strong>${state.board}</strong><small>Tap any node. Green and gold nodes are in the route; the outlined node is next.</small>`;
@@ -149,14 +180,33 @@ function renderBoards(m){
   const statLabel={FixingDamage:'Attack Bonus',Defense:'Defense Bonus',HPMax:'HP',MPMax:'MP'};
   const effectRows=[...Object.entries(boardSkills).map(([name,value])=>[name,`+${value}`]),...Object.entries(boardStats).map(([key,value])=>{const meta=data().stats[key];return [statLabel[key]||meta?.name||key,`+${value/(meta?.div||1)}${meta?.pct?'%':''}`]})];
   $('board-effect-list').innerHTML=effectRows.length?effectRows.map(([name,value])=>`<div><span>${esc(name)}</span><b>${esc(value)}</b></div>`).join(''):'<span class="empty">No purchased effects yet.</span>';
-  let spent=0,number=0,boardSpent=0;const rows=[];for(const x of data().route){const n=nodes.get(x.id).node;spent+=n[5];if(x.board!==state.board)continue;number++;if(spent<=state.preview)boardSpent+=n[5];rows.push({number,spent,cost:n[5],label:effectText(n),id:x.id,row:n[1],col:n[2]})}
-  $('purchase-intro').textContent=`${boardSpent} crystals on ${state.board} at preview ${state.preview}. Click a purchase to locate it on the grid.`;
+  let spent=0,number=0,boardSpent=0;const rows=[];for(const x of route){const n=nodes.get(x.id).node;spent+=n[5];if(x.board!==state.board)continue;number++;if(spent<=state.preview)boardSpent+=n[5];rows.push({number,spent,cost:n[5],label:effectText(n),id:x.id,row:n[1],col:n[2]})}
+  $('purchase-intro').textContent=`${boardSpent} ${isAz?'Azphel':'PvE'} crystals on ${state.board} at preview ${state.preview}. Click a purchase to locate it on the grid.`;
   $('purchase-list').innerHTML=rows.map(x=>`<button type="button" data-purchase="${x.id}" class="purchase ${x.spent<=state.preview?'current':''}"><span class="n">${x.number}.</span><span>${esc(x.label)}<small>r${x.row} · c${x.col} · total ${x.spent}</small></span><span class="c">${x.cost} ✧</span></button>`).join('');
-  const priority=new Set(masteryStages().slice(0,12).map(x=>x[0]));let total=0;const upcoming=[];for(const x of data().route){const n=nodes.get(x.id).node;total+=n[5];if(total<=m.boards.spent)continue;if(n[5]===4||typeof n[6]?.[0]?.[0]==='number'&&priority.has(data().skills[n[6][0][0]]?.name))upcoming.push({total,board:x.board,label:effectText(n)});if(upcoming.length>=5)break}
+  const priority=new Set(masteryStages().slice(0,12).map(x=>x[0]));let total=0;const upcoming=[];for(const x of route){const n=nodes.get(x.id).node;total+=n[5];if(total<=plan.spent)continue;if(n[5]===4||typeof n[6]?.[0]?.[0]==='number'&&priority.has(data().skills[n[6][0][0]]?.name))upcoming.push({total,board:x.board,label:effectText(n)});if(upcoming.length>=5)break}
   $('board-next').innerHTML=upcoming.length?upcoming.map(x=>`<div class="next-unlock"><strong>${x.total} total</strong><span>${x.board}: ${esc(x.label)}</span></div>`).join(''):'<p>All key nodes on this route are funded.</p>';
-  const starter=data().starterCost;$('route-footnote').textContent=starter?`The first ${starter} crystals follow a published connected ${profile().name} PvE path. Later clicks are generated using that guide’s skill and stat priorities. This is a recommended route, not a measured performance optimum.`:'This Chanter route is generated from published healer skill and stat priorities. It is a connected recommendation, not the source’s published damage route or a measured healing optimum.';
+  const method=isAz?ROUTES[state.class].methods.azphel:ROUTES[state.class].methods[a.context];
+  $('route-footnote').textContent=`${method}. Each step touches an owned node. The generated order is a weighted recommendation, not a measured damage, healing or survival optimum. Azphel has its own currency and no skill levels.`;
+  const weights=isAz?{skills:{},stats:activeWeights()?.stats||{}}:activeWeights();
+  const topSkills=Object.entries(weights.skills||{}).sort((x,y)=>y[1]-x[1]).slice(0,3).map(x=>x[0]);
+  const topStats=Object.entries(weights.stats||{}).filter(([key])=>isAz?key.startsWith('PvP')||key.startsWith('Abnormal'):!key.startsWith('PvP')).sort((x,y)=>y[1]-x[1]).slice(0,3).map(([key])=>data().stats[key]?.name||key);
+  const boardPurpose={Nezekan:'Combat Speed and Cooldown Reduction corners support faster actions; inner branches give early skill ranks.',Zikel:'Damage Boost and Damage Tolerance corners trade offensive pressure against damage taken.',Vaizel:'Critical Damage Boost and Critical Damage Tolerance support burst and burst defense.',Triniel:'Multi-Hit Chance and Multi-Hit Resist support repeated hits and defense.',Azphel:'PvP Damage Boost, PvP Damage Tolerance and status resistance are the dedicated PvP gains.'};
+  const bought=rows.filter(x=>x.spent<=state.preview&&x.cost>=2).slice(-3).map(x=>x.label);
+  const nextRows=rows.filter(x=>x.spent>state.preview).slice(0,2).map(x=>x.label);
+  $('board-rationale').innerHTML=`<h3>Why this ${esc(state.board)} path?</h3><p><b>${esc({party:'Group PvE',solo:'Solo',pvp:'PvP'}[a.context])}:</b> ${esc(boardPurpose[state.board])}</p><p><b>Priority skills:</b> ${esc(topSkills.join(', ')||'Azphel has no skill nodes')}. <b>Priority stats:</b> ${esc(topStats.join(', '))}.</p><p><b>At ${state.preview} crystals:</b> ${esc(bought.join(' · ')||'follow the connected approach to the first key node')}.</p><p><b>Next on this board:</b> ${esc(nextRows.join(' → ')||'this board is fully planned')}.</p><p><b>Route basis:</b> ${esc(method)}. Stat and skill weights come from the linked class board guide.</p><a href="${esc(data().sources.route)}" target="_blank" rel="noopener noreferrer">See source route and weights ↗</a>`;
 }
 function titleName(t,faction){return typeof t.name==='string'?t.name:t.name[faction]}
+const TITLE_BY_NAME=new Map(TITLE_CATALOG.map(t=>[t.name.toLowerCase(),t]));
+const TITLE_BY_ID=new Map(TITLE_CATALOG.map(t=>[t.id,t]));
+function titleKey(t,faction){return TITLE_BY_NAME.get(titleName(t,faction).toLowerCase())?.id||t.id}
+function titleOwned(t,owned,faction){return !!(owned[titleKey(t,faction)]||owned[t.id])}
+function eligibleTitle(t,faction){return t.faction==='Both factions'||t.faction.toLowerCase()===faction}
+function titleScore(t,slot,context){
+  const s=t.equip||'',n=(pattern)=>Number((s.match(pattern)?.[1]||'0').replace(/,/g,'')),pvp=context==='pvp',tank=state.class==='templar',healer=profile().kind==='healer';
+  if(slot==='Attack')return (pvp?n(/PvP Damage Boost \+([\d.]+)%/)*140:n(/PvE Damage Boost \+([\d.]+)%/)*140)+n(/(?:^|, )Damage Boost \+([\d.]+)%/)*95+n(/Attack Bonus \+([\d.]+)/)*2+n(/Critical Hit \+([\d.]+)/)*.4+n(/PvP Attack \+([\d.]+)/)*2;
+  if(slot==='Defense')return n(/Boss Damage Tolerance \+([\d.]+)%/)*(tank&&!pvp?160:55)+n(/PvE Damage Tolerance \+([\d.]+)%/)*(pvp?15:100)+n(/PvP Damage Tolerance \+([\d.]+)%/)*(pvp?150:10)+n(/(?:^|, )Damage Tolerance \+([\d.]+)%/)*90+n(/HP \+([\d,]+)/)*.08+n(/Defense Bonus \+([\d,]+)/)*.23+n(/Block \+([\d,]+)/)*.3;
+  return n(/Cooldown Reduction \+([\d.]+)%/)*(healer?115:90)+n(/Combat Speed \+([\d.]+)%/)*75+n(/HP \+([\d,]+)/)*(tank||healer?0.1:0.05)+n(/Move Speed \+([\d.]+)%/)*25+n(/Stamina \+([\d,]+)/)*.05;
+}
 function titlePriority(slot){
   if(slot==='Attack')return ['unbound','guardian','nice','cube'];
   if(slot==='Defense')return state.class==='templar'?['rule','dominator','saint','hello']:['dominator','saint','rule','hello'];
@@ -165,44 +215,70 @@ function titlePriority(slot){
 function renderTitles(){
   const a=account(),owned=a.titlesOwned ||= {},faction=a.faction==='asmodian'?'asmodian':'elyos';
   $('faction-select').value=faction;
-  const count=TITLES.filter(t=>owned[t.id]).length;
-  $('titles-count').textContent=`${count} / ${TITLES.length} tracked earned`;
-  $('titles-role-note').textContent=state.class==='templar'?'Templar: prioritize boss tolerance and a cooldown/HP Other title while retaining an Attack title for threat and damage.':profile().kind==='healer'?'Healer: the Attack title supports damage between heals; Defense and Other improve survival and cooldown uptime. These titles do not directly add a verified heal multiplier.':'Damage class: the Attack slot is your PvE damage title; Defense and Other preserve uptime and survivability.';
+  const count=TITLE_CATALOG.filter(t=>owned[t.id]&&eligibleTitle(t,faction)).length;
+  $('titles-count').textContent=`${count} earned · ${TITLE_CATALOG.length} titles listed`;
+  $('titles-role-note').textContent=a.context==='pvp'?'PvP: favor PvP Damage Boost, PvP Damage Tolerance and escape or cooldown uptime; equip picks use a simple effect heuristic, so compare the matchup.':state.class==='templar'?'Templar: prioritize boss tolerance and a cooldown/HP Other title while retaining an Attack title for threat and damage.':profile().kind==='healer'?'Healer: the Attack title supports damage between heals; Defense and Other improve survival and cooldown uptime. These titles do not directly add a verified heal multiplier.':'Damage class: the Attack slot is your PvE damage title; Defense and Other preserve uptime and survivability.';
   const previews=[];
   $('title-grid').innerHTML=['Attack','Defense','Other'].map(slot=>{
-    const priority=titlePriority(slot),items=priority.map(id=>TITLES.find(t=>t.id===id)),pick=items.find(t=>owned[t.id]),pickIndex=pick?priority.indexOf(pick.id):priority.length;
-    const upgrade=items.slice(0,pickIndex).reverse().find(t=>!owned[t.id]);
-    const collection=items.slice().reverse().find(t=>!owned[t.id]);
+    const priority=titlePriority(slot),items=priority.map(id=>TITLES.find(t=>t.id===id)),available=TITLE_CATALOG.filter(t=>t.slot===slot&&eligibleTitle(t,faction)&&owned[t.id]);
+    const pick=available.sort((x,y)=>titleScore(y,slot,a.context)-titleScore(x,slot,a.context))[0];
+    const bestCurated=items.find(t=>titleOwned(t,owned,faction));
+    const pickIndex=bestCurated?priority.indexOf(bestCurated.id):priority.length;
+    const upgrade=items.slice(0,pickIndex).reverse().find(t=>!titleOwned(t,owned,faction));
+    const collection=items.slice().reverse().find(t=>!titleOwned(t,owned,faction));
     const next=upgrade||collection;
-    previews.push(`${slot}: ${pick?titleName(pick,faction):'none marked earned'}`);
-    return `<article class="title-column"><div class="title-slot">${slot} slot</div><h3>${pick?esc(titleName(pick,faction)):'No earned title marked'}</h3><p class="title-current">${pick?`Equip now · ${esc(pick.equip)}`:'Mark a title below when your character earns it.'}</p><div class="title-next"><b>${upgrade?pick?'Next upgrade':'First title to earn':next?'Next collection':'Path complete'}</b><span>${next?`${esc(titleName(next,faction))} · ${esc(next.earn)}`:'Every title on this curated path is marked earned.'}</span></div><div class="title-options">${items.slice().reverse().map(t=>`<div class="title-option ${owned[t.id]?'earned':''}"><label><input type="checkbox" data-title="${t.id}" ${owned[t.id]?'checked':''}><strong>${esc(titleName(t,faction))}</strong></label><small><b>Equipped:</b> ${esc(t.equip)}</small><small><b>Owned:</b> ${esc(t.owned)}</small><small><b>Earn:</b> ${esc(t.earn)}</small><a href="${esc(t.url)}" target="_blank" rel="noopener noreferrer">Check source ↗</a></div>`).join('')}</div></article>`
+    previews.push(`${slot}: ${pick?pick.name:'none marked earned'}`);
+    return `<article class="title-column"><div class="title-slot">${slot} slot</div><h3>${pick?esc(pick.name):'No earned title marked'}</h3><p class="title-current">${pick?`Equip now · ${esc(pick.equip)}`:'Mark a title below or in the full catalog when earned.'}</p><div class="title-next"><b>${upgrade?pick?'Next path upgrade':'First path title':next?'Next collection':'Path complete'}</b><span>${next?`${esc(titleName(next,faction))} · ${esc(next.earn)}`:'Every title on this suggested path is marked earned.'}</span></div><div class="title-options">${items.slice().reverse().map(t=>`<div class="title-option ${titleOwned(t,owned,faction)?'earned':''}"><label><input type="checkbox" data-title="${esc(titleKey(t,faction))}" data-legacy-title="${t.id}" ${titleOwned(t,owned,faction)?'checked':''}><strong>${esc(titleName(t,faction))}</strong></label><small><b>Equipped:</b> ${esc(t.equip)}</small><small><b>Owned:</b> ${esc(t.owned)}</small><small><b>Earn:</b> ${esc(t.earn)}</small><a href="${esc(t.url)}" target="_blank" rel="noopener noreferrer">Check source ↗</a></div>`).join('')}</div></article>`
   }).join('');
-  $('title-preview').textContent=`${previews.join(' · ')}. Owned effects from all earned titles stay active after a swap. Open the path to mark what this character owns.`;
+  $('title-preview').textContent=`${previews.join(' · ')}. Every earned collection effect stays active. Search all ${TITLE_CATALOG.length} titles in the Titles tab.`;
+  renderTitleCatalog();
+}
+function renderTitleCatalog(){
+  const a=account(),owned=a.titlesOwned||{},query=state.titleSearch.trim().toLowerCase();
+  $('title-search').value=state.titleSearch;$('title-slot-filter').value=state.titleSlot;$('title-owned-filter').value=state.titleOwnership;$('title-faction-filter').value=state.titleFaction;
+  const items=TITLE_CATALOG.filter(t=>{
+    if(state.titleSlot!=='all'&&(t.slot||'Cosmetic')!==state.titleSlot)return false;
+    if(state.titleOwnership==='owned'&&!owned[t.id]||state.titleOwnership==='unowned'&&owned[t.id])return false;
+    if(state.titleFaction==='character'&&!eligibleTitle(t,a.faction))return false;
+    return !query||[t.name,t.group,t.grade,t.faction,t.slot||'Cosmetic',t.equip,t.owned,t.source].some(v=>String(v).toLowerCase().includes(query));
+  });
+  $('title-catalog-count').textContent=`Showing ${items.length} of ${TITLE_CATALOG.length} Global titles`;
+  $('title-catalog-list').innerHTML=items.length?items.map(t=>`<article class="catalog-title ${owned[t.id]?'earned':''}"><label><input type="checkbox" data-catalog-title="${esc(t.id)}" ${owned[t.id]?'checked':''} aria-label="Earned ${esc(t.name)}"><strong>${esc(t.name)}</strong></label><div class="catalog-badges"><span>${esc(t.slot||'Cosmetic')}</span><span>${esc(t.grade)}</span><span>${esc(t.faction)}</span><span>${esc(t.group)}</span></div><p><b>Equipped:</b> ${esc(t.equip)} <b>Owned:</b> ${esc(t.owned)}</p><small><b>Earn:</b> ${esc(t.source)} · <a href="${esc(t.url)}" target="_blank" rel="noopener noreferrer">source ↗</a></small></article>`).join(''):'<p class="empty">No titles match those filters.</p>';
 }
 function renderSources(){
   const d=data(),p=profile();const cards=[
     ['Fresh Global 45 totals','The Global client leveling tables give 203 Mastery points, 29 Stigma points, four slots and 136 Daevanion crystals by level 45. Other rewards are additional.',`https://metabot.gg/en/aion-2/leveling`,'Open level table'],
     ['Combat Power calculation','The game calculates Combat Power server-side. Gear, boards and other permanent systems contribute; the client files do not provide a formula for predicting your final score.',`https://aion2data.com/get-stronger`,'Open stat sources'],
     ['Global client nodes','Board positions, costs, effects and skill names from Aion2Data Global client tables. Compare tooltips after a patch.',d.sources.nodes,'Open board data'],
-    ['Connected route & weights',state.class==='chanter'?'Healer skill and stat weights guide the generated connected route.':'The published early route is preserved; the continuation follows class skill and stat priorities.',d.sources.route,'Open class route'],
+    ['Context routes & weights',`Group, Solo and PvP follow different connected routes. ${ROUTES[state.class].methods[account().context]}. Azphel is a separately funded PvP board.`,d.sources.route,'Open class route'],
     ['Specialty choices','Aion2Codex class guide PvE picks and option text; gear or Arcana can unlock later choices. Compare live tooltips.',`https://aion2codex.com/guides/${state.class}`,'Open specialties'],
     ['Stigmas and skills','Global class skill and stigma effects; the four chosen slots prioritize this planner’s role.',`https://aion2.grimvane.app/companion/wiki/${state.class}-skills/`,'Open class skills'],
     ['Macro setup','The in-game macro uses hotbar keys, up to four skills per stack and delays per step. The layouts are starting points.',state.class==='templar'?`https://mobalytics.gg/gamebase/guides/aion-2-templar-pve-build`:`https://aion2.grimvane.app/companion/wiki/macros-guide/`,'Open macro guide'],
     ['1–8 key layout','The number-key placement is this planner’s ergonomic recommendation. Defiance shares Space with jump/glide by default; the separate Defiance key setting is optional.',`https://couga54.github.io/aion2-guides/en/settings/`,'Open control settings'],
-    ['Titles to earn and equip','Global title equip and collection effects, acquisition paths, and the three title slots. The curated title path uses owned checkboxes; it does not assume a fresh 45 already owns any title.',`https://metabot.gg/en/aion-2/guides/titles-guide`,'Open Global title guide'],
+    ['All Global titles','The searchable catalog includes 528 Global titles in the current source, including cosmetic titles and both faction variants. Equipped recommendations use earned titles and a simple role heuristic.',`https://metabot.gg/en/aion-2/titles`,'Open Global title catalog'],
     ['Class build context',`${p.name} is planned as ${p.role.toLowerCase()}. Compare alternate damage or support presets before swapping roles.`,`https://metabot.gg/en/aion-2/guides/class-builds-guide`,'Open all-class guide']
   ];$('source-cards').innerHTML=cards.map(([title,body,url,label])=>`<div class="source-card"><b>${esc(title)}</b><p>${esc(body)}</p><a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(label)} ↗</a></div>`).join('');
 }
 document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{state.tab=b.dataset.tab;render()}));
 $('class-buttons').addEventListener('click',e=>{const b=e.target.closest('[data-class]');if(!b)return;state.class=b.dataset.class;state.board='Nezekan';state.preview=account().crystals;state.node=null;render()});
 function useBudget(values){Object.assign(account(),values);state.preview=account().crystals;state.node=null;render()}
-$('fresh-45-button').addEventListener('click',()=>useBudget(FRESH_45));
-for(const [id,key,max] of [['mastery-input','mastery',462],['stigma-input','stigma',300],['crystal-input','crystals',570]])$(id).addEventListener('change',e=>{account()[key]=clamp(e.target.value,0,max);if(key==='crystals')state.preview=account().crystals;render()});
-for(const [id,ctx] of [['party-button','party'],['solo-button','solo']])$(id).addEventListener('click',()=>{account().context=ctx;render()});
+$('fresh-45-button').addEventListener('click',()=>useBudget({...FRESH_45,azphel:0}));
+for(const [id,key,max] of [['mastery-input','mastery',462],['stigma-input','stigma',300],['crystal-input','crystals',570]]){
+  $(id).addEventListener('input',e=>{account()[key]=clamp(e.target.value,0,max);if(key==='crystals'&&state.board!=='Azphel')state.preview=account().crystals;save()});
+  $(id).addEventListener('change',e=>{account()[key]=clamp(e.target.value,0,max);if(key==='crystals'&&state.board!=='Azphel')state.preview=account().crystals;render()});
+}
+$('azphel-input').addEventListener('input',e=>{account().azphel=clamp(e.target.value,0,232);if(state.board==='Azphel')state.preview=account().azphel;save()});
+$('azphel-input').addEventListener('change',e=>{account().azphel=clamp(e.target.value,0,232);if(state.board==='Azphel')state.preview=account().azphel;render()});
+for(const [id,ctx] of [['party-button','party'],['solo-button','solo'],['pvp-button','pvp']])$(id).addEventListener('click',()=>{account().context=ctx;if(ctx!=='pvp'&&state.board==='Azphel')state.board='Nezekan';state.preview=state.board==='Azphel'?(account().azphel||0):account().crystals;render()});
 $('macro-bind').addEventListener('change',e=>{account().macroBind=e.target.value;render()});
 $('title-open').addEventListener('click',()=>{state.tab='titles';render();document.querySelector('.tabs').scrollIntoView({behavior:'smooth',block:'start'})});
 $('faction-select').addEventListener('change',e=>{account().faction=e.target.value==='asmodian'?'asmodian':'elyos';render()});
-$('title-grid').addEventListener('change',e=>{const id=e.target.dataset.title;if(!id||!TITLES.some(t=>t.id===id))return;account().titlesOwned ||= {};account().titlesOwned[id]=e.target.checked;render()});
+$('title-grid').addEventListener('change',e=>{const id=e.target.dataset.title;if(!id||!TITLE_BY_ID.has(id))return;account().titlesOwned ||= {};delete account().titlesOwned[e.target.dataset.legacyTitle];account().titlesOwned[id]=e.target.checked;render()});
+$('title-catalog-list').addEventListener('change',e=>{const id=e.target.dataset.catalogTitle;if(!id||!TITLE_BY_ID.has(id))return;account().titlesOwned ||= {};account().titlesOwned[id]=e.target.checked;render()});
+$('title-search').addEventListener('input',e=>{state.titleSearch=e.target.value;renderTitleCatalog()});
+$('title-slot-filter').addEventListener('change',e=>{state.titleSlot=e.target.value;renderTitleCatalog()});
+$('title-owned-filter').addEventListener('change',e=>{state.titleOwnership=e.target.value;renderTitleCatalog()});
+$('title-faction-filter').addEventListener('change',e=>{state.titleFaction=e.target.value;renderTitleCatalog()});
 $('reset-button').addEventListener('click',()=>{state.accounts[state.class]=DEFAULT_ACCOUNT(state.class);state.preview=FRESH_45.crystals;state.node=null;render()});
 for(const [id,key] of [['goal-target','goalTarget'],['goal-observed','goalObserved']])$(id).addEventListener('change',e=>{account()[key]=clamp(e.target.value,0,1000000000);render()});
 $('skill-grid').addEventListener('change',e=>{
@@ -215,8 +291,8 @@ $('skill-grid').addEventListener('change',e=>{
     render();
   }
 });
-$('board-tabs').addEventListener('click',e=>{const b=e.target.closest('[data-board]');if(b){state.board=b.dataset.board;state.node=null;renderBoards(model())}});
+$('board-tabs').addEventListener('click',e=>{const b=e.target.closest('[data-board]');if(b){state.board=b.dataset.board;state.preview=state.board==='Azphel'?(account().azphel||0):account().crystals;state.node=null;renderBoards(model())}});
 $('board-grid').addEventListener('click',e=>{const b=e.target.closest('[data-node]');if(b){state.node=Number(b.dataset.node);renderBoards(model())}});
 $('purchase-list').addEventListener('click',e=>{const b=e.target.closest('[data-purchase]');if(b){state.node=Number(b.dataset.purchase);renderBoards(model())}});
-$('route-slider').addEventListener('input',e=>{state.preview=clamp(e.target.value,0,account().crystals);renderBoards(model())});
+$('route-slider').addEventListener('input',e=>{state.preview=clamp(e.target.value,0,state.board==='Azphel'?(account().azphel||0):account().crystals);renderBoards(model())});
 state.preview=state.class?account().crystals:FRESH_45.crystals;render();

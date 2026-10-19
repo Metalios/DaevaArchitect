@@ -7,6 +7,9 @@ const specs = JSON.parse(fs.readFileSync(new URL('specialties.json', root), 'utf
 const stigmas = JSON.parse(fs.readFileSync(new URL('stigmas.json', root), 'utf8'));
 const profiles = vm.runInNewContext(fs.readFileSync(new URL('profiles.js', root), 'utf8')+'\nPROFILES');
 const titles = vm.runInNewContext(fs.readFileSync(new URL('titles.js', root), 'utf8')+'\nTITLES');
+const catalog = JSON.parse(fs.readFileSync(new URL('titles_catalog.json', root), 'utf8'));
+const routes = JSON.parse(fs.readFileSync(new URL('context_routes.json', root), 'utf8'));
+const azphel = JSON.parse(fs.readFileSync(new URL('azphel_data.json', root), 'utf8'));
 const classes = ['templar','gladiator','assassin','ranger','sorcerer','spiritmaster','cleric','chanter'];
 const assert = (okay, message) => {if(!okay) throw new Error(message)};
 
@@ -63,6 +66,26 @@ for(const slug of classes){
     owned[item.board].add(item.id);cost+=n[5];
   }
   assert(cost===570,`${slug}: board cost ${cost}`);
+  function checkRoute(boards,route,expected,mode){
+    const boardMap=Object.fromEntries(boards.map(b=>[b.name,b]));
+    const seen=Object.fromEntries(boards.map(b=>[b.name,new Set(b.nodes.filter(n=>n[5]===0).map(n=>n[0]))]));
+    const at=Object.fromEntries(boards.map(b=>[b.name,new Map(b.nodes.map(n=>[`${n[1]}:${n[2]}`,n]))]));
+    const byId=Object.fromEntries(boards.map(b=>[b.name,new Map(b.nodes.map(n=>[n[0],n]))]));
+    let total=0;
+    for(const [index,item] of route.entries()){
+      const n=byId[item.board]?.get(item.id);
+      assert(n&&!seen[item.board].has(item.id),`${slug} ${mode}: invalid node ${index+1}`);
+      assert([[n[1]-1,n[2]],[n[1]+1,n[2]],[n[1],n[2]-1],[n[1],n[2]+1]].some(([r,c])=>{const adj=at[item.board].get(`${r}:${c}`);return adj&&seen[item.board].has(adj[0])}),`${slug} ${mode}: disconnected node ${index+1}`);
+      seen[item.board].add(item.id);total+=n[5];
+    }
+    assert(total===expected,`${slug} ${mode}: route cost ${total}`);
+    assert(route.length===Object.values(boardMap).reduce((n,b)=>n+b.nodes.filter(x=>x[5]>0).length,0),`${slug} ${mode}: incomplete route`);
+  }
+  for(const mode of ['party','solo','pvp'])checkRoute(d.boards,routes[slug][mode],570,mode);
+  if(slug==='templar')assert(JSON.stringify(routes[slug].party)===JSON.stringify(d.route),'templar: Group route must preserve screenshot-reviewed hybrid');
+  assert(azphel[slug].name==='Azphel'&&azphel[slug].totalCost===232,`${slug}: missing Azphel`);
+  checkRoute([azphel[slug]],routes[slug].azphel,232,'Azphel');
+  assert(JSON.stringify(routes[slug].party.slice(0,100))!==JSON.stringify(routes[slug].solo.slice(0,100)),`${slug}: group/solo route unchanged`);
   if(slug==='templar'){
     let spent=0;
     const bonuses={},byBoard={};
@@ -94,3 +117,6 @@ for(const t of titles){
   assert(typeof t.name==='string'||t.name.elyos&&t.name.asmodian,`titles: missing faction variant for ${t.id}`);
 }
 console.log('titles: 12 curated, faction-aware progression entries');
+assert(catalog.length===528&&new Set(catalog.map(t=>t.id)).size===528,'titles: incomplete or duplicate Global catalog');
+for(const t of titles)for(const name of typeof t.name==='string'?[t.name]:Object.values(t.name))assert(catalog.some(x=>x.name===name),`titles: curated ${name} missing from catalog`);
+console.log('titles: 528 searchable Global catalog entries');

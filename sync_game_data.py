@@ -118,10 +118,11 @@ def guide_data(slug: str, boards: list[dict]) -> tuple[list[dict], dict, dict, i
 
 
 def connected_route(boards: list[dict], starter: list[dict], skill_names: dict, skill_weights: dict, stat_weights: dict) -> list[dict]:
+    board_names = tuple(board['name'] for board in boards)
     board_by_name = {board['name']: board for board in boards}
     node_by_id = {node[0]: node for board in boards for node in board['nodes']}
     graphs = {}
-    owned = {name: set() for name in BOARD_NAMES}
+    owned = {name: set() for name in board_names}
     for board in boards:
         nodes = {node[0]: node for node in board['nodes']}
         positions = {(node[1], node[2]): node[0] for node in board['nodes']}
@@ -177,9 +178,9 @@ def connected_route(boards: list[dict], starter: list[dict], skill_names: dict, 
             yield target, list(reversed(path))
 
     route = list(starter)
-    while any(len(owned[name]) < len(graphs[name][0]) for name in BOARD_NAMES):
+    while any(len(owned[name]) < len(graphs[name][0]) for name in board_names):
         best = None
-        for name in BOARD_NAMES:
+        for name in board_names:
             for target, path in paths(name):
                 if not path:
                     continue
@@ -196,7 +197,7 @@ def connected_route(boards: list[dict], starter: list[dict], skill_names: dict, 
                 item = {'board': name, 'id': node_id}
                 validate(item, len(route)+1)
                 route.append(item)
-    assert sum(node_by_id[item['id']][5] for item in route) == 570
+    assert sum(node_by_id[item['id']][5] for item in route) == sum(board['totalCost'] for board in boards)
     return route
 
 
