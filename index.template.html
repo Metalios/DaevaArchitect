@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#071016">
+  <meta name="description" content="AION 2 Global Templar hybrid tank and DPS progression planner for mastery, stigma and Daevanion boards.">
+  <title>AION 2 Templar Pathfinder · Global PvE build planner</title>
+  <style>/*STYLES*/</style>
+</head>
+<body>
+  <header class="hero"><div class="hero-inner">
+    <div class="eyebrow">AION 2 · Global PvE · NA East</div>
+    <h1>Path of the Aegis</h1>
+    <p>A Templar build that keeps the boss on you while turning blocks, shield windows and core attacks into damage. Set your point totals to see what to buy now and what opens next.</p>
+    <div class="hero-tags"><span>Level 45 starting point</span><span>Connected board click order</span><span>Specialties by effective skill level</span><span>Local save · works offline</span></div>
+  </div></header>
+  <main>
+    <div class="controls" aria-label="Build inputs">
+      <div class="control"><label for="mastery-input">Mastery points</label><div class="inputrow"><input id="mastery-input" type="number" min="0" max="462" step="1" value="285"><span class="unit">/ 462</span></div><small>Ranks from the skill window</small></div>
+      <div class="control"><label for="stigma-input">Stigma points</label><div class="inputrow"><input id="stigma-input" type="number" min="0" max="375" step="1" value="30"><span class="unit">available</span></div><small>Separate shard pool</small></div>
+      <div class="control"><label for="crystal-input">Daevanion crystals</label><div class="inputrow"><input id="crystal-input" type="number" min="0" max="570" step="1" value="218"><span class="unit">/ 570</span></div><small>Four shared PvE boards</small></div>
+      <div class="control"><span class="label">Where are you playing?</span><div class="seg" role="group" aria-label="Play context"><button id="party-button" type="button" class="active" aria-pressed="true">Party tank</button><button id="solo-button" type="button" aria-pressed="false">Solo farm</button></div><small>Changes specialty and bar suggestions</small></div>
+    </div>
+    <div class="introline"><span>Plan based on Global board data and creator builds reviewed October 18, 2026. Point totals mean your <b>total to allocate</b> after a reset.</span><button class="text-button" id="reset-button" type="button">Reset to 285 / 30 / 218</button></div>
+    <nav class="tabs" aria-label="Planner sections">
+      <button type="button" class="active" data-tab="overview" aria-current="page">Build now</button>
+      <button type="button" data-tab="mastery">Mastery & specialties</button>
+      <button type="button" data-tab="stigma">Stigmas</button>
+      <button type="button" data-tab="rotation">Rotation & macro</button>
+      <button type="button" data-tab="boards">Daevanion boards</button>
+      <button type="button" data-tab="sources">Research notes</button>
+    </nav>
+    <section id="overview" class="tab-panel active" aria-label="Build now">
+      <div class="section-title"><div><h2>Your current path</h2><p>Recommended hybrid PvE setup at your entered totals.</p></div><span class="tag gold">Damage + survival</span></div>
+      <div id="kpis" class="kpi-grid"></div>
+      <div class="two-col">
+        <div class="panel"><h3>Put these in first</h3><ol id="now-steps" class="steps"></ol></div>
+        <div class="panel"><h3>As your points grow</h3><div id="next-unlocks"></div><div class="notice">Specialties use <b>effective skill level</b>: mastery rank + board nodes + gear or Arcana. The level 16 option can replace an equipped choice; a third slot opens at 20.</div></div>
+      </div>
+    </section>
+    <section id="mastery" class="tab-panel" aria-label="Mastery and specialties">
+      <div class="section-title"><div><h2>Mastery & specialties</h2><p>Every rank is priced from the Global skill point curve. Gear and Arcana bonuses are editable per skill.</p></div><span id="mastery-spent" class="tag blue"></span></div>
+      <div class="notice" style="margin:0 0 17px">At rank 8, choose one of the first three specialties. Rank 12 opens option 4 and a second slot. Rank 16 opens option 5; rank 20 adds a third slot. This page marks the choices you can equip now and the ones to chase next.</div>
+      <div id="skill-grid" class="skill-grid"></div>
+    </section>
+    <section id="stigma" class="tab-panel" aria-label="Stigmas">
+      <div class="section-title"><div><h2>Four slots, one shared shard pool</h2><p>The 30-point setup reaches useful level 5 perks on all four equipped stigmas and Noble Armor's level 10 breakpoint.</p></div><span id="stigma-spent" class="tag green"></span></div>
+      <div class="panel" style="margin-bottom:15px"><h3 id="loadout-title">Party tank bar</h3><p id="loadout-text"></p><div id="loadout-tags"></div></div>
+      <div id="stigma-grid" class="stigma-grid"></div>
+    </section>
+    <section id="rotation" class="tab-panel" aria-label="Rotation and macro">
+      <div class="section-title"><div><h2>Rotation & macro</h2><p>A starter layout for your current points. The party/solo switch above changes the opener and manual priorities.</p></div><span id="rotation-level" class="tag blue"></span></div>
+      <div class="rotation-hero panel"><div class="rotation-mark">01 / THE RULE</div><h3>Trigger Judgment. Spend it immediately.</h3><p>Shield Smite, Warding Strike and Doom Shield open a brief Judgment window. Letting a second trigger fire before you use Judgment can waste the first window. Keep boss control and survival on manual keys.</p><div id="rotation-gate" class="notice"></div></div>
+      <div class="two-col rotation-columns">
+        <div class="panel"><h3 id="rotation-opener-title">Party boss opener</h3><ol id="rotation-opener" class="rotation-list"></ol></div>
+        <div class="panel"><h3>During the fight</h3><ol id="rotation-loop" class="rotation-list"></ol></div>
+      </div>
+      <div class="section-title macro-title"><div><h2>One held macro key</h2><p>Build two hotbar stacks, then put their keys into the in-game Skill Macro.</p></div><span class="tag gold">10 ms starting delay</span></div>
+      <div class="macro-layout">
+        <div class="macro-stack"><div class="stack-heading"><span class="keycap">E</span><div><strong>Judgment stack</strong><small>Top priority first</small></div></div><div class="stack-row"><b>Row 0</b><span>Judgment</span></div><div class="stack-row"><b>Row 1</b><span>Shield Smite</span></div><div class="stack-row"><b>Row 2</b><span>Warding Strike</span></div></div>
+        <div class="macro-stack"><div class="stack-heading"><span class="keycap">RMB</span><div><strong>Damage / filler stack</strong><small>Conditional skills above Pummel</small></div></div><div class="stack-row"><b>Row 0</b><span>Annihilate</span></div><div class="stack-row"><b>Row 1</b><span>Debilitating Smash</span></div><div class="stack-row"><b>Row 2</b><span>Pummel</span></div></div>
+        <div class="macro-stack macro-script"><div class="stack-heading"><span class="keycap">M</span><div><strong>Skill Macro steps</strong><small>M is an example bind</small></div></div><div class="stack-row"><b>Step 1</b><span>E stack · 10 ms</span></div><div class="stack-row"><b>Step 2</b><span>RMB stack · 10 ms</span></div><div class="stack-row"><b>Hold</b><span>Macro key + basic attack</span></div></div>
+      </div>
+      <div class="two-col rotation-columns">
+        <div class="panel"><h3>Set it up in game</h3><ol class="setup-list"><li>Open <b>Settings (O) → Key Settings → General → Macro</b> and bind a comfortable keyboard or side-mouse key.</li><li>In <b>Skills (K)</b>, stack the skills on two hotbar slots as shown. Row 0 is the slot's first priority; keep the no-cooldown Pummel below the conditional attacks.</li><li>Open <b>Skill Macros → Add Macro</b>. Add the <b>E hotbar slot</b> as step 1 and <b>RMB hotbar slot</b> as step 2. Start both delays at 10 ms.</li><li>Hold the macro key during safe uptime. If Vicious Strike is on left mouse, hold it alongside the macro to weave basic attacks. Release for mechanics and press your manual keys.</li></ol></div>
+        <div class="panel"><h3>Keep these on manual keys</h3><div id="manual-keys" class="manual-keys"></div><p class="footnote">Taunt, Shield of Protection, Doom Shield, Punishment, Defiance and movement need your timing. Doom Shield can move you and turn the boss, so leave it out of the default tank macro.</p></div>
+      </div>
+      <div class="notice rotation-caveat">The client says a held macro repeatedly attempts its steps and does not guarantee strict order. Manual input takes precedence. Test the stack on a dummy and adjust delay for your ping; 10 ms is a starting value, not a measured optimum. A mouse macro bind will not work in AION 1 control mode.</div>
+    </section>
+    <section id="boards" class="tab-panel" aria-label="Daevanion boards">
+      <div class="section-title"><div><h2>Daevanion route</h2><p>A legal connected click order on the Global grids. Tap a node for its position and effect.</p></div><span id="board-spent" class="tag gold"></span></div>
+      <div id="board-summary" class="board-summary"></div>
+      <div class="board-tabs" id="board-tabs"></div>
+      <div class="board-layout">
+        <div>
+          <div class="board-scroll"><div id="board-grid" class="board-grid" role="group" aria-label="Daevanion board nodes"></div></div>
+          <div class="timeline"><label for="route-slider">Preview clicks</label><input id="route-slider" type="range" min="0" max="218" value="218"><b id="route-slider-value">218</b></div>
+          <p class="footnote">The 149-crystal backbone follows a published Templar hybrid route. The extension is a priority-weighted path through real client nodes and is a recommendation, not a measured DPS optimum. If the board is mirrored in game, match the named node and its connected path.</p>
+        </div>
+        <aside class="board-side">
+          <div><div id="selected-node" class="selected-node"></div><div class="panel"><h3>Board purchase order</h3><p id="purchase-intro"></p><div id="purchase-list" class="purchase-list"></div></div></div>
+          <div class="panel"><h3>Next board gains</h3><div id="board-next"></div></div>
+        </aside>
+      </div>
+    </section>
+    <section id="sources" class="tab-panel" aria-label="Research notes">
+      <div class="section-title"><div><h2>How this plan was built</h2><p>Read the source and the limits before treating a build as a fixed answer.</p></div></div>
+      <div class="sources">
+        <div class="source-card"><b>Global client board nodes</b><p>Node positions, costs, and effects were cross-checked against Aion2Data's Global client 2.0.6.0 hotfix 1 board tables. The later 2.0.7.0 live client may change details; compare any changed in-game tooltip.</p><a href="https://aion2data.com/daevanion/templar" target="_blank" rel="noopener">Open board data ↗</a></div>
+        <div class="source-card"><b>149-point connected hybrid route</b><p>The starting backbone comes from Grimvane's Templar Tank/DPS route, including coordinate-by-coordinate connected clicks. The path after that budget was generated for this planner.</p><a href="https://aion2.grimvane.app/companion/wiki/daevanion-templar/" target="_blank" rel="noopener">Open route ↗</a></div>
+        <div class="source-card"><b>Skill and specialty priorities</b><p>Global player tendencies, Korean high-level picks, and specialty effects inform the hybrid recommendations. Creator advice differs on filler skills and solo sustain; use the play-context switch.</p><a href="https://aion2-meta.com/guides/templar/" target="_blank" rel="noopener">Open current Templar guide ↗</a></div>
+        <div class="source-card"><b>Stigma breakpoints</b><p>Global stigma ranks cost 5 points to level 5, 15 to level 10, 35 to level 15, and 75 to level 20. Four slots are open at level 45.</p><a href="https://aion2builds.com/guides/stigma/" target="_blank" rel="noopener">Open stigma costs ↗</a></div>
+        <div class="source-card"><b>Tank mechanics and loadouts</b><p>Taunt, Shield of Protection, Noble Armor and Doom Shield form a practical damage/survival bar; Empyrean Lord's Punishment is a stagger swap. Shield Block procs Fury's party damage buff.</p><a href="https://daevaos.com/guides/templar-how-not-to-brick-your-account" target="_blank" rel="noopener">Open Templar creator guide ↗</a></div>
+        <div class="source-card"><b>Rotation and macro behavior</b><p>The Global client text describes held macros, per-step delays and manual-input priority. A current Templar guide supplies the two-stack Judgment/Pummel layout. This is a practical starting setup, not a tested damage optimum.</p><a href="https://aion2data.com/macros/templar" target="_blank" rel="noopener">Open client macro data ↗</a> · <a href="https://aion2.grimvane.app/companion/wiki/macros-guide/" target="_blank" rel="noopener">Open Templar layout ↗</a></div>
+        <div class="source-card"><b>More offensive stigma option</b><p>A Global 2.0.7.0 build uses Battlefield Banner instead of Shield of Protection when the fight permits it. This planner favors reliable Block and Fury uptime for a fresh party tank.</p><a href="https://aion2.gaming.tools/builds/templar/pve" target="_blank" rel="noopener">Open offensive build ↗</a></div>
+        <div class="source-card"><b>Point economics</b><p>Mastery ranks cost 1 point for levels 2–4, 2 for 5–7, then 4 for each level 8–10. Rank 10 is the mastery cap. Boards add up to four more ranks per skill; gear and Arcana complete levels 16 and 20.</p><a href="https://aion2.grimvane.app/companion/wiki/templar-skills/" target="_blank" rel="noopener">Open class mechanics ↗</a></div>
+      </div>
+      <div class="notice">This is a PvE hybrid for a fresh Global level 45. NA East uses the Global rules, but gear rolls, party composition and balance patches can change the best choice. Azphel uses separate PvP currency and is intentionally outside the 218-crystal PvE budget.</div>
+    </section>
+  </main>
+  <script>/*DATA*/</script>
+  <script>/*APP*/</script>
+</body>
+</html>
