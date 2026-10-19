@@ -265,9 +265,11 @@ function renderGoal(m){
   if(!heal){
     const estimate=estimateCombatPower(m);
     if(!estimate.ready){$('goal-status').textContent=estimate.reason;return}
-    if(!target){$('goal-status').innerHTML=`Estimated planned CP: <b>≈${estimate.value.toLocaleString()}</b>. Set a target to compare.`;return}
+    const baseline=estimate.exactBaseline,approx=baseline?'':'≈';
+    if(!target){$('goal-status').innerHTML=`${baseline?'Saved in-game baseline':'Estimated planned CP'}: <b>${approx}${estimate.value.toLocaleString()}</b>. Set a target to compare.`;return}
     const percent=Math.min(100,Math.round(estimate.value/target*100)),gap=Math.max(0,target-estimate.value);
-    $('goal-status').innerHTML=`<b>≈${percent}% of target</b> · ${gap?`estimated gap ≈${gap.toLocaleString()} CP`:'estimate meets target'}<small>Planning range ${estimate.low.toLocaleString()}–${estimate.high.toLocaleString()} CP</small><div class="progress"><span style="width:${percent}%"></span></div>`;
+    const range=baseline?'Saved in-game CP for the build at calibration.':estimate.calibrated?`Projection from ${estimate.baseline.toLocaleString()} in-game CP · estimated change ${estimate.change>=0?'+':''}${estimate.change.toLocaleString()} CP`:`Planning range ${estimate.low.toLocaleString()}–${estimate.high.toLocaleString()} CP`;
+    $('goal-status').innerHTML=`<b>${approx}${percent}% of target</b> · ${gap?`${baseline?'':'estimated '}gap ${approx}${gap.toLocaleString()} CP`:`${baseline?'Baseline':'Estimate'} meets target`}<small>${range}</small><div class="progress"><span style="width:${percent}%"></span></div>`;
     return;
   }
   const observed=Number(a.goalObserved)||0;

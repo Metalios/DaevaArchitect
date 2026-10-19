@@ -25,13 +25,37 @@ const setup=await page.evaluate(()=>{
 });
 if(!setup.ready||setup.value<=0)throw Error(`Complete level 45 gear gave no CP estimate: ${JSON.stringify(setup)}`);
 if(!(await page.locator('#gear-cp-estimate').textContent()).includes(setup.value.toLocaleString()))throw Error('Gear estimate did not render');
+await page.locator('.cp-method summary').click();
+await page.locator('#gear-cp-baseline').fill('53034');
+await page.locator('#gear-cp-calibrate').click();
+if((await page.locator('#gear-cp-estimate').textContent()).trim()!=='53,034')throw Error('Saved in-game baseline did not replace the raw estimate');
+if(!(await page.locator('#gear-cp-label').textContent()).includes('In-game baseline'))throw Error('Baseline was not labeled');
+const sameScoreChangedPlan=await page.evaluate(()=>{
+  const item=gearEquipment().weapon,original=item.notes;
+  item.notes='A changed gear record with the same modeled score';render();
+  const changed=estimateCombatPower(model());
+  item.notes=original;render();
+  return {changed:changed.exactBaseline,restored:estimateCombatPower(model()).exactBaseline};
+});
+if(sameScoreChangedPlan.changed||!sameScoreChangedPlan.restored)throw Error('An edited plan was mislabeled as the measured in-game build');
+await page.locator('#share-build-button').click();
+await page.waitForFunction(()=>$('share-url').value.includes('#build='));
+const shared=await page.evaluate(async()=>{
+  const token=new URL($('share-url').value).hash.slice('#build='.length);
+  const binary=atob(token.slice(1).replace(/-/g,'+').replace(/_/g,'/')+'='.repeat((4-(token.length-1)%4)%4));
+  const bytes=Uint8Array.from(binary,char=>char.charCodeAt(0));
+  const raw=token[0]==='g'?await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'))).text():new TextDecoder().decode(bytes);
+  return JSON.parse(raw).account;
+});
+if('cpAnchor' in shared)throw Error('Private in-game baseline leaked into a shared build');
+await page.locator('#share-dialog-close').click();
 if(process.env.CP_DESKTOP_SCREENSHOT)await page.locator('.gear-cp').screenshot({path:process.env.CP_DESKTOP_SCREENSHOT});
 if(process.env.CP_MOBILE_SCREENSHOT){await page.setViewportSize({width:390,height:844});await page.locator('.gear-cp').screenshot({path:process.env.CP_MOBILE_SCREENSHOT});await page.setViewportSize({width:1200,height:850})}
 await page.locator('#gear-cp-target').fill('100000');await page.locator('#gear-cp-target').blur();
 if(!(await page.locator('#gear-cp-status').textContent()).includes('100,000'))throw Error('Target was not compared with estimate');
 await page.locator('[data-tab="overview"]').click();
 if(await page.locator('#goal-target').inputValue()!=='100000')throw Error('Overview target differs from Equipment');
-if(!(await page.locator('#goal-status').textContent()).includes('Planning range'))throw Error('Overview lacks estimated planning range');
+if(!(await page.locator('#goal-status').textContent()).includes('Saved in-game CP'))throw Error('Overview lacks the saved in-game baseline');
 
 const changes=await page.evaluate(()=>{
   const read=()=>estimateCombatPower(model()).value;
@@ -51,6 +75,7 @@ for(const [earlier,later] of [['base','enhancement'],['enhancement','board'],['b
   if(changes[later]<changes[earlier])throw Error(`${later} lowered estimated CP: ${JSON.stringify(changes)}`);
 }
 if(changes.enhancement===changes.base||changes.board===changes.enhancement||changes.mastery===changes.board||changes.stigma===changes.mastery||changes.stone===changes.stigma||changes.cosmeticTitle!==changes.stone||changes.title===changes.cosmeticTitle)throw Error(`Estimate did not respond properly to a build change: ${JSON.stringify(changes)}`);
+if(changes.base!==53034)throw Error(`Baseline was not held at the measured CP: ${JSON.stringify(changes)}`);
 
 await page.reload();
 await page.locator('[data-tab="gear"]').click();

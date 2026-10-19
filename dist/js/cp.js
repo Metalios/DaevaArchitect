@@ -14,6 +14,9 @@ const CP_STAT_WEIGHTS = {
   'Attack Increase':907.5
 };
 const CP_MODEL = {intercept:-11051.5268,gearBase:57.0352,enhance:61.5471,titles:17.9964,stigma:143.8335,mastery:15};
+function cpFingerprint(m){
+  return JSON.stringify([state.class,gearEquipment(),[...m.boards.owned].sort((a,b)=>a-b),m.mastery.levels,activeStigmas(),m.stigma.levels,account().titlesOwned]);
+}
 
 function estimateCombatPower(m){
   const equipment=gearEquipment();let gearBase=0,enhance=0,regular=0;
@@ -57,11 +60,18 @@ function estimateCombatPower(m){
   stoneBonus=Math.min(10000,stoneBonus);
   const raw=CP_MODEL.intercept+CP_MODEL.gearBase*gearBase+CP_MODEL.enhance*enhance+
     boardScore+CP_MODEL.titles*titles+CP_MODEL.stigma*stigma+CP_MODEL.mastery*mastery+stoneBonus;
-  const value=Math.max(0,Math.round(raw/10)*10);
+  const rawValue=Math.max(0,Math.round(raw/10)*10);
+  const anchor=account().cpAnchor;
+  const calibrated=Number.isFinite(Number(anchor?.raw))&&Number.isFinite(Number(anchor?.observed))&&Number(anchor.observed)>0;
+  const exactBaseline=calibrated&&anchor.fingerprint===cpFingerprint(m);
+  const change=calibrated?rawValue-Number(anchor.raw):0;
+  const value=calibrated?Math.max(0,Math.round(Number(anchor.observed)+change)):rawValue;
   // This is a display range, not a statistical confidence interval. The held-
   // out 90th-percentile error was about 8k with complete official inputs; build
   // records can omit more systems, so the displayed range is deliberately wider.
-  const margin=Math.max(10000,Math.ceil(value*0.15/100)*100)+(titles<25?3000:0);
+  const margin=calibrated?(exactBaseline?0:Math.max(8000,Math.ceil(Math.abs(change)*0.3/100)*100)):
+    Math.max(10000,Math.ceil(value*0.15/100)*100)+(titles<25?3000:0);
   return {ready:true,value,low:Math.max(0,value-margin),high:value+margin,
+    rawValue,calibrated,exactBaseline,change,baseline:calibrated?Number(anchor.observed):null,
     regular,gearBase,enhance,boardScore,mastery,stigma,titles,stones};
 }

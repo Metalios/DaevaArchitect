@@ -163,15 +163,24 @@ function renderGear(m=model()){
   $('gear-socket-summary').innerHTML=`<p>${sockets.filled} / ${sockets.available} stone sockets recorded on active gear. Enter the actual rolled stats in each item.</p>${sockets.stats.length?sockets.stats.map(stat=>`<div class="gear-bonus"><span>${esc(stat.name)}</span><b>+${Number(stat.value.toFixed(2)).toLocaleString()}${stat.unit}</b></div>`).join(''):'<p>No socketed stat values recorded yet.</p>'}${sockets.theostones.map(stone=>`<div class="gear-bonus"><span>${esc(stone.slot)} Theostone</span><b>${esc(stone.name)}</b></div>`).join('')}${duplicate?'<p class="gear-stone-warning">Identical Theostone effects do not stack.</p>':''}`;
   const a=account(),healer=profile().kind==='healer',target=Number(healer?a.gearCpTarget:a.goalTarget)||0,estimate=estimateCombatPower(m);
   $('gear-cp-target').value=target||'';
-  $('gear-cp-estimate').textContent=estimate.ready?`≈${estimate.value.toLocaleString()}`:'—';
-  $('gear-cp-uncertainty').textContent=estimate.ready?`Planning range ${estimate.low.toLocaleString()}–${estimate.high.toLocaleString()} CP`:'Waiting for a complete level 45 gear set';
+  $('gear-cp-label').textContent=estimate.calibrated?(estimate.exactBaseline?'In-game baseline':'Projected from baseline'):'Estimated planned CP';
+  $('gear-cp-estimate').textContent=estimate.ready?`${estimate.exactBaseline?'':'≈'}${estimate.value.toLocaleString()}`:'—';
+  $('gear-cp-uncertainty').textContent=!estimate.ready?'Waiting for a complete level 45 gear set':estimate.exactBaseline?'Matches the in-game CP you entered':estimate.calibrated?`Baseline ${estimate.baseline.toLocaleString()} · modeled change ${estimate.change>=0?'+':''}${estimate.change.toLocaleString()} CP`:`Planning range ${estimate.low.toLocaleString()}–${estimate.high.toLocaleString()} CP`;
   if(!estimate.ready){$('gear-cp-status').textContent=estimate.reason}
   else if(!target){$('gear-cp-status').textContent='Set your target CP to compare it with the planned build estimate.'}
   else{
     const percent=Math.round(estimate.value/target*100),gap=Math.max(0,target-estimate.value);
-    const relation=estimate.low>=target?'Planning range is above your target.':estimate.high<target?'Planning range is below your target.':'Your target is inside the planning range; check the result in game.';
-    $('gear-cp-status').innerHTML=`<b>≈${percent}% of target · ${estimate.value.toLocaleString()} / ${target.toLocaleString()} CP</b><span>${gap?`Estimated gap ≈${gap.toLocaleString()} CP. `:'Estimate meets target. '}${relation}</span><div class="progress" role="progressbar" aria-label="Estimated Combat Power target progress" aria-valuenow="${Math.min(100,percent)}" aria-valuemin="0" aria-valuemax="100"><span style="width:${Math.min(100,percent)}%"></span></div>`;
+    const exactBaseline=estimate.exactBaseline;
+    const relation=exactBaseline?'Saved in-game baseline for this build.':estimate.low>=target?'Planning range is above your target.':estimate.high<target?'Planning range is below your target.':'Your target is inside the planning range; check the result in game.';
+    $('gear-cp-status').innerHTML=`<b>${exactBaseline?'':'≈'}${percent}% of target · ${estimate.value.toLocaleString()} / ${target.toLocaleString()} CP</b><span>${gap?`${exactBaseline?'Gap':'Estimated gap'} ${exactBaseline?'':'≈'}${gap.toLocaleString()} CP. `:'Target met. '}${relation}</span><div class="progress" role="progressbar" aria-label="Estimated Combat Power target progress" aria-valuenow="${Math.min(100,percent)}" aria-valuemin="0" aria-valuemax="100"><span style="width:${Math.min(100,percent)}%"></span></div>`;
   }
+  const marked=obtainedNodes().size,planned=m.boards.owned.size;
+  $('gear-cp-assumption').classList.toggle('warn',!marked);
+  $('gear-cp-assumption').textContent=`This is the planned build: ${m.boards.spent} Daevanion crystals, ${m.mastery.spent} allocated Mastery points and ${m.stigma.spent} allocated Stigma points. ${marked} of ${planned} board tiles are marked obtained. Marks and optional current Mastery ranks track progress, but do not change the planned CP projection. Only calibrate against in-game CP when this entire plan matches your character.`;
+  $('gear-cp-baseline').value=a.cpAnchor?.observed||'';
+  $('gear-cp-calibrate').disabled=!estimate.ready;
+  $('gear-cp-clear-calibration').hidden=!estimate.calibrated;
+  $('gear-cp-calibration-status').textContent=estimate.calibrated?`Baseline saved for this class. The uncalibrated model currently predicts ${estimate.rawValue.toLocaleString()} CP; changes are projected from your ${estimate.baseline.toLocaleString()} CP baseline. This baseline is excluded from shared build links.`:'Optional: enter the CP shown in game after you have equipped and purchased the plan above. Future changes use the model’s estimated difference from that baseline. The baseline stays in this browser and is not shared.';
   $('gear-cp-method').innerHTML=estimate.ready?`Based on ${estimate.regular} regular gear slots, ${estimate.gearBase.toLocaleString()} total base item levels, +${estimate.enhance} enhancement levels, ${m.boards.owned.size} planned PvE nodes, ${estimate.mastery} effective Mastery levels above rank 1, ${estimate.stigma} equipped Stigma levels, ${estimate.titles} recorded stat-bearing titles and ${estimate.stones} modeled stone rolls. A five-fold test of 109 public NA East level 45 profiles missed by about 4,000 CP on average and about 8,000 CP at the 90th percentile. Missing pets, wings, Soul Binding, unrecorded titles and other character systems can push the real score outside the displayed range. Stone rolls use a partial weight because the profile fit already includes typical stones. <a href="https://aion2data.com/get-stronger" target="_blank" rel="noopener noreferrer">Global stat sources</a> · <a href="https://aion2index.com/c/nae/nezekan/Bobdesu/upgrades" target="_blank" rel="noopener noreferrer">Community CP weights</a>.`:'The estimate uses a model checked against public Global level 45 profiles. It needs a reasonably complete level 45 gear set; otherwise a number would be misleading. The game calculates exact Combat Power on its server.';
 }
 function gearResults(){
@@ -245,6 +254,12 @@ function initGear(){
   $('gear-level-filter').addEventListener('change',e=>{gearLevelFilter=e.target.value;gearResults()});
   $('gear-faction-filter').addEventListener('change',e=>{gearFactionFilter=e.target.value;gearResults()});
   $('gear-cp-target').addEventListener('change',e=>{const a=account(),value=clamp(e.target.value,0,1000000000);if(profile().kind==='healer')a.gearCpTarget=value;else a.goalTarget=value;render()});
+  $('gear-cp-calibrate').addEventListener('click',()=>{
+    const observed=Number($('gear-cp-baseline').value),estimate=estimateCombatPower(model());
+    if(!estimate.ready||!Number.isSafeInteger(observed)||observed<=0||observed>1000000000){$('gear-cp-calibration-status').textContent='Enter a valid in-game CP for a complete level 45 build.';return}
+    account().cpAnchor={observed,raw:estimate.rawValue,fingerprint:cpFingerprint(model())};render();
+  });
+  $('gear-cp-clear-calibration').addEventListener('click',()=>{delete account().cpAnchor;render()});
   $('gear-results').addEventListener('click',e=>{const result=e.target.closest('[data-gear-result]');if(result)selectGearResult(result.dataset.gearResult)});
   $('gear-editor').addEventListener('input',e=>{gearEditorDirty=true;if(e.target.name==='stoneSlots')updateGearStoneRows();if(e.target.name==='theostone'){const stone=THEOSTONES.find(entry=>entry.name.toLowerCase()===e.target.value.trim().toLowerCase()),hint=$('gear-editor').querySelector('.gear-theostone-editor small');if(hint)hint.textContent=stone?`${stone.grade} · ${stone.effect} effect`:'Choose a Global Theostone or enter its exact in-game name.'}});
   $('gear-editor').addEventListener('change',e=>{gearEditorDirty=true;if(e.target.name?.startsWith('stoneGrade'))e.target.closest('.gear-stone-row').dataset.grade=e.target.value});

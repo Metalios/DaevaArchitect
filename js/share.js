@@ -72,7 +72,8 @@
     $('shared-build-banner').hidden=false;
   }
   $('share-build-button').addEventListener('click',async()=>{
-    const payload={v:1,cls:state.class,account:account(),tab:state.tab,board:state.board,theme,gearView:state.gearView};
+    const sharedAccount={...account()};delete sharedAccount.cpAnchor;
+    const payload={v:1,cls:state.class,account:sharedAccount,tab:state.tab,board:state.board,theme,gearView:state.gearView};
     try{const token=await encode(payload),url=new URL(location.href);url.hash=`build=${token}`;$('share-url').value=url.href;$('share-status').textContent=url.href.length>12000?'Link created, but it is long because this browser lacks compression. Some apps may shorten it.':'Link ready to copy.';$('share-dialog').showModal();$('share-url').select()}
     catch(_){$('share-status').textContent='Could not create a link for this build.';$('share-dialog').showModal()}
   });
