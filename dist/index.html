@@ -85,6 +85,14 @@
 .welcome-panel h2{font:normal 34px Georgia,serif;margin:8px 0}.welcome-panel p{max-width:640px;color:#bfd2d3;margin:0 0 20px;font-size:15px}
 .welcome-stats{display:flex;gap:11px;flex-wrap:wrap}.welcome-stats span{border:1px solid #506b68;border-radius:9px;padding:9px 12px;color:#bcd3d3;font-size:12px}.welcome-stats b{color:var(--gold);font:normal 20px Georgia,serif;margin-right:4px}
 @media(max-width:660px){.welcome-panel{padding:21px}.welcome-panel h2{font-size:27px}}
+
+/* Two-button weaving and configurable in-game Macro binding */
+.weave-setup{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin:0 0 15px;border-color:#5b7c77;background:linear-gradient(120deg,#12343b,#10232c)}
+.weave-keys{display:flex;align-items:center;gap:9px;white-space:nowrap}
+.weave-keys b{color:var(--gold)}
+.weave-setup p{flex:1 1 300px;margin:0;color:#c7dada}
+.weave-setup label{display:grid;gap:5px;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#a8c0c2;font-weight:800}
+.weave-setup select{background:#091b24;color:#f2f7f4;border:1px solid #557176;border-radius:8px;padding:8px;font-size:13px;letter-spacing:0;text-transform:none}
 </style>
 </head>
 <body>
@@ -134,10 +142,11 @@
       <div class="section-title"><div><h2>Rotation & macro</h2><p>Class-specific starting priority and an in-game hotbar macro layout.</p></div><span id="rotation-level" class="tag blue"></span></div>
       <div class="rotation-hero panel"><div class="rotation-mark">01 / THE RULE</div><h3 id="rotation-rule-title"></h3><p id="rotation-rule-text"></p><div id="rotation-gate" class="notice"></div></div>
       <div class="two-col rotation-columns"><div class="panel"><h3 id="rotation-opener-title">Group opener</h3><ol id="rotation-opener" class="rotation-list"></ol></div><div class="panel"><h3>During the fight</h3><ol id="rotation-loop" class="rotation-list"></ol></div></div>
-      <div class="section-title macro-title"><div><h2>Set up the in-game macro</h2><p>Rows are hotbar priority, top to bottom. Macro steps press hotbar keys, not typed skill commands.</p></div><span class="tag gold">10 ms start</span></div>
+      <div class="section-title macro-title"><div><h2>Set up the in-game macro</h2><p>Macro steps press hotbar keys, not typed skill commands. Keep the basic attack or filler held separately to weave it between skills.</p></div><span class="tag gold">10 ms start</span></div>
+      <div class="weave-setup panel"><div class="weave-keys"><span class="keycap" id="weave-basic-key">LMB</span><b>+</b><span class="keycap" id="weave-macro-key">RMB</span></div><p id="weave-guide"></p><label for="macro-bind">Bind Macro to <select id="macro-bind"><option value="RMB">Right mouse (RMB)</option><option value="Mouse 4">Side mouse (Mouse 4)</option><option value="MMB">Middle mouse (MMB)</option><option value="M">Keyboard M</option></select></label></div>
       <div id="macro-stacks" class="macro-layout"></div>
       <div class="two-col rotation-columns"><div class="panel"><h3>In-game setup</h3><ol id="setup-list" class="setup-list"></ol></div><div class="panel"><h3>Keep these manual</h3><div id="manual-keys" class="manual-keys"></div></div></div>
-      <div class="notice rotation-caveat">Hold the in-game macro key during safe uptime; release it for mechanics. Keep charged attacks, heals, toggles, movement and emergency skills on manual keys. A held macro skips unavailable steps and manual input takes precedence. Test on a dummy and raise delays only if your ping drops steps. Use the game’s own macro feature while you are playing.</div>
+      <div class="notice rotation-caveat">Hold the filler and in-game Macro key together to weave basic attacks between skills. Release them for mechanics. Keep charged attacks, heals, toggles, movement and emergency skills on manual keys. A 10 ms macro step is an input delay, not a guaranteed cancel time; Global has minimum cancel delays. Test on a dummy and adjust for your ping. In AION 1 control mode, use a keyboard Macro bind.</div>
     </section>
     <section id="boards" class="tab-panel" aria-label="Daevanion boards">
       <div class="section-title"><div><h2>Daevanion route</h2><p>A legal connected click order on the Global PvE grids. Select a board and tap a node for its effect.</p></div><span id="board-spent" class="tag gold"></span></div>
@@ -156,9 +165,10 @@
     rule:'Keep the Rage Burst → Overhead Slam → Rending Blow line moving; time blocks and buffs for boss windows.',
     opener:['Apply Zikel’s Blessing and Lunge Stance before the pull.','Open with Rage Burst, then Overhead Slam and Rending Blow.','Use Ruinous Blow and keep your main line flowing.'],
     loop:['Repeat Rage Burst → Overhead Slam → Rending Blow as each is ready.','Use Ruinous Blow and Lifestealing Blade for damage and sustain.','Time Focused Block for a blockable hit; save Defiance for danger.'],
-    stacks:[{key:'RMB',title:'Main line',skills:['Rage Burst','Overhead Slam','Rending Blow']},{key:'E',title:'Ruinous line',skills:['Ruinous Blow','Lifestealing Blade']},{key:'R',title:'Buff line',skills:['Lunge Stance',"Zikel's Blessing"]}],
-    macro:['RMB','E','R'], hold:'Hold macro; use Keen Strike on its own key while leveling.',
-    manual:['Focused Block — time against blockable hits','Mocking Blade / Crushing Wave — control','Leaping Slam — movement','Defiance — emergency'],
+    weave:'Keen Strike',
+    stacks:[{key:'Q',title:'Main line',skills:['Rage Burst','Overhead Slam','Rending Blow']},{key:'E',title:'Ruinous line',skills:['Ruinous Blow','Lifestealing Blade']},{key:'R',title:'Buff line, manual',skills:['Lunge Stance',"Zikel's Blessing"],manual:true}],
+    macro:['Q','E'], hold:'Hold Keen Strike alongside the Macro key while leveling; use buffs by hand.',
+    manual:['R buff line — use before burst','Focused Block — time against blockable hits','Leaping Slam — movement','Defiance — emergency'],
   },
   templar: {
     name:'Templar', role:'Tank / damage', kind:'dps',
@@ -168,8 +178,9 @@
     rule:'A shield attack opens Judgment briefly. Spend Judgment before the next shield trigger.',
     opener:['Use Noble Armor before the pull.','Taunt and face the boss away from your party.','Doom Shield or Shield Smite → Judgment.','Fully charge Punishment when the boss is stable.'],
     loop:['Shield Smite / Warding Strike → Judgment; do not overwrite the window.','Charge Punishment on cooldown when safe.','Block a heavy hit with Shield of Protection to trigger Fury.','Use Annihilate after knockdown; keep Taunt for threat.'],
-    stacks:[{key:'E',title:'Judgment line',skills:['Judgment','Shield Smite','Warding Strike']},{key:'RMB',title:'Damage filler',skills:['Annihilate','Debilitating Smash','Pummel']}],
-    macro:['E','RMB'], hold:'Hold macro plus Vicious Strike on its own key.',
+    weave:'Vicious Strike',
+    stacks:[{key:'E',title:'Judgment line',skills:['Judgment','Shield Smite','Warding Strike']},{key:'Q',title:'Damage filler',skills:['Annihilate','Debilitating Smash','Pummel']}],
+    macro:['E','Q'], hold:'Hold Vicious Strike and the Macro key together; charge Punishment by hand.',
     manual:['Taunt — threat','Doom Shield — movement / Judgment trigger','Punishment — fully charge','Shield of Protection — timed block','Defiance — emergency'],
   },
   assassin: {
@@ -180,9 +191,10 @@
     rule:'Build Insignia with Savage Roar and spend with Insignia Explosion only when stacks are ready.',
     opener:['Use your Swift Contract and Illusive Clone buff stack before the burst window.','Approach behind the boss with Ambush or manual movement.','Savage Roar to build Insignia, then Insignia Explosion.'],
     loop:['Maintain Quick Slice chain between cooldowns.','Use Heart Gore after a critical hit; spend Insignia stacks with Explosion.','Save movement skills for position and Defiance for danger.'],
-    stacks:[{key:'E',title:'Damage line',skills:['Insignia Explosion','Heart Gore','Ambush','Savage Roar']},{key:'Q',title:'Manual buff stack',skills:['Swift Contract','Illusive Clone','Savage Fang',"Triniel's Dagger"],manual:true}],
-    macro:['E','LMB'], hold:'Hold the macro; put Quick Slice alone on LMB.',
-    manual:['Q buff stack — line up burst','Shadowstrike / Flash Slice / Infiltrate — position','Storm Rampage — stagger window','Defiance — emergency'],
+    weave:'Quick Slice',
+    stacks:[{key:'E',title:'Damage line',skills:['Insignia Explosion','Heart Gore','Savage Roar']},{key:'Q',title:'Manual buff stack',skills:['Swift Contract','Illusive Clone','Savage Fang',"Triniel's Dagger"],manual:true}],
+    macro:['E'], hold:'Hold Quick Slice alongside the Macro key; use Ambush for positioning by hand.',
+    manual:['Q buff stack — line up burst','Ambush / Shadowstrike / Flash Slice — position','Storm Rampage — stagger window','Defiance — emergency'],
   },
   ranger: {
     name:'Ranger', role:'Ranged damage', kind:'dps',
@@ -192,9 +204,10 @@
     rule:'Fire fully charged Deadshot under Precision; keep Snipe flowing for MP.',
     opener:['Use Vaizel’s Authority, Bow of Blessing and Supporting Fire before the pull.','Start Snipe and build Precision.','Charge Deadshot under Precision while the Gale and Drill Dart lines run.'],
     loop:['Keep Snipe held for MP and Precision.','Charge Deadshot on its own key when Precision is up.','Use Gale Arrow and Drill Dart lines; switch to Arrow Scattershot on stagger.'],
+    weave:'Snipe',
     stacks:[{key:'E',title:'Gale line',skills:['Gale Arrow','Griffon Arrow','Snare Shot']},{key:'Q',title:'Drill Dart line',skills:['Drill Dart','Burst Arrow','Tempest Shot']}],
-    macro:['E','Q'], hold:'Hold Snipe, macro, and charged Deadshot on separate keys.',
-    manual:['Deadshot — fully charged under Precision','Marking Shot — movement','Vaizel’s Authority / Bow of Blessing — buff timing','Defiance — emergency'],
+    macro:['E','Q'], hold:'Hold Snipe with the Macro key; charge Deadshot on its own key.',
+    manual:['Deadshot — fully charged under Precision','Arrow Scattershot — stagger, separate key','Marking Shot — movement','Vaizel’s Authority / Bow of Blessing — buff timing','Defiance — emergency'],
   },
   sorcerer: {
     name:'Sorcerer', role:'Magic damage', kind:'dps',
@@ -204,9 +217,10 @@
     rule:'Charge Hellfire by hand. Do not spend Fire Wall or Cold Storm where the boss will immediately move.',
     opener:['Set up Element Enhancement and Wish of Concentration.','Place Fire Wall / Cold Storm for a stable boss window.','Charge Hellfire fully and continue the fire line.'],
     loop:['Use Blaze and Firestorm when ready.','Keep Flame Arrow going for MP and charge Hellfire on its own key.','Reposition ground damage for mechanics; use Defiance or barriers for danger.'],
-    stacks:[{key:'4',title:'Buff line',skills:['Element Enhancement','Bittercold Wind','Delayed Explosion']},{key:'5',title:'Concentration',skills:['Wish of Concentration','Cold Storm','Fire Wall']},{key:'1',title:'Fire line',skills:['Blaze','Firestorm']},{key:'T',title:'Ice line',skills:["Winter's Shackles",'Ice Chain']}],
-    macro:['4','5','R','1','R','T','3'], hold:'R = Flame Arrow; 3 = Flame Scattershot. Hold Hellfire separately to charge.',
-    manual:['Hellfire — full charge','Steel Barrier / Arctic Armor — survival','Hibernation — control','Defiance — emergency'],
+    weave:'Flame Arrow',weaveKey:'R',
+    stacks:[{key:'E',title:'Short damage line',skills:["Winter's Shackles",'Bittercold Wind','Blaze','Firestorm']},{key:'4',title:'Buff line, manual',skills:['Element Enhancement','Delayed Explosion'],manual:true},{key:'5',title:'Ground damage, manual',skills:['Wish of Concentration','Cold Storm','Fire Wall'],manual:true}],
+    macro:['E'], hold:'Hold Flame Arrow on R with the Macro key; charge Hellfire separately.',
+    manual:['Hellfire — full charge','4 and 5 — buffs and ground damage when the boss is stable','Flame Scattershot — separate key','Steel Barrier / Arctic Armor — survival','Defiance — emergency'],
   },
   spiritmaster: {
     name:'Spiritmaster', role:'Summon damage', kind:'dps',
@@ -216,9 +230,10 @@
     rule:'Buff the spirit before summoning Ancient Spirit; use Elemental Fusion only with Four Elements ready.',
     opener:['Choose and summon the spirit needed for the fight.','Apply Flame Blessing and Spirit’s Benediction before Ancient Spirit.','Build Four Elements, then use Elemental Fusion.'],
     loop:['Keep Cold Shock and Combustion going.','Use Jointstrike: Curse / Corrode and Dimensional Control.','Spend Four Elements with Elemental Fusion; control summons manually.'],
-    stacks:[{key:'RMB',title:'Fusion',skills:['Elemental Fusion']},{key:'3',title:'Jointstrike line',skills:['Jointstrike: Corrode','Jointstrike: Curse','Dimensional Control','Combustion']},{key:'1',title:'Summons, manual',skills:['Summon: Water Spirit','Summon: Earth Spirit','Summon: Fire Spirit'],manual:true}],
-    macro:['RMB','3'], hold:'Hold Cold Shock on LMB with the macro.',
-    manual:['Spirit summons and buffs — before Ancient Spirit','Destructive Attack — charge','Rapid Scattershot — stagger','Defiance — emergency'],
+    weave:'Cold Shock',
+    stacks:[{key:'E',title:'Fusion',skills:['Elemental Fusion']},{key:'3',title:'Jointstrike line',skills:['Jointstrike: Corrode','Jointstrike: Curse','Dimensional Control','Combustion']},{key:'1',title:'Summons, manual',skills:['Summon: Water Spirit','Summon: Earth Spirit','Summon: Fire Spirit'],manual:true}],
+    macro:['E','3'], hold:'Hold Cold Shock with the Macro key. If Fusion is charged, take it out of the macro.',
+    manual:['Spirit summons and buffs — before Ancient Spirit','Elemental Fusion — manual if charge specialty is selected','Destructive Attack — charge','Defiance — emergency'],
   },
   cleric: {
     name:'Cleric', role:'Primary healer', kind:'healer',
@@ -228,8 +243,9 @@
     rule:'Keep healing decisions manual. The macro only repeats safe damage while the party is stable.',
     opener:['Toggle Light of Protection on before the pull.','Prepare Benevolence and Yustiel’s Power for predictable party damage.','Keep Light of Regeneration available; use damage skills only while everyone is safe.'],
     loop:['Use Healing Light for routine healing and Radiant Recovery after a hit.','Use Absolution for group damage or cleanses; layer Benevolence and Yustiel’s Power when needed.','Weave Chain of Torment, Condemnation and Divine Aura during safe gaps.'],
+    weave:"Earth's Retribution",
     stacks:[{key:'E',title:'Safe damage line',skills:['Chain of Torment','Condemnation']},{key:'Q',title:'Aura line',skills:['Divine Aura','Judgment Thunder']},{key:'2',title:'Heal line, manual',skills:['Light of Regeneration','Healing Light'],manual:true}],
-    macro:['E','Q'], hold:'Hold Earth’s Retribution on LMB only while the party is stable.',
+    macro:['E','Q'], hold:'Hold Earth’s Retribution with the Macro key only while the party is stable.',
     manual:['Healing Light / Radiant Recovery — direct heals','Absolution / Yustiel’s Power / Benevolence — group recovery','Light of Protection — toggle once','Salvation / Defiance — emergencies'],
   },
   chanter: {
@@ -240,8 +256,9 @@
     rule:'Switch mantras on once and keep Recuperation and Healing Touch under your fingers.',
     opener:['Turn on Undefeated Mantra and Sprint Mantra before the pull.','Use Power of the Storm for the group burst window.','Prepare Recuperation and Protection Circle for incoming damage.'],
     loop:['Refresh Recuperation and use Healing Touch when direct healing is needed.','Use Protection Circle or Impeding Authority for predictable damage.','During safe uptime, build a Dark Crush window with Spinning Strike / Impactful Crush, then spend it.'],
-    stacks:[{key:'RMB',title:'Dark Crush line',skills:['Dark Crush','Spinning Strike','Impactful Crush','Incandescent Blow']}],
-    macro:['RMB','LMB'], hold:'LMB = Onslaught. Release the macro for healing and mechanics.',
+    weave:'Onslaught',
+    stacks:[{key:'E',title:'Dark Crush line',skills:['Dark Crush','Spinning Strike','Impactful Crush','Incandescent Blow']}],
+    macro:['E'], hold:'Hold Onslaught with the Macro key during safe damage; release for healing.',
     manual:['Undefeated / Sprint Mantra — toggle once','Recuperation / Healing Touch — healing','Protection Circle — protection','Power of the Storm — group burst','Defiance — emergency'],
   },
 };
@@ -259,7 +276,7 @@ const TEMPLAR_STAGES = [
   ['Block Pain',8],['Warding Shield',8],['Guarding Seal',8],['Survival Willpower',8],['Flash Rampage',8],
   ['Poach',10],['Defiance',10],['Debilitating Smash',10],['Shield Rush',10],['Block Pain',10],['Warding Shield',10],['Guarding Seal',10],['Survival Willpower',10],['Flash Rampage',10]
 ];
-const DEFAULT_ACCOUNT = (cls='templar') => ({...FRESH_45,context:'party',gear:{},currentRanks:{},goalTarget:['cleric','chanter'].includes(cls)?0:cls==='templar'?60000:100000,goalObserved:0});
+const DEFAULT_ACCOUNT = (cls='templar') => ({...FRESH_45,context:'party',gear:{},currentRanks:{},macroBind:'RMB',goalTarget:['cleric','chanter'].includes(cls)?0:cls==='templar'?60000:100000,goalObserved:0});
 let saved = {};
 try { saved = JSON.parse(localStorage.getItem('aion2-pathfinder-all-v3') || '{}') || {}; } catch (_) {}
 let state = {class:CLASS_ORDER.includes(saved.class)?saved.class:null,accounts:saved.accounts||{},tab:'overview',board:'Nezekan',preview:FRESH_45.crystals,node:null};
@@ -359,13 +376,15 @@ function renderStigma(m){
 }
 function numbered(items){return items.map((v,i)=>`<li><span class="rotation-num">${String(i+1).padStart(2,'0')}</span><span>${esc(v)}</span></li>`).join('')}
 function renderRotation(m){
-  const p=profile(),a=account(),main=masteryStages()[0][0];$('rotation-level').textContent=`${main} Lv ${effective(main,m)}`;$('rotation-rule-title').textContent=p.rule;$('rotation-rule-text').textContent=p.summary;
+  const p=profile(),a=account(),main=masteryStages()[0][0],macroKey=['RMB','Mouse 4','MMB','M'].includes(a.macroBind)?a.macroBind:'RMB',weaveKey=p.weaveKey||'LMB';$('rotation-level').textContent=`${main} Lv ${effective(main,m)}`;$('rotation-rule-title').textContent=p.rule;$('rotation-rule-text').textContent=p.summary;
   $('rotation-gate').textContent=p.kind==='healer'?'Heals, toggles and emergency buttons remain manual. Use the macro only while the group is stable.':`Current first priority: ${main} effective Lv ${effective(main,m)}. Keep charged and movement skills on their own keys.`;
   $('rotation-opener-title').textContent=a.context==='party'?'Group opener':'Solo opener';$('rotation-opener').innerHTML=numbered(p.opener);$('rotation-loop').innerHTML=numbered(p.loop);
+  $('macro-bind').value=macroKey;$('weave-basic-key').textContent=weaveKey;$('weave-macro-key').textContent=macroKey;
+  $('weave-guide').textContent=`Hold ${weaveKey} (${p.weave}) with ${macroKey} (the in-game Macro bind) during safe damage windows. ${macroKey==='RMB'?'Right mouse is reserved for Macro, so the skill stacks below use other keys.':'Keep the Macro bind free of skill stacks.'}`;
   const stacks=p.stacks.map(s=>`<div class="macro-stack"><div class="stack-heading"><span class="keycap">${esc(s.key)}</span><div><strong>${esc(s.title)}</strong><small>${s.manual?'Manual key':'Macro hotbar key'}</small></div></div>${s.skills.map((name,i)=>`<div class="stack-row"><b>Row ${i}</b><span>${esc(name)}</span></div>`).join('')}</div>`).join('');
-  const script=`<div class="macro-stack macro-script"><div class="stack-heading"><span class="keycap">M</span><div><strong>Macro steps</strong><small>M is an example bind</small></div></div>${p.macro.map((key,i)=>`<div class="stack-row"><b>Step ${i+1}</b><span>${esc(key)} · 10 ms</span></div>`).join('')}<div class="stack-row"><b>Hold</b><span>${esc(p.hold)}</span></div></div>`;
+  const script=`<div class="macro-stack macro-script"><div class="stack-heading"><span class="keycap">${esc(macroKey)}</span><div><strong>In-game Macro steps</strong><small>Bind Macro to ${esc(macroKey)}</small></div></div>${p.macro.map((key,i)=>`<div class="stack-row"><b>Step ${i+1}</b><span>${esc(key)} · 10 ms</span></div>`).join('')}<div class="stack-row"><b>Hold</b><span>${esc(p.hold)}</span></div></div>`;
   $('macro-stacks').innerHTML=stacks+script;
-  $('setup-list').innerHTML=[`Settings (O) → Key Settings → General → Gameplay → Macro: bind a comfortable key.`,`Skills (K): stack each hotbar key as shown. Row 0 has first priority. A no-cooldown filler belongs at the bottom.`,`Skills (K) → Macro: add the listed hotbar keys in order and start each delay at 10 ms. Keep manual stacks out of the macro.`,`Save, hold the macro while active, and test on a dummy. ${p.hold}`].map(x=>`<li>${esc(x)}</li>`).join('');
+  $('setup-list').innerHTML=[`Settings (O) → Key Settings → General → Gameplay → Macro: bind ${macroKey}. In AION 1 control mode, use a keyboard key instead of a mouse button.`,`Put ${p.weave} on ${weaveKey}. Keep ${macroKey} free for Macro; place the shown skill stacks on their labeled hotbar keys.`,`Skills (K) → Macro: add only the listed hotbar keys, in order. Start each step at 10 ms. Do not add ${weaveKey} if you hold it separately.`,`Save, hold ${weaveKey} and ${macroKey} together during safe uptime, and test the timing on a dummy. Release for mechanics and manual skills.`].map(x=>`<li>${esc(x)}</li>`).join('');
   $('manual-keys').innerHTML=p.manual.map(v=>`<div class="manual-key"><b>${esc(v.split(' — ')[0])}</b><small>${esc(v.split(' — ')[1]||'Manual timing')}</small></div>`).join('');
 }
 function renderBoards(m){
@@ -408,6 +427,7 @@ function useBudget(values){Object.assign(account(),values);state.preview=account
 $('fresh-45-button').addEventListener('click',()=>useBudget(FRESH_45));
 for(const [id,key,max] of [['mastery-input','mastery',462],['stigma-input','stigma',300],['crystal-input','crystals',570]])$(id).addEventListener('change',e=>{account()[key]=clamp(e.target.value,0,max);if(key==='crystals')state.preview=account().crystals;render()});
 for(const [id,ctx] of [['party-button','party'],['solo-button','solo']])$(id).addEventListener('click',()=>{account().context=ctx;render()});
+$('macro-bind').addEventListener('change',e=>{account().macroBind=e.target.value;render()});
 $('reset-button').addEventListener('click',()=>{state.accounts[state.class]=DEFAULT_ACCOUNT(state.class);state.preview=FRESH_45.crystals;state.node=null;render()});
 for(const [id,key] of [['goal-target','goalTarget'],['goal-observed','goalObserved']])$(id).addEventListener('change',e=>{account()[key]=clamp(e.target.value,0,1000000000);render()});
 $('skill-grid').addEventListener('change',e=>{

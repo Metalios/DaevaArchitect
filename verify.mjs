@@ -13,6 +13,12 @@ for(const slug of classes){
   const d=data[slug],p=profiles[slug],names=new Set(Object.values(d.skills).map(s=>s.name));
   assert(d&&p,`${slug}: missing data`);
   assert(d.boards.length===4&&Object.keys(d.skills).length===22,`${slug}: incomplete class tables`);
+  assert(typeof p.weave==='string'&&p.weave.length>0,`${slug}: missing held weave skill`);
+  assert(names.has(p.weave),`${slug}: held weave skill is absent from the class data`);
+  assert(!p.stacks.some(s=>s.key==='RMB'),`${slug}: right mouse must be free for the default Macro bind`);
+  assert(!p.macro.some(key=>key==='RMB'||key==='LMB'),`${slug}: do not put the Macro bind or held weave key in Macro steps`);
+  for(const key of p.macro) assert(p.stacks.some(s=>s.key===key&&!s.manual),`${slug}: Macro key ${key} has no automatic skill stack`);
+  for(const stack of p.stacks) assert(stack.skills.length>0&&stack.skills.length<=4,`${slug}: invalid ${stack.key} stack`);
   assert(p.stigmas.length===4&&new Set(p.stigmas).size===4,`${slug}: stigma slots`);
   for(const name of p.stigmas) assert(stigmas[slug][name],`${slug}: missing stigma ${name}`);
   for(const name of Object.keys(specs[slug])) assert(names.has(name),`${slug}: unknown specialty skill ${name}`);

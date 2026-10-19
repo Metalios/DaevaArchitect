@@ -12,7 +12,7 @@ const TEMPLAR_STAGES = [
   ['Block Pain',8],['Warding Shield',8],['Guarding Seal',8],['Survival Willpower',8],['Flash Rampage',8],
   ['Poach',10],['Defiance',10],['Debilitating Smash',10],['Shield Rush',10],['Block Pain',10],['Warding Shield',10],['Guarding Seal',10],['Survival Willpower',10],['Flash Rampage',10]
 ];
-const DEFAULT_ACCOUNT = (cls='templar') => ({...FRESH_45,context:'party',gear:{},currentRanks:{},goalTarget:['cleric','chanter'].includes(cls)?0:cls==='templar'?60000:100000,goalObserved:0});
+const DEFAULT_ACCOUNT = (cls='templar') => ({...FRESH_45,context:'party',gear:{},currentRanks:{},macroBind:'RMB',goalTarget:['cleric','chanter'].includes(cls)?0:cls==='templar'?60000:100000,goalObserved:0});
 let saved = {};
 try { saved = JSON.parse(localStorage.getItem('aion2-pathfinder-all-v3') || '{}') || {}; } catch (_) {}
 let state = {class:CLASS_ORDER.includes(saved.class)?saved.class:null,accounts:saved.accounts||{},tab:'overview',board:'Nezekan',preview:FRESH_45.crystals,node:null};
@@ -112,13 +112,15 @@ function renderStigma(m){
 }
 function numbered(items){return items.map((v,i)=>`<li><span class="rotation-num">${String(i+1).padStart(2,'0')}</span><span>${esc(v)}</span></li>`).join('')}
 function renderRotation(m){
-  const p=profile(),a=account(),main=masteryStages()[0][0];$('rotation-level').textContent=`${main} Lv ${effective(main,m)}`;$('rotation-rule-title').textContent=p.rule;$('rotation-rule-text').textContent=p.summary;
+  const p=profile(),a=account(),main=masteryStages()[0][0],macroKey=['RMB','Mouse 4','MMB','M'].includes(a.macroBind)?a.macroBind:'RMB',weaveKey=p.weaveKey||'LMB';$('rotation-level').textContent=`${main} Lv ${effective(main,m)}`;$('rotation-rule-title').textContent=p.rule;$('rotation-rule-text').textContent=p.summary;
   $('rotation-gate').textContent=p.kind==='healer'?'Heals, toggles and emergency buttons remain manual. Use the macro only while the group is stable.':`Current first priority: ${main} effective Lv ${effective(main,m)}. Keep charged and movement skills on their own keys.`;
   $('rotation-opener-title').textContent=a.context==='party'?'Group opener':'Solo opener';$('rotation-opener').innerHTML=numbered(p.opener);$('rotation-loop').innerHTML=numbered(p.loop);
+  $('macro-bind').value=macroKey;$('weave-basic-key').textContent=weaveKey;$('weave-macro-key').textContent=macroKey;
+  $('weave-guide').textContent=`Hold ${weaveKey} (${p.weave}) with ${macroKey} (the in-game Macro bind) during safe damage windows. ${macroKey==='RMB'?'Right mouse is reserved for Macro, so the skill stacks below use other keys.':'Keep the Macro bind free of skill stacks.'}`;
   const stacks=p.stacks.map(s=>`<div class="macro-stack"><div class="stack-heading"><span class="keycap">${esc(s.key)}</span><div><strong>${esc(s.title)}</strong><small>${s.manual?'Manual key':'Macro hotbar key'}</small></div></div>${s.skills.map((name,i)=>`<div class="stack-row"><b>Row ${i}</b><span>${esc(name)}</span></div>`).join('')}</div>`).join('');
-  const script=`<div class="macro-stack macro-script"><div class="stack-heading"><span class="keycap">M</span><div><strong>Macro steps</strong><small>M is an example bind</small></div></div>${p.macro.map((key,i)=>`<div class="stack-row"><b>Step ${i+1}</b><span>${esc(key)} · 10 ms</span></div>`).join('')}<div class="stack-row"><b>Hold</b><span>${esc(p.hold)}</span></div></div>`;
+  const script=`<div class="macro-stack macro-script"><div class="stack-heading"><span class="keycap">${esc(macroKey)}</span><div><strong>In-game Macro steps</strong><small>Bind Macro to ${esc(macroKey)}</small></div></div>${p.macro.map((key,i)=>`<div class="stack-row"><b>Step ${i+1}</b><span>${esc(key)} · 10 ms</span></div>`).join('')}<div class="stack-row"><b>Hold</b><span>${esc(p.hold)}</span></div></div>`;
   $('macro-stacks').innerHTML=stacks+script;
-  $('setup-list').innerHTML=[`Settings (O) → Key Settings → General → Gameplay → Macro: bind a comfortable key.`,`Skills (K): stack each hotbar key as shown. Row 0 has first priority. A no-cooldown filler belongs at the bottom.`,`Skills (K) → Macro: add the listed hotbar keys in order and start each delay at 10 ms. Keep manual stacks out of the macro.`,`Save, hold the macro while active, and test on a dummy. ${p.hold}`].map(x=>`<li>${esc(x)}</li>`).join('');
+  $('setup-list').innerHTML=[`Settings (O) → Key Settings → General → Gameplay → Macro: bind ${macroKey}. In AION 1 control mode, use a keyboard key instead of a mouse button.`,`Put ${p.weave} on ${weaveKey}. Keep ${macroKey} free for Macro; place the shown skill stacks on their labeled hotbar keys.`,`Skills (K) → Macro: add only the listed hotbar keys, in order. Start each step at 10 ms. Do not add ${weaveKey} if you hold it separately.`,`Save, hold ${weaveKey} and ${macroKey} together during safe uptime, and test the timing on a dummy. Release for mechanics and manual skills.`].map(x=>`<li>${esc(x)}</li>`).join('');
   $('manual-keys').innerHTML=p.manual.map(v=>`<div class="manual-key"><b>${esc(v.split(' — ')[0])}</b><small>${esc(v.split(' — ')[1]||'Manual timing')}</small></div>`).join('');
 }
 function renderBoards(m){
@@ -161,6 +163,7 @@ function useBudget(values){Object.assign(account(),values);state.preview=account
 $('fresh-45-button').addEventListener('click',()=>useBudget(FRESH_45));
 for(const [id,key,max] of [['mastery-input','mastery',462],['stigma-input','stigma',300],['crystal-input','crystals',570]])$(id).addEventListener('change',e=>{account()[key]=clamp(e.target.value,0,max);if(key==='crystals')state.preview=account().crystals;render()});
 for(const [id,ctx] of [['party-button','party'],['solo-button','solo']])$(id).addEventListener('click',()=>{account().context=ctx;render()});
+$('macro-bind').addEventListener('change',e=>{account().macroBind=e.target.value;render()});
 $('reset-button').addEventListener('click',()=>{state.accounts[state.class]=DEFAULT_ACCOUNT(state.class);state.preview=FRESH_45.crystals;state.node=null;render()});
 for(const [id,key] of [['goal-target','goalTarget'],['goal-observed','goalObserved']])$(id).addEventListener('change',e=>{account()[key]=clamp(e.target.value,0,1000000000);render()});
 $('skill-grid').addEventListener('change',e=>{
