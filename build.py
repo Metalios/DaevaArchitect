@@ -27,7 +27,7 @@ out_dir = root / 'dist'
 (out_dir / 'js').mkdir(parents=True, exist_ok=True)
 (out_dir / 'css').mkdir(parents=True, exist_ok=True)
 (out_dir / 'assets').mkdir(parents=True, exist_ok=True)
-for name in ('profiles.js', 'titles.js', 'gear.js', 'app.js', 'share.js'):
+for name in ('profiles.js', 'titles.js', 'gear.js', 'cp.js', 'app.js', 'share.js'):
     shutil.copy2(root / 'js' / name, out_dir / 'js' / name)
 shutil.copy2(root / 'css' / 'styles.css', out_dir / 'css' / 'styles.css')
 for asset in (root / 'assets').rglob('*'):

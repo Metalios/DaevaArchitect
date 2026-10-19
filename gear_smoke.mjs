@@ -43,11 +43,13 @@ if(!await page.locator('[data-gear-slot="top"].filled img').count())throw Error(
 if(!(await page.locator('[data-gear-slot="top"].filled').textContent()).includes('+3'))throw Error('Enhancement overlay missing');
 if(!await page.locator('#gear-skill-summary').getByText('Insulting Roar').count())throw Error('Skill bonus missing from gear summary');
 if(!await page.locator('#gear-fixed-stats .gear-bonus').count())throw Error('Known fixed item stats were not summarized');
-await page.locator('#gear-cp-input').fill('38500');
-await page.locator('#gear-cp-input').blur();
-if(!(await page.locator('#gear-cp-status').textContent()).includes('38,500'))throw Error('Recorded Combat Power was not shown');
+if(await page.locator('#gear-cp-input').count())throw Error('Current Combat Power must be derived, not entered');
+if(!(await page.locator('#gear-cp-status').textContent()).includes('18 of 20'))throw Error('Sparse gear should explain why no estimate is shown');
+await page.locator('#gear-cp-target').fill('75000');
+await page.locator('#gear-cp-target').blur();
 await page.locator('[data-tab="overview"]').click();
-if(await page.locator('#goal-observed').inputValue()!=='38500')throw Error('Combat Power entry was not shared with the build overview');
+if(await page.locator('#goal-target').inputValue()!=='75000')throw Error('Combat Power target was not shared with the build overview');
+if(!await page.locator('#observed-field').isHidden())throw Error('Damage and tank builds should hide the measured HPS input');
 await page.locator('[data-tab="gear"]').click();
 if(process.env.GEAR_SCREENSHOT){await page.screenshot({path:process.env.GEAR_SCREENSHOT,fullPage:true})}
 if(process.env.GEAR_FILLED_SCREENSHOT){await page.locator('#gear').screenshot({path:process.env.GEAR_FILLED_SCREENSHOT})}

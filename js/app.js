@@ -43,14 +43,20 @@ Object.assign(STIGMAS.templar,{
   "Empyrean Lord's Punishment":{base:'High stagger damage and manual burst window',perks:{}},
   "Nezekan's Shield":{base:'Short protective shield for self or group survival',perks:{}}
 });
-const DEFAULT_ACCOUNT = (cls='templar') => ({...FRESH_45,azphel:0,context:'party',journey:'endgame',endgameContext:'party',levelingContext:'solo',leveling:{level:1,extraByLevel:{}},gear:{},equipment:{},currentRanks:{},obtainedNodes:[],boardMode:'recommended',customNodes:[],customAzphelNodes:[],titlesOwned:{},faction:'elyos',macroBind:'RMB',goalTarget:['cleric','chanter'].includes(cls)?0:cls==='templar'?60000:100000,goalObserved:0,gearCpTarget:0,gearCombatPower:0});
+const DEFAULT_ACCOUNT = (cls='templar') => ({...FRESH_45,azphel:0,context:'party',journey:'endgame',endgameContext:'party',levelingContext:'solo',leveling:{level:1,extraByLevel:{}},gear:{},equipment:{},currentRanks:{},obtainedNodes:[],boardMode:'recommended',customNodes:[],customAzphelNodes:[],titlesOwned:{},faction:'elyos',macroBind:'RMB',goalTarget:['cleric','chanter'].includes(cls)?0:cls==='templar'?60000:100000,goalObserved:0,gearCpTarget:0});
 let saved = {};
 try { saved = JSON.parse(localStorage.getItem('daeva-architect-all-v1') || localStorage.getItem('aion2-pathfinder-all-v3') || '{}') || {}; } catch (_) {}
 let state = {class:CLASS_ORDER.includes(saved.class)?saved.class:null,accounts:saved.accounts||{},gearView:['inventory','inspect'].includes(saved.gearView)?saved.gearView:null,tab:'overview',board:'Nezekan',preview:FRESH_45.crystals,node:null,titleSearch:'',titleSlot:'all',titleOwnership:'all',titleFaction:'all'};
 let theme = 'aether';
 try { const storedTheme=localStorage.getItem('daeva-architect-theme')||localStorage.getItem('aion2-pathfinder-theme');if(['aether','sanctum','abyss'].includes(storedTheme))theme=storedTheme; } catch (_) {}
 function applyTheme(){document.body.dataset.theme=theme;document.querySelectorAll('.theme-picker [data-theme]').forEach(b=>{b.classList.toggle('active',b.dataset.theme===theme);b.setAttribute('aria-pressed',b.dataset.theme===theme)});document.querySelector('meta[name="theme-color"]').content=theme==='sanctum'?'#eaf2f0':theme==='abyss'?'#160f25':'#0b1c2c'}
-function account(){ if(!state.accounts[state.class]) state.accounts[state.class]=DEFAULT_ACCOUNT(state.class); return state.accounts[state.class]; }
+function account(){
+  if(!state.accounts[state.class])state.accounts[state.class]=DEFAULT_ACCOUNT(state.class);
+  const a=state.accounts[state.class];
+  delete a.gearCombatPower; // Legacy manually entered CP is no longer a build input.
+  if(PROFILES[state.class]?.kind!=='healer')delete a.goalObserved;
+  return a;
+}
 function isLeveling(){return account().journey==='leveling'}
 function leveling(){
   const a=account();a.leveling ||= {level:1,extraByLevel:{}};
@@ -195,7 +201,7 @@ function render(){
   document.querySelectorAll('[data-tab]').forEach(b=>{b.classList.toggle('active',b.dataset.tab===state.tab);b.setAttribute('aria-current',b.dataset.tab===state.tab?'page':'false')});
   $('mobile-more-button').classList.toggle('active',['stigma','rotation','titles','sources'].includes(state.tab));
   document.querySelectorAll('.tab-panel').forEach(el=>el.classList.toggle('active',el.id===state.tab));
-  renderOverview(m);renderMobileNext(m);renderMastery(m);renderStigma(m);renderRotation(m);renderBoards(m);renderGear();renderTitles();renderSources();save();
+  renderOverview(m);renderMobileNext(m);renderMastery(m);renderStigma(m);renderRotation(m);renderBoards(m);renderGear(m);renderTitles();renderSources();save();
 }
 function renderMobileNext(m){
   const el=$('mobile-next');el.hidden=false;
@@ -233,7 +239,7 @@ function renderOverview(m){
   const next=[];if(m.mastery.next)next.push([`+${m.mastery.next.need} mastery`,`${m.mastery.next.name} rank ${m.mastery.next.rank}`]);if(m.stigma.next)next.push([`+${m.stigma.next.need} stigma`,`${m.stigma.next.name} rank ${m.stigma.next.rank}`]);if(m.boards.next)next.push([`+${m.boards.next.need} PvE crystals`,`${m.boards.next.board}: ${effectText(nodeMap().get(m.boards.next.id).node)}`]);if(a.context==='pvp'&&m.azphel.next)next.push([`+${m.azphel.next.need} Azphel crystals`,effectText(nodeMap().get(m.azphel.next.id).node)]);
   const needs=top.map(n=>({name:n,level:effective(n,m)})).find(x=>x.level<16);if(needs)next.push(['Lv 16 specialty',`${needs.name}: ${16-needs.level} more effective levels from mastery, board or gear`]);
   $('next-unlocks').innerHTML=next.length?next.map(([label,detail])=>`<div class="next-unlock"><strong>${esc(label)}</strong><span>${esc(detail)}</span></div>`).join(''):'<p>All planned ranks and nodes are funded.</p>';
-  renderGoal();
+  renderGoal(m);
 }
 function renderLevelingOverview(m){
   $('build-flow').hidden=true;
@@ -248,15 +254,25 @@ function renderLevelingOverview(m){
   const future=[];for(const [name,at] of unlocks)future.push([`Lv ${at} skill`,name,at]);if(next)future.push([`Lv ${next[0]}`,next[1],next[0]]);future.sort((x,y)=>x[2]-y[2]);if(m.mastery.next)future.push([`+${m.mastery.next.need} Mastery`,`${m.mastery.next.name} rank ${m.mastery.next.rank}`]);if(m.boards.next)future.push([`+${m.boards.next.need} crystals`,`${m.boards.next.board}: ${effectText(nodeMap().get(m.boards.next.id).node)}`]);
   $('next-unlocks').innerHTML=future.length?future.slice(0,6).map(([label,detail])=>`<div class="next-unlock"><strong>${esc(label)}</strong><span>${esc(detail)}</span></div>`).join(''):'<p>Level 45 progression is ready.</p>';
 }
-function renderGoal(){
+function renderGoal(m){
   const a=account(),heal=profile().kind==='healer',tank=state.class==='templar';
   $('goal-title').textContent=heal?'Effective healing & survival':tank?'Tank Combat Power goal':'Damage Combat Power goal';
-  $('goal-explainer').textContent=heal?'Enter an effective HPS target for your group if you have one. Record healing actually needed, and judge it with deaths and missed mechanics.':`The ${tank?'60k tank':'100k damage'} starting goal is editable. Enter the Combat Power shown in game to track progress. Gear and other systems affect it; point totals alone cannot predict the score.`;
-  $('target-label').textContent=heal?'Target effective HPS':'Target Combat Power';$('observed-label').textContent=heal?'Measured effective HPS':'Current Combat Power';
-  $('goal-target').value=a.goalTarget||'';$('goal-observed').value=a.goalObserved||'';
-  const target=Number(a.goalTarget)||0,observed=Number(a.goalObserved)||0;
-  if(!target){$('goal-status').innerHTML=heal?'Set a target when your group has a useful effective HPS benchmark. Prioritize timely heals and survival now.':'Set a Combat Power target to track progress.';return}
-  if(!observed){$('goal-status').innerHTML=`Target: <b>${target.toLocaleString()}</b> ${heal?'effective HPS':'Combat Power'} · add your current in-game value to see the gap.`;return}
+  $('goal-explainer').textContent=heal?'Enter an effective HPS target for your group if you have one. Record healing actually needed, and judge it with deaths and missed mechanics.':`The ${tank?'60k tank':'100k damage'} starting goal is editable. Estimated CP updates from the planned build after you record your gear; it is not the in-game score.`;
+  $('target-label').textContent=heal?'Target effective HPS':'Target Combat Power';
+  $('observed-field').hidden=!heal;$('goal-observed').value=heal?a.goalObserved||'':'';
+  document.querySelector('.goal-inputs').classList.toggle('single-target',!heal);$('goal-target').value=a.goalTarget||'';
+  const target=Number(a.goalTarget)||0;
+  if(!heal){
+    const estimate=estimateCombatPower(m);
+    if(!estimate.ready){$('goal-status').textContent=estimate.reason;return}
+    if(!target){$('goal-status').innerHTML=`Estimated planned CP: <b>≈${estimate.value.toLocaleString()}</b>. Set a target to compare.`;return}
+    const percent=Math.min(100,Math.round(estimate.value/target*100)),gap=Math.max(0,target-estimate.value);
+    $('goal-status').innerHTML=`<b>≈${percent}% of target</b> · ${gap?`estimated gap ≈${gap.toLocaleString()} CP`:'estimate meets target'}<small>Planning range ${estimate.low.toLocaleString()}–${estimate.high.toLocaleString()} CP</small><div class="progress"><span style="width:${percent}%"></span></div>`;
+    return;
+  }
+  const observed=Number(a.goalObserved)||0;
+  if(!target){$('goal-status').textContent='Set a target when your group has a useful effective HPS benchmark. Prioritize timely heals and survival now.';return}
+  if(!observed){$('goal-status').innerHTML=`Target: <b>${target.toLocaleString()}</b> effective HPS · record measured healing to see the gap.`;return}
   const percent=Math.min(100,Math.round(observed/target*100)),gap=Math.max(0,target-observed);
   $('goal-status').innerHTML=`<b>${percent}% of target</b> · ${gap?`${gap.toLocaleString()} to go`:'target reached'}<div class="progress"><span style="width:${percent}%"></span></div>`;
 }
@@ -431,11 +447,11 @@ function renderSources(){
   const d=data(),p=profile(),firstSkill=Object.values(d.skills)[0];const cards=[
     ['Global service scope','Daeva Architect uses Global client data across Global regions. Taiwan and Korea have separate clients and progression rules; their items and point tables are outside this planner.',`https://aion2.gg/guides/global-vs-asia`,'Compare client rules'],
     ['Searchable Global equipment',`${GEAR_CATALOG.items.length} equipment, Arcana and wing entries from Aion2Data Global client ${GEAR_CATALOG.clientVersion}, retrieved ${GEAR_CATALOG.retrieved}. Item icons use game asset paths; live tooltips show base values. Newer Global patch items may be absent until the index is refreshed. Record your own soul binding and skill rolls. Game art © NCSOFT.`,`https://aion2data.com/creators`,'Open reuse and data source'],
-    ['Gear sockets and Theostones','Global item tooltips list stone and Theostone sockets. The editor uses those counts when available and lets you record the stone, rolled stat and value. Weapons and guards can carry one Theostone at Epic or Unique grade; identical effects do not stack. The game calculates their Combat Power contribution.',`https://metabot.gg/en/aion-2/guides/gear-enhancement-guide`,'Open Global socket rules'],
+    ['Gear sockets and Theostones','Global item tooltips list stone and Theostone sockets. The editor uses those counts when available and lets you record the stone, rolled stat and value. Weapons and guards can carry one Theostone at Epic or Unique grade; identical effects do not stack. Valid stone rolls add a conservative amount to the planner’s approximate CP estimate.',`https://metabot.gg/en/aion-2/guides/gear-enhancement-guide`,'Open Global socket rules'],
     ['Levels 1–45 point table','The Global client level table supplies the level-only Mastery, Stigma, slot and crystal baseline. Quest, Sealed Dungeon and other rewards are additional. This planner carries user-entered extras forward as the level changes.',`https://aion2data.com/leveling`,'Open level table'],
     ['Skill and board level gates',`The Global class table supplies each ${p.name} skill's unlock level. Nezekan, Zikel, Vaizel and Triniel open at 12, 20, 30 and 40; Stigma slots open at 22, 27, 32 and 37.`, `https://aion2data.com/classes/${state.class}`,'Open class unlocks'],
     ['Mastery rank gates','SkillAcquireData limits rank 2 to the unlock level, then adds one purchasable rank every three character levels. The leveling plan respects that gate and buys usable early skills before chasing rank 8. Point costs are 1 for ranks 2–4, 2 for 5–7, and 4 for 8–10.',`https://aion2data.com/skills/${firstSkill.slug}`,'Open skill rank table'],
-    ['Combat Power calculation','The game calculates Combat Power server-side. Gear, boards and other permanent systems contribute; the client files do not provide a formula for predicting your final score.',`https://aion2data.com/get-stronger`,'Open stat sources'],
+    ['Combat Power estimate','The game calculates exact Combat Power server-side. The planner provides a level-45 build estimate fitted to public NA East profiles and uses reverse-engineered weights for supported board stats. It is a planning range, and unrecorded systems can move the real score outside it.',`https://aion2data.com/get-stronger`,'Open stat sources'],
     ['Global client nodes','Board positions, costs, effects and skill names from Aion2Data Global client tables. Compare tooltips after a patch.',d.sources.nodes,'Open board data'],
     ['Context routes & weights',`Group, Solo and PvP follow different connected routes. ${ROUTES[state.class].methods[account().context]}. Azphel is a separately funded PvP board.`,d.sources.route,'Open class route'],
     ['Specialty choices','Aion2Codex class guide PvE picks and option text; gear or Arcana can unlock later choices. Compare live tooltips.',`https://aion2codex.com/guides/${state.class}`,'Open specialties'],
@@ -486,7 +502,7 @@ $('title-faction-filter').addEventListener('change',e=>{state.titleFaction=e.tar
 $('mastery-search').addEventListener('input',e=>{state.masterySearch=e.target.value;renderMastery(model())});
 $('mastery-level-context').addEventListener('click',e=>{if(!e.target.closest('[data-reset-level-mastery]'))return;setLevelingBudget('mastery',levelReward().mastery);render()});
 $('reset-button').addEventListener('click',()=>{state.accounts[state.class]=DEFAULT_ACCOUNT(state.class);state.preview=FRESH_45.crystals;state.node=null;clearMasterySearch();render()});
-for(const [id,key] of [['goal-target','goalTarget'],['goal-observed','goalObserved']])$(id).addEventListener('change',e=>{account()[key]=clamp(e.target.value,0,1000000000);render()});
+for(const [id,key] of [['goal-target','goalTarget'],['goal-observed','goalObserved']])$(id).addEventListener('change',e=>{if(key==='goalObserved'&&profile().kind!=='healer')return;account()[key]=clamp(e.target.value,0,1000000000);render()});
 $('skill-grid').addEventListener('change',e=>{
   if(e.target.dataset.gear){account().gear[e.target.dataset.gear]=clamp(e.target.value,0,30);render()}
   if(e.target.dataset.currentRank){
