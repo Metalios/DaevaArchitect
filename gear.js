@@ -27,6 +27,12 @@ const GEAR_SLOTS=[
   {id:'mirror',name:'Mirror',type:'Mirror',area:'arcana'},
   {id:'wings',name:'Wings',type:'Wing',area:'wings'},
 ];
+// The inventory order mirrors the two-column in-game inventory strip.
+// Inspect separates equipment and accessories around the central aether field.
+const GEAR_INVENTORY_ORDER=['weapon','guard','helm','pauldrons','top','belt','legs','gloves','cloak','shoes','necklace','earring1','earring2','amulet','ring1','ring2','bracelet1','bracelet2','rune1','rune2'];
+const GEAR_INSPECT_LEFT=['weapon','guard','helm','pauldrons','top','belt','legs','gloves','cloak','shoes','rune1','rune2'];
+const GEAR_INSPECT_RIGHT=['bracelet1','bracelet2','earring1','amulet','ring1','ring2','earring2','necklace'];
+const GEAR_TILE_LABELS={weapon:'Weapon',pauldrons:'Shoulder',earring1:'Ear I',earring2:'Ear II',bracelet1:'Brace I',bracelet2:'Brace II'};
 let gearDraft=null,gearSlotId=null,gearQuery='';
 const gearSlot=id=>GEAR_SLOTS.find(slot=>slot.id===id);
 const gearEquipment=()=>{account().equipment ||= {};return account().equipment};
@@ -45,15 +51,23 @@ function gearSlotHTML(slot){
   const grade=['Common','Rare','Epic','Unique'].includes(item?.grade)?item.grade.toLowerCase():'none';
   return `<button type="button" class="gear-slot ${item?'filled':''} grade-${grade} ${locked?'locked':''} ${item&&!active?'inactive':''}" data-gear-slot="${slot.id}" aria-label="${esc(slot.name)}: ${item?esc(item.name):'empty'}"><span class="gear-slot-icon">${gearIcon(item)}</span><span class="gear-slot-copy"><small>${esc(slot.name)}${locked?' · Lv 45':''}</small><b>${item?esc(item.name):'Empty slot'}</b><em>${item?`${item.enhancement?`+${item.enhancement} · `:''}${esc(item.grade||item.type||gearAllowedType(slot))}${!active?' · inactive':''}`:esc(gearAllowedType(slot))}</em></span></button>`;
 }
+function gearTileHTML(id){
+  const slot=gearSlot(id),item=gearEquipment()[id],active=gearIsActive(slot,item),grade=['Common','Rare','Epic','Unique'].includes(item?.grade)?item.grade.toLowerCase():'none';
+  return `<button type="button" class="gear-tile ${item?'filled':''} grade-${grade} ${id.startsWith('rune')?'rune':''} ${item&&!active?'inactive':''}" data-gear-slot="${id}" title="${esc(slot.name)}${item?`: ${esc(item.name)}`:' · empty'}" aria-label="${esc(slot.name)}: ${item?esc(item.name):'empty; select to search Global gear'}"><span class="gear-tile-art">${gearIcon(item)}</span>${item?.enhancement?`<strong class="gear-tile-enhancement">+${clamp(item.enhancement,0,30)}</strong>`:''}${!item?`<span class="gear-tile-empty-label">${esc(GEAR_TILE_LABELS[id]||slot.name)}</span>`:''}<span class="gear-tile-slot-label">${esc(slot.name)}</span></button>`;
+}
+function gearTileGroup(ids){return ids.map(gearTileHTML).join('')}
 function renderGear(){
   const equipment=gearEquipment(),regular=GEAR_SLOTS.filter(s=>['left','right'].includes(s.area)),arcana=GEAR_SLOTS.filter(s=>s.area==='arcana');
   const active=GEAR_SLOTS.filter(s=>gearIsActive(s,equipment[s.id])),gearCount=regular.filter(s=>equipment[s.id]).length;
   $('gear-count').textContent=`${gearCount} / 20 gear slots`;
   $('gear-class-heading').textContent=`${profile().name} · ${GEAR_WEAPONS[state.class]} and Guard`;
-  $('gear-level-note').textContent=`Character level ${currentLevel()}`;
+  $('gear-level-note').textContent=`${profile().name} · level ${currentLevel()}`;
   $('gear-snapshot').textContent=`${GEAR_CATALOG.clientVersion} · retrieved ${GEAR_CATALOG.retrieved}`;
   $('gear-summary').innerHTML=`<div><strong>${gearCount}<small>/ 20</small></strong><span>Equipment</span></div><div><strong>${arcana.filter(s=>equipment[s.id]).length}<small>/ 5</small></strong><span>Arcana</span></div><div><strong>${equipment.wings?'1':'0'}<small>/ 1</small></strong><span>Wings</span></div><div><strong>${active.length}</strong><span>Active now</span></div>`;
-  $('gear-doll-grid').innerHTML=`<div class="gear-doll-column">${regular.filter(s=>s.area==='left').map(gearSlotHTML).join('')}</div><div class="gear-figure" aria-hidden="true"><div class="gear-figure-halo"></div><svg viewBox="0 0 180 360" role="presentation"><path d="M90 27c20 0 29 14 29 33 0 15-8 29-19 35l23 8 29 34-10 53-17 1-3-44-11-8-7 47 15 104-15 53-21-2-4-57-7-47-7 47-4 57-21 2-15-53 15-104-7-47-11 8-3 44-17-1-10-53 29-34 23-8C69 89 61 75 61 60c0-19 9-33 29-33Z" fill="none" stroke="currentColor" stroke-width="3"/><path d="M55 117q35 22 70 0M76 95v51m28-51v51M65 185q25 16 50 0M58 290h64" fill="none" stroke="currentColor" stroke-width="2"/></svg><span>${esc(profile().name)}</span></div><div class="gear-doll-column">${regular.filter(s=>s.area==='right').map(gearSlotHTML).join('')}</div>`;
+  const view=state.gearView||((window.matchMedia&&window.matchMedia('(max-width: 700px)').matches)?'inventory':'inspect');
+  document.querySelectorAll('[data-gear-view]').forEach(button=>{const selected=button.dataset.gearView===view;button.classList.toggle('active',selected);button.setAttribute('aria-pressed',String(selected))});
+  $('gear-doll-grid').className=`gear-doll-grid ${view}`;
+  $('gear-doll-grid').innerHTML=view==='inventory'?`<div class="gear-inventory-backdrop"><span aria-hidden="true">✦</span><div class="gear-inventory-tiles">${gearTileGroup(GEAR_INVENTORY_ORDER)}</div></div>`:`<div class="gear-inspect-layout"><div class="gear-inspect-wing left" aria-hidden="true">⚔</div><div class="gear-inspect-wing right" aria-hidden="true">♧</div><div class="gear-inspect-tiles gear-inspect-left">${gearTileGroup(GEAR_INSPECT_LEFT)}</div><div class="gear-inspect-center" aria-hidden="true"><div class="gear-aether-ring"><span>✦</span></div><i></i></div><div class="gear-inspect-tiles gear-inspect-right">${gearTileGroup(GEAR_INSPECT_RIGHT)}</div></div>`;
   $('gear-arcana-grid').innerHTML=arcana.map(gearSlotHTML).join('');
   $('gear-wing-slot').innerHTML=gearSlotHTML(gearSlot('wings'));
   const bonuses=Object.entries(gearSkillLevels()).filter(([,n])=>n>0).sort((a,b)=>b[1]-a[1]);
@@ -95,6 +109,7 @@ async function selectGearResult(href){
 }
 function initGear(){
   $('gear').addEventListener('click',e=>{const slot=e.target.closest('[data-gear-slot]');if(slot)openGearSlot(slot.dataset.gearSlot)});
+  document.querySelector('.gear-view-switch').addEventListener('click',e=>{const button=e.target.closest('[data-gear-view]');if(!button)return;state.gearView=button.dataset.gearView;save();renderGear()});
   $('gear-dialog-close').addEventListener('click',()=>$('gear-dialog').close());
   $('gear-query').addEventListener('input',e=>{gearQuery=e.target.value;gearResults()});
   $('gear-results').addEventListener('click',e=>{const result=e.target.closest('[data-gear-result]');if(result)selectGearResult(result.dataset.gearResult)});

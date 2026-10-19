@@ -8,16 +8,27 @@ const errors=[];page.on('pageerror',error=>errors.push(error.message));
 await page.goto(process.env.GEAR_BASE_URL||pathToFileURL(path.resolve('dist/index.html')).href);
 await page.locator('[data-class="templar"]').click();
 await page.locator('[data-tab="gear"]').click();
+if(!await page.locator('#gear-doll-grid.inspect').count())throw Error('Desktop should open with the inspect layout');
+if(await page.locator('#gear-doll-grid .gear-tile').count()!==20)throw Error('Expected 20 gear tiles');
+if(await page.locator('#gear-doll-grid .gear-tile.filled').count())throw Error('Fresh equipment slots should be empty');
+if(process.env.GEAR_DESKTOP_SCREENSHOT)await page.locator('#gear').screenshot({path:process.env.GEAR_DESKTOP_SCREENSHOT});
+await page.locator('[data-gear-view="inventory"]').click();
+if(!await page.locator('#gear-doll-grid.inventory').count())throw Error('Inventory view toggle failed');
+await page.locator('[data-gear-view="inspect"]').click();
 await page.locator('[data-gear-slot="top"]').click();
 await page.locator('#gear-query').fill('Abyssal');
 await page.locator('[data-gear-result]').first().click();
 await page.locator('.gear-base-stats').waitFor({timeout:10000});
+await page.locator('[name="enhancement"]').fill('3');
 await page.locator('[name="skill0"]').selectOption({label:'Insulting Roar'});
 await page.locator('[name="levels0"]').fill('1');
 await page.locator('.gear-save').click();
 if(!await page.locator('[data-gear-slot="top"].filled').count())throw Error('Gear slot did not save');
+if(!await page.locator('[data-gear-slot="top"].filled img').count())throw Error('Selected game icon missing');
+if(!(await page.locator('[data-gear-slot="top"].filled').textContent()).includes('+3'))throw Error('Enhancement overlay missing');
 if(!await page.locator('#gear-skill-summary').getByText('Insulting Roar').count())throw Error('Skill bonus missing from gear summary');
 if(process.env.GEAR_SCREENSHOT){await page.screenshot({path:process.env.GEAR_SCREENSHOT,fullPage:true})}
+if(process.env.GEAR_FILLED_SCREENSHOT){await page.locator('#gear').screenshot({path:process.env.GEAR_FILLED_SCREENSHOT})}
 if(process.env.GEAR_MOBILE_SCREENSHOT){await page.setViewportSize({width:390,height:844});await page.screenshot({path:process.env.GEAR_MOBILE_SCREENSHOT,fullPage:true});await page.setViewportSize({width:1200,height:850})}
 await page.locator('[data-tab="mastery"]').click();
 await page.locator('#mastery-search').fill('Insulting Roar');
@@ -31,5 +42,12 @@ if(await page.locator('[data-gear-slot="top"].filled').count())throw Error('Temp
 await page.locator('[data-gear-slot="weapon"]').click();
 if(!await page.locator('#gear-results').getByText('Spellbook',{exact:false}).count())throw Error('Sorcerer weapon search is not class-specific');
 if(errors.length)throw Error(`Browser errors: ${errors.join('; ')}`);
+const mobile=await browser.newPage({viewport:{width:390,height:844}});
+await mobile.goto(process.env.GEAR_BASE_URL||pathToFileURL(path.resolve('dist/index.html')).href);
+await mobile.locator('[data-class="templar"]').click();
+await mobile.locator('[data-tab="gear"]').click();
+if(!await mobile.locator('#gear-doll-grid.inventory').count())throw Error('Mobile should open with the compact inventory layout');
+if(await mobile.locator('#gear-doll-grid .gear-tile.filled').count())throw Error('Fresh mobile equipment slots should be empty');
+if(process.env.GEAR_MOBILE_EMPTY_SCREENSHOT)await mobile.locator('#gear').screenshot({path:process.env.GEAR_MOBILE_EMPTY_SCREENSHOT});
 console.log('Gear search, save, skill bonus, persistence and class-specific weapons passed.');
 await browser.close();
