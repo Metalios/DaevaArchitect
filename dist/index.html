@@ -79,6 +79,8 @@
 .presets button{border:1px solid #715b39;border-radius:8px;background:#322a20;color:#eed09c;padding:8px 10px;font-size:12px;font-weight:800}
 .presets button.active{background:var(--gold);color:#091820}
 .skill-card .lv{text-align:right}.skill-card .lv strong,.skill-card .lv small{display:block}.skill-card .lv strong{font-size:23px;font-weight:400}.skill-card .lv small{font:700 11px Inter,Segoe UI,Arial,sans-serif;color:#9ec8cf;margin-top:2px}
+.skill-card .lv strong{font-size:19px}.baseline-level{font-size:12px;color:#d6e7e5;border-left:2px solid var(--aqua);padding:5px 8px;background:#15343a;margin:4px 0 10px}.baseline-level b{color:var(--aqua)}.baseline-level span{color:#a8c3c7}.baseline-level div{margin-top:4px;color:#cfe5dc}
+.board-effects-panel{margin-bottom:12px}.board-effect-list{max-height:270px;overflow:auto}.board-effect-list>div{display:flex;justify-content:space-between;gap:12px;padding:4px 0;border-top:1px solid #29434c;font-size:12px;color:#c7d9d9}.board-effect-list b{color:var(--aqua);white-space:nowrap}
 .welcome-panel{margin:20px 0 0;padding:30px;border:1px solid #456067;border-radius:16px;background:linear-gradient(135deg,#102a32,#0c1b23);box-shadow:var(--shadow)}
 .welcome-panel h2{font:normal 34px Georgia,serif;margin:8px 0}.welcome-panel p{max-width:640px;color:#bfd2d3;margin:0 0 20px;font-size:15px}
 .welcome-stats{display:flex;gap:11px;flex-wrap:wrap}.welcome-stats span{border:1px solid #506b68;border-radius:9px;padding:9px 12px;color:#bcd3d3;font-size:12px}.welcome-stats b{color:var(--gold);font:normal 20px Georgia,serif;margin-right:4px}
@@ -119,8 +121,8 @@
       <div class="two-col"><div class="panel"><h3>Put these in first</h3><ol id="now-steps" class="steps"></ol></div><div class="panel"><h3>Next points to earn</h3><div id="next-unlocks"></div><div class="notice">Effective skill level = mastery rank + board nodes + any gear or Arcana levels you enter. Specialty slots open at effective 8, 12 and 20; option 5 opens at 16.</div></div></div>
     </section>
     <section id="mastery" class="tab-panel" aria-label="Mastery and specialties">
-      <div class="section-title"><div><h2>Mastery & specialties</h2><p>Exact point costs, current effective levels and recommended PvE specialties for this class.</p></div><span id="mastery-spent" class="tag blue"></span></div>
-      <div class="notice" style="margin:0 0 17px">The large <b>Rank</b> is what you buy with Mastery points. <b>Effective Lv</b> includes board, gear and Arcana bonuses and controls specialty unlocks. Rank 8 → 10 costs 8 Mastery points. Highlighted specialty chips are suggested choices; check the current in-game tooltip after a balance patch.</div>
+      <div class="section-title"><div><h2>Mastery & specialties</h2><p>Recommended reset targets, exact point costs and projected in-game levels for this class.</p></div><span id="mastery-spent" class="tag blue"></span></div>
+      <div class="notice" style="margin:0 0 17px">The green <b>(+number)</b> beside a skill in game is a bonus, separate from its Mastery rank. It includes Daevanion nodes and other sources such as gear or Arcana. Compare it with each card's <b>In-game green bonus</b>; enter any levels beyond the planned board nodes in <b>Other bonus levels</b>. Enter your current Mastery rank to compare your actual skill level with the recommended target. For example, rank 9 + green (+5) shows Lv 14. Specialty choices use the target level; check live tooltips after a balance patch.</div>
       <div id="skill-grid" class="skill-grid"></div>
     </section>
     <section id="stigma" class="tab-panel" aria-label="Stigmas">
@@ -140,7 +142,7 @@
     <section id="boards" class="tab-panel" aria-label="Daevanion boards">
       <div class="section-title"><div><h2>Daevanion route</h2><p>A legal connected click order on the Global PvE grids. Select a board and tap a node for its effect.</p></div><span id="board-spent" class="tag gold"></span></div>
       <div id="board-summary" class="board-summary"></div><div class="board-tabs" id="board-tabs"></div>
-      <div class="board-layout"><div><div class="board-scroll"><div id="board-grid" class="board-grid" role="group" aria-label="Daevanion board nodes"></div></div><div class="timeline"><label for="route-slider">Preview crystals</label><input id="route-slider" type="range" min="0" max="136" value="136"><b id="route-slider-value">136</b></div><p id="route-footnote" class="footnote"></p></div><aside class="board-side"><div><div id="selected-node" class="selected-node"></div><div class="panel"><h3>Purchase order</h3><p id="purchase-intro"></p><div id="purchase-list" class="purchase-list"></div></div></div><div class="panel"><h3>Next key nodes</h3><div id="board-next"></div></div></aside></div>
+      <div class="board-layout"><div><div class="board-scroll"><div id="board-grid" class="board-grid" role="group" aria-label="Daevanion board nodes"></div></div><div class="timeline"><label for="route-slider">Preview crystals</label><input id="route-slider" type="range" min="0" max="136" value="136"><b id="route-slider-value">136</b></div><p id="route-footnote" class="footnote"></p></div><aside class="board-side"><div><div id="selected-node" class="selected-node"></div><div class="panel board-effects-panel"><h3>Board effects at preview</h3><p id="board-effect-intro"></p><div id="board-effect-list" class="board-effect-list"></div></div><div class="panel"><h3>Purchase order</h3><p id="purchase-intro"></p><div id="purchase-list" class="purchase-list"></div></div></div><div class="panel"><h3>Next key nodes</h3><div id="board-next"></div></div></aside></div>
     </section>
     <section id="sources" class="tab-panel" aria-label="Research notes"><div class="section-title"><div><h2>Research & limits</h2><p>Live links for the selected class and the assumptions behind the route.</p></div></div><div id="source-cards" class="sources"></div><div class="notice">This is a PvE starting recommendation, not a combat simulator. The 60k Templar tank and 100k damage Combat Power goals are editable planning benchmarks, not official dungeon requirements. Gear, boards, skills and other systems affect the in-game score; the game calculates the final number. Healers should measure effective healing, avoid overhealing, and keep the party alive. Azphel PvP currency is separate.</div></section>
     </div>
@@ -257,7 +259,7 @@ const TEMPLAR_STAGES = [
   ['Block Pain',8],['Warding Shield',8],['Guarding Seal',8],['Survival Willpower',8],['Flash Rampage',8],
   ['Poach',10],['Defiance',10],['Debilitating Smash',10],['Shield Rush',10],['Block Pain',10],['Warding Shield',10],['Guarding Seal',10],['Survival Willpower',10],['Flash Rampage',10]
 ];
-const DEFAULT_ACCOUNT = (cls='templar') => ({...FRESH_45,context:'party',gear:{},goalTarget:['cleric','chanter'].includes(cls)?0:cls==='templar'?60000:100000,goalObserved:0});
+const DEFAULT_ACCOUNT = (cls='templar') => ({...FRESH_45,context:'party',gear:{},currentRanks:{},goalTarget:['cleric','chanter'].includes(cls)?0:cls==='templar'?60000:100000,goalObserved:0});
 let saved = {};
 try { saved = JSON.parse(localStorage.getItem('aion2-pathfinder-all-v3') || '{}') || {}; } catch (_) {}
 let state = {class:CLASS_ORDER.includes(saved.class)?saved.class:null,accounts:saved.accounts||{},tab:'overview',board:'Nezekan',preview:FRESH_45.crystals,node:null};
@@ -294,7 +296,7 @@ function effects(owned){const skills={},stats={},nodes=nodeMap();for(const id of
 function effectText(n){if(!n||!n[6]?.length)return 'Start node';return n[6].map(([key,v])=>{if(typeof key==='number')return `${data().skills[key]?.name||key} +${v} level`;const meta=data().stats[key];return `${meta?.name||key} +${v/(meta?.div||1)}${meta?.pct?'%':''}`}).join(' · ')}
 function nodeShort(n){if(n[5]===0||n[5]===4)return '✦';if(typeof n[6]?.[0]?.[0]==='number')return n[5]===2?'P':'S';return ({FixingDamage:'ATK',Critical:'CR',Defense:'DEF',HPMax:'HP',MPMax:'MP',HealBoost:'HEAL'})[n[6]?.[0]?.[0]]||'·'}
 function model(){const a=account(),mastery=allocate(masteryStages(),a.mastery,masteryCost,skillNames(),1),stigma=allocate(stigmaStages(),a.stigma,stigmaCost,profile().stigmas,0),boards=boardPlan(a.crystals);return {mastery,stigma,boards,effects:effects(boards.owned)}}
-function effective(name,m){return Math.min(20,(m.mastery.levels[name]||1)+(m.effects.skills[name]||0)+(account().gear[name]||0))}
+function effective(name,m){return Math.min(40,(m.mastery.levels[name]||1)+(m.effects.skills[name]||0)+(account().gear[name]||0))}
 function render(){
   const selected=CLASS_ORDER.includes(state.class);
   $('class-buttons').innerHTML=CLASS_ORDER.map(c=>`<button type="button" data-class="${c}" class="${state.class===c?'active':''}" aria-pressed="${state.class===c}"><span>${PROFILES[c].name}</span><small>${PROFILES[c].role}</small></button>`).join('');
@@ -313,8 +315,8 @@ function render(){
 }
 function renderOverview(m){
   const a=account(),p=profile(),ordered=masteryStages().map(x=>x[0]).filter((v,i,s)=>s.indexOf(v)===i),top=ordered.slice(0,4);
-  $('overview-title').textContent=`${p.name}: your current path`;$('overview-subtitle').textContent=p.summary;
-  const kpis=[['Top mastery',top[0]?`Lv ${effective(top[0],m)}`:'—',top[0]||''],['Board crystals',`${m.boards.spent} / ${a.crystals}`,`${m.boards.perBoard.Nezekan} Nezekan · ${m.boards.perBoard.Zikel} Zikel`],['Stigma bar',`${m.stigma.spent} / ${a.stigma}`,'Four class-specific slots'],['Ready points',`${a.mastery-m.mastery.spent} · ${a.stigma-m.stigma.spent} · ${a.crystals-m.boards.spent}`,'Unspent mastery · stigma · crystals']];
+  $('overview-title').textContent=`${p.name}: recommended path`;$('overview-subtitle').textContent=p.summary;
+  const kpis=[['Top target',top[0]?`Lv ${effective(top[0],m)}`:'—',top[0]||''],['Board crystals',`${m.boards.spent} / ${a.crystals}`,`${m.boards.perBoard.Nezekan} Nezekan · ${m.boards.perBoard.Zikel} Zikel`],['Stigma bar',`${m.stigma.spent} / ${a.stigma}`,'Four class-specific slots'],['Ready points',`${a.mastery-m.mastery.spent} · ${a.stigma-m.stigma.spent} · ${a.crystals-m.boards.spent}`,'Unspent in recommended plan']];
   $('kpis').innerHTML=kpis.map(([label,value,detail])=>`<div class="kpi"><div class="k-label">${esc(label)}</div><strong>${esc(value)}</strong><small>${esc(detail)}</small></div>`).join('');
   const mode=p.kind==='healer'?'healing':'damage';
   const steps=[`<b>Mastery:</b> ${top.map(n=>`${esc(n)} Lv ${m.mastery.levels[n]||1}`).join(' · ')}. Open the Mastery tab for every rank and specialty.`,
@@ -342,11 +344,11 @@ function renderGoal(){
 }
 function specPicks(name,eff){const spec=SPECS[state.class]?.[name];if(!spec)return [];let key=eff>=20?'20':eff>=16?'16':eff>=12?'12':eff>=8?'8':null;if(!key)return [];let picks=spec.picks[key]||[];if(state.class==='templar'&&account().context==='party'&&name==='Judgment'){picks=eff>=20?[3,4,5]:eff>=16?[4,5]:eff>=12?[3,4]:[3]}return picks}
 function renderMastery(m){
-  const a=account(),order=masteryStages().map(x=>x[0]).filter((v,i,s)=>s.indexOf(v)===i);$('mastery-spent').textContent=`${m.mastery.spent} / ${a.mastery} spent`;
+  const a=account(),order=masteryStages().map(x=>x[0]).filter((v,i,s)=>s.indexOf(v)===i);$('mastery-spent').textContent=`${m.mastery.spent} / ${a.mastery} planned`;
   $('skill-grid').innerHTML=order.map((name,i)=>{
-    const base=m.mastery.levels[name]||1,board=m.effects.skills[name]||0,gear=a.gear[name]||0,eff=effective(name,m),spec=SPECS[state.class]?.[name],picks=specPicks(name,eff);
+    const base=m.mastery.levels[name]||1,board=m.effects.skills[name]||0,gear=a.gear[name]||0,bonus=board+gear,eff=effective(name,m),current=a.currentRanks?.[name],currentLevel=current?Math.min(40,current+bonus):null,spec=SPECS[state.class]?.[name],picks=specPicks(name,eff);
     const chips=spec?`<div class="specs"><div class="specs-title">${eff<8?'First specialty at Lv 8':`Equip now · ${picks.length} choice${picks.length===1?'':'s'}`}</div><div class="spec-row">${Object.entries(spec.options).map(([num,label])=>{const required=+num<=3?8:+num===4?12:16;return `<span class="spec ${picks.includes(+num)?'on':eff<required?'future':''}" title="Option ${num} · level ${required}">#${num} ${esc(label)}${eff<required?` · Lv ${required}`:''}</span>`}).join('')}</div></div>`:'';
-    return `<article class="skill-card ${i<4?'highlight':''}"><div class="skill-head"><div><h3>${esc(name)}</h3><div class="sub">Priority ${i+1}${spec?' · specialty choices':''}</div></div><div class="lv"><strong>Rank ${base}</strong><small>Effective Lv ${eff}</small></div></div><div class="build-parts"><span>${masteryTotal(base)} Mastery spent</span><span>Board +${board}</span><span>Gear / Arcana +${gear}</span></div>${chips}<label class="gear-row">Extra gear / Arcana levels <input type="number" data-gear="${esc(name)}" min="0" max="10" value="${gear}" aria-label="Extra levels for ${esc(name)}"></label></article>`
+    return `<article class="skill-card ${i<4?'highlight':''}"><div class="skill-head"><div><h3>${esc(name)}</h3><div class="sub">Priority ${i+1}${spec?' · specialty choices':''}</div></div><div class="lv"><strong>Target Rank ${base}</strong><small>Target in-game Lv ${eff}</small></div></div><div class="build-parts"><span>${masteryTotal(base)} Mastery to reach target</span><span>Board +${board}</span><span>Other +${gear}</span></div><div class="baseline-level"><b>In-game green bonus: (+${bonus})</b><span> ${board} board + ${gear} other</span>${currentLevel?`<div>On this board route: current rank ${current} → Lv ${currentLevel}; target rank ${base} → Lv ${eff}.</div>`:''}</div>${chips}<label class="gear-row">Other bonus levels (gear / Arcana) <input type="number" data-gear="${esc(name)}" min="0" max="30" value="${gear}" aria-label="Other bonus levels for ${esc(name)}"></label><label class="gear-row">Your current Mastery rank (optional) <input type="number" data-current-rank="${esc(name)}" min="1" max="10" placeholder="—" value="${current||''}" aria-label="Current Mastery rank for ${esc(name)}"></label></article>`
   }).join('');
 }
 function renderStigma(m){
@@ -376,6 +378,11 @@ function renderBoards(m){
   for(let r=1;r<=15;r++)for(let c=1;c<=15;c++){const n=grid.get(`${r}:${c}`);if(!n){html+='<span></span>';continue}const owned=preview.owned.has(n[0])||n[5]===0,kind=n[5]===0?'start':n[5]===4?'unique':typeof n[6]?.[0]?.[0]==='number'?'skill':'stat';html+=`<button type="button" class="node ${kind} ${owned?'owned':''} ${preview.next?.id===n[0]?'next':''} ${state.node===n[0]?'selected':''}" data-node="${n[0]}" title="${esc(effectText(n))}" aria-label="${esc(effectText(n))}; row ${r}, column ${c}; ${owned?'owned':'future'}"><span>${nodeShort(n)}</span></button>`}
   $('board-grid').innerHTML=html;const selected=state.node&&nodes.get(state.node)?.board===state.board?nodes.get(state.node).node:null;
   $('selected-node').innerHTML=selected?`<strong>${esc(effectText(selected))}</strong><small>Row ${selected[1]}, column ${selected[2]} · ${selected[5]} crystal${selected[5]===1?'':'s'} · ${preview.owned.has(selected[0])||selected[5]===0?'In preview':'Future'}</small>`:`<strong>${state.board}</strong><small>Tap any node. Green and gold nodes are in the route; the outlined node is next.</small>`;
+  const boardSkills={},boardStats={};for(const n of board.nodes){if(!preview.owned.has(n[0]))continue;for(const [key,value] of n[6]){if(typeof key==='number'){const name=data().skills[key]?.name||String(key);boardSkills[name]=(boardSkills[name]||0)+value}else boardStats[key]=(boardStats[key]||0)+value}}
+  $('board-effect-intro').textContent=`${state.board} totals from the selected route at ${state.preview} crystals.`;
+  const statLabel={FixingDamage:'Attack Bonus',Defense:'Defense Bonus',HPMax:'HP',MPMax:'MP'};
+  const effectRows=[...Object.entries(boardSkills).map(([name,value])=>[name,`+${value}`]),...Object.entries(boardStats).map(([key,value])=>{const meta=data().stats[key];return [statLabel[key]||meta?.name||key,`+${value/(meta?.div||1)}${meta?.pct?'%':''}`]})];
+  $('board-effect-list').innerHTML=effectRows.length?effectRows.map(([name,value])=>`<div><span>${esc(name)}</span><b>${esc(value)}</b></div>`).join(''):'<span class="empty">No purchased effects yet.</span>';
   let spent=0,number=0,boardSpent=0;const rows=[];for(const x of data().route){const n=nodes.get(x.id).node;spent+=n[5];if(x.board!==state.board)continue;number++;if(spent<=state.preview)boardSpent+=n[5];rows.push({number,spent,cost:n[5],label:effectText(n),id:x.id,row:n[1],col:n[2]})}
   $('purchase-intro').textContent=`${boardSpent} crystals on ${state.board} at preview ${state.preview}. Click a purchase to locate it on the grid.`;
   $('purchase-list').innerHTML=rows.map(x=>`<button type="button" data-purchase="${x.id}" class="purchase ${x.spent<=state.preview?'current':''}"><span class="n">${x.number}.</span><span>${esc(x.label)}<small>r${x.row} · c${x.col} · total ${x.spent}</small></span><span class="c">${x.cost} ✧</span></button>`).join('');
@@ -403,7 +410,16 @@ for(const [id,key,max] of [['mastery-input','mastery',462],['stigma-input','stig
 for(const [id,ctx] of [['party-button','party'],['solo-button','solo']])$(id).addEventListener('click',()=>{account().context=ctx;render()});
 $('reset-button').addEventListener('click',()=>{state.accounts[state.class]=DEFAULT_ACCOUNT(state.class);state.preview=FRESH_45.crystals;state.node=null;render()});
 for(const [id,key] of [['goal-target','goalTarget'],['goal-observed','goalObserved']])$(id).addEventListener('change',e=>{account()[key]=clamp(e.target.value,0,1000000000);render()});
-$('skill-grid').addEventListener('change',e=>{if(e.target.dataset.gear){account().gear[e.target.dataset.gear]=clamp(e.target.value,0,10);render()}});
+$('skill-grid').addEventListener('change',e=>{
+  if(e.target.dataset.gear){account().gear[e.target.dataset.gear]=clamp(e.target.value,0,30);render()}
+  if(e.target.dataset.currentRank){
+    account().currentRanks ||= {};
+    const name=e.target.dataset.currentRank;
+    if(e.target.value==='')delete account().currentRanks[name];
+    else account().currentRanks[name]=clamp(e.target.value,1,10);
+    render();
+  }
+});
 $('board-tabs').addEventListener('click',e=>{const b=e.target.closest('[data-board]');if(b){state.board=b.dataset.board;state.node=null;renderBoards(model())}});
 $('board-grid').addEventListener('click',e=>{const b=e.target.closest('[data-node]');if(b){state.node=Number(b.dataset.node);renderBoards(model())}});
 $('purchase-list').addEventListener('click',e=>{const b=e.target.closest('[data-purchase]');if(b){state.node=Number(b.dataset.purchase);renderBoards(model())}});

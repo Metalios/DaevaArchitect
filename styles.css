@@ -71,6 +71,8 @@
 .presets button{border:1px solid #715b39;border-radius:8px;background:#322a20;color:#eed09c;padding:8px 10px;font-size:12px;font-weight:800}
 .presets button.active{background:var(--gold);color:#091820}
 .skill-card .lv{text-align:right}.skill-card .lv strong,.skill-card .lv small{display:block}.skill-card .lv strong{font-size:23px;font-weight:400}.skill-card .lv small{font:700 11px Inter,Segoe UI,Arial,sans-serif;color:#9ec8cf;margin-top:2px}
+.skill-card .lv strong{font-size:19px}.baseline-level{font-size:12px;color:#d6e7e5;border-left:2px solid var(--aqua);padding:5px 8px;background:#15343a;margin:4px 0 10px}.baseline-level b{color:var(--aqua)}.baseline-level span{color:#a8c3c7}.baseline-level div{margin-top:4px;color:#cfe5dc}
+.board-effects-panel{margin-bottom:12px}.board-effect-list{max-height:270px;overflow:auto}.board-effect-list>div{display:flex;justify-content:space-between;gap:12px;padding:4px 0;border-top:1px solid #29434c;font-size:12px;color:#c7d9d9}.board-effect-list b{color:var(--aqua);white-space:nowrap}
 .welcome-panel{margin:20px 0 0;padding:30px;border:1px solid #456067;border-radius:16px;background:linear-gradient(135deg,#102a32,#0c1b23);box-shadow:var(--shadow)}
 .welcome-panel h2{font:normal 34px Georgia,serif;margin:8px 0}.welcome-panel p{max-width:640px;color:#bfd2d3;margin:0 0 20px;font-size:15px}
 .welcome-stats{display:flex;gap:11px;flex-wrap:wrap}.welcome-stats span{border:1px solid #506b68;border-radius:9px;padding:9px 12px;color:#bcd3d3;font-size:12px}.welcome-stats b{color:var(--gold);font:normal 20px Georgia,serif;margin-right:4px}

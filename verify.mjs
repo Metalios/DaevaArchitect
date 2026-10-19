@@ -36,5 +36,27 @@ for(const slug of classes){
     owned[item.board].add(item.id);cost+=n[5];
   }
   assert(cost===570,`${slug}: board cost ${cost}`);
+  if(slug==='templar'){
+    let spent=0;
+    const bonuses={},byBoard={};
+    for(const item of d.route){
+      const node=nodes[item.board].get(item.id);
+      if(spent+node[5]>218) break;
+      spent+=node[5];
+      const board=byBoard[item.board] ||= {};
+      for(const [key,value] of node[6]){
+        const name=typeof key==='number'?d.skills[key].name:key;
+        board[name]=(board[name]||0)+value;
+        if(typeof key==='number')bonuses[name]=(bonuses[name]||0)+value;
+      }
+    }
+    assert(spent===218,'templar: 218-crystal route does not spend full budget');
+    assert(bonuses['Insulting Roar']===4,'templar: board bonus for Insulting Roar should be +4 at 218 crystals');
+    assert(bonuses['Impact Hit']===3,'templar: board bonus for Impact Hit should be +3 at 218 crystals');
+    assert(byBoard.Nezekan.CombatSpeed===300&&byBoard.Nezekan.CoolTimeDecrease===300,'templar: Nezekan route disagrees with game screenshot');
+    assert(byBoard.Zikel['Insulting Roar']===2&&byBoard.Zikel.Fury===2&&byBoard.Zikel.DecreaseDamage===300,'templar: Zikel route disagrees with game screenshot');
+    assert(byBoard.Vaizel['Impact Hit']===1&&byBoard.Vaizel.HPMax===100,'templar: Vaizel route disagrees with game screenshot');
+    assert(byBoard.Triniel.AdditionalHitRate===300&&byBoard.Triniel['Insulting Roar']===1,'templar: Triniel route disagrees with game screenshot');
+  }
   console.log(`${slug}: 22 skills, 4 stigmas, ${d.route.length} connected purchases, 570 crystals`);
 }
