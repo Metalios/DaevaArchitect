@@ -430,4 +430,7 @@ body[data-theme=sanctum] #mastery{--m-card:#fffdfa;--m-card-feature:#f7faf4;--m-
 .gear-stone-row>input[name^="stoneStat"]{grid-column:2}
 .gear-theostone-editor input{display:block;width:100%;margin:7px 0}
 .gear-stone-warning{color:#ffd284!important}
+.gear-dialog-grid{height:calc(100dvh - 184px);min-height:0;grid-template-rows:minmax(0,1fr)}
+.gear-preview-pane{min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
+@media(max-width:700px){.gear-dialog-grid{height:auto;max-height:calc(100dvh - 160px);overflow-y:auto}.gear-preview-pane{overflow:visible}}
 @media(max-width:700px){.introline{display:block}.intro-actions{justify-content:flex-start;margin-top:10px}.shared-build-banner{display:block}.shared-build-banner button{margin:9px 8px 0 0}}
