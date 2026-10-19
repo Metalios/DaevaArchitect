@@ -16,6 +16,12 @@ await page.locator('[data-gear-view="inventory"]').click();
 if(!await page.locator('#gear-doll-grid.inventory').count())throw Error('Inventory view toggle failed');
 await page.locator('[data-gear-view="inspect"]').click();
 await page.locator('[data-gear-slot="top"]').click();
+if(await page.locator('.gear-result').count()<10)throw Error('Gear picker should show a searchable catalog');
+if(!await page.locator('.gear-result.grade-unique img').count())throw Error('Gear picker is missing item icons or rarity frames');
+if(await page.evaluate(()=>[...document.querySelectorAll('.gear-result')].some(card=>GEAR_CATALOG_BY_HREF.get(card.dataset.gearResult)?.faction==='asmodian')))throw Error('Default faction filter included opposing-faction gear');
+await page.locator('#gear-grade-filter').selectOption('Rare');
+if(!await page.locator('.gear-result.grade-rare').count()||await page.locator('.gear-result:not(.grade-rare)').count())throw Error('Rarity filter failed');
+await page.locator('#gear-grade-filter').selectOption('all');
 await page.locator('#gear-query').fill('Abyssal');
 await page.locator('[data-gear-result]').first().click();
 await page.locator('.gear-base-stats').waitFor({timeout:10000});
@@ -27,6 +33,13 @@ if(!await page.locator('[data-gear-slot="top"].filled').count())throw Error('Gea
 if(!await page.locator('[data-gear-slot="top"].filled img').count())throw Error('Selected game icon missing');
 if(!(await page.locator('[data-gear-slot="top"].filled').textContent()).includes('+3'))throw Error('Enhancement overlay missing');
 if(!await page.locator('#gear-skill-summary').getByText('Insulting Roar').count())throw Error('Skill bonus missing from gear summary');
+if(!await page.locator('#gear-fixed-stats .gear-bonus').count())throw Error('Known fixed item stats were not summarized');
+await page.locator('#gear-cp-input').fill('38500');
+await page.locator('#gear-cp-input').blur();
+if(!(await page.locator('#gear-cp-status').textContent()).includes('38,500'))throw Error('Recorded Combat Power was not shown');
+await page.locator('[data-tab="overview"]').click();
+if(await page.locator('#goal-observed').inputValue()!=='38500')throw Error('Combat Power entry was not shared with the build overview');
+await page.locator('[data-tab="gear"]').click();
 if(process.env.GEAR_SCREENSHOT){await page.screenshot({path:process.env.GEAR_SCREENSHOT,fullPage:true})}
 if(process.env.GEAR_FILLED_SCREENSHOT){await page.locator('#gear').screenshot({path:process.env.GEAR_FILLED_SCREENSHOT})}
 if(process.env.GEAR_MOBILE_SCREENSHOT){await page.setViewportSize({width:390,height:844});await page.screenshot({path:process.env.GEAR_MOBILE_SCREENSHOT,fullPage:true});await page.setViewportSize({width:1200,height:850})}

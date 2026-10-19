@@ -188,7 +188,9 @@ function render(){
 function renderMobileNext(m){
   const el=$('mobile-next');el.hidden=false;
   const first=isLeveling()?LEVELING_MASTERY_CORE[state.class].find(([name,target])=>(m.mastery.levels[name]||1)<Math.min(target,masteryRankCap(name))):null;
-  const choice=first?{title:`Raise ${first[0]} to rank ${Math.min(first[1],masteryRankCap(first[0]))}`,detail:`Current plan: rank ${m.mastery.levels[first[0]]||1}. This skill's next rank is available at your character level.`,tab:'mastery'}:m.mastery.next?{title:`Plan ${m.mastery.next.name} rank ${m.mastery.next.rank}`,detail:`Earn ${m.mastery.next.need} more Mastery point${m.mastery.next.need===1?'':'s'} for this step.`,tab:'mastery'}:m.boards.next?{title:`Open ${m.boards.next.board} next`,detail:`${effectText(nodeMap().get(m.boards.next.id).node)} · ${m.boards.next.need} more crystals for the next connected node.`,tab:'boards'}:{title:'Review your current build',detail:'Your available points are allocated. Check skill specialties and the next board route.',tab:'mastery'};
+  const filled=GEAR_SLOTS.filter(slot=>['left','right'].includes(slot.area)&&gearEquipment()[slot.id]).length;
+  const gearFirst=!isLeveling()&&filled<4,boardsNext=!isLeveling()&&!gearFirst&&!obtainedNodes().size;
+  const choice=gearFirst?{title:'Equip your current gear',detail:`${filled} of 20 equipment slots recorded. Item grade, fixed stats and rolled skill levels shape the rest of the build.`,tab:'gear'}:boardsNext?{title:'Follow your Daevanion route',detail:'Mark the connected nodes you already own; board skill levels combine with Mastery and gear.',tab:'boards'}:first?{title:`Raise ${first[0]} to rank ${Math.min(first[1],masteryRankCap(first[0]))}`,detail:`Current plan: rank ${m.mastery.levels[first[0]]||1}. This skill's next rank is available at your character level.`,tab:'mastery'}:m.mastery.next?{title:`Plan ${m.mastery.next.name} rank ${m.mastery.next.rank}`,detail:`Earn ${m.mastery.next.need} more Mastery point${m.mastery.next.need===1?'':'s'} for this step.`,tab:'mastery'}:m.boards.next?{title:`Open ${m.boards.next.board} next`,detail:`${effectText(nodeMap().get(m.boards.next.id).node)} · ${m.boards.next.need} more crystals for the next connected node.`,tab:'boards'}:{title:'Review your current build',detail:'Your available points are allocated. Check skill specialties and the next board route.',tab:'mastery'};
   $('mobile-next-title').textContent=choice.title;$('mobile-next-description').textContent=choice.detail;el.dataset.targetTab=choice.tab;
 }
 function renderLevelControls(){
@@ -204,10 +206,14 @@ function renderOverview(m){
   $('overview-title').textContent=`${p.name}: recommended path`;$('overview-subtitle').textContent=p.summary;
   const kpis=[['Top target',top[0]?`Lv ${effective(top[0],m)}`:'—',top[0]||''],['PvE crystals',`${m.boards.spent} / ${a.crystals}`,`${m.boards.perBoard.Nezekan} Nezekan · ${m.boards.perBoard.Zikel} Zikel`],['Stigma bar',`${m.stigma.spent} / ${a.stigma}`,'Four context-specific slots'],['Ready points',`${a.mastery-m.mastery.spent} · ${a.stigma-m.stigma.spent} · ${a.crystals-m.boards.spent}`,'Unspent Mastery · Stigma · PvE crystals']];
   $('kpis').innerHTML=kpis.map(([label,value,detail])=>`<div class="kpi"><div class="k-label">${esc(label)}</div><strong>${esc(value)}</strong><small>${esc(detail)}</small></div>`).join('');
+  const gearCount=GEAR_SLOTS.filter(slot=>['left','right'].includes(slot.area)&&gearEquipment()[slot.id]).length;
+  $('build-flow').hidden=false;
+  $('build-flow').innerHTML=`<button type="button" data-flow-tab="gear"><small>01 / establish your loadout</small><b>Equipment</b><span>${gearCount} / 20 slots recorded · grades, stats and skill rolls</span></button><button type="button" data-flow-tab="boards"><small>02 / route your crystals</small><b>Daevanion</b><span>${m.boards.spent} / ${a.crystals} PvE crystals in the plan</span></button><button type="button" data-flow-tab="mastery"><small>03 / finish the kit</small><b>Mastery & Stigmas</b><span>Use gear and board bonuses to check specialty levels</span></button>`;
   const mode=p.kind==='healer'?'healing':'damage';
-  const steps=[`<b>Mastery:</b> ${top.map(n=>`${esc(n)} Lv ${m.mastery.levels[n]||1}`).join(' · ')}. Open the Mastery tab for every rank and specialty.`,
+  const steps=[`<b>Gear:</b> ${gearCount} / 20 slots recorded. Equip current pieces first; fixed stats, enhancement and rolled skill levels change the final build.`,
+    `<b>Daevanion:</b> ${BOARD_NAMES.map(n=>`${n} ${m.boards.perBoard[n]}`).join(' · ')}. Follow the connected ${a.context==='pvp'?'PvP-oriented':'PvE'} route at ${a.crystals} crystals.`,
+    `<b>Mastery:</b> ${top.map(n=>`${esc(n)} Lv ${m.mastery.levels[n]||1}`).join(' · ')}. Check specialty unlocks using gear and board bonuses.`,
     `<b>Stigmas:</b> ${activeStigmas().map(n=>`${esc(n)} Lv ${m.stigma.levels[n]||0}`).join(' · ')}. ${esc(p.swap)}`,
-    `<b>PvE boards:</b> ${BOARD_NAMES.map(n=>`${n} ${m.boards.perBoard[n]}`).join(' · ')}. The grid gives a connected ${a.context==='pvp'?'PvP-oriented':'PvE'} click order at ${a.crystals} crystals.`,
     `<b>${mode==='healing'?'Healing':'Fight'} priority:</b> ${esc(p.rule)}`];
   if(a.context==='solo')steps.push(`<b>Solo route:</b> Mastery, Stigmas and the board order favor personal damage and self-sustain. The board route differs from Group PvE.`);
   if(a.context==='pvp')steps.push(`<b>PvP route:</b> Mastery, Stigmas and PvE crystal clicks prioritize control, escape and survival. Azphel uses a separate ${a.azphel||0}-crystal budget; it has no skill-level nodes.`);
@@ -218,6 +224,7 @@ function renderOverview(m){
   renderGoal();
 }
 function renderLevelingOverview(m){
+  $('build-flow').hidden=true;
   const p=profile(),level=currentLevel(),r=levelReward(),solo=account().context==='solo',next=LEVEL_MILESTONES.find(([at])=>at>level),names=masteryStages().map(([name])=>name).filter((v,i,s)=>s.indexOf(v)===i),top=names.slice(0,4),unlocks=Object.entries(SKILL_UNLOCKS[state.class]).filter(([,at])=>at>level).sort((a,b)=>a[1]-b[1]).slice(0,3);
   const band=level<12?'Learn the core loop':level<22?'Build your first board':level<30?'Add Stigmas':level<40?'Expand your kit':'Finish the campaign';
   $('overview-title').textContent=`${p.name} · Level ${level} path`;$('overview-subtitle').textContent=`${solo?'Solo':'Group'} leveling priorities through level 45. Recommendations use skills and systems available at your selected level.`;
@@ -419,6 +426,7 @@ function renderSources(){
   ];$('source-cards').innerHTML=cards.map(([title,body,url,label])=>`<div class="source-card"><b>${esc(title)}</b><p>${esc(body)}</p><a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(label)} ↗</a></div>`).join('');
 }
 document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{state.tab=b.dataset.tab;$('mobile-more-menu').hidden=true;$('mobile-more-button').setAttribute('aria-expanded','false');render()}));
+$('build-flow').addEventListener('click',e=>{const button=e.target.closest('[data-flow-tab]');if(!button)return;state.tab=button.dataset.flowTab;render();document.querySelector('.tab-panel.active')?.scrollIntoView({behavior:'smooth',block:'start'})});
 document.querySelectorAll('.theme-picker [data-theme]').forEach(b=>b.addEventListener('click',()=>{theme=b.dataset.theme;try{localStorage.setItem('daeva-architect-theme',theme)}catch(_){}applyTheme()}));
 $('mobile-more-button').addEventListener('click',()=>{const open=$('mobile-more-menu').hidden;$('mobile-more-menu').hidden=!open;$('mobile-more-button').setAttribute('aria-expanded',String(open))});
 $('mobile-more-menu').addEventListener('click',e=>{const b=e.target.closest('[data-more-tab]');if(!b)return;state.tab=b.dataset.moreTab;$('mobile-more-menu').hidden=true;$('mobile-more-button').setAttribute('aria-expanded','false');render()});
