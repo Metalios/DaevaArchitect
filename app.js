@@ -12,16 +12,16 @@ const TEMPLAR_STAGES = [
   ['Block Pain',8],['Warding Shield',8],['Guarding Seal',8],['Survival Willpower',8],['Flash Rampage',8],
   ['Poach',10],['Defiance',10],['Debilitating Smash',10],['Shield Rush',10],['Block Pain',10],['Warding Shield',10],['Guarding Seal',10],['Survival Willpower',10],['Flash Rampage',10]
 ];
-const DEFAULT_ACCOUNT = (cls='templar') => ({...FRESH_45,context:'party',gear:{},goalTarget:['cleric','chanter'].includes(cls)?0:100000,goalObserved:0});
+const DEFAULT_ACCOUNT = (cls='templar') => ({...FRESH_45,context:'party',gear:{},goalTarget:['cleric','chanter'].includes(cls)?0:cls==='templar'?60000:100000,goalObserved:0});
 let saved = {};
-try { saved = JSON.parse(localStorage.getItem('aion2-pathfinder-all-v2') || '{}') || {}; } catch (_) {}
-let state = {class:CLASS_ORDER.includes(saved.class)?saved.class:'templar',accounts:saved.accounts||{},tab:'overview',board:'Nezekan',preview:FRESH_45.crystals,node:null};
+try { saved = JSON.parse(localStorage.getItem('aion2-pathfinder-all-v3') || '{}') || {}; } catch (_) {}
+let state = {class:CLASS_ORDER.includes(saved.class)?saved.class:null,accounts:saved.accounts||{},tab:'overview',board:'Nezekan',preview:FRESH_45.crystals,node:null};
 function account(){ if(!state.accounts[state.class]) state.accounts[state.class]=DEFAULT_ACCOUNT(state.class); return state.accounts[state.class]; }
 function data(){return DATA[state.class]}
 function profile(){return PROFILES[state.class]}
 function esc(value){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function clamp(v,min,max){v=Number(v);return Number.isFinite(v)?Math.max(min,Math.min(max,Math.floor(v))):min}
-function save(){try{localStorage.setItem('aion2-pathfinder-all-v2',JSON.stringify({class:state.class,accounts:state.accounts}))}catch(_){}}
+function save(){try{localStorage.setItem('aion2-pathfinder-all-v3',JSON.stringify({class:state.class,accounts:state.accounts}))}catch(_){}}
 function skillNames(){return Object.values(data().skills).map(s=>s.name)}
 function nodeMap(){return new Map(data().boards.flatMap(b=>b.nodes.map(n=>[n[0],{board:b.name,node:n}]))) }
 function masteryCost(rank){return rank<=4?1:rank<=7?2:4}
@@ -51,10 +51,14 @@ function nodeShort(n){if(n[5]===0||n[5]===4)return '✦';if(typeof n[6]?.[0]?.[0
 function model(){const a=account(),mastery=allocate(masteryStages(),a.mastery,masteryCost,skillNames(),1),stigma=allocate(stigmaStages(),a.stigma,stigmaCost,profile().stigmas,0),boards=boardPlan(a.crystals);return {mastery,stigma,boards,effects:effects(boards.owned)}}
 function effective(name,m){return Math.min(20,(m.mastery.levels[name]||1)+(m.effects.skills[name]||0)+(account().gear[name]||0))}
 function render(){
+  const selected=CLASS_ORDER.includes(state.class);
+  $('class-buttons').innerHTML=CLASS_ORDER.map(c=>`<button type="button" data-class="${c}" class="${state.class===c?'active':''}" aria-pressed="${state.class===c}"><span>${PROFILES[c].name}</span><small>${PROFILES[c].role}</small></button>`).join('');
+  $('welcome-panel').hidden=selected;$('planner-content').hidden=!selected;
+  $('class-role').textContent=selected?profile().role:'Select a class';
+  if(!selected){$('hero-description').textContent='Choose a class to plan Mastery, Stigmas, Daevanion boards, specialties and rotation from a fresh Global level 45.';save();return}
   const a=account(),m=model(),p=profile();
   $('hero-description').textContent=p.summary+' Change your point totals to see what to buy now and next.';
   $('class-role').textContent=p.role;$('overview-role').textContent=p.role;
-  $('class-buttons').innerHTML=CLASS_ORDER.map(c=>`<button type="button" data-class="${c}" class="${state.class===c?'active':''}" aria-pressed="${state.class===c}"><span>${PROFILES[c].name}</span><small>${PROFILES[c].role}</small></button>`).join('');
   $('mastery-input').value=a.mastery;$('stigma-input').value=a.stigma;$('crystal-input').value=a.crystals;
   $('fresh-45-button').classList.toggle('active',Object.entries(FRESH_45).every(([key,value])=>a[key]===value));
   for(const [id,ctx] of [['party-button','party'],['solo-button','solo']]){$(id).classList.toggle('active',a.context===ctx);$(id).setAttribute('aria-pressed',a.context===ctx)}
@@ -80,9 +84,9 @@ function renderOverview(m){
   renderGoal();
 }
 function renderGoal(){
-  const a=account(),heal=profile().kind==='healer';
-  $('goal-title').textContent=heal?'Effective healing & survival':'100k Combat Power goal';
-  $('goal-explainer').textContent=heal?'Enter an effective HPS target for your group if you have one. Record healing actually needed, and judge it with deaths and missed mechanics.':'Enter the Combat Power shown in game. Gear and other progression systems contribute to it. This planner tracks the gap to your target; it cannot calculate Combat Power from points alone.';
+  const a=account(),heal=profile().kind==='healer',tank=state.class==='templar';
+  $('goal-title').textContent=heal?'Effective healing & survival':tank?'Tank Combat Power goal':'Damage Combat Power goal';
+  $('goal-explainer').textContent=heal?'Enter an effective HPS target for your group if you have one. Record healing actually needed, and judge it with deaths and missed mechanics.':`The ${tank?'60k tank':'100k damage'} starting goal is editable. Enter the Combat Power shown in game to track progress. Gear and other systems affect it; point totals alone cannot predict the score.`;
   $('target-label').textContent=heal?'Target effective HPS':'Target Combat Power';$('observed-label').textContent=heal?'Measured effective HPS':'Current Combat Power';
   $('goal-target').value=a.goalTarget||'';$('goal-observed').value=a.goalObserved||'';
   const target=Number(a.goalTarget)||0,observed=Number(a.goalObserved)||0;
@@ -159,4 +163,4 @@ $('board-tabs').addEventListener('click',e=>{const b=e.target.closest('[data-boa
 $('board-grid').addEventListener('click',e=>{const b=e.target.closest('[data-node]');if(b){state.node=Number(b.dataset.node);renderBoards(model())}});
 $('purchase-list').addEventListener('click',e=>{const b=e.target.closest('[data-purchase]');if(b){state.node=Number(b.dataset.purchase);renderBoards(model())}});
 $('route-slider').addEventListener('input',e=>{state.preview=clamp(e.target.value,0,account().crystals);renderBoards(model())});
-state.preview=account().crystals;render();
+state.preview=state.class?account().crystals:FRESH_45.crystals;render();
