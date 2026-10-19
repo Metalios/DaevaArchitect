@@ -2,7 +2,6 @@ const $ = id => document.getElementById(id);
 const CLASS_ORDER = ['templar','gladiator','assassin','ranger','sorcerer','spiritmaster','cleric','chanter'];
 const BOARD_NAMES = ['Nezekan','Zikel','Vaizel','Triniel'];
 const FRESH_45 = {mastery:203,stigma:29,crystals:136};
-const ORIGINAL_TEMPLAR = {mastery:285,stigma:30,crystals:218};
 const TEMPLAR_STAGES = [
   ['Vicious Strike',10],['Pummel',10],
   ['Judgment',8],['Punishment',8],['Warding Strike',8],['Annihilate',8],
@@ -15,18 +14,14 @@ const TEMPLAR_STAGES = [
 ];
 const DEFAULT_ACCOUNT = (cls='templar') => ({...FRESH_45,context:'party',gear:{},goalTarget:['cleric','chanter'].includes(cls)?0:100000,goalObserved:0});
 let saved = {};
-try { saved = JSON.parse(localStorage.getItem('aion2-pathfinder-all-v1') || '{}') || {}; } catch (_) {}
-try {
-  const old = JSON.parse(localStorage.getItem('aion2-templar-pathfinder-v1') || 'null');
-  if (old && !saved.accounts?.templar) saved.accounts = {...saved.accounts,templar:{...DEFAULT_ACCOUNT(),...old}};
-} catch (_) {}
+try { saved = JSON.parse(localStorage.getItem('aion2-pathfinder-all-v2') || '{}') || {}; } catch (_) {}
 let state = {class:CLASS_ORDER.includes(saved.class)?saved.class:'templar',accounts:saved.accounts||{},tab:'overview',board:'Nezekan',preview:FRESH_45.crystals,node:null};
 function account(){ if(!state.accounts[state.class]) state.accounts[state.class]=DEFAULT_ACCOUNT(state.class); return state.accounts[state.class]; }
 function data(){return DATA[state.class]}
 function profile(){return PROFILES[state.class]}
 function esc(value){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function clamp(v,min,max){v=Number(v);return Number.isFinite(v)?Math.max(min,Math.min(max,Math.floor(v))):min}
-function save(){try{localStorage.setItem('aion2-pathfinder-all-v1',JSON.stringify({class:state.class,accounts:state.accounts}))}catch(_){}}
+function save(){try{localStorage.setItem('aion2-pathfinder-all-v2',JSON.stringify({class:state.class,accounts:state.accounts}))}catch(_){}}
 function skillNames(){return Object.values(data().skills).map(s=>s.name)}
 function nodeMap(){return new Map(data().boards.flatMap(b=>b.nodes.map(n=>[n[0],{board:b.name,node:n}]))) }
 function masteryCost(rank){return rank<=4?1:rank<=7?2:4}
@@ -61,10 +56,7 @@ function render(){
   $('class-role').textContent=p.role;$('overview-role').textContent=p.role;
   $('class-buttons').innerHTML=CLASS_ORDER.map(c=>`<button type="button" data-class="${c}" class="${state.class===c?'active':''}" aria-pressed="${state.class===c}"><span>${PROFILES[c].name}</span><small>${PROFILES[c].role}</small></button>`).join('');
   $('mastery-input').value=a.mastery;$('stigma-input').value=a.stigma;$('crystal-input').value=a.crystals;
-  $('original-templar-button').hidden=state.class!=='templar';
   $('fresh-45-button').classList.toggle('active',Object.entries(FRESH_45).every(([key,value])=>a[key]===value));
-  $('original-templar-button').classList.toggle('active',state.class==='templar'&&Object.entries(ORIGINAL_TEMPLAR).every(([key,value])=>a[key]===value));
-  $('templar-point-note').hidden=state.class!=='templar'||a.mastery!==285;
   for(const [id,ctx] of [['party-button','party'],['solo-button','solo']]){$(id).classList.toggle('active',a.context===ctx);$(id).setAttribute('aria-pressed',a.context===ctx)}
   document.querySelectorAll('[data-tab]').forEach(b=>{b.classList.toggle('active',b.dataset.tab===state.tab);b.setAttribute('aria-current',b.dataset.tab===state.tab?'page':'false')});
   document.querySelectorAll('.tab-panel').forEach(el=>el.classList.toggle('active',el.id===state.tab));
@@ -89,13 +81,13 @@ function renderOverview(m){
 }
 function renderGoal(){
   const a=account(),heal=profile().kind==='healer';
-  $('goal-title').textContent=heal?'Effective healing & survival':'100k DPS target';
-  $('goal-explainer').textContent=heal?'Enter an effective HPS target for your group if you have one. Record healing actually needed, and judge it with deaths and missed mechanics.':'Enter measured single-target boss DPS from a comparable fight or dummy. This planner tracks the gap; it does not calculate DPS from point totals.';
-  $('target-label').textContent=heal?'Target effective HPS':'Target DPS';$('observed-label').textContent=heal?'Measured effective HPS':'Measured DPS';
+  $('goal-title').textContent=heal?'Effective healing & survival':'100k Combat Power goal';
+  $('goal-explainer').textContent=heal?'Enter an effective HPS target for your group if you have one. Record healing actually needed, and judge it with deaths and missed mechanics.':'Enter the Combat Power shown in game. Gear and other progression systems contribute to it. This planner tracks the gap to your target; it cannot calculate Combat Power from points alone.';
+  $('target-label').textContent=heal?'Target effective HPS':'Target Combat Power';$('observed-label').textContent=heal?'Measured effective HPS':'Current Combat Power';
   $('goal-target').value=a.goalTarget||'';$('goal-observed').value=a.goalObserved||'';
   const target=Number(a.goalTarget)||0,observed=Number(a.goalObserved)||0;
-  if(!target){$('goal-status').innerHTML=heal?'Set a target when your group has a useful effective HPS benchmark. Prioritize timely heals and survival now.':'Set a target DPS to track progress.';return}
-  if(!observed){$('goal-status').innerHTML=`Target: <b>${target.toLocaleString()}</b> ${heal?'effective HPS':'DPS'} · add a measured result to see the gap.`;return}
+  if(!target){$('goal-status').innerHTML=heal?'Set a target when your group has a useful effective HPS benchmark. Prioritize timely heals and survival now.':'Set a Combat Power target to track progress.';return}
+  if(!observed){$('goal-status').innerHTML=`Target: <b>${target.toLocaleString()}</b> ${heal?'effective HPS':'Combat Power'} · add your current in-game value to see the gap.`;return}
   const percent=Math.min(100,Math.round(observed/target*100)),gap=Math.max(0,target-observed);
   $('goal-status').innerHTML=`<b>${percent}% of target</b> · ${gap?`${gap.toLocaleString()} to go`:'target reached'}<div class="progress"><span style="width:${percent}%"></span></div>`;
 }
@@ -145,6 +137,7 @@ function renderBoards(m){
 function renderSources(){
   const d=data(),p=profile();const cards=[
     ['Fresh Global 45 totals','The Global client leveling tables give 203 Mastery points, 29 Stigma points, four slots and 136 Daevanion crystals by level 45. Other rewards are additional.',`https://metabot.gg/en/aion-2/leveling`,'Open level table'],
+    ['Combat Power calculation','The game calculates Combat Power server-side. Gear, boards and other permanent systems contribute; the client files do not provide a formula for predicting your final score.',`https://aion2data.com/get-stronger`,'Open stat sources'],
     ['Global client nodes','Board positions, costs, effects and skill names from Aion2Data Global client tables. Compare tooltips after a patch.',d.sources.nodes,'Open board data'],
     ['Connected route & weights',state.class==='chanter'?'Healer skill and stat weights guide the generated connected route.':'The published early route is preserved; the continuation follows class skill and stat priorities.',d.sources.route,'Open class route'],
     ['Specialty choices','Aion2Codex class guide PvE picks and option text; gear or Arcana can unlock later choices. Compare live tooltips.',`https://aion2codex.com/guides/${state.class}`,'Open specialties'],
@@ -157,8 +150,6 @@ document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()
 $('class-buttons').addEventListener('click',e=>{const b=e.target.closest('[data-class]');if(!b)return;state.class=b.dataset.class;state.board='Nezekan';state.preview=account().crystals;state.node=null;render()});
 function useBudget(values){Object.assign(account(),values);state.preview=account().crystals;state.node=null;render()}
 $('fresh-45-button').addEventListener('click',()=>useBudget(FRESH_45));
-$('original-templar-button').addEventListener('click',()=>useBudget(ORIGINAL_TEMPLAR));
-$('add-eight-button').addEventListener('click',()=>useBudget({mastery:293}));
 for(const [id,key,max] of [['mastery-input','mastery',462],['stigma-input','stigma',300],['crystal-input','crystals',570]])$(id).addEventListener('change',e=>{account()[key]=clamp(e.target.value,0,max);if(key==='crystals')state.preview=account().crystals;render()});
 for(const [id,ctx] of [['party-button','party'],['solo-button','solo']])$(id).addEventListener('click',()=>{account().context=ctx;render()});
 $('reset-button').addEventListener('click',()=>{state.accounts[state.class]=DEFAULT_ACCOUNT(state.class);state.preview=FRESH_45.crystals;state.node=null;render()});

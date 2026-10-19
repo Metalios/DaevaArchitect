@@ -13,7 +13,7 @@
     <div class="eyebrow">AION 2 · Global PvE · NA East</div>
     <h1>Pathfinder</h1>
     <p id="hero-description">Choose a class, enter your points, and follow a connected board route alongside mastery, specialty, stigma, rotation and macro choices.</p>
-    <div class="hero-tags"><span>Eight classes</span><span>Point-by-point progression</span><span>100k DPS goal tracker</span><span>Healer support paths</span><span>Saved in this browser</span></div>
+    <div class="hero-tags"><span>Eight classes</span><span>Point-by-point progression</span><span>100k Combat Power tracker</span><span>Healer support paths</span><span>Saved in this browser</span></div>
   </div></header>
   <main>
     <section class="class-picker" aria-label="Choose class"><div class="class-picker-head"><span class="eyebrow">01 / Choose your class</span><span id="class-role" class="tag gold"></span></div><div id="class-buttons" class="class-buttons"></div></section>
@@ -23,8 +23,7 @@
       <div class="control"><label for="crystal-input">Daevanion crystals</label><div class="inputrow"><input id="crystal-input" type="number" min="0" max="570" step="1" value="136"><span class="unit">/ 570</span></div><small>Four PvE boards</small></div>
       <div class="control"><span class="label">Play context</span><div class="seg" role="group" aria-label="Play context"><button id="party-button" type="button" class="active">Group PvE</button><button id="solo-button" type="button">Solo</button></div><small>Adjusts practical priorities</small></div>
     </div>
-    <div class="presets"><div><b>Start from your point totals</b><span>Global level 45 from leveling alone: 203 Mastery · 29 Stigma · 136 crystals. Quest and dungeon rewards add more.</span></div><button id="fresh-45-button" type="button">Fresh Global 45</button><button id="original-templar-button" type="button">My original Templar · 285 / 30 / 218</button></div>
-    <div id="templar-point-note" class="notice point-note" hidden>Your screenshot shows 8 Mastery points remaining. If 285 is the amount you <b>already invested</b>, your earned total is at least 293. At 293, this route puts the next 8 points into <b>Enhance Health rank 8 → 10</b>. <button id="add-eight-button" type="button">Plan 293 total</button></div>
+    <div class="presets"><div><b>Start from your point totals</b><span>Global level 45 from leveling alone: 203 Mastery · 29 Stigma · 136 crystals. Quest and dungeon rewards add more.</span></div><button id="fresh-45-button" type="button">Fresh Global 45</button></div>
     <div class="introline"><span>Enter <b>total points earned, including spent and unspent</b>. The recommended ranks are a reset plan; displayed in-game skill levels can also include board, gear and Arcana bonuses. Each class saves its own inputs. Research reviewed October 18, 2026.</span><button class="text-button" id="reset-button" type="button">Reset class to fresh 45</button></div>
     <nav class="tabs" aria-label="Planner sections">
       <button type="button" class="active" data-tab="overview">Build now</button>
@@ -37,7 +36,7 @@
     <section id="overview" class="tab-panel active" aria-label="Build now">
       <div class="section-title"><div><h2 id="overview-title">Your current path</h2><p id="overview-subtitle"></p></div><span id="overview-role" class="tag gold"></span></div>
       <div id="kpis" class="kpi-grid"></div>
-      <div class="panel goal-panel"><div><span class="eyebrow">Performance goal</span><h3 id="goal-title"></h3><p id="goal-explainer"></p></div><div class="goal-inputs"><label><span id="target-label">Target DPS</span><input id="goal-target" type="number" min="0" step="1000"></label><label><span id="observed-label">Measured DPS</span><input id="goal-observed" type="number" min="0" step="1000"></label></div><div id="goal-status" class="goal-status"></div></div>
+      <div class="panel goal-panel"><div><span class="eyebrow">Progress goal</span><h3 id="goal-title"></h3><p id="goal-explainer"></p></div><div class="goal-inputs"><label><span id="target-label">Target Combat Power</span><input id="goal-target" type="number" min="0" step="1000"></label><label><span id="observed-label">Current Combat Power</span><input id="goal-observed" type="number" min="0" step="1000"></label></div><div id="goal-status" class="goal-status"></div></div>
       <div class="two-col"><div class="panel"><h3>Put these in first</h3><ol id="now-steps" class="steps"></ol></div><div class="panel"><h3>Next points to earn</h3><div id="next-unlocks"></div><div class="notice">Effective skill level = mastery rank + board nodes + any gear or Arcana levels you enter. Specialty slots open at effective 8, 12 and 20; option 5 opens at 16.</div></div></div>
     </section>
     <section id="mastery" class="tab-panel" aria-label="Mastery and specialties">
@@ -64,7 +63,7 @@
       <div id="board-summary" class="board-summary"></div><div class="board-tabs" id="board-tabs"></div>
       <div class="board-layout"><div><div class="board-scroll"><div id="board-grid" class="board-grid" role="group" aria-label="Daevanion board nodes"></div></div><div class="timeline"><label for="route-slider">Preview crystals</label><input id="route-slider" type="range" min="0" max="136" value="136"><b id="route-slider-value">136</b></div><p id="route-footnote" class="footnote"></p></div><aside class="board-side"><div><div id="selected-node" class="selected-node"></div><div class="panel"><h3>Purchase order</h3><p id="purchase-intro"></p><div id="purchase-list" class="purchase-list"></div></div></div><div class="panel"><h3>Next key nodes</h3><div id="board-next"></div></div></aside></div>
     </section>
-    <section id="sources" class="tab-panel" aria-label="Research notes"><div class="section-title"><div><h2>Research & limits</h2><p>Live links for the selected class and the assumptions behind the route.</p></div></div><div id="source-cards" class="sources"></div><div class="notice">This is a PvE starting recommendation, not a combat simulator. Gear, party composition, encounter downtime and patch changes determine measured DPS or effective healing. The 100k DPS target is a benchmark you enter results against. Healers should measure effective healing, avoid overhealing, and keep the party alive. Azphel PvP currency is separate.</div></section>
+    <section id="sources" class="tab-panel" aria-label="Research notes"><div class="section-title"><div><h2>Research & limits</h2><p>Live links for the selected class and the assumptions behind the route.</p></div></div><div id="source-cards" class="sources"></div><div class="notice">This is a PvE starting recommendation, not a combat simulator. Gear, boards, skills and other systems affect the in-game Combat Power score; the game calculates the final number. The 100k Combat Power goal is tracked from the value you enter, not predicted from point totals. Healers should measure effective healing, avoid overhealing, and keep the party alive. Azphel PvP currency is separate.</div></section>
   </main>
   <script>/*DATA*/</script><script>/*PROFILES*/</script><script>/*APP*/</script>
 </body></html>
