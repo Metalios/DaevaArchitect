@@ -16,6 +16,28 @@ const TEMPLAR_STAGES = [
   ['Poach',10],['Defiance',10],['Debilitating Smash',10],['Shield Rush',10],['Block Pain',10],['Warding Shield',10],['Guarding Seal',10],['Survival Willpower',10],['Flash Rampage',10]
 ];
 const TEMPLAR_GROUP_STAGES = [['Judgment',10],['Vicious Strike',10],['Insulting Roar',10],['Fury',10],['Punishing Benediction',10],['Enhance Health',8],['Warding Strike',8],['Shield Smite',8],...TEMPLAR_STAGES];
+// The first purchases during leveling go to skills available and useful in the
+// opening rotation. Higher targets are still limited by SkillAcquireData gates.
+const LEVELING_MASTERY_CORE = {
+  templar:[['Vicious Strike',5],['Pummel',5],['Shield Smite',5],['Judgment',5],['Enhance Health',4],['Debilitating Smash',4]],
+  gladiator:[['Keen Strike',5],['Rending Blow',5],['Overhead Slam',5],['Sword Aura Rampage',5],['Leaping Slam',4]],
+  assassin:[['Quick Slice',5],['Savage Roar',5],['Heart Gore',5],['Ambush',5],['Shadowstrike',4]],
+  ranger:[['Snipe',5],['Tempest Shot',5],['Snare Shot',5],['Drill Dart',5],['Marking Shot',4]],
+  sorcerer:[['Flame Arrow',5],['Ice Chain',5],['Firestorm',5],['Blaze',4],['Bittercold Wind',3]],
+  spiritmaster:[['Cold Shock',5],['Combustion',5],['Spirit Strike',5],['Summon: Fire Spirit',5],['Jointstrike: Curse',4]],
+  cleric:[["Earth's Retribution",5],['Judgment Thunder',5],['Warm Benediction',5],['Divine Aura',5],['Chain of Torment',4]],
+  chanter:[['Onslaught',5],['Incandescent Blow',5],['Rushing Smash',5],['Impactful Crush',5],['Blessing of Life',4]]
+};
+const LEVELING_MASTERY_NEXT = {
+  templar:['Vicious Strike','Pummel','Judgment','Shield Smite','Warding Strike','Enhance Health'],
+  gladiator:['Keen Strike','Rending Blow','Overhead Slam','Sword Aura Rampage','Ruinous Blow'],
+  assassin:['Quick Slice','Savage Roar','Heart Gore','Ambush','Insignia Explosion'],
+  ranger:['Snipe','Tempest Shot','Drill Dart','Gale Arrow','Deadshot'],
+  sorcerer:['Flame Arrow','Ice Chain','Firestorm','Hellfire','Blaze','Bittercold Wind'],
+  spiritmaster:['Cold Shock','Combustion','Spirit Strike','Summon: Fire Spirit','Elemental Fusion'],
+  cleric:['Healing Light','Light of Regeneration','Radiant Recovery',"Earth's Retribution",'Chain of Torment'],
+  chanter:['Onslaught','Incandescent Blow','Dark Crush','Recuperation','Protection Circle']
+};
 Object.assign(STIGMAS.templar,{
   'Executing Blade':{base:'Manual PvP pressure and stagger; pair with control openings',perks:{}},
   "Empyrean Lord's Punishment":{base:'High stagger damage and manual burst window',perks:{}},
@@ -25,6 +47,9 @@ const DEFAULT_ACCOUNT = (cls='templar') => ({...FRESH_45,azphel:0,context:'party
 let saved = {};
 try { saved = JSON.parse(localStorage.getItem('aion2-pathfinder-all-v3') || '{}') || {}; } catch (_) {}
 let state = {class:CLASS_ORDER.includes(saved.class)?saved.class:null,accounts:saved.accounts||{},tab:'overview',board:'Nezekan',preview:FRESH_45.crystals,node:null,titleSearch:'',titleSlot:'all',titleOwnership:'all',titleFaction:'all'};
+let theme = 'aether';
+try { const storedTheme=localStorage.getItem('aion2-pathfinder-theme');if(['aether','sanctum','abyss'].includes(storedTheme))theme=storedTheme; } catch (_) {}
+function applyTheme(){document.body.dataset.theme=theme;document.querySelectorAll('.theme-picker [data-theme]').forEach(b=>{b.classList.toggle('active',b.dataset.theme===theme);b.setAttribute('aria-pressed',b.dataset.theme===theme)});document.querySelector('meta[name="theme-color"]').content=theme==='sanctum'?'#eaf2f0':theme==='abyss'?'#160f25':'#0b1c2c'}
 function account(){ if(!state.accounts[state.class]) state.accounts[state.class]=DEFAULT_ACCOUNT(state.class); return state.accounts[state.class]; }
 function isLeveling(){return account().journey==='leveling'}
 function leveling(){const a=account();a.leveling ||= {level:1,extra:{mastery:0,stigma:0,crystals:0}};a.leveling.extra ||= {mastery:0,stigma:0,crystals:0};return a.leveling}
@@ -54,8 +79,21 @@ function activeStigmas(){
 function masteryCost(rank){return rank<=4?1:rank<=7?2:4}
 function masteryTotal(rank){let points=0;for(let n=2;n<=rank;n++)points+=masteryCost(n);return points}
 function stigmaCost(rank){return rank<=5?1:rank<=10?2:rank<=15?4:8}
+function masteryRankCap(name){
+  if(!isLeveling())return 10;
+  const unlocked=SKILL_UNLOCKS[state.class][name];
+  if(!unlocked||currentLevel()<unlocked)return 1;
+  return Math.min(10,2+Math.floor((currentLevel()-unlocked)/3));
+}
 function masteryStages(){
   const available=stages=>isLeveling()?stages.filter(([name])=>(SKILL_UNLOCKS[state.class][name]||1)<=currentLevel()):stages;
+  if(isLeveling()){
+    const core=LEVELING_MASTERY_CORE[state.class],next=LEVELING_MASTERY_NEXT[state.class];
+    const weights=activeWeights()?.skills||data().skillWeights;
+    const rest=skillNames().map((name,i)=>({name,i,weight:weights[name]||0})).sort((a,b)=>b.weight-a.weight||a.i-b.i).map(x=>x.name);
+    const support=account().context!=='party'?[]:state.class==='cleric'?[['Healing Light',5],['Light of Regeneration',5],['Radiant Recovery',5]]:state.class==='chanter'?[['Recuperation',5],['Protection Circle',5]]:[];
+    return available([...support,...core,...next.map(name=>[name,8]),...rest.map(name=>[name,8]),...next.map(name=>[name,10]),...rest.map(name=>[name,10])]);
+  }
   if(state.class==='templar'&&account().context==='party') return available(TEMPLAR_GROUP_STAGES);
   if(state.class==='templar'&&account().context==='solo') return available(TEMPLAR_STAGES);
   const names=skillNames(); const weights=activeWeights()?.skills||data().skillWeights;
@@ -64,9 +102,18 @@ function masteryStages(){
   return available([...first.map(n=>[n,8]),...first.map(n=>[n,10]),...second.map(n=>[n,8]),...second.map(n=>[n,10]),...third.map(n=>[n,8]),...third.map(n=>[n,10])]);
 }
 function stigmaStages(){const s=activeStigmas().slice(0,isLeveling()?levelReward().slots:4);return [5,10,15,20].flatMap(rank=>s.map(name=>[name,rank]))}
-function allocate(stages,budget,costFn,names,base){
-  const levels=Object.fromEntries(names.map(n=>[n,base]));let spent=0,next=null;
-  for(const [name,target] of stages){if(!(name in levels))continue;while(levels[name]<target){const cost=costFn(levels[name]+1);if(spent+cost>budget){next={name,rank:levels[name]+1,cost,need:spent+cost-budget};return {levels,spent,next}}levels[name]++;spent+=cost}}
+function allocate(stages,budget,costFn,names,base,capFn=null){
+  const levels=Object.fromEntries(names.map(n=>[n,base]));let spent=0,firstMiss=null;
+  for(const [name,wanted] of stages){
+    if(!(name in levels))continue;
+    const target=Math.min(wanted,capFn?capFn(name):wanted);
+    while(levels[name]<target){
+      const cost=costFn(levels[name]+1);
+      if(spent+cost>budget){firstMiss ||= {name,rank:levels[name]+1,cost};break}
+      levels[name]++;spent+=cost;
+    }
+  }
+  const next=firstMiss?{...firstMiss,need:Math.max(1,firstMiss.cost-(budget-spent))}:null;
   return {levels,spent,next};
 }
 function boardPlan(budget,azphel=false){
@@ -83,14 +130,19 @@ function renderGlobalBoardRoute(m,nodes){
   $('obtained-status').textContent=`${markedCost} crystals marked obtained across ${marked.length} nodes · ${unmarkedWithinBudget} planned clicks still unmarked at this budget`;
   $('global-route-caption').textContent=first?`Your obtained marks are skipped in the shared ${isLeveling()?'unlocked':'four-board'} route. ${first.board} is the first unmarked node at ${first.total} planned crystals${switchBoard?`; the next unmarked board switch is ${switchBoard.board} at ${switchBoard.total}`:''}.${markedCost>crystals?` Marked nodes cost ${markedCost}, above the entered ${crystals} crystals; check your total.`:''}`:isLeveling()&&currentLevel()<12?'Nezekan opens at level 12. Your crystals are saved until then.':'All currently available PvE nodes are marked obtained.';
   $('global-board-allocation').innerHTML=BOARD_NAMES.map(name=>{const spent=m.boards.perBoard[name],share=m.boards.spent?Math.round(spent/m.boards.spent*100):0,next=upcoming.find(x=>x.board===name),obtained=marked.filter(x=>x.board===name).reduce((sum,x)=>sum+x.cost,0),locked=!boardOpen(name);return `<button type="button" data-board-jump="${name}" class="global-board-card ${state.board===name?'active':''} ${locked?'locked':''}" ${locked?'disabled':''}><span>${name}</span><b>${locked?`Opens at Lv ${BOARD_UNLOCKS[name]}`:`${spent} planned · ${obtained} obtained`}</b><small>${locked?'Future board':`${share}% of planned PvE crystals`}</small><em>${locked?'Locked':next?`Next unmarked at ${next.total} ✧`:'Board complete'}</em><i style="width:${share}%"></i></button>`}).join('');
-  $('global-route-next').innerHTML=upcoming.length?`<div class="global-next-label">Next 16 unmarked clicks across unlocked boards · tap to open its board</div><div class="global-next-grid">${upcoming.slice(0,16).map(x=>`<button type="button" data-route-node="${x.id}" data-route-board="${x.board}" class="global-next-step ${x.total<=crystals?'affordable':'later'}"><span class="global-step-number">${x.number}</span><span class="global-step-detail"><b>${x.board}${x.total<=crystals?' · within budget':' · later'}</b><small>${esc(effectText(x.node))} · r${x.node[1]} c${x.node[2]}</small></span><span class="global-step-total">${x.total} ✧</span></button>`).join('')}</div>`:'<p>No available next clicks at this level.</p>';
+  $('global-route-next').innerHTML=upcoming.length?`<div class="global-next-label">Next 16 unmarked clicks across unlocked boards · tap to open its board</div><div class="global-next-grid">${upcoming.slice(0,16).map(x=>`<button type="button" data-route-node="${x.id}" data-route-board="${x.board}" class="global-next-step ${x.total<=crystals?'affordable':'later'}"><span class="global-step-number">${x.number}</span><span class="route-step-icon">${nodeVisual(x.node)}</span><span class="global-step-detail"><b>${x.board}${x.total<=crystals?' · within budget':' · later'}</b><small>${esc(effectText(x.node))} · r${x.node[1]} c${x.node[2]}</small></span><span class="global-step-total">${x.total} ✧</span></button>`).join('')}</div>`:'<p>No available next clicks at this level.</p>';
 }
 function effects(owned){const skills={},stats={},nodes=nodeMap();for(const id of owned){const n=nodes.get(id).node;for(const [key,v] of n[6]){if(typeof key==='number'){const name=data().skills[key]?.name||String(key);skills[name]=(skills[name]||0)+v}else stats[key]=(stats[key]||0)+v}}return {skills,stats}}
 function effectText(n){if(!n||!n[6]?.length)return 'Start node';return n[6].map(([key,v])=>{if(typeof key==='number')return `${data().skills[key]?.name||key} +${v} level`;const meta=data().stats[key];return `${meta?.name||key} +${v/(meta?.div||1)}${meta?.pct?'%':''}`}).join(' · ')}
 function nodeShort(n){if(n[5]===0||n[5]===4)return '✦';if(typeof n[6]?.[0]?.[0]==='number')return n[5]===2?'P':'S';return ({FixingDamage:'ATK',Critical:'CR',Defense:'DEF',HPMax:'HP',MPMax:'MP',HealBoost:'HEAL'})[n[6]?.[0]?.[0]]||'·'}
-function model(){const a=account(),mastery=allocate(masteryStages(),budget('mastery'),masteryCost,skillNames(),1),stigma=allocate(stigmaStages(),budget('stigma'),stigmaCost,activeStigmas(),0),boards=boardPlan(budget('crystals')),azphel=boardPlan(isLeveling()?0:a.azphel||0,true);return {mastery,stigma,boards,azphel,effects:effects(boards.owned),azphelEffects:effects(azphel.owned)}}
+function nodeVisual(n){
+  const key=n[6]?.[0]?.[0],icon=typeof key==='number'?data().skills[key]?.icon:null;
+  return icon&&icon.startsWith('/game/skills/')?`<img class="node-game-icon" src="https://aion2data.com${esc(icon)}" alt="" loading="lazy">`:`<span>${nodeShort(n)}</span>`;
+}
+function model(){const a=account(),mastery=allocate(masteryStages(),budget('mastery'),masteryCost,skillNames(),1,isLeveling()?masteryRankCap:null),stigma=allocate(stigmaStages(),budget('stigma'),stigmaCost,activeStigmas(),0),boards=boardPlan(budget('crystals')),azphel=boardPlan(isLeveling()?0:a.azphel||0,true);return {mastery,stigma,boards,azphel,effects:effects(boards.owned),azphelEffects:effects(azphel.owned)}}
 function effective(name,m){return Math.min(40,(m.mastery.levels[name]||1)+(m.effects.skills[name]||0)+(account().gear[name]||0))}
 function render(){
+  applyTheme();
   const selected=CLASS_ORDER.includes(state.class);
   $('class-buttons').innerHTML=CLASS_ORDER.map(c=>`<button type="button" data-class="${c}" class="${state.class===c?'active':''}" aria-pressed="${state.class===c}"><span>${PROFILES[c].name}</span><small>${PROFILES[c].role}</small></button>`).join('');
   $('welcome-panel').hidden=selected;$('planner-content').hidden=!selected;
@@ -103,15 +155,22 @@ function render(){
   for(const key of ['mastery','stigma','crystals'])$(`${key==='crystals'?'crystal':key}-input`).value=budget(key);
   pointLabels();$('leveling-controls').hidden=!isLeveling();$('fresh-preset').hidden=isLeveling();$('azphel-control').hidden=isLeveling();$('pvp-button').hidden=isLeveling();$('goal-panel').hidden=isLeveling();$('leveling-guide').hidden=!isLeveling();
   for(const [id,active] of [['leveling-mode',isLeveling()],['endgame-mode',!isLeveling()]]){$(id).classList.toggle('active',active);$(id).setAttribute('aria-pressed',active)}
-  $('intro-copy').innerHTML=isLeveling()?`Enter <b>total points earned</b>, including spent and unspent. The level-only points are the baseline; your extra rewards carry forward. Mastery skills, Stigma slots, and boards obey Global level gates. ${currentLevel()===45?'Use the transfer button to copy these totals into your level 45 build.':'The full macro becomes available in the level 45 build stage.'}`:'Enter <b>total points earned, including spent and unspent</b>. Recommended ranks are a reset plan; displayed in-game skill levels can also include board, gear and Arcana bonuses. Each class saves its own inputs. Research reviewed October 18, 2026.';
+  $('intro-copy').innerHTML=isLeveling()?`Enter <b>total points earned</b>, including spent and unspent. The level-only points are the baseline; your extra rewards carry forward. Mastery skills, Stigma slots, and boards obey Global level gates. ${currentLevel()===45?'Use the transfer button to copy these totals into your level 45 build.':'The full macro becomes available in the level 45 build stage.'}`:'Enter <b>total points earned, including spent and unspent</b>. Recommended ranks are a reset plan; displayed in-game skill levels can also include board, gear and Arcana bonuses. Each class saves its own inputs. Research reviewed October 19, 2026.';
   $('reset-button').textContent=isLeveling()?'Reset class progress':'Reset class to fresh 45';
   if(isLeveling())renderLevelControls();
   $('fresh-45-button').classList.toggle('active',Object.entries(FRESH_45).every(([key,value])=>a[key]===value)&&!(a.azphel||0));
   for(const [id,ctx] of [['party-button','party'],['solo-button','solo'],['pvp-button','pvp']]){$(id).classList.toggle('active',a.context===ctx);$(id).setAttribute('aria-pressed',a.context===ctx)}
   $('azphel-input').value=a.azphel||0;
   document.querySelectorAll('[data-tab]').forEach(b=>{b.classList.toggle('active',b.dataset.tab===state.tab);b.setAttribute('aria-current',b.dataset.tab===state.tab?'page':'false')});
+  $('mobile-more-button').classList.toggle('active',['stigma','rotation','titles','sources'].includes(state.tab));
   document.querySelectorAll('.tab-panel').forEach(el=>el.classList.toggle('active',el.id===state.tab));
-  renderOverview(m);renderMastery(m);renderStigma(m);renderRotation(m);renderBoards(m);renderTitles();renderSources();save();
+  renderOverview(m);renderMobileNext(m);renderMastery(m);renderStigma(m);renderRotation(m);renderBoards(m);renderTitles();renderSources();save();
+}
+function renderMobileNext(m){
+  const el=$('mobile-next');el.hidden=false;
+  const first=isLeveling()?LEVELING_MASTERY_CORE[state.class].find(([name,target])=>(m.mastery.levels[name]||1)<Math.min(target,masteryRankCap(name))):null;
+  const choice=first?{title:`Raise ${first[0]} to rank ${Math.min(first[1],masteryRankCap(first[0]))}`,detail:`Current plan: rank ${m.mastery.levels[first[0]]||1}. This skill's next rank is available at your character level.`,tab:'mastery'}:m.mastery.next?{title:`Plan ${m.mastery.next.name} rank ${m.mastery.next.rank}`,detail:`Earn ${m.mastery.next.need} more Mastery point${m.mastery.next.need===1?'':'s'} for this step.`,tab:'mastery'}:m.boards.next?{title:`Open ${m.boards.next.board} next`,detail:`${effectText(nodeMap().get(m.boards.next.id).node)} · ${m.boards.next.need} more crystals for the next connected node.`,tab:'boards'}:{title:'Review your current build',detail:'Your available points are allocated. Check skill specialties and the next board route.',tab:'mastery'};
+  $('mobile-next-title').textContent=choice.title;$('mobile-next-description').textContent=choice.detail;el.dataset.targetTab=choice.tab;
 }
 function renderLevelControls(){
   const level=currentLevel(),r=levelReward(),next=LEVEL_MILESTONES.find(([at])=>at>level);
@@ -169,7 +228,8 @@ function renderMastery(m){
   $('skill-grid').innerHTML=order.map((name,i)=>{
     const base=m.mastery.levels[name]||1,board=m.effects.skills[name]||0,gear=a.gear[name]||0,bonus=board+gear,eff=effective(name,m),current=a.currentRanks?.[name],currentLevel=current?Math.min(40,current+bonus):null,spec=SPECS[state.class]?.[name],picks=specPicks(name,eff);
     const chips=spec?`<div class="specs"><div class="specs-title">${eff<8?'First specialty at Lv 8':`Equip now · ${picks.length} choice${picks.length===1?'':'s'}`}</div><div class="spec-row">${Object.entries(spec.options).map(([num,label])=>{const required=+num<=3?8:+num===4?12:16;return `<span class="spec ${picks.includes(+num)?'on':eff<required?'future':''}" title="Option ${num} · level ${required}">#${num} ${esc(label)}${eff<required?` · Lv ${required}`:''}</span>`}).join('')}</div></div>`:'';
-    return `<article class="skill-card ${i<4?'highlight':''}"><div class="skill-head"><div><h3>${esc(name)}</h3><div class="sub">Priority ${i+1}${isLeveling()?` · unlocked Lv ${SKILL_UNLOCKS[state.class][name]||1}`:''}${spec?' · specialty choices':''}</div></div><div class="lv"><strong>Target Rank ${base}</strong><small>Target in-game Lv ${eff}</small></div></div><div class="build-parts"><span>${masteryTotal(base)} Mastery to reach target</span><span>Board +${board}</span><span>Other +${gear}</span></div><div class="baseline-level"><b>In-game green bonus: (+${bonus})</b><span> ${board} board + ${gear} other</span>${currentLevel?`<div>On this board route: current rank ${current} → Lv ${currentLevel}; target rank ${base} → Lv ${eff}.</div>`:''}</div>${chips}<label class="gear-row">Other bonus levels (gear / Arcana) <input type="number" data-gear="${esc(name)}" min="0" max="30" value="${gear}" aria-label="Other bonus levels for ${esc(name)}"></label><label class="gear-row">Your current Mastery rank (optional) <input type="number" data-current-rank="${esc(name)}" min="1" max="10" placeholder="—" value="${current||''}" aria-label="Current Mastery rank for ${esc(name)}"></label></article>`
+    const cap=masteryRankCap(name),nextGate=cap<10?(SKILL_UNLOCKS[state.class][name]||1)+3*(cap-1):null;
+    return `<article class="skill-card ${i<4?'highlight':''}"><div class="skill-head"><div><h3>${esc(name)}</h3><div class="sub">Priority ${i+1}${isLeveling()?` · unlocked Lv ${SKILL_UNLOCKS[state.class][name]||1}`:''}${spec?' · specialty choices':''}</div></div><div class="lv"><strong>Target Rank ${base}</strong><small>Target in-game Lv ${eff}</small></div></div><div class="build-parts"><span>${masteryTotal(base)} Mastery to reach target</span>${isLeveling()?`<span>Rank cap now ${cap}${nextGate?` · next rank Lv ${nextGate}`:''}</span>`:''}<span>Board +${board}</span><span>Other +${gear}</span></div><div class="baseline-level"><b>In-game green bonus: (+${bonus})</b><span> ${board} board + ${gear} other</span>${currentLevel?`<div>On this board route: current rank ${current} → Lv ${currentLevel}; target rank ${base} → Lv ${eff}.</div>`:''}</div>${chips}<label class="gear-row">Other bonus levels (gear / Arcana) <input type="number" data-gear="${esc(name)}" min="0" max="30" value="${gear}" aria-label="Other bonus levels for ${esc(name)}"></label><label class="gear-row">Your current Mastery rank (optional) <input type="number" data-current-rank="${esc(name)}" min="1" max="10" placeholder="—" value="${current||''}" aria-label="Current Mastery rank for ${esc(name)}"></label></article>`
   }).join('')||(isLeveling()?'<div class="notice">Mastery points begin at level 4. Your first skills are available now; come back when you earn points.</div>':'');
 }
 function renderStigma(m){
@@ -218,6 +278,7 @@ function renderRotation(m){
 }
 function renderBoards(m){
   const a=account(),nodes=nodeMap(),actual=obtainedNodes(),isAz=state.board==='Azphel',crystalBudget=isAz?(a.azphel||0):budget('crystals'),route=isAz?ROUTES[state.class].azphel:activeRoute(),plan=isAz?m.azphel:m.boards,boardNext=routeSteps(route,nodes).find(x=>x.board===state.board&&!actual.has(x.id));
+  $('board-icon-source').href=`https://aion2data.com/daevanion/${state.class}`;
   $('global-route-heading').textContent=isLeveling()?`Level ${currentLevel()} · unlocked PvE boards`:'All four PvE boards · what to buy next';
   $('board-section-description').textContent=isLeveling()?`Only boards unlocked by level ${currentLevel()} are included. Nezekan opens at 12, Zikel at 20, Vaizel at 30 and Triniel at 40. Tap a planned node to mark it obtained.`:'One connected purchase order spans Nezekan, Zikel, Vaizel and Triniel. The board tabs below show each part of that route. Azphel appears in PvP and uses its own currency.';
   renderGlobalBoardRoute(m,nodes);
@@ -229,9 +290,9 @@ function renderBoards(m){
   $('board-tabs').innerHTML=available.map(b=>`<button type="button" data-board="${b.name}" class="${state.board===b.name?'active':''}" ${boardOpen(b.name)?'':`disabled title="Opens at level ${BOARD_UNLOCKS[b.name]}"`}>${b.name}<small>${boardOpen(b.name)?`${(b.name==='Azphel'?m.azphel:m.boards).perBoard[b.name]} / ${b.totalCost}`:`Opens Lv ${BOARD_UNLOCKS[b.name]}`}</small></button>`).join('');
   $('route-slider').max=crystalBudget;state.preview=Math.min(state.preview,crystalBudget);$('route-slider').value=state.preview;$('route-slider-value').textContent=state.preview;
   const preview=boardPlan(state.preview,isAz),board=available.find(b=>b.name===state.board),grid=new Map(board.nodes.map(n=>[`${n[1]}:${n[2]}`,n]));let html='';
-  for(let r=1;r<=15;r++)for(let c=1;c<=15;c++){const n=grid.get(`${r}:${c}`);if(!n){html+='<span></span>';continue}const planned=preview.owned.has(n[0])||n[5]===0,obtained=actual.has(n[0]),kind=n[5]===0?'start':n[5]===4?'unique':typeof n[6]?.[0]?.[0]==='number'?'skill':'stat';html+=`<button type="button" class="node ${kind} ${planned?'planned':''} ${obtained?'obtained':''} ${boardNext?.id===n[0]?'next':''} ${state.node===n[0]?'selected':''}" data-node="${n[0]}" title="${esc(effectText(n))}${n[5]&&boardOpen(state.board)?' · click to mark obtained':''}" aria-label="${esc(effectText(n))}; row ${r}, column ${c}; ${obtained?'obtained':planned?'planned':'later'}" aria-pressed="${obtained}" ${boardOpen(state.board)?'': 'disabled'}><span>${nodeShort(n)}</span></button>`}
+  for(let r=1;r<=15;r++)for(let c=1;c<=15;c++){const n=grid.get(`${r}:${c}`);if(!n){html+='<span></span>';continue}const planned=preview.owned.has(n[0])||n[5]===0,obtained=actual.has(n[0]),kind=n[5]===0?'start':n[5]===4?'unique':typeof n[6]?.[0]?.[0]==='number'?'skill':'stat';html+=`<button type="button" class="node ${kind} ${planned?'planned':''} ${obtained?'obtained':''} ${boardNext?.id===n[0]?'next':''} ${state.node===n[0]?'selected':''}" data-node="${n[0]}" title="${esc(effectText(n))}${n[5]&&boardOpen(state.board)?' · click to mark obtained':''}" aria-label="${esc(effectText(n))}; row ${r}, column ${c}; ${obtained?'obtained':planned?'planned':'later'}" aria-pressed="${obtained}" ${boardOpen(state.board)?'': 'disabled'}>${nodeVisual(n)}</button>`}
   $('board-grid').innerHTML=html;const selected=state.node&&nodes.get(state.node)?.board===state.board?nodes.get(state.node).node:null;
-  $('selected-node').innerHTML=selected?`<strong>${esc(effectText(selected))}</strong><small>Row ${selected[1]}, column ${selected[2]} · ${selected[5]} crystal${selected[5]===1?'':'s'} · ${selected[5]===0?'Start node':actual.has(selected[0])?'Obtained':preview.owned.has(selected[0])?'Planned within budget':'Planned later'}. ${selected[5]?'Click again to '+(actual.has(selected[0])?'unmark':'mark obtained')+'.':''}</small>`:`<strong>${state.board}</strong><small>${boardOpen(state.board)?'Teal = planned path · gold fill = marked obtained · outlined = next unmarked node on this board. Click a node to mark or unmark it.':`Locked until level ${BOARD_UNLOCKS[state.board]}. Nodes become selectable then.`}</small>`;
+  $('selected-node').innerHTML=selected?`<div class="selected-icon">${nodeVisual(selected)}</div><div><strong>${esc(effectText(selected))}</strong><small>Row ${selected[1]}, column ${selected[2]} · ${selected[5]} crystal${selected[5]===1?'':'s'} · ${selected[5]===0?'Start node':actual.has(selected[0])?'Obtained':preview.owned.has(selected[0])?'Planned within budget':'Planned later'}. ${selected[5]?'Click again to '+(actual.has(selected[0])?'unmark':'mark obtained')+'.':''}</small></div>`:`<strong>${state.board}</strong><small>${boardOpen(state.board)?'Teal = planned path · gold fill = marked obtained · outlined = next unmarked node on this board. Click a node to mark or unmark it.':`Locked until level ${BOARD_UNLOCKS[state.board]}. Nodes become selectable then.`}</small>`;
   const boardSkills={},boardStats={};for(const n of board.nodes){if(!preview.owned.has(n[0]))continue;for(const [key,value] of n[6]){if(typeof key==='number'){const name=data().skills[key]?.name||String(key);boardSkills[name]=(boardSkills[name]||0)+value}else boardStats[key]=(boardStats[key]||0)+value}}
   $('board-effect-intro').textContent=boardOpen(state.board)?`${state.board} projected totals from the planned route at ${state.preview} crystals. Gold nodes are those you marked obtained.`:`${state.board} opens at level ${BOARD_UNLOCKS[state.board]}. This board has no purchasable path yet.`;
   const statLabel={FixingDamage:'Attack Bonus',Defense:'Defense Bonus',HPMax:'HP',MPMax:'MP'};
@@ -241,7 +302,7 @@ function renderBoards(m){
   $('board-effect-list').innerHTML=skillRows.length||statRows.length?effectGroup('Skill levels',skillRows)+effectGroup('Stats',statRows):'<span class="empty">No planned effects yet.</span>';
   let spent=0,number=0,boardSpent=0;const rows=[];for(const x of route){const n=nodes.get(x.id).node;spent+=n[5];if(x.board!==state.board)continue;number++;if(spent<=state.preview)boardSpent+=n[5];rows.push({number,spent,cost:n[5],label:effectText(n),id:x.id,row:n[1],col:n[2]})}
   $('purchase-intro').textContent=`${boardSpent} ${isAz?'Azphel':'PvE'} crystals on ${state.board} at preview ${state.preview}. Click a purchase to locate it on the grid.`;
-  $('purchase-list').innerHTML=rows.map(x=>`<button type="button" data-purchase="${x.id}" class="purchase ${x.spent<=state.preview?'current':''} ${actual.has(x.id)?'obtained':''}"><span class="n">${x.number}.</span><span>${esc(x.label)}<small>r${x.row} · c${x.col} · total ${x.spent}${actual.has(x.id)?' · obtained':''}</small></span><span class="c">${x.cost} ✧</span></button>`).join('');
+  $('purchase-list').innerHTML=rows.map(x=>`<button type="button" data-purchase="${x.id}" class="purchase ${x.spent<=state.preview?'current':''} ${actual.has(x.id)?'obtained':''}"><span class="n">${x.number}.</span><span class="route-step-icon">${nodeVisual(nodes.get(x.id).node)}</span><span>${esc(x.label)}<small>r${x.row} · c${x.col} · total ${x.spent}${actual.has(x.id)?' · obtained':''}</small></span><span class="c">${x.cost} ✧</span></button>`).join('');
   const priority=new Set(masteryStages().slice(0,12).map(x=>x[0]));let total=0;const upcoming=[];for(const x of route){const n=nodes.get(x.id).node;total+=n[5];if(total<=plan.spent)continue;if(n[5]===4||typeof n[6]?.[0]?.[0]==='number'&&priority.has(data().skills[n[6][0][0]]?.name))upcoming.push({total,board:x.board,label:effectText(n)});if(upcoming.length>=5)break}
   $('board-next').innerHTML=upcoming.length?upcoming.map(x=>`<div class="next-unlock"><strong>${x.total} total</strong><span>${x.board}: ${esc(x.label)}</span></div>`).join(''):'<p>All key nodes on this route are funded.</p>';
   const method=isAz?ROUTES[state.class].methods.azphel:ROUTES[state.class].methods[a.context];
@@ -305,9 +366,10 @@ function renderTitleCatalog(){
   $('title-catalog-list').innerHTML=items.length?items.map(t=>`<article class="catalog-title ${owned[t.id]?'earned':''}"><label><input type="checkbox" data-catalog-title="${esc(t.id)}" ${owned[t.id]?'checked':''} aria-label="Earned ${esc(t.name)}"><strong>${esc(t.name)}</strong></label><div class="catalog-badges"><span>${esc(t.slot||'Cosmetic')}</span><span>${esc(t.grade)}</span><span>${esc(t.faction)}</span><span>${esc(t.group)}</span></div><p><b>Equipped:</b> ${esc(t.equip)} <b>Owned:</b> ${esc(t.owned)}</p><small><b>Earn:</b> ${esc(t.source)} · <a href="${esc(t.url)}" target="_blank" rel="noopener noreferrer">source ↗</a></small></article>`).join(''):'<p class="empty">No titles match those filters.</p>';
 }
 function renderSources(){
-  const d=data(),p=profile();const cards=[
+  const d=data(),p=profile(),firstSkill=Object.values(d.skills)[0];const cards=[
     ['Levels 1–45 point table','The Global client level table supplies the level-only Mastery, Stigma, slot and crystal baseline. Quest, Sealed Dungeon and other rewards are additional. This planner carries user-entered extras forward as the level changes.',`https://aion2data.com/leveling`,'Open level table'],
     ['Skill and board level gates',`The Global class table supplies each ${p.name} skill's unlock level. Nezekan, Zikel, Vaizel and Triniel open at 12, 20, 30 and 40; Stigma slots open at 22, 27, 32 and 37.`, `https://aion2data.com/classes/${state.class}`,'Open class unlocks'],
+    ['Mastery rank gates','SkillAcquireData limits rank 2 to the unlock level, then adds one purchasable rank every three character levels. The leveling plan respects that gate and buys usable early skills before chasing rank 8. Point costs are 1 for ranks 2–4, 2 for 5–7, and 4 for 8–10.',`https://aion2data.com/skills/${firstSkill.slug}`,'Open skill rank table'],
     ['Combat Power calculation','The game calculates Combat Power server-side. Gear, boards and other permanent systems contribute; the client files do not provide a formula for predicting your final score.',`https://aion2data.com/get-stronger`,'Open stat sources'],
     ['Global client nodes','Board positions, costs, effects and skill names from Aion2Data Global client tables. Compare tooltips after a patch.',d.sources.nodes,'Open board data'],
     ['Context routes & weights',`Group, Solo and PvP follow different connected routes. ${ROUTES[state.class].methods[account().context]}. Azphel is a separately funded PvP board.`,d.sources.route,'Open class route'],
@@ -319,7 +381,11 @@ function renderSources(){
     ['Class build context',`${p.name} is planned as ${p.role.toLowerCase()}. Compare alternate damage or support presets before swapping roles.`,`https://metabot.gg/en/aion-2/guides/class-builds-guide`,'Open all-class guide']
   ];$('source-cards').innerHTML=cards.map(([title,body,url,label])=>`<div class="source-card"><b>${esc(title)}</b><p>${esc(body)}</p><a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(label)} ↗</a></div>`).join('');
 }
-document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{state.tab=b.dataset.tab;render()}));
+document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{state.tab=b.dataset.tab;$('mobile-more-menu').hidden=true;$('mobile-more-button').setAttribute('aria-expanded','false');render()}));
+document.querySelectorAll('.theme-picker [data-theme]').forEach(b=>b.addEventListener('click',()=>{theme=b.dataset.theme;try{localStorage.setItem('aion2-pathfinder-theme',theme)}catch(_){}applyTheme()}));
+$('mobile-more-button').addEventListener('click',()=>{const open=$('mobile-more-menu').hidden;$('mobile-more-menu').hidden=!open;$('mobile-more-button').setAttribute('aria-expanded',String(open))});
+$('mobile-more-menu').addEventListener('click',e=>{const b=e.target.closest('[data-more-tab]');if(!b)return;state.tab=b.dataset.moreTab;$('mobile-more-menu').hidden=true;$('mobile-more-button').setAttribute('aria-expanded','false');render()});
+$('mobile-next-action').addEventListener('click',()=>{state.tab=$('mobile-next').dataset.targetTab||'mastery';render();document.querySelector('.tab-panel.active')?.scrollIntoView({behavior:'smooth',block:'start'})});
 $('class-buttons').addEventListener('click',e=>{const b=e.target.closest('[data-class]');if(!b)return;state.class=b.dataset.class;state.board='Nezekan';state.preview=budget('crystals');state.node=null;render()});
 function useBudget(values){Object.assign(account(),values);state.preview=account().crystals;state.node=null;render()}
 $('fresh-45-button').addEventListener('click',()=>useBudget({...FRESH_45,azphel:0}));

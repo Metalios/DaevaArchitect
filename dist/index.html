@@ -235,6 +235,109 @@ main{max-width:1420px;padding-bottom:90px}
 .handoff-button{margin-top:17px;border:1px solid #f1cf94;border-radius:10px;background:linear-gradient(120deg,#684b32,#896338);color:#fff5de;padding:12px 17px;font-weight:800;cursor:pointer}.handoff-button:hover{background:#a47740}
 @media(max-width:1000px){.level-milestones{grid-template-columns:repeat(6,1fr)}.leveling-guide-grid,.leveling-rotation-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:700px){.hero-inner{padding-top:36px;padding-bottom:58px}.hero h1{font-size:58px}.class-picker{margin-top:-25px;padding:14px}.journey-switch{padding:16px}.journey-head{display:block}.journey-head #stage-caption{display:block;margin-top:5px}.journey-options{grid-template-columns:1fr}.journey-option{min-height:72px}.leveling-controls{padding:18px}.leveling-head{display:block}.level-picker{margin-top:15px}.level-milestones{grid-template-columns:repeat(5,1fr)}.controls{grid-template-columns:1fr}.control:nth-child(4),.control:nth-child(5){grid-column:auto}.is-leveling .control:nth-child(4){grid-column:auto}.tabs{overflow-x:auto;display:flex;white-space:nowrap;scrollbar-width:thin}.leveling-guide-grid,.leveling-rotation-grid{grid-template-columns:1fr}.kpi strong{font-size:22px}}
+
+/* Game skill art in the Daevanion route, with clear obtained/planned states. */
+.board-grid{grid-template-columns:repeat(15,40px);grid-template-rows:repeat(15,40px);gap:4px}
+.node{width:39px;height:39px;border-radius:9px;background:#0b2034;border-color:#415c78;font-size:10px;overflow:hidden}
+.node.skill{transform:none;border-radius:9px;padding:3px}
+.node.skill span{transform:none}
+.node-game-icon{display:block;width:100%;height:100%;object-fit:cover;border-radius:5px;position:relative;z-index:1}
+.node.skill:not(.planned):not(.obtained) .node-game-icon{filter:grayscale(.72);opacity:.52}
+.node.skill.planned .node-game-icon{filter:saturate(.9);opacity:.94}
+.node.skill.obtained .node-game-icon{filter:saturate(1.1);opacity:1}
+.node.obtained:after{content:'✓';display:grid;place-items:center;position:absolute;z-index:2;right:0;bottom:0;width:15px;height:15px;border-radius:5px 0 6px 0;background:#ffe0a5;color:#172536;font:900 10px/1 Arial,sans-serif}
+.node.start{font-size:19px}
+.node.unique{background:linear-gradient(135deg,#574226,#aa783e);border-color:#edbe73;color:#fff2cd}
+.node.next{outline:2px solid #b9a4ff;outline-offset:2px;box-shadow:0 0 14px #a895ff88}
+.node.selected{outline:2px solid #fff2ce;outline-offset:2px}
+.selected-node{display:flex;align-items:center;gap:12px}
+.selected-node .selected-icon{flex:none;display:grid;place-items:center;width:50px;height:50px;border:1px solid #c8a66b;border-radius:9px;background:#203b53;color:#f5cc8d;font-size:19px}
+.selected-node .selected-icon img{width:42px;height:42px}
+.selected-node>div:last-child{min-width:0}
+.route-step-icon{display:grid;place-items:center;flex:none;width:30px;height:30px;border:1px solid #547087;border-radius:7px;background:#0d253a;color:#e3c480;font-size:12px;font-weight:800;overflow:hidden}
+.route-step-icon img{display:block;width:100%;height:100%;object-fit:cover}
+.global-next-step{align-items:center}
+.purchase{align-items:center;gap:10px}
+.purchase>span:nth-child(3){min-width:0;flex:1}
+.board-icon-credit{color:#a8bfd0;font-size:12px;line-height:1.45;margin:10px 4px 20px}
+.board-icon-credit a{font-weight:800}
+.timeline{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;padding:15px 17px;margin:0 0 18px;border:1px solid #3d5a72;border-radius:12px;background:#152b42}
+.timeline label{font-size:13px;font-weight:800;color:#e8f3f4}
+.timeline b{color:var(--gold)}
+.timeline input{grid-column:1/-1;width:100%;margin:0}
+.board-effects-panel{margin-top:16px;padding:20px}
+.board-effect-list h4{margin-top:22px}
+@media(max-width:700px){.board-scroll{padding:12px}.board-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.global-board-allocation{grid-template-columns:repeat(2,minmax(0,1fr))}.board-tabs{display:flex;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;padding-bottom:5px}.board-tabs button{flex:none;min-width:100px}.board-layout{grid-template-columns:minmax(0,1fr)}.board-side{display:block}.board-effect-list>div{font-size:13px}}
+
+/* The three approved visual directions share one functional planner. */
+[hidden]{display:none!important}
+.theme-picker{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:22px;max-width:max-content;padding:5px;border:1px solid #64829588;border-radius:11px;background:#0a1b2bbb;backdrop-filter:blur(10px)}
+.theme-picker span{padding:0 9px;color:#bfd0dc;font-size:11px;text-transform:uppercase;letter-spacing:.12em;font-weight:850}
+.theme-picker button{border:0;border-radius:7px;background:transparent;color:#bfcfdf;padding:8px 12px;font-size:12px;font-weight:800}
+.theme-picker button.active{background:#dfc18a;color:#152637}
+.tab-icon{display:none}
+.mobile-more-button,.mobile-more-menu,.mobile-next{display:none}
+.mobile-next{margin-top:15px;overflow:hidden;position:relative;border-color:#d0ac75;background:linear-gradient(118deg,#1f4050,#112b3d 77%)}
+.mobile-next:after{content:'✧';position:absolute;right:-10px;top:-38px;color:#b4e2ea20;font:220px/1 Georgia,serif;pointer-events:none}
+.mobile-next h2{font:normal 28px/1.16 Georgia,serif;letter-spacing:-.025em;max-width:560px;margin:8px 0}
+.mobile-next p{max-width:600px;color:#ccdbe2;margin:0 0 17px}
+.mobile-next button{position:relative;z-index:1;display:flex;justify-content:space-between;gap:20px;align-items:center;border:0;border-radius:9px;background:#dec089;color:#152637;padding:11px 14px;font-size:13px;font-weight:850;min-height:44px}
+.mobile-next button span{font-size:20px;line-height:1}
+body[data-theme=abyss]{--bg:#160f25;--panel:#271a38;--panel2:#2d2040;--line:#614a70;--muted:#c3b2cb;--text:#f6eff8;--gold:#eab5ca;--aqua:#bb9af1;--blue:#c3a8ff;--green:#a8dfc3;background:radial-gradient(circle at 80% 0%,#72376355,transparent 40%),#160f25}
+body[data-theme=abyss] .hero{background:radial-gradient(circle at 73% 30%,#513059,#2b1c3d 50%,#170f27 100%)}
+body[data-theme=abyss] .hero:before{background-image:linear-gradient(#dfb1e90b 1px,transparent 1px),linear-gradient(90deg,#dfb1e90b 1px,transparent 1px)}
+body[data-theme=abyss] .theme-picker,body[data-theme=abyss] .tabs{background:#1a102bcc}
+body[data-theme=abyss] .theme-picker button.active{background:#eab5ca;color:#2b1834}
+body[data-theme=abyss] .class-picker,body[data-theme=abyss] .welcome-panel,body[data-theme=abyss] .panel,body[data-theme=abyss] .control,body[data-theme=abyss] .presets,body[data-theme=abyss] .source-card,body[data-theme=abyss] .skill-card,body[data-theme=abyss] .stigma-card,body[data-theme=abyss] .global-board-card,body[data-theme=abyss] .title-card,body[data-theme=abyss] .catalog-card,body[data-theme=abyss] .journey-switch{background:#281a38;border-color:#604776}
+body[data-theme=abyss] .class-buttons button,body[data-theme=abyss] .journey-option,body[data-theme=abyss] .board-tabs button,body[data-theme=abyss] .global-next-step,body[data-theme=abyss] .purchase,body[data-theme=abyss] .seg button,body[data-theme=abyss] .level-milestones button{background:#332141;border-color:#684e79;color:#f1e6f6}
+body[data-theme=abyss] .class-buttons button.active,body[data-theme=abyss] .journey-option.active,body[data-theme=abyss] .seg button.active,body[data-theme=abyss] .board-tabs button.active{background:#61436e;border-color:#eab5ca;color:#fff}
+body[data-theme=abyss] .controls,body[data-theme=abyss] .leveling-controls,body[data-theme=abyss] .leveling-guide,body[data-theme=abyss] .goal-panel,body[data-theme=abyss] .kpi,body[data-theme=abyss] .board-scroll,body[data-theme=abyss] .board-effects-panel,body[data-theme=abyss] .timeline,body[data-theme=abyss] .leveling-guide-grid>div,body[data-theme=abyss] .leveling-rotation-grid>div{background:#25192f;border-color:#604776}
+body[data-theme=abyss] .mobile-next{background:linear-gradient(115deg,#40254f,#251a38);border-color:#eab5ca}
+body[data-theme=abyss] .mobile-next button{background:#eab5ca;color:#2b1834}
+body[data-theme=sanctum]{--bg:#eaf2f0;--panel:#f8fbf8;--panel2:#edf5f1;--line:#cad9d6;--muted:#60777e;--text:#213840;--gold:#a07038;--aqua:#397b80;--blue:#426d98;--green:#267c63;--shadow:0 15px 45px #486e7026;background:#eaf2f0;color:#213840}
+body[data-theme=sanctum] .hero{background:radial-gradient(circle at 75% 27%,#e9d2a875,transparent 36%),linear-gradient(150deg,#d7e7e5,#f3f8f4 80%);border-color:#c8d8d6}
+body[data-theme=sanctum] .hero h1,body[data-theme=sanctum] .hero p,body[data-theme=sanctum] .section-title h2,body[data-theme=sanctum] .panel h3,body[data-theme=sanctum] .leveling-head h2{color:#213840}
+body[data-theme=sanctum] .theme-picker{background:#f9fcf8;border-color:#c5d5cf}
+body[data-theme=sanctum] .theme-picker span,body[data-theme=sanctum] .theme-picker button{color:#416069}
+body[data-theme=sanctum] .theme-picker button.active{background:#a07038;color:white}
+body[data-theme=sanctum] .class-picker,body[data-theme=sanctum] .welcome-panel,body[data-theme=sanctum] .panel,body[data-theme=sanctum] .control,body[data-theme=sanctum] .presets,body[data-theme=sanctum] .source-card,body[data-theme=sanctum] .skill-card,body[data-theme=sanctum] .stigma-card,body[data-theme=sanctum] .global-board-card,body[data-theme=sanctum] .title-card,body[data-theme=sanctum] .catalog-card,body[data-theme=sanctum] .journey-switch{background:#fbfdfb;border-color:#c6d7d4;box-shadow:0 9px 24px #557b7820;color:#213840}
+body[data-theme=sanctum] .class-buttons button,body[data-theme=sanctum] .journey-option,body[data-theme=sanctum] .board-tabs button,body[data-theme=sanctum] .global-next-step,body[data-theme=sanctum] .purchase,body[data-theme=sanctum] .seg button,body[data-theme=sanctum] .level-milestones button{background:#f1f7f4;border-color:#c6d7d4;color:#213840}
+body[data-theme=sanctum] .class-buttons button.active,body[data-theme=sanctum] .journey-option.active,body[data-theme=sanctum] .seg button.active,body[data-theme=sanctum] .board-tabs button.active{background:#dbece9;border-color:#5c938e;color:#213840}
+body[data-theme=sanctum] .controls,body[data-theme=sanctum] .leveling-controls,body[data-theme=sanctum] .leveling-guide,body[data-theme=sanctum] .goal-panel,body[data-theme=sanctum] .kpi,body[data-theme=sanctum] .board-scroll,body[data-theme=sanctum] .board-effects-panel,body[data-theme=sanctum] .timeline,body[data-theme=sanctum] .leveling-guide-grid>div,body[data-theme=sanctum] .leveling-rotation-grid>div{background:#f5faf6;border-color:#cadbd6}
+body[data-theme=sanctum] .panel p,body[data-theme=sanctum] .section-title p,body[data-theme=sanctum] .leveling-head p,body[data-theme=sanctum] .leveling-hint,body[data-theme=sanctum] .introline,body[data-theme=sanctum] .journey-head #stage-caption,body[data-theme=sanctum] .control small,body[data-theme=sanctum] .journey-option small,body[data-theme=sanctum] .kpi small,body[data-theme=sanctum] .skill-card .sub,body[data-theme=sanctum] .stigma-card .sub,body[data-theme=sanctum] .footnote{color:#5c747a}
+body[data-theme=sanctum] .control input[type=number],body[data-theme=sanctum] .goal-inputs input,body[data-theme=sanctum] .title-catalog-controls input,body[data-theme=sanctum] .title-catalog-controls select,body[data-theme=sanctum] .level-picker input{background:#fff;border:1px solid #a8c3c0;color:#213840}
+body[data-theme=sanctum] .tabs{background:#f9fcf8ee;border-color:#c9d9d5}body[data-theme=sanctum] .tabs button{color:#48646a}body[data-theme=sanctum] .tabs button.active{background:#e5f0ec;border-color:#a07038;color:#684b2a}
+body[data-theme=sanctum] .notice{background:#f0f6f0;border-color:#a07038;color:#415d61}
+body[data-theme=sanctum] .leveling-guide-grid b,body[data-theme=sanctum] .leveling-rotation-grid b{color:#397b80}
+body[data-theme=sanctum] .leveling-guide-grid p,body[data-theme=sanctum] .leveling-rotation-grid span,body[data-theme=sanctum] .kpi strong,body[data-theme=sanctum] .class-buttons button.active small{color:#213840}
+body[data-theme=sanctum] .mobile-next{background:linear-gradient(110deg,#fbfdfb,#dfede8);border-color:#a07038}
+body[data-theme=sanctum] .mobile-next button{background:#a07038;color:white}
+body[data-theme=sanctum] .tag{background:#edf3ef;color:#47676b;border-color:#a7c0bb}
+/* Dense build data uses ink cards in the light theme so specialty and effect text stays legible. */
+body[data-theme=sanctum] .tab-panel .panel,body[data-theme=sanctum] .tab-panel .skill-card,body[data-theme=sanctum] .tab-panel .stigma-card,body[data-theme=sanctum] .tab-panel .source-card,body[data-theme=sanctum] .tab-panel .title-card,body[data-theme=sanctum] .tab-panel .catalog-card,body[data-theme=sanctum] .tab-panel .global-board-card,body[data-theme=sanctum] .tab-panel .global-next-step,body[data-theme=sanctum] .tab-panel .purchase,body[data-theme=sanctum] .board-summary div{background:#142d38;border-color:#46656d;color:#ecf5f4}
+body[data-theme=sanctum] .tab-panel .panel h3,body[data-theme=sanctum] .tab-panel .skill-card h3,body[data-theme=sanctum] .tab-panel .stigma-card h3,body[data-theme=sanctum] .tab-panel .panel b{color:#f4f8f5}
+body[data-theme=sanctum] .tab-panel .panel p,body[data-theme=sanctum] .tab-panel .skill-card .sub,body[data-theme=sanctum] .tab-panel .stigma-card .sub,body[data-theme=sanctum] .tab-panel .footnote{color:#bad0d1}
+body[data-theme=sanctum] .tab-panel .leveling-guide-grid>div,body[data-theme=sanctum] .tab-panel .leveling-rotation-grid>div,body[data-theme=sanctum] .tab-panel .timeline,body[data-theme=sanctum] .tab-panel .board-effects-panel,body[data-theme=sanctum] .tab-panel .selected-node{background:#1b3c45;border-color:#517178;color:#eef7f5}
+body[data-theme=sanctum] .tab-panel .leveling-guide-grid p,body[data-theme=sanctum] .tab-panel .leveling-rotation-grid span{color:#d2e3e1}
+body[data-theme=sanctum] .tab-panel .leveling-guide-grid b,body[data-theme=sanctum] .tab-panel .leveling-rotation-grid b{color:#9ce0d9}
+body[data-theme=sanctum] .tab-panel .skill-card .gear-row input,body[data-theme=sanctum] .tab-panel .title-catalog-controls input,body[data-theme=sanctum] .tab-panel .title-catalog-controls select{background:#0a2029;border-color:#59747c;color:#fff}
+body[data-theme=sanctum] .tab-panel .board-scroll{background:#ecf5f1;border-color:#bfd2cc}
+body[data-theme=sanctum] .tab-panel .board-tabs button{background:#f1f7f4;border-color:#bdd2cc;color:#24484f}
+body[data-theme=sanctum] .tab-panel .board-tabs button.active{background:#dbece9;border-color:#5c938e;color:#23434b}
+body[data-theme=sanctum] .board-summary b,body[data-theme=sanctum] .board-summary span{color:#ecf5f4}
+body[data-theme=sanctum] .tab-panel .notice{background:#eaf3ef;border-color:#a07038;color:#355457}
+@media(max-width:700px){
+  main{padding:0 15px calc(100px + env(safe-area-inset-bottom));max-width:600px}
+  .hero-inner{padding:24px 16px 41px}.hero h1{font-size:42px;margin:7px 0 7px}.hero p{font-size:13px;line-height:1.45}.hero-tags{display:none}.theme-picker{margin-top:14px;overflow-x:auto;flex-wrap:nowrap;max-width:100%;white-space:nowrap}.theme-picker span{padding:0 4px}.theme-picker button{font-size:11px;padding:8px}
+  .class-picker{margin-top:-19px;padding:14px 13px;border-radius:14px}.class-picker-head{margin-bottom:10px}.class-buttons{display:flex;overflow-x:auto;gap:7px;scroll-snap-type:x proximity;padding-bottom:3px}.class-buttons button{flex:0 0 auto;min-width:115px;min-height:53px;scroll-snap-align:start;padding:8px 11px}.class-buttons button span{font-size:12px}.class-buttons button small{font-size:10px}
+  .journey-switch{margin-top:13px;padding:13px}.journey-head{margin-bottom:9px}.journey-head #stage-caption{font-size:11px}.journey-options{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.journey-option{min-height:69px;padding:9px;gap:8px}.journey-icon{width:28px;height:28px;font-size:17px}.journey-option b{font-size:13px}.journey-option small{font-size:10px;line-height:1.2}
+  .leveling-controls{margin-top:13px;padding:16px}.leveling-head{display:flex;align-items:center}.leveling-head h2{font-size:30px}.leveling-head p{font-size:11px}.level-picker{margin:0;flex:none}.level-picker button{width:32px;height:36px;font-size:17px}.level-picker input{width:52px;height:36px;font-size:18px}.leveling-controls input[type=range]{margin:13px 0 8px}.level-milestones{display:flex;overflow-x:auto;gap:5px;padding:2px 1px 6px}.level-milestones button{flex:0 0 55px;padding:6px 3px}.level-milestones b{font-size:12px}.level-milestones small{font-size:9px}.leveling-hint{font-size:11px;margin-top:10px}
+  .controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:7px;margin-top:11px}.control{padding:8px;min-width:0}.control label,.control .label{font-size:9px;line-height:1.2;letter-spacing:.08em}.control input[type=number]{font-size:20px}.control .unit{display:none}.control small{display:none}.control:nth-child(4),.is-leveling .control:nth-child(4){grid-column:1/-1;order:-1}.control:nth-child(5){grid-column:1/-1}.seg button{font-size:11px;min-height:34px}
+  .presets{padding:10px 12px}.introline{margin:7px 0 0;padding:6px 2px;font-size:11px}.introline .text-button{font-size:11px;white-space:nowrap}
+  .mobile-next{display:block;padding:17px;margin-top:12px}.mobile-next h2{font-size:23px}.mobile-next p{font-size:12px;line-height:1.4}.mobile-next button{width:100%}
+  .tabs{position:fixed;top:auto;bottom:0;left:0;right:0;z-index:20;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin:0;padding:6px 7px calc(7px + env(safe-area-inset-bottom));border-top:1px solid var(--line);border-bottom:0;overflow:visible;box-shadow:0 -12px 30px #0003}.tabs button{display:none}.tabs [data-tab=overview],.tabs [data-tab=mastery],.tabs [data-tab=boards],.tabs .mobile-more-button{display:grid;justify-items:center;align-content:center;gap:2px;min-width:0;min-height:53px;padding:5px 3px;font-size:10px;line-height:1.12;white-space:normal;text-align:center}.tabs .tab-icon{display:block;font:23px/1 Georgia,serif}.mobile-more-menu:not([hidden]){position:fixed;display:grid;grid-template-columns:1fr 1fr;gap:7px;left:15px;right:15px;bottom:calc(75px + env(safe-area-inset-bottom));z-index:22;padding:12px;border:1px solid var(--line);border-radius:13px;background:var(--panel);box-shadow:0 14px 38px #0006}.mobile-more-menu button{min-height:42px;border:1px solid var(--line);border-radius:8px;background:var(--panel2);color:var(--text);font-size:12px;font-weight:800}
+  .tab-panel{padding-top:18px;scroll-margin-top:15px}.section-title h2{font-size:25px}.section-title p{font-size:12px}.kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.kpi{padding:11px;min-height:80px}.kpi strong{font-size:20px}.kpi small{font-size:10px}.leveling-guide{padding:15px}.leveling-guide-heading h3{font-size:22px;margin-bottom:12px}.leveling-guide-grid{grid-template-columns:1fr}.leveling-guide-grid>div{padding:11px}.two-col,.skill-grid,.stigma-grid,.sources{grid-template-columns:1fr}.board-grid{margin:0}.board-scroll{overflow-x:auto}
+}
 </style>
 </head>
 <body>
@@ -243,13 +346,14 @@ main{max-width:1420px;padding-bottom:90px}
     <h1>Pathfinder</h1>
     <p id="hero-description">Choose a class, enter your points, and follow a connected board route alongside mastery, specialty, stigma, title, rotation and macro choices.</p>
     <div class="hero-tags"><span>Eight classes</span><span>Levels 1–45</span><span>Solo or group</span><span>Saved in this browser</span></div>
+    <div class="theme-picker" role="group" aria-label="Color theme"><span>Theme</span><button type="button" data-theme="aether">Aether Sky</button><button type="button" data-theme="sanctum">Sanctum Light</button><button type="button" data-theme="abyss">Abyss Night</button></div>
   </div></header>
   <main>
     <section class="class-picker" aria-label="Choose class"><div class="class-picker-head"><span class="eyebrow">01 / Choose your class</span><span id="class-role" class="tag gold"></span></div><div id="class-buttons" class="class-buttons"></div></section>
     <section id="welcome-panel" class="welcome-panel"><span class="eyebrow">Start here</span><h2>Choose your class and stage</h2><p>Plan the journey from level 1 with Solo or Group recommendations, or start with your fresh level 45 totals.</p><div class="welcome-stats"><span><b>1–44</b> Leveling</span><span><b>45</b> Endgame</span><span><b>8</b> Classes</span></div></section>
     <div id="planner-content" hidden>
     <section class="journey-switch" aria-label="Choose progression stage"><div class="journey-head"><span class="eyebrow">02 / Choose your stage</span><span id="stage-caption">Leveling and level 45 point totals are saved separately.</span></div><div class="journey-options"><button id="leveling-mode" type="button" class="journey-option"><span class="journey-icon">↗</span><span><b>Leveling to 45</b><small>Level gates · Solo or Group · points by level</small></span></button><button id="endgame-mode" type="button" class="journey-option"><span class="journey-icon">✦</span><span><b>Level 45 build</b><small>Full boards · PvP · combat power goals</small></span></button></div></section>
-    <section id="leveling-controls" class="leveling-controls panel" hidden><div class="leveling-head"><div><span class="eyebrow">03 / Set your current level</span><h2>Level <span id="level-display">1</span></h2><p id="leveling-summary"></p></div><div class="level-picker"><button id="level-minus" type="button" aria-label="Previous level">−</button><input id="level-input" type="number" min="1" max="45" value="1" aria-label="Current character level"><button id="level-plus" type="button" aria-label="Next level">+</button></div></div><input id="level-slider" type="range" min="1" max="45" value="1" aria-label="Character level slider"><div id="level-milestones" class="level-milestones"></div><p class="leveling-hint">Point fields below show your level-only baseline. Enter your total earned points if quests, Sealed Dungeons, or other rewards added more; those extras carry forward when you change level.</p><button id="handoff-button" class="handoff-button" type="button" hidden>Use these point totals in my level 45 build →</button></section>
+    <section id="leveling-controls" class="leveling-controls panel" hidden><div class="leveling-head"><div><span class="eyebrow">03 / Set your current level</span><h2>Level <span id="level-display">1</span></h2><p id="leveling-summary"></p></div><div class="level-picker"><button id="level-minus" type="button" aria-label="Previous level">−</button><input id="level-input" type="number" min="1" max="45" value="1" aria-label="Current character level"><button id="level-plus" type="button" aria-label="Next level">+</button></div></div><input id="level-slider" type="range" min="1" max="45" value="1" aria-label="Character level slider"><div id="level-milestones" class="level-milestones"></div><p class="leveling-hint">Point fields below show your level-only baseline. Enter your total earned points if quests, Sealed Dungeons, or other rewards added more; those extras carry forward when you change level. Mastery ranks have character-level gates: after rank 2, one more rank opens every three character levels from that skill's unlock.</p><button id="handoff-button" class="handoff-button" type="button" hidden>Use these point totals in my level 45 build →</button></section>
     <div class="controls" aria-label="Build inputs">
       <div class="control"><label for="mastery-input">Mastery points</label><div class="inputrow"><input id="mastery-input" type="number" min="0" max="462" step="1" value="203"><span class="unit">/ 462</span></div><small id="mastery-hint">Earned total, including spent points</small></div>
       <div class="control"><label for="stigma-input">Stigma points</label><div class="inputrow"><input id="stigma-input" type="number" min="0" max="300" step="1" value="29"><span class="unit">/ 300</span></div><small id="stigma-hint">Four equipped stigmas</small></div>
@@ -258,16 +362,19 @@ main{max-width:1420px;padding-bottom:90px}
       <div class="control" id="azphel-control"><label class="label" for="azphel-input">Azphel crystals</label><input id="azphel-input" type="number" min="0" max="232" value="0"><small>Separate PvP board currency</small></div>
     </div>
     <div class="presets" id="fresh-preset"><div><b>Start from your point totals</b><span>Global level 45 from leveling alone: 203 Mastery · 29 Stigma · 136 crystals. Quest and dungeon rewards add more.</span></div><button id="fresh-45-button" type="button">Fresh Global 45</button></div>
-    <div class="introline"><span id="intro-copy">Enter <b>total points earned, including spent and unspent</b>. The recommended ranks are a reset plan; displayed in-game skill levels can also include board, gear and Arcana bonuses. Each class saves its own inputs. Research reviewed October 18, 2026.</span><button class="text-button" id="reset-button" type="button">Reset class to fresh 45</button></div>
+    <div class="introline"><span id="intro-copy">Enter <b>total points earned, including spent and unspent</b>. The recommended ranks are a reset plan; displayed in-game skill levels can also include board, gear and Arcana bonuses. Each class saves its own inputs. Research reviewed October 19, 2026.</span><button class="text-button" id="reset-button" type="button">Reset class to fresh 45</button></div>
+    <div class="mobile-next panel" id="mobile-next" hidden><span class="eyebrow">Your next step</span><h2 id="mobile-next-title"></h2><p id="mobile-next-description"></p><button type="button" id="mobile-next-action">Open recommendation <span aria-hidden="true">→</span></button></div>
     <nav class="tabs" aria-label="Planner sections">
-      <button type="button" class="active" data-tab="overview">Build now</button>
-      <button type="button" data-tab="mastery">Mastery & specialties</button>
+      <button type="button" class="active" data-tab="overview"><span class="tab-icon" aria-hidden="true">✦</span>Build now</button>
+      <button type="button" data-tab="mastery"><span class="tab-icon" aria-hidden="true">✧</span>Mastery & specialties</button>
       <button type="button" data-tab="stigma">Stigmas</button>
       <button type="button" data-tab="rotation">Rotation & macro</button>
-      <button type="button" data-tab="boards">Daevanion boards</button>
+      <button type="button" data-tab="boards"><span class="tab-icon" aria-hidden="true">◇</span>Daevanion boards</button>
       <button type="button" data-tab="titles">Titles</button>
       <button type="button" data-tab="sources">Research notes</button>
+      <button type="button" id="mobile-more-button" class="mobile-more-button" aria-expanded="false" aria-controls="mobile-more-menu"><span class="tab-icon" aria-hidden="true">☰</span>More</button>
     </nav>
+    <div id="mobile-more-menu" class="mobile-more-menu" hidden><button type="button" data-more-tab="stigma">Stigmas</button><button type="button" data-more-tab="rotation">Rotation & macro</button><button type="button" data-more-tab="titles">Titles</button><button type="button" data-more-tab="sources">Research notes</button></div>
     <section id="overview" class="tab-panel active" aria-label="Build now">
       <div class="section-title"><div><h2 id="overview-title">Your current path</h2><p id="overview-subtitle"></p></div><span id="overview-role" class="tag gold"></span></div>
       <div id="leveling-guide" class="leveling-guide panel" hidden></div>
@@ -307,7 +414,7 @@ main{max-width:1420px;padding-bottom:90px}
       <div class="panel global-route"><div class="global-route-heading"><div><h3 id="global-route-heading">All four PvE boards · what to buy next</h3><p id="global-route-caption"></p></div><span id="global-route-budget" class="tag gold"></span></div><div class="obtained-controls"><span id="obtained-status"></span><button id="mark-planned-button" type="button">Mark planned nodes obtained</button><button id="clear-obtained-button" type="button">Clear PvE obtained marks</button></div><div class="board-legend"><span><i class="planned"></i> Planned</span><span><i class="obtained"></i> Marked obtained</span><span><i class="next"></i> Next unmarked on this board</span></div><div id="global-board-allocation" class="global-board-allocation"></div><div id="global-route-next" class="global-route-next"></div></div>
       <div id="board-rationale" class="panel board-rationale"></div>
       <div id="board-summary" class="board-summary"></div><div class="board-tabs" id="board-tabs"></div>
-      <div class="board-layout"><div><div class="board-scroll"><div id="board-grid" class="board-grid" role="group" aria-label="Daevanion board nodes"></div></div><div class="timeline"><label for="route-slider">Preview crystals</label><input id="route-slider" type="range" min="0" max="136" value="136"><b id="route-slider-value">136</b></div><p id="route-footnote" class="footnote"></p></div><aside class="board-side"><div><div id="selected-node" class="selected-node"></div><div class="panel board-effects-panel"><h3>Board effects at preview</h3><p id="board-effect-intro"></p><div id="board-effect-list" class="board-effect-list"></div></div><div class="panel"><h3>Purchase order</h3><p id="purchase-intro"></p><div id="purchase-list" class="purchase-list"></div></div></div><div class="panel"><h3>Next key nodes</h3><div id="board-next"></div></div></aside></div>
+      <div class="board-layout"><div><div class="board-scroll"><div id="board-grid" class="board-grid" role="group" aria-label="Daevanion board nodes"></div></div><p class="board-icon-credit">Skill icon images from <a id="board-icon-source" href="https://aion2data.com/daevanion/templar" target="_blank" rel="noopener noreferrer">Aion2Data</a>; game art © NCSOFT. Select a node to read its exact effect.</p><div class="timeline"><label for="route-slider">Preview crystals</label><input id="route-slider" type="range" min="0" max="136" value="136"><b id="route-slider-value">136</b></div><p id="route-footnote" class="footnote"></p></div><aside class="board-side"><div><div id="selected-node" class="selected-node"></div><div class="panel board-effects-panel"><h3>Board effects at preview</h3><p id="board-effect-intro"></p><div id="board-effect-list" class="board-effect-list"></div></div><div class="panel"><h3>Purchase order</h3><p id="purchase-intro"></p><div id="purchase-list" class="purchase-list"></div></div></div><div class="panel"><h3>Next key nodes</h3><div id="board-next"></div></div></aside></div>
     </section>
     <section id="titles" class="tab-panel" aria-label="Titles to earn and equip">
       <div class="section-title"><div><h2>Titles to earn & equip</h2><p>Track what this character has earned. Recommendations update for its role and your available titles.</p></div><span id="titles-count" class="tag gold"></span></div>
@@ -549,6 +656,28 @@ const TEMPLAR_STAGES = [
   ['Poach',10],['Defiance',10],['Debilitating Smash',10],['Shield Rush',10],['Block Pain',10],['Warding Shield',10],['Guarding Seal',10],['Survival Willpower',10],['Flash Rampage',10]
 ];
 const TEMPLAR_GROUP_STAGES = [['Judgment',10],['Vicious Strike',10],['Insulting Roar',10],['Fury',10],['Punishing Benediction',10],['Enhance Health',8],['Warding Strike',8],['Shield Smite',8],...TEMPLAR_STAGES];
+// The first purchases during leveling go to skills available and useful in the
+// opening rotation. Higher targets are still limited by SkillAcquireData gates.
+const LEVELING_MASTERY_CORE = {
+  templar:[['Vicious Strike',5],['Pummel',5],['Shield Smite',5],['Judgment',5],['Enhance Health',4],['Debilitating Smash',4]],
+  gladiator:[['Keen Strike',5],['Rending Blow',5],['Overhead Slam',5],['Sword Aura Rampage',5],['Leaping Slam',4]],
+  assassin:[['Quick Slice',5],['Savage Roar',5],['Heart Gore',5],['Ambush',5],['Shadowstrike',4]],
+  ranger:[['Snipe',5],['Tempest Shot',5],['Snare Shot',5],['Drill Dart',5],['Marking Shot',4]],
+  sorcerer:[['Flame Arrow',5],['Ice Chain',5],['Firestorm',5],['Blaze',4],['Bittercold Wind',3]],
+  spiritmaster:[['Cold Shock',5],['Combustion',5],['Spirit Strike',5],['Summon: Fire Spirit',5],['Jointstrike: Curse',4]],
+  cleric:[["Earth's Retribution",5],['Judgment Thunder',5],['Warm Benediction',5],['Divine Aura',5],['Chain of Torment',4]],
+  chanter:[['Onslaught',5],['Incandescent Blow',5],['Rushing Smash',5],['Impactful Crush',5],['Blessing of Life',4]]
+};
+const LEVELING_MASTERY_NEXT = {
+  templar:['Vicious Strike','Pummel','Judgment','Shield Smite','Warding Strike','Enhance Health'],
+  gladiator:['Keen Strike','Rending Blow','Overhead Slam','Sword Aura Rampage','Ruinous Blow'],
+  assassin:['Quick Slice','Savage Roar','Heart Gore','Ambush','Insignia Explosion'],
+  ranger:['Snipe','Tempest Shot','Drill Dart','Gale Arrow','Deadshot'],
+  sorcerer:['Flame Arrow','Ice Chain','Firestorm','Hellfire','Blaze','Bittercold Wind'],
+  spiritmaster:['Cold Shock','Combustion','Spirit Strike','Summon: Fire Spirit','Elemental Fusion'],
+  cleric:['Healing Light','Light of Regeneration','Radiant Recovery',"Earth's Retribution",'Chain of Torment'],
+  chanter:['Onslaught','Incandescent Blow','Dark Crush','Recuperation','Protection Circle']
+};
 Object.assign(STIGMAS.templar,{
   'Executing Blade':{base:'Manual PvP pressure and stagger; pair with control openings',perks:{}},
   "Empyrean Lord's Punishment":{base:'High stagger damage and manual burst window',perks:{}},
@@ -558,6 +687,9 @@ const DEFAULT_ACCOUNT = (cls='templar') => ({...FRESH_45,azphel:0,context:'party
 let saved = {};
 try { saved = JSON.parse(localStorage.getItem('aion2-pathfinder-all-v3') || '{}') || {}; } catch (_) {}
 let state = {class:CLASS_ORDER.includes(saved.class)?saved.class:null,accounts:saved.accounts||{},tab:'overview',board:'Nezekan',preview:FRESH_45.crystals,node:null,titleSearch:'',titleSlot:'all',titleOwnership:'all',titleFaction:'all'};
+let theme = 'aether';
+try { const storedTheme=localStorage.getItem('aion2-pathfinder-theme');if(['aether','sanctum','abyss'].includes(storedTheme))theme=storedTheme; } catch (_) {}
+function applyTheme(){document.body.dataset.theme=theme;document.querySelectorAll('.theme-picker [data-theme]').forEach(b=>{b.classList.toggle('active',b.dataset.theme===theme);b.setAttribute('aria-pressed',b.dataset.theme===theme)});document.querySelector('meta[name="theme-color"]').content=theme==='sanctum'?'#eaf2f0':theme==='abyss'?'#160f25':'#0b1c2c'}
 function account(){ if(!state.accounts[state.class]) state.accounts[state.class]=DEFAULT_ACCOUNT(state.class); return state.accounts[state.class]; }
 function isLeveling(){return account().journey==='leveling'}
 function leveling(){const a=account();a.leveling ||= {level:1,extra:{mastery:0,stigma:0,crystals:0}};a.leveling.extra ||= {mastery:0,stigma:0,crystals:0};return a.leveling}
@@ -587,8 +719,21 @@ function activeStigmas(){
 function masteryCost(rank){return rank<=4?1:rank<=7?2:4}
 function masteryTotal(rank){let points=0;for(let n=2;n<=rank;n++)points+=masteryCost(n);return points}
 function stigmaCost(rank){return rank<=5?1:rank<=10?2:rank<=15?4:8}
+function masteryRankCap(name){
+  if(!isLeveling())return 10;
+  const unlocked=SKILL_UNLOCKS[state.class][name];
+  if(!unlocked||currentLevel()<unlocked)return 1;
+  return Math.min(10,2+Math.floor((currentLevel()-unlocked)/3));
+}
 function masteryStages(){
   const available=stages=>isLeveling()?stages.filter(([name])=>(SKILL_UNLOCKS[state.class][name]||1)<=currentLevel()):stages;
+  if(isLeveling()){
+    const core=LEVELING_MASTERY_CORE[state.class],next=LEVELING_MASTERY_NEXT[state.class];
+    const weights=activeWeights()?.skills||data().skillWeights;
+    const rest=skillNames().map((name,i)=>({name,i,weight:weights[name]||0})).sort((a,b)=>b.weight-a.weight||a.i-b.i).map(x=>x.name);
+    const support=account().context!=='party'?[]:state.class==='cleric'?[['Healing Light',5],['Light of Regeneration',5],['Radiant Recovery',5]]:state.class==='chanter'?[['Recuperation',5],['Protection Circle',5]]:[];
+    return available([...support,...core,...next.map(name=>[name,8]),...rest.map(name=>[name,8]),...next.map(name=>[name,10]),...rest.map(name=>[name,10])]);
+  }
   if(state.class==='templar'&&account().context==='party') return available(TEMPLAR_GROUP_STAGES);
   if(state.class==='templar'&&account().context==='solo') return available(TEMPLAR_STAGES);
   const names=skillNames(); const weights=activeWeights()?.skills||data().skillWeights;
@@ -597,9 +742,18 @@ function masteryStages(){
   return available([...first.map(n=>[n,8]),...first.map(n=>[n,10]),...second.map(n=>[n,8]),...second.map(n=>[n,10]),...third.map(n=>[n,8]),...third.map(n=>[n,10])]);
 }
 function stigmaStages(){const s=activeStigmas().slice(0,isLeveling()?levelReward().slots:4);return [5,10,15,20].flatMap(rank=>s.map(name=>[name,rank]))}
-function allocate(stages,budget,costFn,names,base){
-  const levels=Object.fromEntries(names.map(n=>[n,base]));let spent=0,next=null;
-  for(const [name,target] of stages){if(!(name in levels))continue;while(levels[name]<target){const cost=costFn(levels[name]+1);if(spent+cost>budget){next={name,rank:levels[name]+1,cost,need:spent+cost-budget};return {levels,spent,next}}levels[name]++;spent+=cost}}
+function allocate(stages,budget,costFn,names,base,capFn=null){
+  const levels=Object.fromEntries(names.map(n=>[n,base]));let spent=0,firstMiss=null;
+  for(const [name,wanted] of stages){
+    if(!(name in levels))continue;
+    const target=Math.min(wanted,capFn?capFn(name):wanted);
+    while(levels[name]<target){
+      const cost=costFn(levels[name]+1);
+      if(spent+cost>budget){firstMiss ||= {name,rank:levels[name]+1,cost};break}
+      levels[name]++;spent+=cost;
+    }
+  }
+  const next=firstMiss?{...firstMiss,need:Math.max(1,firstMiss.cost-(budget-spent))}:null;
   return {levels,spent,next};
 }
 function boardPlan(budget,azphel=false){
@@ -616,14 +770,19 @@ function renderGlobalBoardRoute(m,nodes){
   $('obtained-status').textContent=`${markedCost} crystals marked obtained across ${marked.length} nodes · ${unmarkedWithinBudget} planned clicks still unmarked at this budget`;
   $('global-route-caption').textContent=first?`Your obtained marks are skipped in the shared ${isLeveling()?'unlocked':'four-board'} route. ${first.board} is the first unmarked node at ${first.total} planned crystals${switchBoard?`; the next unmarked board switch is ${switchBoard.board} at ${switchBoard.total}`:''}.${markedCost>crystals?` Marked nodes cost ${markedCost}, above the entered ${crystals} crystals; check your total.`:''}`:isLeveling()&&currentLevel()<12?'Nezekan opens at level 12. Your crystals are saved until then.':'All currently available PvE nodes are marked obtained.';
   $('global-board-allocation').innerHTML=BOARD_NAMES.map(name=>{const spent=m.boards.perBoard[name],share=m.boards.spent?Math.round(spent/m.boards.spent*100):0,next=upcoming.find(x=>x.board===name),obtained=marked.filter(x=>x.board===name).reduce((sum,x)=>sum+x.cost,0),locked=!boardOpen(name);return `<button type="button" data-board-jump="${name}" class="global-board-card ${state.board===name?'active':''} ${locked?'locked':''}" ${locked?'disabled':''}><span>${name}</span><b>${locked?`Opens at Lv ${BOARD_UNLOCKS[name]}`:`${spent} planned · ${obtained} obtained`}</b><small>${locked?'Future board':`${share}% of planned PvE crystals`}</small><em>${locked?'Locked':next?`Next unmarked at ${next.total} ✧`:'Board complete'}</em><i style="width:${share}%"></i></button>`}).join('');
-  $('global-route-next').innerHTML=upcoming.length?`<div class="global-next-label">Next 16 unmarked clicks across unlocked boards · tap to open its board</div><div class="global-next-grid">${upcoming.slice(0,16).map(x=>`<button type="button" data-route-node="${x.id}" data-route-board="${x.board}" class="global-next-step ${x.total<=crystals?'affordable':'later'}"><span class="global-step-number">${x.number}</span><span class="global-step-detail"><b>${x.board}${x.total<=crystals?' · within budget':' · later'}</b><small>${esc(effectText(x.node))} · r${x.node[1]} c${x.node[2]}</small></span><span class="global-step-total">${x.total} ✧</span></button>`).join('')}</div>`:'<p>No available next clicks at this level.</p>';
+  $('global-route-next').innerHTML=upcoming.length?`<div class="global-next-label">Next 16 unmarked clicks across unlocked boards · tap to open its board</div><div class="global-next-grid">${upcoming.slice(0,16).map(x=>`<button type="button" data-route-node="${x.id}" data-route-board="${x.board}" class="global-next-step ${x.total<=crystals?'affordable':'later'}"><span class="global-step-number">${x.number}</span><span class="route-step-icon">${nodeVisual(x.node)}</span><span class="global-step-detail"><b>${x.board}${x.total<=crystals?' · within budget':' · later'}</b><small>${esc(effectText(x.node))} · r${x.node[1]} c${x.node[2]}</small></span><span class="global-step-total">${x.total} ✧</span></button>`).join('')}</div>`:'<p>No available next clicks at this level.</p>';
 }
 function effects(owned){const skills={},stats={},nodes=nodeMap();for(const id of owned){const n=nodes.get(id).node;for(const [key,v] of n[6]){if(typeof key==='number'){const name=data().skills[key]?.name||String(key);skills[name]=(skills[name]||0)+v}else stats[key]=(stats[key]||0)+v}}return {skills,stats}}
 function effectText(n){if(!n||!n[6]?.length)return 'Start node';return n[6].map(([key,v])=>{if(typeof key==='number')return `${data().skills[key]?.name||key} +${v} level`;const meta=data().stats[key];return `${meta?.name||key} +${v/(meta?.div||1)}${meta?.pct?'%':''}`}).join(' · ')}
 function nodeShort(n){if(n[5]===0||n[5]===4)return '✦';if(typeof n[6]?.[0]?.[0]==='number')return n[5]===2?'P':'S';return ({FixingDamage:'ATK',Critical:'CR',Defense:'DEF',HPMax:'HP',MPMax:'MP',HealBoost:'HEAL'})[n[6]?.[0]?.[0]]||'·'}
-function model(){const a=account(),mastery=allocate(masteryStages(),budget('mastery'),masteryCost,skillNames(),1),stigma=allocate(stigmaStages(),budget('stigma'),stigmaCost,activeStigmas(),0),boards=boardPlan(budget('crystals')),azphel=boardPlan(isLeveling()?0:a.azphel||0,true);return {mastery,stigma,boards,azphel,effects:effects(boards.owned),azphelEffects:effects(azphel.owned)}}
+function nodeVisual(n){
+  const key=n[6]?.[0]?.[0],icon=typeof key==='number'?data().skills[key]?.icon:null;
+  return icon&&icon.startsWith('/game/skills/')?`<img class="node-game-icon" src="https://aion2data.com${esc(icon)}" alt="" loading="lazy">`:`<span>${nodeShort(n)}</span>`;
+}
+function model(){const a=account(),mastery=allocate(masteryStages(),budget('mastery'),masteryCost,skillNames(),1,isLeveling()?masteryRankCap:null),stigma=allocate(stigmaStages(),budget('stigma'),stigmaCost,activeStigmas(),0),boards=boardPlan(budget('crystals')),azphel=boardPlan(isLeveling()?0:a.azphel||0,true);return {mastery,stigma,boards,azphel,effects:effects(boards.owned),azphelEffects:effects(azphel.owned)}}
 function effective(name,m){return Math.min(40,(m.mastery.levels[name]||1)+(m.effects.skills[name]||0)+(account().gear[name]||0))}
 function render(){
+  applyTheme();
   const selected=CLASS_ORDER.includes(state.class);
   $('class-buttons').innerHTML=CLASS_ORDER.map(c=>`<button type="button" data-class="${c}" class="${state.class===c?'active':''}" aria-pressed="${state.class===c}"><span>${PROFILES[c].name}</span><small>${PROFILES[c].role}</small></button>`).join('');
   $('welcome-panel').hidden=selected;$('planner-content').hidden=!selected;
@@ -636,15 +795,22 @@ function render(){
   for(const key of ['mastery','stigma','crystals'])$(`${key==='crystals'?'crystal':key}-input`).value=budget(key);
   pointLabels();$('leveling-controls').hidden=!isLeveling();$('fresh-preset').hidden=isLeveling();$('azphel-control').hidden=isLeveling();$('pvp-button').hidden=isLeveling();$('goal-panel').hidden=isLeveling();$('leveling-guide').hidden=!isLeveling();
   for(const [id,active] of [['leveling-mode',isLeveling()],['endgame-mode',!isLeveling()]]){$(id).classList.toggle('active',active);$(id).setAttribute('aria-pressed',active)}
-  $('intro-copy').innerHTML=isLeveling()?`Enter <b>total points earned</b>, including spent and unspent. The level-only points are the baseline; your extra rewards carry forward. Mastery skills, Stigma slots, and boards obey Global level gates. ${currentLevel()===45?'Use the transfer button to copy these totals into your level 45 build.':'The full macro becomes available in the level 45 build stage.'}`:'Enter <b>total points earned, including spent and unspent</b>. Recommended ranks are a reset plan; displayed in-game skill levels can also include board, gear and Arcana bonuses. Each class saves its own inputs. Research reviewed October 18, 2026.';
+  $('intro-copy').innerHTML=isLeveling()?`Enter <b>total points earned</b>, including spent and unspent. The level-only points are the baseline; your extra rewards carry forward. Mastery skills, Stigma slots, and boards obey Global level gates. ${currentLevel()===45?'Use the transfer button to copy these totals into your level 45 build.':'The full macro becomes available in the level 45 build stage.'}`:'Enter <b>total points earned, including spent and unspent</b>. Recommended ranks are a reset plan; displayed in-game skill levels can also include board, gear and Arcana bonuses. Each class saves its own inputs. Research reviewed October 19, 2026.';
   $('reset-button').textContent=isLeveling()?'Reset class progress':'Reset class to fresh 45';
   if(isLeveling())renderLevelControls();
   $('fresh-45-button').classList.toggle('active',Object.entries(FRESH_45).every(([key,value])=>a[key]===value)&&!(a.azphel||0));
   for(const [id,ctx] of [['party-button','party'],['solo-button','solo'],['pvp-button','pvp']]){$(id).classList.toggle('active',a.context===ctx);$(id).setAttribute('aria-pressed',a.context===ctx)}
   $('azphel-input').value=a.azphel||0;
   document.querySelectorAll('[data-tab]').forEach(b=>{b.classList.toggle('active',b.dataset.tab===state.tab);b.setAttribute('aria-current',b.dataset.tab===state.tab?'page':'false')});
+  $('mobile-more-button').classList.toggle('active',['stigma','rotation','titles','sources'].includes(state.tab));
   document.querySelectorAll('.tab-panel').forEach(el=>el.classList.toggle('active',el.id===state.tab));
-  renderOverview(m);renderMastery(m);renderStigma(m);renderRotation(m);renderBoards(m);renderTitles();renderSources();save();
+  renderOverview(m);renderMobileNext(m);renderMastery(m);renderStigma(m);renderRotation(m);renderBoards(m);renderTitles();renderSources();save();
+}
+function renderMobileNext(m){
+  const el=$('mobile-next');el.hidden=false;
+  const first=isLeveling()?LEVELING_MASTERY_CORE[state.class].find(([name,target])=>(m.mastery.levels[name]||1)<Math.min(target,masteryRankCap(name))):null;
+  const choice=first?{title:`Raise ${first[0]} to rank ${Math.min(first[1],masteryRankCap(first[0]))}`,detail:`Current plan: rank ${m.mastery.levels[first[0]]||1}. This skill's next rank is available at your character level.`,tab:'mastery'}:m.mastery.next?{title:`Plan ${m.mastery.next.name} rank ${m.mastery.next.rank}`,detail:`Earn ${m.mastery.next.need} more Mastery point${m.mastery.next.need===1?'':'s'} for this step.`,tab:'mastery'}:m.boards.next?{title:`Open ${m.boards.next.board} next`,detail:`${effectText(nodeMap().get(m.boards.next.id).node)} · ${m.boards.next.need} more crystals for the next connected node.`,tab:'boards'}:{title:'Review your current build',detail:'Your available points are allocated. Check skill specialties and the next board route.',tab:'mastery'};
+  $('mobile-next-title').textContent=choice.title;$('mobile-next-description').textContent=choice.detail;el.dataset.targetTab=choice.tab;
 }
 function renderLevelControls(){
   const level=currentLevel(),r=levelReward(),next=LEVEL_MILESTONES.find(([at])=>at>level);
@@ -702,7 +868,8 @@ function renderMastery(m){
   $('skill-grid').innerHTML=order.map((name,i)=>{
     const base=m.mastery.levels[name]||1,board=m.effects.skills[name]||0,gear=a.gear[name]||0,bonus=board+gear,eff=effective(name,m),current=a.currentRanks?.[name],currentLevel=current?Math.min(40,current+bonus):null,spec=SPECS[state.class]?.[name],picks=specPicks(name,eff);
     const chips=spec?`<div class="specs"><div class="specs-title">${eff<8?'First specialty at Lv 8':`Equip now · ${picks.length} choice${picks.length===1?'':'s'}`}</div><div class="spec-row">${Object.entries(spec.options).map(([num,label])=>{const required=+num<=3?8:+num===4?12:16;return `<span class="spec ${picks.includes(+num)?'on':eff<required?'future':''}" title="Option ${num} · level ${required}">#${num} ${esc(label)}${eff<required?` · Lv ${required}`:''}</span>`}).join('')}</div></div>`:'';
-    return `<article class="skill-card ${i<4?'highlight':''}"><div class="skill-head"><div><h3>${esc(name)}</h3><div class="sub">Priority ${i+1}${isLeveling()?` · unlocked Lv ${SKILL_UNLOCKS[state.class][name]||1}`:''}${spec?' · specialty choices':''}</div></div><div class="lv"><strong>Target Rank ${base}</strong><small>Target in-game Lv ${eff}</small></div></div><div class="build-parts"><span>${masteryTotal(base)} Mastery to reach target</span><span>Board +${board}</span><span>Other +${gear}</span></div><div class="baseline-level"><b>In-game green bonus: (+${bonus})</b><span> ${board} board + ${gear} other</span>${currentLevel?`<div>On this board route: current rank ${current} → Lv ${currentLevel}; target rank ${base} → Lv ${eff}.</div>`:''}</div>${chips}<label class="gear-row">Other bonus levels (gear / Arcana) <input type="number" data-gear="${esc(name)}" min="0" max="30" value="${gear}" aria-label="Other bonus levels for ${esc(name)}"></label><label class="gear-row">Your current Mastery rank (optional) <input type="number" data-current-rank="${esc(name)}" min="1" max="10" placeholder="—" value="${current||''}" aria-label="Current Mastery rank for ${esc(name)}"></label></article>`
+    const cap=masteryRankCap(name),nextGate=cap<10?(SKILL_UNLOCKS[state.class][name]||1)+3*(cap-1):null;
+    return `<article class="skill-card ${i<4?'highlight':''}"><div class="skill-head"><div><h3>${esc(name)}</h3><div class="sub">Priority ${i+1}${isLeveling()?` · unlocked Lv ${SKILL_UNLOCKS[state.class][name]||1}`:''}${spec?' · specialty choices':''}</div></div><div class="lv"><strong>Target Rank ${base}</strong><small>Target in-game Lv ${eff}</small></div></div><div class="build-parts"><span>${masteryTotal(base)} Mastery to reach target</span>${isLeveling()?`<span>Rank cap now ${cap}${nextGate?` · next rank Lv ${nextGate}`:''}</span>`:''}<span>Board +${board}</span><span>Other +${gear}</span></div><div class="baseline-level"><b>In-game green bonus: (+${bonus})</b><span> ${board} board + ${gear} other</span>${currentLevel?`<div>On this board route: current rank ${current} → Lv ${currentLevel}; target rank ${base} → Lv ${eff}.</div>`:''}</div>${chips}<label class="gear-row">Other bonus levels (gear / Arcana) <input type="number" data-gear="${esc(name)}" min="0" max="30" value="${gear}" aria-label="Other bonus levels for ${esc(name)}"></label><label class="gear-row">Your current Mastery rank (optional) <input type="number" data-current-rank="${esc(name)}" min="1" max="10" placeholder="—" value="${current||''}" aria-label="Current Mastery rank for ${esc(name)}"></label></article>`
   }).join('')||(isLeveling()?'<div class="notice">Mastery points begin at level 4. Your first skills are available now; come back when you earn points.</div>':'');
 }
 function renderStigma(m){
@@ -751,6 +918,7 @@ function renderRotation(m){
 }
 function renderBoards(m){
   const a=account(),nodes=nodeMap(),actual=obtainedNodes(),isAz=state.board==='Azphel',crystalBudget=isAz?(a.azphel||0):budget('crystals'),route=isAz?ROUTES[state.class].azphel:activeRoute(),plan=isAz?m.azphel:m.boards,boardNext=routeSteps(route,nodes).find(x=>x.board===state.board&&!actual.has(x.id));
+  $('board-icon-source').href=`https://aion2data.com/daevanion/${state.class}`;
   $('global-route-heading').textContent=isLeveling()?`Level ${currentLevel()} · unlocked PvE boards`:'All four PvE boards · what to buy next';
   $('board-section-description').textContent=isLeveling()?`Only boards unlocked by level ${currentLevel()} are included. Nezekan opens at 12, Zikel at 20, Vaizel at 30 and Triniel at 40. Tap a planned node to mark it obtained.`:'One connected purchase order spans Nezekan, Zikel, Vaizel and Triniel. The board tabs below show each part of that route. Azphel appears in PvP and uses its own currency.';
   renderGlobalBoardRoute(m,nodes);
@@ -762,9 +930,9 @@ function renderBoards(m){
   $('board-tabs').innerHTML=available.map(b=>`<button type="button" data-board="${b.name}" class="${state.board===b.name?'active':''}" ${boardOpen(b.name)?'':`disabled title="Opens at level ${BOARD_UNLOCKS[b.name]}"`}>${b.name}<small>${boardOpen(b.name)?`${(b.name==='Azphel'?m.azphel:m.boards).perBoard[b.name]} / ${b.totalCost}`:`Opens Lv ${BOARD_UNLOCKS[b.name]}`}</small></button>`).join('');
   $('route-slider').max=crystalBudget;state.preview=Math.min(state.preview,crystalBudget);$('route-slider').value=state.preview;$('route-slider-value').textContent=state.preview;
   const preview=boardPlan(state.preview,isAz),board=available.find(b=>b.name===state.board),grid=new Map(board.nodes.map(n=>[`${n[1]}:${n[2]}`,n]));let html='';
-  for(let r=1;r<=15;r++)for(let c=1;c<=15;c++){const n=grid.get(`${r}:${c}`);if(!n){html+='<span></span>';continue}const planned=preview.owned.has(n[0])||n[5]===0,obtained=actual.has(n[0]),kind=n[5]===0?'start':n[5]===4?'unique':typeof n[6]?.[0]?.[0]==='number'?'skill':'stat';html+=`<button type="button" class="node ${kind} ${planned?'planned':''} ${obtained?'obtained':''} ${boardNext?.id===n[0]?'next':''} ${state.node===n[0]?'selected':''}" data-node="${n[0]}" title="${esc(effectText(n))}${n[5]&&boardOpen(state.board)?' · click to mark obtained':''}" aria-label="${esc(effectText(n))}; row ${r}, column ${c}; ${obtained?'obtained':planned?'planned':'later'}" aria-pressed="${obtained}" ${boardOpen(state.board)?'': 'disabled'}><span>${nodeShort(n)}</span></button>`}
+  for(let r=1;r<=15;r++)for(let c=1;c<=15;c++){const n=grid.get(`${r}:${c}`);if(!n){html+='<span></span>';continue}const planned=preview.owned.has(n[0])||n[5]===0,obtained=actual.has(n[0]),kind=n[5]===0?'start':n[5]===4?'unique':typeof n[6]?.[0]?.[0]==='number'?'skill':'stat';html+=`<button type="button" class="node ${kind} ${planned?'planned':''} ${obtained?'obtained':''} ${boardNext?.id===n[0]?'next':''} ${state.node===n[0]?'selected':''}" data-node="${n[0]}" title="${esc(effectText(n))}${n[5]&&boardOpen(state.board)?' · click to mark obtained':''}" aria-label="${esc(effectText(n))}; row ${r}, column ${c}; ${obtained?'obtained':planned?'planned':'later'}" aria-pressed="${obtained}" ${boardOpen(state.board)?'': 'disabled'}>${nodeVisual(n)}</button>`}
   $('board-grid').innerHTML=html;const selected=state.node&&nodes.get(state.node)?.board===state.board?nodes.get(state.node).node:null;
-  $('selected-node').innerHTML=selected?`<strong>${esc(effectText(selected))}</strong><small>Row ${selected[1]}, column ${selected[2]} · ${selected[5]} crystal${selected[5]===1?'':'s'} · ${selected[5]===0?'Start node':actual.has(selected[0])?'Obtained':preview.owned.has(selected[0])?'Planned within budget':'Planned later'}. ${selected[5]?'Click again to '+(actual.has(selected[0])?'unmark':'mark obtained')+'.':''}</small>`:`<strong>${state.board}</strong><small>${boardOpen(state.board)?'Teal = planned path · gold fill = marked obtained · outlined = next unmarked node on this board. Click a node to mark or unmark it.':`Locked until level ${BOARD_UNLOCKS[state.board]}. Nodes become selectable then.`}</small>`;
+  $('selected-node').innerHTML=selected?`<div class="selected-icon">${nodeVisual(selected)}</div><div><strong>${esc(effectText(selected))}</strong><small>Row ${selected[1]}, column ${selected[2]} · ${selected[5]} crystal${selected[5]===1?'':'s'} · ${selected[5]===0?'Start node':actual.has(selected[0])?'Obtained':preview.owned.has(selected[0])?'Planned within budget':'Planned later'}. ${selected[5]?'Click again to '+(actual.has(selected[0])?'unmark':'mark obtained')+'.':''}</small></div>`:`<strong>${state.board}</strong><small>${boardOpen(state.board)?'Teal = planned path · gold fill = marked obtained · outlined = next unmarked node on this board. Click a node to mark or unmark it.':`Locked until level ${BOARD_UNLOCKS[state.board]}. Nodes become selectable then.`}</small>`;
   const boardSkills={},boardStats={};for(const n of board.nodes){if(!preview.owned.has(n[0]))continue;for(const [key,value] of n[6]){if(typeof key==='number'){const name=data().skills[key]?.name||String(key);boardSkills[name]=(boardSkills[name]||0)+value}else boardStats[key]=(boardStats[key]||0)+value}}
   $('board-effect-intro').textContent=boardOpen(state.board)?`${state.board} projected totals from the planned route at ${state.preview} crystals. Gold nodes are those you marked obtained.`:`${state.board} opens at level ${BOARD_UNLOCKS[state.board]}. This board has no purchasable path yet.`;
   const statLabel={FixingDamage:'Attack Bonus',Defense:'Defense Bonus',HPMax:'HP',MPMax:'MP'};
@@ -774,7 +942,7 @@ function renderBoards(m){
   $('board-effect-list').innerHTML=skillRows.length||statRows.length?effectGroup('Skill levels',skillRows)+effectGroup('Stats',statRows):'<span class="empty">No planned effects yet.</span>';
   let spent=0,number=0,boardSpent=0;const rows=[];for(const x of route){const n=nodes.get(x.id).node;spent+=n[5];if(x.board!==state.board)continue;number++;if(spent<=state.preview)boardSpent+=n[5];rows.push({number,spent,cost:n[5],label:effectText(n),id:x.id,row:n[1],col:n[2]})}
   $('purchase-intro').textContent=`${boardSpent} ${isAz?'Azphel':'PvE'} crystals on ${state.board} at preview ${state.preview}. Click a purchase to locate it on the grid.`;
-  $('purchase-list').innerHTML=rows.map(x=>`<button type="button" data-purchase="${x.id}" class="purchase ${x.spent<=state.preview?'current':''} ${actual.has(x.id)?'obtained':''}"><span class="n">${x.number}.</span><span>${esc(x.label)}<small>r${x.row} · c${x.col} · total ${x.spent}${actual.has(x.id)?' · obtained':''}</small></span><span class="c">${x.cost} ✧</span></button>`).join('');
+  $('purchase-list').innerHTML=rows.map(x=>`<button type="button" data-purchase="${x.id}" class="purchase ${x.spent<=state.preview?'current':''} ${actual.has(x.id)?'obtained':''}"><span class="n">${x.number}.</span><span class="route-step-icon">${nodeVisual(nodes.get(x.id).node)}</span><span>${esc(x.label)}<small>r${x.row} · c${x.col} · total ${x.spent}${actual.has(x.id)?' · obtained':''}</small></span><span class="c">${x.cost} ✧</span></button>`).join('');
   const priority=new Set(masteryStages().slice(0,12).map(x=>x[0]));let total=0;const upcoming=[];for(const x of route){const n=nodes.get(x.id).node;total+=n[5];if(total<=plan.spent)continue;if(n[5]===4||typeof n[6]?.[0]?.[0]==='number'&&priority.has(data().skills[n[6][0][0]]?.name))upcoming.push({total,board:x.board,label:effectText(n)});if(upcoming.length>=5)break}
   $('board-next').innerHTML=upcoming.length?upcoming.map(x=>`<div class="next-unlock"><strong>${x.total} total</strong><span>${x.board}: ${esc(x.label)}</span></div>`).join(''):'<p>All key nodes on this route are funded.</p>';
   const method=isAz?ROUTES[state.class].methods.azphel:ROUTES[state.class].methods[a.context];
@@ -838,9 +1006,10 @@ function renderTitleCatalog(){
   $('title-catalog-list').innerHTML=items.length?items.map(t=>`<article class="catalog-title ${owned[t.id]?'earned':''}"><label><input type="checkbox" data-catalog-title="${esc(t.id)}" ${owned[t.id]?'checked':''} aria-label="Earned ${esc(t.name)}"><strong>${esc(t.name)}</strong></label><div class="catalog-badges"><span>${esc(t.slot||'Cosmetic')}</span><span>${esc(t.grade)}</span><span>${esc(t.faction)}</span><span>${esc(t.group)}</span></div><p><b>Equipped:</b> ${esc(t.equip)} <b>Owned:</b> ${esc(t.owned)}</p><small><b>Earn:</b> ${esc(t.source)} · <a href="${esc(t.url)}" target="_blank" rel="noopener noreferrer">source ↗</a></small></article>`).join(''):'<p class="empty">No titles match those filters.</p>';
 }
 function renderSources(){
-  const d=data(),p=profile();const cards=[
+  const d=data(),p=profile(),firstSkill=Object.values(d.skills)[0];const cards=[
     ['Levels 1–45 point table','The Global client level table supplies the level-only Mastery, Stigma, slot and crystal baseline. Quest, Sealed Dungeon and other rewards are additional. This planner carries user-entered extras forward as the level changes.',`https://aion2data.com/leveling`,'Open level table'],
     ['Skill and board level gates',`The Global class table supplies each ${p.name} skill's unlock level. Nezekan, Zikel, Vaizel and Triniel open at 12, 20, 30 and 40; Stigma slots open at 22, 27, 32 and 37.`, `https://aion2data.com/classes/${state.class}`,'Open class unlocks'],
+    ['Mastery rank gates','SkillAcquireData limits rank 2 to the unlock level, then adds one purchasable rank every three character levels. The leveling plan respects that gate and buys usable early skills before chasing rank 8. Point costs are 1 for ranks 2–4, 2 for 5–7, and 4 for 8–10.',`https://aion2data.com/skills/${firstSkill.slug}`,'Open skill rank table'],
     ['Combat Power calculation','The game calculates Combat Power server-side. Gear, boards and other permanent systems contribute; the client files do not provide a formula for predicting your final score.',`https://aion2data.com/get-stronger`,'Open stat sources'],
     ['Global client nodes','Board positions, costs, effects and skill names from Aion2Data Global client tables. Compare tooltips after a patch.',d.sources.nodes,'Open board data'],
     ['Context routes & weights',`Group, Solo and PvP follow different connected routes. ${ROUTES[state.class].methods[account().context]}. Azphel is a separately funded PvP board.`,d.sources.route,'Open class route'],
@@ -852,7 +1021,11 @@ function renderSources(){
     ['Class build context',`${p.name} is planned as ${p.role.toLowerCase()}. Compare alternate damage or support presets before swapping roles.`,`https://metabot.gg/en/aion-2/guides/class-builds-guide`,'Open all-class guide']
   ];$('source-cards').innerHTML=cards.map(([title,body,url,label])=>`<div class="source-card"><b>${esc(title)}</b><p>${esc(body)}</p><a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(label)} ↗</a></div>`).join('');
 }
-document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{state.tab=b.dataset.tab;render()}));
+document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{state.tab=b.dataset.tab;$('mobile-more-menu').hidden=true;$('mobile-more-button').setAttribute('aria-expanded','false');render()}));
+document.querySelectorAll('.theme-picker [data-theme]').forEach(b=>b.addEventListener('click',()=>{theme=b.dataset.theme;try{localStorage.setItem('aion2-pathfinder-theme',theme)}catch(_){}applyTheme()}));
+$('mobile-more-button').addEventListener('click',()=>{const open=$('mobile-more-menu').hidden;$('mobile-more-menu').hidden=!open;$('mobile-more-button').setAttribute('aria-expanded',String(open))});
+$('mobile-more-menu').addEventListener('click',e=>{const b=e.target.closest('[data-more-tab]');if(!b)return;state.tab=b.dataset.moreTab;$('mobile-more-menu').hidden=true;$('mobile-more-button').setAttribute('aria-expanded','false');render()});
+$('mobile-next-action').addEventListener('click',()=>{state.tab=$('mobile-next').dataset.targetTab||'mastery';render();document.querySelector('.tab-panel.active')?.scrollIntoView({behavior:'smooth',block:'start'})});
 $('class-buttons').addEventListener('click',e=>{const b=e.target.closest('[data-class]');if(!b)return;state.class=b.dataset.class;state.board='Nezekan';state.preview=budget('crystals');state.node=null;render()});
 function useBudget(values){Object.assign(account(),values);state.preview=account().crystals;state.node=null;render()}
 $('fresh-45-button').addEventListener('click',()=>useBudget({...FRESH_45,azphel:0}));

@@ -227,3 +227,106 @@ main{max-width:1420px;padding-bottom:90px}
 .handoff-button{margin-top:17px;border:1px solid #f1cf94;border-radius:10px;background:linear-gradient(120deg,#684b32,#896338);color:#fff5de;padding:12px 17px;font-weight:800;cursor:pointer}.handoff-button:hover{background:#a47740}
 @media(max-width:1000px){.level-milestones{grid-template-columns:repeat(6,1fr)}.leveling-guide-grid,.leveling-rotation-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:700px){.hero-inner{padding-top:36px;padding-bottom:58px}.hero h1{font-size:58px}.class-picker{margin-top:-25px;padding:14px}.journey-switch{padding:16px}.journey-head{display:block}.journey-head #stage-caption{display:block;margin-top:5px}.journey-options{grid-template-columns:1fr}.journey-option{min-height:72px}.leveling-controls{padding:18px}.leveling-head{display:block}.level-picker{margin-top:15px}.level-milestones{grid-template-columns:repeat(5,1fr)}.controls{grid-template-columns:1fr}.control:nth-child(4),.control:nth-child(5){grid-column:auto}.is-leveling .control:nth-child(4){grid-column:auto}.tabs{overflow-x:auto;display:flex;white-space:nowrap;scrollbar-width:thin}.leveling-guide-grid,.leveling-rotation-grid{grid-template-columns:1fr}.kpi strong{font-size:22px}}
+
+/* Game skill art in the Daevanion route, with clear obtained/planned states. */
+.board-grid{grid-template-columns:repeat(15,40px);grid-template-rows:repeat(15,40px);gap:4px}
+.node{width:39px;height:39px;border-radius:9px;background:#0b2034;border-color:#415c78;font-size:10px;overflow:hidden}
+.node.skill{transform:none;border-radius:9px;padding:3px}
+.node.skill span{transform:none}
+.node-game-icon{display:block;width:100%;height:100%;object-fit:cover;border-radius:5px;position:relative;z-index:1}
+.node.skill:not(.planned):not(.obtained) .node-game-icon{filter:grayscale(.72);opacity:.52}
+.node.skill.planned .node-game-icon{filter:saturate(.9);opacity:.94}
+.node.skill.obtained .node-game-icon{filter:saturate(1.1);opacity:1}
+.node.obtained:after{content:'✓';display:grid;place-items:center;position:absolute;z-index:2;right:0;bottom:0;width:15px;height:15px;border-radius:5px 0 6px 0;background:#ffe0a5;color:#172536;font:900 10px/1 Arial,sans-serif}
+.node.start{font-size:19px}
+.node.unique{background:linear-gradient(135deg,#574226,#aa783e);border-color:#edbe73;color:#fff2cd}
+.node.next{outline:2px solid #b9a4ff;outline-offset:2px;box-shadow:0 0 14px #a895ff88}
+.node.selected{outline:2px solid #fff2ce;outline-offset:2px}
+.selected-node{display:flex;align-items:center;gap:12px}
+.selected-node .selected-icon{flex:none;display:grid;place-items:center;width:50px;height:50px;border:1px solid #c8a66b;border-radius:9px;background:#203b53;color:#f5cc8d;font-size:19px}
+.selected-node .selected-icon img{width:42px;height:42px}
+.selected-node>div:last-child{min-width:0}
+.route-step-icon{display:grid;place-items:center;flex:none;width:30px;height:30px;border:1px solid #547087;border-radius:7px;background:#0d253a;color:#e3c480;font-size:12px;font-weight:800;overflow:hidden}
+.route-step-icon img{display:block;width:100%;height:100%;object-fit:cover}
+.global-next-step{align-items:center}
+.purchase{align-items:center;gap:10px}
+.purchase>span:nth-child(3){min-width:0;flex:1}
+.board-icon-credit{color:#a8bfd0;font-size:12px;line-height:1.45;margin:10px 4px 20px}
+.board-icon-credit a{font-weight:800}
+.timeline{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;padding:15px 17px;margin:0 0 18px;border:1px solid #3d5a72;border-radius:12px;background:#152b42}
+.timeline label{font-size:13px;font-weight:800;color:#e8f3f4}
+.timeline b{color:var(--gold)}
+.timeline input{grid-column:1/-1;width:100%;margin:0}
+.board-effects-panel{margin-top:16px;padding:20px}
+.board-effect-list h4{margin-top:22px}
+@media(max-width:700px){.board-scroll{padding:12px}.board-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.global-board-allocation{grid-template-columns:repeat(2,minmax(0,1fr))}.board-tabs{display:flex;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;padding-bottom:5px}.board-tabs button{flex:none;min-width:100px}.board-layout{grid-template-columns:minmax(0,1fr)}.board-side{display:block}.board-effect-list>div{font-size:13px}}
+
+/* The three approved visual directions share one functional planner. */
+[hidden]{display:none!important}
+.theme-picker{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:22px;max-width:max-content;padding:5px;border:1px solid #64829588;border-radius:11px;background:#0a1b2bbb;backdrop-filter:blur(10px)}
+.theme-picker span{padding:0 9px;color:#bfd0dc;font-size:11px;text-transform:uppercase;letter-spacing:.12em;font-weight:850}
+.theme-picker button{border:0;border-radius:7px;background:transparent;color:#bfcfdf;padding:8px 12px;font-size:12px;font-weight:800}
+.theme-picker button.active{background:#dfc18a;color:#152637}
+.tab-icon{display:none}
+.mobile-more-button,.mobile-more-menu,.mobile-next{display:none}
+.mobile-next{margin-top:15px;overflow:hidden;position:relative;border-color:#d0ac75;background:linear-gradient(118deg,#1f4050,#112b3d 77%)}
+.mobile-next:after{content:'✧';position:absolute;right:-10px;top:-38px;color:#b4e2ea20;font:220px/1 Georgia,serif;pointer-events:none}
+.mobile-next h2{font:normal 28px/1.16 Georgia,serif;letter-spacing:-.025em;max-width:560px;margin:8px 0}
+.mobile-next p{max-width:600px;color:#ccdbe2;margin:0 0 17px}
+.mobile-next button{position:relative;z-index:1;display:flex;justify-content:space-between;gap:20px;align-items:center;border:0;border-radius:9px;background:#dec089;color:#152637;padding:11px 14px;font-size:13px;font-weight:850;min-height:44px}
+.mobile-next button span{font-size:20px;line-height:1}
+body[data-theme=abyss]{--bg:#160f25;--panel:#271a38;--panel2:#2d2040;--line:#614a70;--muted:#c3b2cb;--text:#f6eff8;--gold:#eab5ca;--aqua:#bb9af1;--blue:#c3a8ff;--green:#a8dfc3;background:radial-gradient(circle at 80% 0%,#72376355,transparent 40%),#160f25}
+body[data-theme=abyss] .hero{background:radial-gradient(circle at 73% 30%,#513059,#2b1c3d 50%,#170f27 100%)}
+body[data-theme=abyss] .hero:before{background-image:linear-gradient(#dfb1e90b 1px,transparent 1px),linear-gradient(90deg,#dfb1e90b 1px,transparent 1px)}
+body[data-theme=abyss] .theme-picker,body[data-theme=abyss] .tabs{background:#1a102bcc}
+body[data-theme=abyss] .theme-picker button.active{background:#eab5ca;color:#2b1834}
+body[data-theme=abyss] .class-picker,body[data-theme=abyss] .welcome-panel,body[data-theme=abyss] .panel,body[data-theme=abyss] .control,body[data-theme=abyss] .presets,body[data-theme=abyss] .source-card,body[data-theme=abyss] .skill-card,body[data-theme=abyss] .stigma-card,body[data-theme=abyss] .global-board-card,body[data-theme=abyss] .title-card,body[data-theme=abyss] .catalog-card,body[data-theme=abyss] .journey-switch{background:#281a38;border-color:#604776}
+body[data-theme=abyss] .class-buttons button,body[data-theme=abyss] .journey-option,body[data-theme=abyss] .board-tabs button,body[data-theme=abyss] .global-next-step,body[data-theme=abyss] .purchase,body[data-theme=abyss] .seg button,body[data-theme=abyss] .level-milestones button{background:#332141;border-color:#684e79;color:#f1e6f6}
+body[data-theme=abyss] .class-buttons button.active,body[data-theme=abyss] .journey-option.active,body[data-theme=abyss] .seg button.active,body[data-theme=abyss] .board-tabs button.active{background:#61436e;border-color:#eab5ca;color:#fff}
+body[data-theme=abyss] .controls,body[data-theme=abyss] .leveling-controls,body[data-theme=abyss] .leveling-guide,body[data-theme=abyss] .goal-panel,body[data-theme=abyss] .kpi,body[data-theme=abyss] .board-scroll,body[data-theme=abyss] .board-effects-panel,body[data-theme=abyss] .timeline,body[data-theme=abyss] .leveling-guide-grid>div,body[data-theme=abyss] .leveling-rotation-grid>div{background:#25192f;border-color:#604776}
+body[data-theme=abyss] .mobile-next{background:linear-gradient(115deg,#40254f,#251a38);border-color:#eab5ca}
+body[data-theme=abyss] .mobile-next button{background:#eab5ca;color:#2b1834}
+body[data-theme=sanctum]{--bg:#eaf2f0;--panel:#f8fbf8;--panel2:#edf5f1;--line:#cad9d6;--muted:#60777e;--text:#213840;--gold:#a07038;--aqua:#397b80;--blue:#426d98;--green:#267c63;--shadow:0 15px 45px #486e7026;background:#eaf2f0;color:#213840}
+body[data-theme=sanctum] .hero{background:radial-gradient(circle at 75% 27%,#e9d2a875,transparent 36%),linear-gradient(150deg,#d7e7e5,#f3f8f4 80%);border-color:#c8d8d6}
+body[data-theme=sanctum] .hero h1,body[data-theme=sanctum] .hero p,body[data-theme=sanctum] .section-title h2,body[data-theme=sanctum] .panel h3,body[data-theme=sanctum] .leveling-head h2{color:#213840}
+body[data-theme=sanctum] .theme-picker{background:#f9fcf8;border-color:#c5d5cf}
+body[data-theme=sanctum] .theme-picker span,body[data-theme=sanctum] .theme-picker button{color:#416069}
+body[data-theme=sanctum] .theme-picker button.active{background:#a07038;color:white}
+body[data-theme=sanctum] .class-picker,body[data-theme=sanctum] .welcome-panel,body[data-theme=sanctum] .panel,body[data-theme=sanctum] .control,body[data-theme=sanctum] .presets,body[data-theme=sanctum] .source-card,body[data-theme=sanctum] .skill-card,body[data-theme=sanctum] .stigma-card,body[data-theme=sanctum] .global-board-card,body[data-theme=sanctum] .title-card,body[data-theme=sanctum] .catalog-card,body[data-theme=sanctum] .journey-switch{background:#fbfdfb;border-color:#c6d7d4;box-shadow:0 9px 24px #557b7820;color:#213840}
+body[data-theme=sanctum] .class-buttons button,body[data-theme=sanctum] .journey-option,body[data-theme=sanctum] .board-tabs button,body[data-theme=sanctum] .global-next-step,body[data-theme=sanctum] .purchase,body[data-theme=sanctum] .seg button,body[data-theme=sanctum] .level-milestones button{background:#f1f7f4;border-color:#c6d7d4;color:#213840}
+body[data-theme=sanctum] .class-buttons button.active,body[data-theme=sanctum] .journey-option.active,body[data-theme=sanctum] .seg button.active,body[data-theme=sanctum] .board-tabs button.active{background:#dbece9;border-color:#5c938e;color:#213840}
+body[data-theme=sanctum] .controls,body[data-theme=sanctum] .leveling-controls,body[data-theme=sanctum] .leveling-guide,body[data-theme=sanctum] .goal-panel,body[data-theme=sanctum] .kpi,body[data-theme=sanctum] .board-scroll,body[data-theme=sanctum] .board-effects-panel,body[data-theme=sanctum] .timeline,body[data-theme=sanctum] .leveling-guide-grid>div,body[data-theme=sanctum] .leveling-rotation-grid>div{background:#f5faf6;border-color:#cadbd6}
+body[data-theme=sanctum] .panel p,body[data-theme=sanctum] .section-title p,body[data-theme=sanctum] .leveling-head p,body[data-theme=sanctum] .leveling-hint,body[data-theme=sanctum] .introline,body[data-theme=sanctum] .journey-head #stage-caption,body[data-theme=sanctum] .control small,body[data-theme=sanctum] .journey-option small,body[data-theme=sanctum] .kpi small,body[data-theme=sanctum] .skill-card .sub,body[data-theme=sanctum] .stigma-card .sub,body[data-theme=sanctum] .footnote{color:#5c747a}
+body[data-theme=sanctum] .control input[type=number],body[data-theme=sanctum] .goal-inputs input,body[data-theme=sanctum] .title-catalog-controls input,body[data-theme=sanctum] .title-catalog-controls select,body[data-theme=sanctum] .level-picker input{background:#fff;border:1px solid #a8c3c0;color:#213840}
+body[data-theme=sanctum] .tabs{background:#f9fcf8ee;border-color:#c9d9d5}body[data-theme=sanctum] .tabs button{color:#48646a}body[data-theme=sanctum] .tabs button.active{background:#e5f0ec;border-color:#a07038;color:#684b2a}
+body[data-theme=sanctum] .notice{background:#f0f6f0;border-color:#a07038;color:#415d61}
+body[data-theme=sanctum] .leveling-guide-grid b,body[data-theme=sanctum] .leveling-rotation-grid b{color:#397b80}
+body[data-theme=sanctum] .leveling-guide-grid p,body[data-theme=sanctum] .leveling-rotation-grid span,body[data-theme=sanctum] .kpi strong,body[data-theme=sanctum] .class-buttons button.active small{color:#213840}
+body[data-theme=sanctum] .mobile-next{background:linear-gradient(110deg,#fbfdfb,#dfede8);border-color:#a07038}
+body[data-theme=sanctum] .mobile-next button{background:#a07038;color:white}
+body[data-theme=sanctum] .tag{background:#edf3ef;color:#47676b;border-color:#a7c0bb}
+/* Dense build data uses ink cards in the light theme so specialty and effect text stays legible. */
+body[data-theme=sanctum] .tab-panel .panel,body[data-theme=sanctum] .tab-panel .skill-card,body[data-theme=sanctum] .tab-panel .stigma-card,body[data-theme=sanctum] .tab-panel .source-card,body[data-theme=sanctum] .tab-panel .title-card,body[data-theme=sanctum] .tab-panel .catalog-card,body[data-theme=sanctum] .tab-panel .global-board-card,body[data-theme=sanctum] .tab-panel .global-next-step,body[data-theme=sanctum] .tab-panel .purchase,body[data-theme=sanctum] .board-summary div{background:#142d38;border-color:#46656d;color:#ecf5f4}
+body[data-theme=sanctum] .tab-panel .panel h3,body[data-theme=sanctum] .tab-panel .skill-card h3,body[data-theme=sanctum] .tab-panel .stigma-card h3,body[data-theme=sanctum] .tab-panel .panel b{color:#f4f8f5}
+body[data-theme=sanctum] .tab-panel .panel p,body[data-theme=sanctum] .tab-panel .skill-card .sub,body[data-theme=sanctum] .tab-panel .stigma-card .sub,body[data-theme=sanctum] .tab-panel .footnote{color:#bad0d1}
+body[data-theme=sanctum] .tab-panel .leveling-guide-grid>div,body[data-theme=sanctum] .tab-panel .leveling-rotation-grid>div,body[data-theme=sanctum] .tab-panel .timeline,body[data-theme=sanctum] .tab-panel .board-effects-panel,body[data-theme=sanctum] .tab-panel .selected-node{background:#1b3c45;border-color:#517178;color:#eef7f5}
+body[data-theme=sanctum] .tab-panel .leveling-guide-grid p,body[data-theme=sanctum] .tab-panel .leveling-rotation-grid span{color:#d2e3e1}
+body[data-theme=sanctum] .tab-panel .leveling-guide-grid b,body[data-theme=sanctum] .tab-panel .leveling-rotation-grid b{color:#9ce0d9}
+body[data-theme=sanctum] .tab-panel .skill-card .gear-row input,body[data-theme=sanctum] .tab-panel .title-catalog-controls input,body[data-theme=sanctum] .tab-panel .title-catalog-controls select{background:#0a2029;border-color:#59747c;color:#fff}
+body[data-theme=sanctum] .tab-panel .board-scroll{background:#ecf5f1;border-color:#bfd2cc}
+body[data-theme=sanctum] .tab-panel .board-tabs button{background:#f1f7f4;border-color:#bdd2cc;color:#24484f}
+body[data-theme=sanctum] .tab-panel .board-tabs button.active{background:#dbece9;border-color:#5c938e;color:#23434b}
+body[data-theme=sanctum] .board-summary b,body[data-theme=sanctum] .board-summary span{color:#ecf5f4}
+body[data-theme=sanctum] .tab-panel .notice{background:#eaf3ef;border-color:#a07038;color:#355457}
+@media(max-width:700px){
+  main{padding:0 15px calc(100px + env(safe-area-inset-bottom));max-width:600px}
+  .hero-inner{padding:24px 16px 41px}.hero h1{font-size:42px;margin:7px 0 7px}.hero p{font-size:13px;line-height:1.45}.hero-tags{display:none}.theme-picker{margin-top:14px;overflow-x:auto;flex-wrap:nowrap;max-width:100%;white-space:nowrap}.theme-picker span{padding:0 4px}.theme-picker button{font-size:11px;padding:8px}
+  .class-picker{margin-top:-19px;padding:14px 13px;border-radius:14px}.class-picker-head{margin-bottom:10px}.class-buttons{display:flex;overflow-x:auto;gap:7px;scroll-snap-type:x proximity;padding-bottom:3px}.class-buttons button{flex:0 0 auto;min-width:115px;min-height:53px;scroll-snap-align:start;padding:8px 11px}.class-buttons button span{font-size:12px}.class-buttons button small{font-size:10px}
+  .journey-switch{margin-top:13px;padding:13px}.journey-head{margin-bottom:9px}.journey-head #stage-caption{font-size:11px}.journey-options{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.journey-option{min-height:69px;padding:9px;gap:8px}.journey-icon{width:28px;height:28px;font-size:17px}.journey-option b{font-size:13px}.journey-option small{font-size:10px;line-height:1.2}
+  .leveling-controls{margin-top:13px;padding:16px}.leveling-head{display:flex;align-items:center}.leveling-head h2{font-size:30px}.leveling-head p{font-size:11px}.level-picker{margin:0;flex:none}.level-picker button{width:32px;height:36px;font-size:17px}.level-picker input{width:52px;height:36px;font-size:18px}.leveling-controls input[type=range]{margin:13px 0 8px}.level-milestones{display:flex;overflow-x:auto;gap:5px;padding:2px 1px 6px}.level-milestones button{flex:0 0 55px;padding:6px 3px}.level-milestones b{font-size:12px}.level-milestones small{font-size:9px}.leveling-hint{font-size:11px;margin-top:10px}
+  .controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:7px;margin-top:11px}.control{padding:8px;min-width:0}.control label,.control .label{font-size:9px;line-height:1.2;letter-spacing:.08em}.control input[type=number]{font-size:20px}.control .unit{display:none}.control small{display:none}.control:nth-child(4),.is-leveling .control:nth-child(4){grid-column:1/-1;order:-1}.control:nth-child(5){grid-column:1/-1}.seg button{font-size:11px;min-height:34px}
+  .presets{padding:10px 12px}.introline{margin:7px 0 0;padding:6px 2px;font-size:11px}.introline .text-button{font-size:11px;white-space:nowrap}
+  .mobile-next{display:block;padding:17px;margin-top:12px}.mobile-next h2{font-size:23px}.mobile-next p{font-size:12px;line-height:1.4}.mobile-next button{width:100%}
+  .tabs{position:fixed;top:auto;bottom:0;left:0;right:0;z-index:20;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin:0;padding:6px 7px calc(7px + env(safe-area-inset-bottom));border-top:1px solid var(--line);border-bottom:0;overflow:visible;box-shadow:0 -12px 30px #0003}.tabs button{display:none}.tabs [data-tab=overview],.tabs [data-tab=mastery],.tabs [data-tab=boards],.tabs .mobile-more-button{display:grid;justify-items:center;align-content:center;gap:2px;min-width:0;min-height:53px;padding:5px 3px;font-size:10px;line-height:1.12;white-space:normal;text-align:center}.tabs .tab-icon{display:block;font:23px/1 Georgia,serif}.mobile-more-menu:not([hidden]){position:fixed;display:grid;grid-template-columns:1fr 1fr;gap:7px;left:15px;right:15px;bottom:calc(75px + env(safe-area-inset-bottom));z-index:22;padding:12px;border:1px solid var(--line);border-radius:13px;background:var(--panel);box-shadow:0 14px 38px #0006}.mobile-more-menu button{min-height:42px;border:1px solid var(--line);border-radius:8px;background:var(--panel2);color:var(--text);font-size:12px;font-weight:800}
+  .tab-panel{padding-top:18px;scroll-margin-top:15px}.section-title h2{font-size:25px}.section-title p{font-size:12px}.kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.kpi{padding:11px;min-height:80px}.kpi strong{font-size:20px}.kpi small{font-size:10px}.leveling-guide{padding:15px}.leveling-guide-heading h3{font-size:22px;margin-bottom:12px}.leveling-guide-grid{grid-template-columns:1fr}.leveling-guide-grid>div{padding:11px}.two-col,.skill-grid,.stigma-grid,.sources{grid-template-columns:1fr}.board-grid{margin:0}.board-scroll{overflow-x:auto}
+}
