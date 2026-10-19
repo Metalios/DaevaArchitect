@@ -20,9 +20,10 @@ if(!(await owner.locator('#gear-cp-status').textContent()).includes('36,500 CP t
 await owner.locator('[data-gear-slot="top"]').click();
 await owner.locator('#gear-query').fill('Abyssal');
 await owner.locator('[data-gear-result]').first().click();
-await owner.locator('[name="stoneKind0"]').selectOption('Superior');
+await owner.locator('[name="stoneType"]').selectOption('Superior');
 await owner.locator('[name="stoneStat0"]').fill('HP');
 await owner.locator('[name="stoneValue0"]').fill('160');
+await owner.locator('[name="stoneGrade0"]').selectOption('Unique');
 await owner.locator('.gear-save').click();
 await owner.locator('#share-build-button').click();
 await owner.waitForFunction(()=>document.querySelector('#share-url').value.includes('#build='));
@@ -40,6 +41,7 @@ if(await recipient.evaluate(()=>account().goalObserved)!==38500||await recipient
 await recipient.locator('[data-tab="gear"]').click();
 if(!await recipient.locator('[data-gear-slot="top"].filled').count())throw Error('Equipped item was not shared');
 if(await recipient.evaluate(()=>account().equipment.top.stones?.[0]?.value)!==160)throw Error('Socketed stone stat was not shared');
+if(await recipient.evaluate(()=>account().equipment.top.stoneType)!=='Superior'||await recipient.evaluate(()=>account().equipment.top.stones?.[0]?.grade)!=='Unique')throw Error('Stone tier and color were not shared');
 if(new URL(recipient.url()).hash)throw Error('Imported build token stayed in the address bar');
 await recipient.reload();
 if(await recipient.evaluate(()=>account().customNodes[0])!==first)throw Error('Imported route did not persist');

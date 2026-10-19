@@ -38,6 +38,8 @@ const STONE_SLOTS_BY_GRADE={Common:1,Rare:2,Epic:3,Unique:4};
 const STONE_ARMOR_IDS=new Set(['weapon','guard','helm','pauldrons','top','legs','gloves','shoes','cloak']);
 const STONE_ACCESSORY_IDS=new Set(['necklace','earring1','earring2','ring1','ring2','bracelet1','bracelet2']);
 const STONE_STATS=['HP','MP','Attack','Defense','Accuracy Bonus','Evasion Bonus','Critical Hit','Critical Hit Resist','Block','Damage Boost','Weapon Damage Boost','Critical Damage Boost','Back Attack Damage Boost','Front Attack Damage Boost','PvE Damage Boost','PvP Damage Boost','Boss Damage Boost','Boss Defense','Damage Tolerance','Penetration','Multi-hit Chance','Combat Speed'];
+const STONE_KINDS=['Lesser','Intermediate','Superior','Lesser Abyssal','Intermediate Abyssal','Superior Abyssal'];
+const STONE_LINE_GRADES=[['Common','Gray'],['Rare','Green'],['Epic','Blue'],['Unique','Gold']];
 const THEOSTONE_FAMILIES=[
   ['Blind',"Kaisinel's Vestige","Bollvig's Tragedy","Fregion's Schemes"],
   ['Seal',"Perion's Tragedy","Khrudgelmir's Silence","Beritra's Conspiracy"],
@@ -64,6 +66,7 @@ const gearSlot=id=>GEAR_SLOTS.find(slot=>slot.id===id);
 const gearEquipment=()=>{
   const equipment=account().equipment ||= {};
   for(const item of Object.values(equipment)){
+    if(item&&!item.stoneType&&Array.isArray(item.stones))item.stoneType=item.stones.find(stone=>STONE_KINDS.includes(stone?.kind))?.kind||'';
     const catalog=GEAR_CATALOG_BY_HREF.get(item?.href);if(!catalog)continue;
     item.grade ||= catalog.grade||'';
     item.itemLevel ??= catalog.itemLevel||null;
@@ -130,7 +133,7 @@ function gearSocketTotals(){
     const item=gearEquipment()[slot.id];if(!gearIsActive(slot,item))continue;
     const count=gearStoneSlots(slot,item);available+=count;
     for(const stone of (item.stones||[]).slice(0,count)){
-      if(!stone?.kind&&!stone?.stat)continue;filled++;
+      if(!stone?.stat)continue;filled++;
       const value=Number(stone.value);if(!stone.stat||!Number.isFinite(value)||!value)continue;
       const key=`${stone.stat}|${stone.unit==='%'?'%':''}`;totals.set(key,(totals.get(key)||0)+value);
     }
@@ -177,10 +180,9 @@ function gearStonesEditor(slot,item){
   const host=$('gear-editor'),family=gearStoneFamily(slot);
   const count=gearStoneSlots(slot,item),stones=Array.isArray(item.stones)?item.stones:[];
   if(family){
-    const kinds=['Lesser','Intermediate','Superior','Lesser Abyssal','Intermediate Abyssal','Superior Abyssal'];
-    const options=(value,values)=>values.map(option=>`<option value="${esc(option)}" ${value===option?'selected':''}>${esc(option)}</option>`).join('');
-    const rows=Array.from({length:4},(_,i)=>{const stone=stones[i]||{};return `<div class="gear-stone-row" data-stone-row="${i}"><b>${i+1}</b><select name="stoneKind${i}" aria-label="${family} ${i+1} type"><option value="">Empty</option>${options(stone.kind,kinds)}</select><input name="stoneStat${i}" list="gear-stone-stat-list" value="${esc(stone.stat||'')}" placeholder="Rolled stat" aria-label="${family} ${i+1} rolled stat"><input name="stoneValue${i}" type="number" step="any" value="${stone.value??''}" placeholder="Value" aria-label="${family} ${i+1} stat value"><select name="stoneUnit${i}" aria-label="${family} ${i+1} unit"><option value="" ${stone.unit!=='%'?'selected':''}>flat</option><option value="%" ${stone.unit==='%'?'selected':''}>%</option></select></div>`}).join('');
-    host.insertAdjacentHTML('beforeend',`<section class="gear-stones-editor"><div class="gear-stones-head"><div><b>${family} sockets</b><p>Record the stone and the stat that actually rolled. A socket can be empty.</p></div><label>Slots on item<input name="stoneSlots" type="number" min="0" max="4" value="${count}" aria-label="${family} socket count"></label></div><div class="gear-stone-rows">${rows}</div><datalist id="gear-stone-stat-list">${STONE_STATS.map(stat=>`<option value="${esc(stat)}">`).join('')}</datalist><small>Socket count comes from the item tooltip when available; adjust it if yours differs.</small></section>`);
+    const type=STONE_KINDS.includes(item.stoneType)?item.stoneType:stones.find(stone=>STONE_KINDS.includes(stone?.kind))?.kind||'';
+    const rows=Array.from({length:4},(_,i)=>{const stone=stones[i]||{},grade=STONE_LINE_GRADES.some(([name])=>name===stone.grade)?stone.grade:'';return `<div class="gear-stone-row" data-stone-row="${i}" data-grade="${grade}"><b>${i+1}</b><input name="stoneStat${i}" list="gear-stone-stat-list" value="${esc(stone.stat||'')}" placeholder="Rolled stat" aria-label="${family} line ${i+1} rolled stat"><div class="gear-stone-result"><input name="stoneValue${i}" type="number" step="any" value="${stone.value??''}" placeholder="Value" aria-label="${family} line ${i+1} stat value"><select name="stoneUnit${i}" aria-label="${family} line ${i+1} unit"><option value="" ${stone.unit!=='%'?'selected':''}>flat</option><option value="%" ${stone.unit==='%'?'selected':''}>%</option></select></div><select name="stoneGrade${i}" aria-label="${family} line ${i+1} color"><option value="">Color unknown</option>${STONE_LINE_GRADES.map(([name,color])=>`<option value="${name}" ${grade===name?'selected':''}>${color} · ${name}</option>`).join('')}</select></div>`}).join('');
+    host.insertAdjacentHTML('beforeend',`<section class="gear-stones-editor"><div class="gear-stones-head"><div><b>${family} engraving</b><p>One ${family} type rolls every stat line on this item. Record the result shown in game.</p></div><label>Lines on item<input name="stoneSlots" type="number" min="0" max="4" value="${count}" aria-label="${family} line count"></label></div><label class="gear-stone-type">Stone used for this item<select name="stoneType" aria-label="${family} used for this item"><option value="">Not recorded</option>${STONE_KINDS.map(kind=>`<option value="${kind}" ${type===kind?'selected':''}>${kind} ${family}</option>`).join('')}</select></label><p class="gear-stone-help">Line color is the grade of the rolled stat: gray Common, green Rare, blue Epic, gold Unique. It is separate from the stone type.</p><div class="gear-stone-rows">${rows}</div><datalist id="gear-stone-stat-list">${STONE_STATS.map(stat=>`<option value="${esc(stat)}">`).join('')}</datalist><small>Line count comes from the item tooltip when available; adjust it if yours differs.</small></section>`);
     updateGearStoneRows();
   }
   if(['weapon','guard'].includes(slot.id)){
@@ -208,7 +210,7 @@ function openGearSlot(id){
 async function selectGearResult(href){
   const item=GEAR_CATALOG.items.find(x=>x.href===href&&x.type===gearAllowedType(gearSlot(gearSlotId)));if(!item)return;
   const prior=gearDraft||{},sameItem=prior.href===item.href;
-  gearEditorDirty=false;gearDraft={...prior,name:item.name,icon:item.icon,href:item.href,type:item.type,grade:item.grade||'',faction:item.faction||'',fixedStats:item.fixedStats||[],baseStats:[],requiredLevel:item.requiredLevel||null,itemLevel:item.itemLevel||null,manastoneSlots:sameItem?prior.manastoneSlots:null,theostoneSlots:sameItem?prior.theostoneSlots:null,stones:sameItem?prior.stones:[],theostone:sameItem?prior.theostone:''};gearResults();gearEditor();
+  gearEditorDirty=false;gearDraft={...prior,name:item.name,icon:item.icon,href:item.href,type:item.type,grade:item.grade||'',faction:item.faction||'',fixedStats:item.fixedStats||[],baseStats:[],requiredLevel:item.requiredLevel||null,itemLevel:item.itemLevel||null,manastoneSlots:sameItem?prior.manastoneSlots:null,theostoneSlots:sameItem?prior.theostoneSlots:null,stoneType:sameItem?prior.stoneType||'':'',stones:sameItem?prior.stones:[],theostone:sameItem?prior.theostone:''};gearResults();gearEditor();
   try{
     const res=await fetch(`https://aion2data.com/tooltip${item.href}`);
     if(!res.ok)throw Error(`HTTP ${res.status}`);
@@ -238,14 +240,15 @@ function initGear(){
   $('gear-cp-target').addEventListener('change',e=>{const a=account(),value=clamp(e.target.value,0,1000000000);if(profile().kind==='healer')a.gearCpTarget=value;else a.goalTarget=value;render()});
   $('gear-results').addEventListener('click',e=>{const result=e.target.closest('[data-gear-result]');if(result)selectGearResult(result.dataset.gearResult)});
   $('gear-editor').addEventListener('input',e=>{gearEditorDirty=true;if(e.target.name==='stoneSlots')updateGearStoneRows();if(e.target.name==='theostone'){const stone=THEOSTONES.find(entry=>entry.name.toLowerCase()===e.target.value.trim().toLowerCase()),hint=$('gear-editor').querySelector('.gear-theostone-editor small');if(hint)hint.textContent=stone?`${stone.grade} · ${stone.effect} effect`:'Choose a Global Theostone or enter its exact in-game name.'}});
-  $('gear-editor').addEventListener('change',()=>{gearEditorDirty=true});
+  $('gear-editor').addEventListener('change',e=>{gearEditorDirty=true;if(e.target.name?.startsWith('stoneGrade'))e.target.closest('.gear-stone-row').dataset.grade=e.target.value});
   $('gear-remove').addEventListener('click',()=>{delete gearEquipment()[gearSlotId];$('gear-dialog').close();render()});
   $('gear-form').addEventListener('submit',e=>{
     e.preventDefault();const values=new FormData(e.currentTarget),name=String(values.get('name')||'').trim();if(!name)return;
     const slot=gearSlot(gearSlotId),socketCount=gearStoneFamily(slot)?clamp(values.get('stoneSlots'),0,4):0;
-    const stones=Array.from({length:socketCount},(_,i)=>({kind:String(values.get(`stoneKind${i}`)||''),stat:String(values.get(`stoneStat${i}`)||'').trim().slice(0,80),value:values.get(`stoneValue${i}`)===''?null:clamp(values.get(`stoneValue${i}`),-1000000,1000000),unit:values.get(`stoneUnit${i}`)==='%'?'%':''}));
+    const stoneType=STONE_KINDS.includes(values.get('stoneType'))?String(values.get('stoneType')):'';
+    const stones=Array.from({length:socketCount},(_,i)=>({stat:String(values.get(`stoneStat${i}`)||'').trim().slice(0,80),value:values.get(`stoneValue${i}`)===''?null:clamp(values.get(`stoneValue${i}`),-1000000,1000000),unit:values.get(`stoneUnit${i}`)==='%'?'%':'',grade:STONE_LINE_GRADES.some(([name])=>name===values.get(`stoneGrade${i}`))?String(values.get(`stoneGrade${i}`)):''}));
     const theostone=gearTheostoneEligible(slot,gearDraft)?String(values.get('theostone')||'').trim().slice(0,100):'';
-    gearDraft={...(gearDraft||{}),name,type:gearAllowedType(slot),enhancement:clamp(values.get('enhancement'),0,30),requiredLevel:values.get('requiredLevel')?clamp(values.get('requiredLevel'),1,45):null,itemLevel:values.get('itemLevel')?clamp(values.get('itemLevel'),0,999):null,manastoneSlots:gearStoneFamily(slot)?socketCount:null,stones,theostone,statNotes:String(values.get('statNotes')||''),notes:String(values.get('notes')||''),skillBonuses:[0,1,2].map(i=>({skill:String(values.get(`skill${i}`)||''),levels:clamp(values.get(`levels${i}`),0,30)})).filter(x=>x.skill&&x.levels)};
+    gearDraft={...(gearDraft||{}),name,type:gearAllowedType(slot),enhancement:clamp(values.get('enhancement'),0,30),requiredLevel:values.get('requiredLevel')?clamp(values.get('requiredLevel'),1,45):null,itemLevel:values.get('itemLevel')?clamp(values.get('itemLevel'),0,999):null,manastoneSlots:gearStoneFamily(slot)?socketCount:null,stoneType,stones,theostone,statNotes:String(values.get('statNotes')||''),notes:String(values.get('notes')||''),skillBonuses:[0,1,2].map(i=>({skill:String(values.get(`skill${i}`)||''),levels:clamp(values.get(`levels${i}`),0,30)})).filter(x=>x.skill&&x.levels)};
     gearEquipment()[gearSlotId]=gearDraft;$('gear-dialog').close();render();
   });
 }

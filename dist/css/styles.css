@@ -422,14 +422,25 @@ body[data-theme=sanctum] #mastery{--m-card:#fffdfa;--m-card-feature:#f7faf4;--m-
 .gear-stones-head input{display:block;width:62px;margin:4px 0 0 auto}
 .gear-stones-editor input,.gear-stones-editor select{min-width:0;border:1px solid #53717a;border-radius:7px;background:#081b27;color:#f5fbfa;padding:8px;font:inherit;font-size:12px}
 .gear-stones-editor input:focus,.gear-stones-editor select:focus{outline:2px solid #80dce1;outline-offset:1px}
+.gear-stone-type{display:block;margin:7px 0 0;color:#d8e9eb;font-size:11px;font-weight:800}
+.gear-stone-type select{display:block;width:100%;margin-top:5px}
+.gear-stones-editor .gear-stone-help{margin:8px 0 11px;color:#b7cdd4}
 .gear-stone-rows{display:grid;gap:7px;margin:5px 0 9px}
-.gear-stone-row{display:grid;grid-template-columns:20px minmax(0,1fr) 80px;gap:5px;align-items:center;padding:7px;border:1px solid #38545e;border-radius:8px;background:#0d2431}
+.gear-stone-row{display:grid;grid-template-columns:20px minmax(0,1fr);gap:5px;align-items:center;padding:7px;border:1px solid #38545e;border-left:4px solid #526770;border-radius:8px;background:#0d2431}
 .gear-stone-row[hidden]{display:none}
 .gear-stone-row>b{grid-row:1/4;text-align:center;color:#8fdde0;font-size:11px}
-.gear-stone-row>select[name^="stoneKind"],.gear-stone-row>input[name^="stoneStat"]{grid-column:2/4}
-.gear-stone-row>input[name^="stoneValue"]{grid-column:2}
-.gear-stone-row>select[name^="stoneUnit"]{grid-column:3}
-.gear-stone-row>select[name^="stoneUnit"]{padding-right:22px}
+.gear-stone-row>input[name^="stoneStat"],.gear-stone-row>select[name^="stoneGrade"]{grid-column:2;width:100%}
+.gear-stone-result{grid-column:2;display:grid;grid-template-columns:minmax(0,1fr) 80px;gap:5px;min-width:0}
+.gear-stone-result input,.gear-stone-result select{width:100%}
+.gear-stone-result select{padding-right:22px}
+.gear-stone-row[data-grade="Common"]{border-left-color:#b6bdc6}
+.gear-stone-row[data-grade="Rare"]{border-left-color:#75c998}
+.gear-stone-row[data-grade="Epic"]{border-left-color:#6ab6f0}
+.gear-stone-row[data-grade="Unique"]{border-left-color:#f1c46c}
+.gear-stone-row[data-grade="Common"] select[name^="stoneGrade"]{color:#d0d6dc}
+.gear-stone-row[data-grade="Rare"] select[name^="stoneGrade"]{color:#8ee0aa}
+.gear-stone-row[data-grade="Epic"] select[name^="stoneGrade"]{color:#91ccfb}
+.gear-stone-row[data-grade="Unique"] select[name^="stoneGrade"]{color:#ffda8d}
 .gear-theostone-editor input{display:block;width:100%;margin:7px 0}
 .gear-stone-warning{color:#ffd284!important}
 .gear-dialog-grid{height:calc(100dvh - 184px);min-height:0;grid-template-rows:minmax(0,1fr)}
