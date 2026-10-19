@@ -85,3 +85,21 @@
 .weave-setup p{flex:1 1 300px;margin:0;color:#c7dada}
 .weave-setup label{display:grid;gap:5px;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#a8c0c2;font-weight:800}
 .weave-setup select{background:#091b24;color:#f2f7f4;border:1px solid #557176;border-radius:8px;padding:8px;font-size:13px;letter-spacing:0;text-transform:none}
+
+/* Eight suggested manual hotkeys alongside the held Macro and filler */
+.hotbar-heading{display:flex;justify-content:space-between;align-items:end;gap:16px;margin:24px 0 12px}
+.hotbar-heading h3{font:normal 24px Georgia,serif;margin:0 0 4px;color:#f1e3c8}
+.hotbar-heading p{font-size:13px;color:#aec5c7;margin:0}
+.hotbar-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.hotbar-card{--slot:#84c4ca;min-width:0;min-height:154px;border:1px solid #3c5960;border-top:3px solid var(--slot);border-radius:12px;background:linear-gradient(150deg,#142b32,#0d1c24);padding:13px;transition:transform .18s ease,border-color .18s ease}
+.hotbar-card:hover{transform:translateY(-2px);border-color:var(--slot)}
+.hotbar-card.tone-attack{--slot:#e2bc72}.hotbar-card.tone-buff{--slot:#9fbde9}.hotbar-card.tone-heal{--slot:#8edab2}.hotbar-card.tone-defense{--slot:#87c9cf}.hotbar-card.tone-movement{--slot:#c5abe4}.hotbar-card.tone-emergency{--slot:#ed9d91}
+.hotbar-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.hotbar-top small{color:var(--slot);font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:800}
+.hotbar-number{display:grid;place-items:center;width:31px;height:31px;border:1px solid var(--slot);border-bottom-width:3px;border-radius:7px;color:#fff;background:#112b34;font-weight:900}
+.hotbar-skills{display:grid;gap:3px}
+.hotbar-skills strong{font-size:13px;line-height:1.25;color:#edf6f5;overflow-wrap:anywhere}
+.hotbar-card p{margin:9px 0 0;font-size:11px;color:#afc2c5;line-height:1.35}
+.hotbar-note{margin:10px 0 16px;padding:11px 14px;border-left:3px solid #7abdb6;background:#153039;border-radius:0 8px 8px 0;color:#c3d8d8;font-size:12px}
+@media(max-width:750px){.hotbar-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:500px){.hotbar-heading{align-items:start}.hotbar-heading .tag{display:none}.hotbar-card{min-height:0}}
