@@ -1,11 +1,7 @@
 const $ = id => document.getElementById(id);
-const SKILL_NAMES = Object.values(DATA.skills).map(s => s.name);
-const SKILL_ID_BY_NAME = Object.fromEntries(Object.entries(DATA.skills).map(([id,s]) => [s.name, id]));
-const NODE_BY_ID = new Map(DATA.boards.flatMap(b => b.nodes.map(n => [n[0], {board:b.name, node:n}])));
-const BOARD_BY_NAME = Object.fromEntries(DATA.boards.map(b => [b.name,b]));
-const CORE = ['Judgment','Vicious Strike','Pummel','Punishment'];
-const ACTIVE = new Set(['Vicious Strike','Pummel','Poach','Shield Smite','Judgment','Flash Rampage','Debilitating Smash','Warding Strike','Shield Rush','Annihilate','Punishment','Defiance']);
-const MASTERY_STAGES = [
+const CLASS_ORDER = ['templar','gladiator','assassin','ranger','sorcerer','spiritmaster','cleric','chanter'];
+const BOARD_NAMES = ['Nezekan','Zikel','Vaizel','Triniel'];
+const TEMPLAR_STAGES = [
   ['Judgment',8],['Vicious Strike',8],['Pummel',8],['Punishment',8],['Warding Strike',8],['Shield Smite',8],['Annihilate',8],['Poach',8],['Defiance',8],['Debilitating Smash',8],
   ['Fury',10],['Insulting Roar',10],['Impact Hit',10],['Punishing Benediction',10],
   ['Judgment',10],['Vicious Strike',10],['Pummel',10],['Punishment',10],['Warding Strike',10],['Shield Smite',10],['Annihilate',10],
@@ -13,95 +9,149 @@ const MASTERY_STAGES = [
   ['Block Pain',8],['Warding Shield',8],['Guarding Seal',8],['Survival Willpower',8],['Flash Rampage',8],
   ['Poach',10],['Defiance',10],['Debilitating Smash',10],['Shield Rush',10],['Block Pain',10],['Warding Shield',10],['Guarding Seal',10],['Survival Willpower',10],['Flash Rampage',10]
 ];
-const STIGMA_STAGES = [
-  ['Noble Armor',5],['Shield of Protection',5],['Taunt',5],['Doom Shield',5],['Noble Armor',10],['Noble Armor',15],
-  ['Battlefield Banner',5],['Battlefield Banner',10],['Taunt',10],['Shield of Protection',10],['Taunt',15],
-  ['Battlefield Banner',15],['Shield of Protection',15],['Doom Shield',10],['Doom Shield',15],
-  ['Noble Armor',20],['Taunt',20],['Shield of Protection',20],['Battlefield Banner',20],['Doom Shield',20]
-];
-const STIGMAS = {
-  'Noble Armor': {role:'HP · defense · Fury amplifier',perks:{5:'+5% Defense',10:'Insulting Roar ×1.5',15:'Fury ×1.5',20:'+10% Incoming Heal'}},
-  'Shield of Protection': {role:'Active block · Fury trigger',perks:{5:'+1 consecutive use',10:'Can move while active',15:'+20% Move Speed after Block',20:'Restores 10% HP on Block'}},
-  'Taunt': {role:'Boss control · party damage debuff',perks:{5:'Shrink cuts PvE Damage Tolerance 10%',10:'Shrink cuts Attack 10% more',15:'Cooldown reduced 5s',20:'Longer Taunt / Shrink'}},
-  'Doom Shield': {role:'Shield charge · Judgment trigger',perks:{5:'Resets Annihilate on hit',10:'+200 Block for 5s on hit',15:'Resets its cooldown on kill',20:'+25% Knockdown Chance'}},
-  'Battlefield Banner': {role:'Damage buff from Defense',perks:{5:'+10% Multi-Hit Chance',10:'+10% Weapon Damage Boost',15:'+20% Attack from Defense',20:'Cooldown reduced 30s'}}
-};
-const SPECS = {
-  'Judgment':{options:{1:'Absorb 1% HP',2:'Extra damage vs Impact',3:'Extra damage on hit',4:'Critical Hit on hit',5:'Remove cooldown'},party:[[3],[3,4],[4,5],[3,4,5]],solo:[[1],[1,4],[1,5],[1,4,5]]},
-  'Vicious Strike':{options:{1:'+20% MP restored',2:'Absorb 1% HP',3:'+50% Multi-Hit on hit',4:'Warding Strike cooldown −2s',5:'Threatening Blow chain'},party:[[3],[3,4],[4,5],[3,4,5]],solo:[[1],[1,4],[4,5],[1,4,5]]},
-  'Pummel':{options:{1:'MP cost −20%',2:'Punishing Strike absorbs 3% HP',3:'Up to 12% more single-target damage',4:'Punishment cooldown −1s',5:'Extra Punishing Strike damage'},party:[[2],[2,3],[2,3],[2,3,4]],solo:[[2],[2,3],[2,3],[2,3,4]]},
-  'Punishment':{options:{1:'Absorb 10% HP',2:'Damage over time',3:'+30% Skill Speed',4:'Can move while charging',5:'Ignores Block/Evasion; Critical Hit'},party:[[3],[2,3],[3,5],[2,3,5]],solo:[[3],[1,3],[3,5],[1,3,5]]},
-  'Warding Strike':{options:{1:'Cooldown −5s',2:'+100 Block during Warding',3:'Heal over time during Warding',4:'More tolerance per target hit',5:'+10% party PvE Damage Tolerance'},party:[[1],[1,4],[1,5],[1,4,5]],solo:[[2],[2,4],[2,5],[2,4,5]]},
-  'Shield Smite':{options:{1:'Stun +1s',2:'No MP cost; restores 200 MP',3:'50% Debilitating Smash trigger',4:'Cooldown −2s',5:'AoE Stun'},party:[[3],[3,4],[3,4],[3,4,5]],solo:[[2],[2,4],[2,4],[2,4,5]]},
-  'Annihilate':{options:{1:'+50% Multi-Hit on hit',2:'+20% Knockdown chance',3:'+100% damage vs immune bosses',4:'Cooldown −10s',5:'Becomes AoE'},party:[[3],[3,4],[3,4],[1,3,4]],solo:[[3],[3,4],[3,4],[1,3,4]]},
-  'Poach':{options:{1:'Move to immune boss',2:'Target status resist −20%',3:'Reset cooldown on kill',4:'10% Max HP shield',5:'50% Stun chance'},party:[[1],[1,4],[1,4],[1,4,5]],solo:[[3],[3,4],[3,4],[3,4,5]]},
-  'Defiance':{options:{3:'Restores 20% HP on use',5:'High tolerance during Tenacity'},party:[[3],[3],[3,5],[3,5]],solo:[[3],[3],[3,5],[3,5]]},
-  'Debilitating Smash':{options:{1:'30% Stun chance',2:'Debilitate +3s',4:'Guaranteed Multi-Hit vs Block/Evasion'},party:[[2],[2,4],[2,4],[2,4]],solo:[[2],[2,4],[2,4],[2,4]]},
-  'Shield Rush':{options:{2:'Range +10m',4:'Cooldown −10s'},party:[[2],[2,4],[2,4],[2,4]],solo:[[2],[2,4],[2,4],[2,4]]}
-};
-const SKILL_ORDER = ['Judgment','Vicious Strike','Pummel','Punishment','Fury','Insulting Roar','Warding Strike','Shield Smite','Impact Hit','Punishing Benediction','Annihilate','Enhance Health','Ironclad Defense','Poach','Defiance','Debilitating Smash','Shield Rush','Block Pain','Warding Shield','Guarding Seal','Survival Willpower','Flash Rampage'];
-const KEY_SKILLS = new Set(['Judgment','Vicious Strike','Pummel','Punishment','Fury','Insulting Roar','Warding Strike','Impact Hit']);
-let state = {mastery:285,stigma:30,crystals:218,context:'party',gear:{},tab:'overview',board:'Nezekan',preview:218,node:null};
-try { const saved=JSON.parse(localStorage.getItem('aion2-templar-pathfinder-v1')||'null'); if(saved){state={...state,...saved,tab:'overview',board:'Nezekan',preview:saved.crystals??218,node:null};} } catch(e){}
-function save(){try{localStorage.setItem('aion2-templar-pathfinder-v1',JSON.stringify({mastery:state.mastery,stigma:state.stigma,crystals:state.crystals,context:state.context,gear:state.gear}));}catch(e){}}
+const DEFAULT_ACCOUNT = (cls='templar') => ({mastery:285,stigma:30,crystals:218,context:'party',gear:{},goalTarget:['cleric','chanter'].includes(cls)?0:100000,goalObserved:0});
+let saved = {};
+try { saved = JSON.parse(localStorage.getItem('aion2-pathfinder-all-v1') || '{}') || {}; } catch (_) {}
+try {
+  const old = JSON.parse(localStorage.getItem('aion2-templar-pathfinder-v1') || 'null');
+  if (old && !saved.accounts?.templar) saved.accounts = {...saved.accounts,templar:{...DEFAULT_ACCOUNT(),...old}};
+} catch (_) {}
+let state = {class:CLASS_ORDER.includes(saved.class)?saved.class:'templar',accounts:saved.accounts||{},tab:'overview',board:'Nezekan',preview:218,node:null};
+function account(){ if(!state.accounts[state.class]) state.accounts[state.class]=DEFAULT_ACCOUNT(state.class); return state.accounts[state.class]; }
+function data(){return DATA[state.class]}
+function profile(){return PROFILES[state.class]}
+function esc(value){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function clamp(v,min,max){v=Number(v);return Number.isFinite(v)?Math.max(min,Math.min(max,Math.floor(v))):min}
+function save(){try{localStorage.setItem('aion2-pathfinder-all-v1',JSON.stringify({class:state.class,accounts:state.accounts}))}catch(_){}}
+function skillNames(){return Object.values(data().skills).map(s=>s.name)}
+function nodeMap(){return new Map(data().boards.flatMap(b=>b.nodes.map(n=>[n[0],{board:b.name,node:n}]))) }
 function masteryCost(rank){return rank<=4?1:rank<=7?2:4}
 function stigmaCost(rank){return rank<=5?1:rank<=10?2:rank<=15?4:8}
-function allocate(stages,budget,costFn,names){const levels=Object.fromEntries(names.map(n=>[n,stages===MASTERY_STAGES?1:0]));let spent=0,next=null;for(const [name,target] of stages){while(levels[name]<target){const cost=costFn(levels[name]+1);if(spent+cost>budget){next={name,rank:levels[name]+1,cost,need:spent+cost-budget};return {levels,spent,next};}levels[name]++;spent+=cost;}}return {levels,spent,next:null};}
-function boardPlan(budget){let spent=0;const owned=new Set(),perBoard={Nezekan:0,Zikel:0,Vaizel:0,Triniel:0};let next=null;for(const item of DATA.route){const n=NODE_BY_ID.get(item.id).node;if(spent+n[5]>budget){next={...item,cost:n[5],need:spent+n[5]-budget};break;}spent+=n[5];owned.add(item.id);perBoard[item.board]+=n[5];}return {spent,owned,perBoard,next};}
-function boardEffects(owned){let skills={},stats={};for(const id of owned){const n=NODE_BY_ID.get(id).node;for(const [key,v] of n[6]){if(typeof key==='number'){const name=DATA.skills[key]?.name||String(key);skills[name]=(skills[name]||0)+v;}else stats[key]=(stats[key]||0)+v;}}return {skills,stats};}
-function effectText(node){if(!node||!node[6].length)return 'Start node';return node[6].map(([key,v])=>{if(typeof key==='number')return `${DATA.skills[key]?.name||key} +${v} level`;const meta=DATA.stats[key];let amount=v/(meta?.div||1);return `${meta?.name||key} +${amount}${meta?.pct?'%':''}`;}).join(' · ');}
-function nodeShort(node){if(node[5]===0)return '✦';if(node[5]===4)return '✦';if(typeof node[6]?.[0]?.[0]==='number')return node[5]===2?'P':'S';const k=node[6]?.[0]?.[0];return ({FixingDamage:'ATK',Critical:'CR',CriticalResist:'RES',Defense:'DEF',HPMax:'HP',MPMax:'MP'})[k]||'·';}
-function formatStat(key,val){const meta=DATA.stats[key];if(!meta)return String(val);return `${meta.name} +${val/(meta.div||1)}${meta.pct?'%':''}`;}
-function specIndex(level){return level>=20?3:level>=16?2:level>=12?1:level>=8?0:-1}
-function prep(){const mastery=allocate(MASTERY_STAGES,state.mastery,masteryCost,SKILL_NAMES);const stigma=allocate(STIGMA_STAGES,state.stigma,stigmaCost,Object.keys(STIGMAS));const boards=boardPlan(state.crystals);const effects=boardEffects(boards.owned);return {mastery,stigma,boards,effects};}
-function render(){const model=prep();renderOverview(model);renderMastery(model);renderStigma(model);renderRotation(model);renderBoards(model);$('mastery-input').value=state.mastery;$('stigma-input').value=state.stigma;$('crystal-input').value=state.crystals;$('party-button').classList.toggle('active',state.context==='party');$('solo-button').classList.toggle('active',state.context==='solo');$('party-button').setAttribute('aria-pressed',state.context==='party');$('solo-button').setAttribute('aria-pressed',state.context==='solo');document.querySelectorAll('[data-tab]').forEach(b=>{b.classList.toggle('active',b.dataset.tab===state.tab);b.toggleAttribute('aria-current',b.dataset.tab===state.tab);});document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('active',p.id===state.tab));save();}
-function renderOverview(m){const e=m.effects.skills;const stat=m.effects.stats;const level=n=>(m.mastery.levels[n]||1)+(e[n]||0)+(state.gear[n]||0);const kpis=[
-  ['Judgment',`Lv ${level('Judgment')}`,`${m.mastery.levels.Judgment||1} mastery + ${e.Judgment||0} board`],
-  ['Fury',`Lv ${level('Fury')}`,`Block to activate party damage`],
-  ['PvE corner stats',`${((stat.CombatSpeed||0)/100).toFixed(1)}% / ${((stat.CoolTimeDecrease||0)/100).toFixed(1)}%`,`Combat Speed / cooldown reduction`],
-  ['Spend status',`${m.mastery.spent} · ${m.stigma.spent} · ${m.boards.spent}`,`Mastery · stigma · crystals`]
-];$('kpis').innerHTML=kpis.map(([a,b,c])=>`<div class="kpi"><div class="k-label">${a}</div><strong>${b}</strong><small>${c}</small></div>`).join('');
-  const steps=[
-    `<b>Mastery:</b> Judgment, Vicious Strike, Pummel and Punishment are the first damage core. This plan gives them ${CORE.map(n=>`<b>${m.mastery.levels[n]||1}</b>`).join(' / ')} base ranks.`,
-    `<b>Tank engine:</b> keep Fury (${m.mastery.levels.Fury||1} base) and Insulting Roar (${m.mastery.levels['Insulting Roar']||1} base). Block deliberately to trigger Fury; use Taunt to lock threat.`,
-    `<b>Stigmas:</b> Noble Armor ${m.stigma.levels['Noble Armor']||0}, Shield of Protection ${m.stigma.levels['Shield of Protection']||0}, Taunt ${m.stigma.levels.Taunt||0}, Doom Shield ${m.stigma.levels['Doom Shield']||0}.`,
-    `<b>Boards:</b> Nezekan ${m.boards.perBoard.Nezekan}, Zikel ${m.boards.perBoard.Zikel}, Vaizel ${m.boards.perBoard.Vaizel}, Triniel ${m.boards.perBoard.Triniel} crystals. Follow the numbered grid; the current route spends ${m.boards.spent}.`,
-    state.context==='party'?`<b>Boss loop:</b> open with Taunt, use Shield Smite / Warding Strike to open Judgment, and time Shield of Protection for a Block + Fury proc. Charge Punishment when safe.`:`<b>Solo loop:</b> use Vicious Strike for MP, Pummel sustain, and Poach's kill reset to chain packs. Keep Shield of Protection ready for dangerous pulls.`
-  ];$('now-steps').innerHTML=steps.map((s,i)=>`<li><span class="step-num">${i+1}</span><span>${s}</span></li>`).join('');
-  const next=[];if(m.mastery.next)next.push([`+${m.mastery.next.need} mastery`,`${m.mastery.next.name} rank ${m.mastery.next.rank}`]);if(m.stigma.next)next.push([`+${m.stigma.next.need} stigma`,`${m.stigma.next.name} rank ${m.stigma.next.rank}`]);if(m.boards.next)next.push([`+${m.boards.next.need} crystal${m.boards.next.need===1?'':'s'}`,`${m.boards.next.board}: ${effectText(NODE_BY_ID.get(m.boards.next.id).node)}`]);const goal=CORE.map(n=>({name:n,eff:level(n)})).find(x=>x.eff<16);if(goal)next.push([`Lv 16 goal`,`${goal.name}: ${16-goal.eff} more effective levels from boards, gear or Arcana`]);$('next-unlocks').innerHTML=next.length?next.map(([a,b])=>`<div class="next-unlock"><strong>${a}</strong><span>${b}</span></div>`).join(''):'<p>All listed progression steps are funded.</p>';
+function masteryStages(){
+  if(state.class==='templar') return TEMPLAR_STAGES;
+  const names=skillNames(); const weights=data().skillWeights;
+  const order=names.map((name,i)=>({name,i,weight:weights[name]||0})).sort((a,b)=>b.weight-a.weight||a.i-b.i).map(x=>x.name);
+  const first=order.slice(0,8), second=order.slice(8,16), third=order.slice(16);
+  return [...first.map(n=>[n,8]),...first.map(n=>[n,10]),...second.map(n=>[n,8]),...second.map(n=>[n,10]),...third.map(n=>[n,8]),...third.map(n=>[n,10])];
 }
-function renderMastery(m){$('mastery-spent').textContent=`${m.mastery.spent} / ${state.mastery} spent`;$('skill-grid').innerHTML=SKILL_ORDER.map(name=>{const base=m.mastery.levels[name]||1;const board=m.effects.skills[name]||0;const gear=state.gear[name]||0;const eff=Math.min(20,base+board+gear);const spec=SPECS[name];let specMarkup='';if(spec){const idx=specIndex(eff);const picks=idx<0?[]:spec[state.context][idx];const all=Object.entries(spec.options).map(([num,label])=>{const required=Number(num)<=3?8:Number(num)===4?12:16;const cls=picks.includes(Number(num))?'on':eff>=required?'':'future';return `<span class="spec ${cls}" title="Option ${num} · unlocks at skill level ${required}">#${num} ${label}${eff<required?` · Lv ${required}`:''}</span>`;}).join('');specMarkup=`<div class="specs"><div class="specs-title">${idx<0?'First specialty at level 8':`Equip now · ${picks.length} slot${picks.length===1?'':'s'}`}</div><div class="spec-row">${all}</div></div>`;}
-  return `<article class="skill-card ${CORE.includes(name)?'highlight':''}"><div class="skill-head"><div><h3>${name}</h3><div class="sub">${ACTIVE.has(name)?'Active skill':'Passive skill'}${KEY_SKILLS.has(name)?' · core priority':''}</div></div><div class="lv">Lv ${eff}</div></div><div class="build-parts"><span>Mastery ${base}</span><span>Board +${board}</span><span>Gear/Arcana +${gear}</span></div>${specMarkup}<label class="gear-row">Extra levels from gear / Arcana <input type="number" data-gear="${name}" min="0" max="10" value="${gear}" aria-label="Extra levels for ${name}"></label></article>`;}).join('');}
-function renderStigma(m){$('stigma-spent').textContent=`${m.stigma.spent} / ${state.stigma} spent`;const main=['Shield of Protection','Noble Armor','Taunt','Doom Shield'];$('loadout-title').textContent=state.context==='party'?'Party tank bar':'Solo farm bar';$('loadout-text').textContent=state.context==='party'?'Keep Taunt and active Block available. Doom Shield supplies an extra Judgment window; swap it for Empyrean Lord’s Punishment in stagger checks once you have points for that stigma.':'For safe solo packs, Doom Shield and Noble Armor keep damage high while Shield of Protection covers dangerous hits. You can swap Taunt for Battlefield Banner once Banner is levelled and threat is irrelevant.';$('loadout-tags').innerHTML=main.map(n=>`<span class="tag ${m.stigma.levels[n]>=5?'green':''}" style="margin-right:6px">${n} · Lv ${m.stigma.levels[n]||0}</span>`).join('');$('stigma-grid').innerHTML=Object.entries(STIGMAS).map(([name,info])=>{const lv=m.stigma.levels[name]||0;const perks=Object.entries(info.perks).map(([rank,text])=>`<span class="spec ${lv>=Number(rank)?'on':'future'}">Lv ${rank}: ${text}</span>`).join('');return `<article class="stigma-card"><div class="stigma-head"><div><h3>${name}</h3><div class="sub">${info.role}</div></div><div class="lv">Lv ${lv}</div></div><div class="build-parts"><span>${main.includes(name)?'Equipped in default bar':'Swap candidate'}</span><span>${lv>=5?'First perk active':'First perk at Lv 5'}</span></div><div class="spec-row">${perks}</div><div class="milestone">${lv<5?`${5-lv} levels to first perk`:lv<10?`${10-lv} levels to second perk`:lv<15?`${15-lv} levels to third perk`:lv<20?`${20-lv} levels to fourth perk`:'All Global perks unlocked'}</div></article>`;}).join('');}
+function stigmaStages(){const s=profile().stigmas;return [5,10,15,20].flatMap(rank=>s.map(name=>[name,rank]))}
+function allocate(stages,budget,costFn,names,base){
+  const levels=Object.fromEntries(names.map(n=>[n,base]));let spent=0,next=null;
+  for(const [name,target] of stages){if(!(name in levels))continue;while(levels[name]<target){const cost=costFn(levels[name]+1);if(spent+cost>budget){next={name,rank:levels[name]+1,cost,need:spent+cost-budget};return {levels,spent,next}}levels[name]++;spent+=cost}}
+  return {levels,spent,next};
+}
+function boardPlan(budget){
+  const nodes=nodeMap(), owned=new Set(),perBoard=Object.fromEntries(BOARD_NAMES.map(n=>[n,0]));let spent=0,next=null;
+  for(const item of data().route){const n=nodes.get(item.id).node;if(spent+n[5]>budget){next={...item,cost:n[5],need:spent+n[5]-budget};break}spent+=n[5];owned.add(item.id);perBoard[item.board]+=n[5]}
+  return {spent,owned,perBoard,next};
+}
+function effects(owned){const skills={},stats={},nodes=nodeMap();for(const id of owned){const n=nodes.get(id).node;for(const [key,v] of n[6]){if(typeof key==='number'){const name=data().skills[key]?.name||String(key);skills[name]=(skills[name]||0)+v}else stats[key]=(stats[key]||0)+v}}return {skills,stats}}
+function effectText(n){if(!n||!n[6]?.length)return 'Start node';return n[6].map(([key,v])=>{if(typeof key==='number')return `${data().skills[key]?.name||key} +${v} level`;const meta=data().stats[key];return `${meta?.name||key} +${v/(meta?.div||1)}${meta?.pct?'%':''}`}).join(' · ')}
+function nodeShort(n){if(n[5]===0||n[5]===4)return '✦';if(typeof n[6]?.[0]?.[0]==='number')return n[5]===2?'P':'S';return ({FixingDamage:'ATK',Critical:'CR',Defense:'DEF',HPMax:'HP',MPMax:'MP',HealBoost:'HEAL'})[n[6]?.[0]?.[0]]||'·'}
+function model(){const a=account(),mastery=allocate(masteryStages(),a.mastery,masteryCost,skillNames(),1),stigma=allocate(stigmaStages(),a.stigma,stigmaCost,profile().stigmas,0),boards=boardPlan(a.crystals);return {mastery,stigma,boards,effects:effects(boards.owned)}}
+function effective(name,m){return Math.min(20,(m.mastery.levels[name]||1)+(m.effects.skills[name]||0)+(account().gear[name]||0))}
+function render(){
+  const a=account(),m=model(),p=profile();
+  $('hero-description').textContent=p.summary+' Change your point totals to see what to buy now and next.';
+  $('class-role').textContent=p.role;$('overview-role').textContent=p.role;
+  $('class-buttons').innerHTML=CLASS_ORDER.map(c=>`<button type="button" data-class="${c}" class="${state.class===c?'active':''}" aria-pressed="${state.class===c}"><span>${PROFILES[c].name}</span><small>${PROFILES[c].role}</small></button>`).join('');
+  $('mastery-input').value=a.mastery;$('stigma-input').value=a.stigma;$('crystal-input').value=a.crystals;
+  for(const [id,ctx] of [['party-button','party'],['solo-button','solo']]){$(id).classList.toggle('active',a.context===ctx);$(id).setAttribute('aria-pressed',a.context===ctx)}
+  document.querySelectorAll('[data-tab]').forEach(b=>{b.classList.toggle('active',b.dataset.tab===state.tab);b.setAttribute('aria-current',b.dataset.tab===state.tab?'page':'false')});
+  document.querySelectorAll('.tab-panel').forEach(el=>el.classList.toggle('active',el.id===state.tab));
+  renderOverview(m);renderMastery(m);renderStigma(m);renderRotation(m);renderBoards(m);renderSources();save();
+}
+function renderOverview(m){
+  const a=account(),p=profile(),ordered=masteryStages().map(x=>x[0]).filter((v,i,s)=>s.indexOf(v)===i),top=ordered.slice(0,4);
+  $('overview-title').textContent=`${p.name}: your current path`;$('overview-subtitle').textContent=p.summary;
+  const kpis=[['Top mastery',top[0]?`Lv ${effective(top[0],m)}`:'—',top[0]||''],['Board crystals',`${m.boards.spent} / ${a.crystals}`,`${m.boards.perBoard.Nezekan} Nezekan · ${m.boards.perBoard.Zikel} Zikel`],['Stigma bar',`${m.stigma.spent} / ${a.stigma}`,'Four class-specific slots'],['Ready points',`${a.mastery-m.mastery.spent} · ${a.stigma-m.stigma.spent} · ${a.crystals-m.boards.spent}`,'Unspent mastery · stigma · crystals']];
+  $('kpis').innerHTML=kpis.map(([label,value,detail])=>`<div class="kpi"><div class="k-label">${esc(label)}</div><strong>${esc(value)}</strong><small>${esc(detail)}</small></div>`).join('');
+  const mode=p.kind==='healer'?'healing':'damage';
+  const steps=[`<b>Mastery:</b> ${top.map(n=>`${esc(n)} Lv ${m.mastery.levels[n]||1}`).join(' · ')}. Open the Mastery tab for every rank and specialty.`,
+    `<b>Stigmas:</b> ${p.stigmas.map(n=>`${esc(n)} Lv ${m.stigma.levels[n]||0}`).join(' · ')}. ${esc(p.swap)}`,
+    `<b>Boards:</b> ${BOARD_NAMES.map(n=>`${n} ${m.boards.perBoard[n]}`).join(' · ')}. The grid gives the connected click order at ${a.crystals} crystals.`,
+    `<b>${mode==='healing'?'Healing':'Fight'} priority:</b> ${esc(p.rule)}`];
+  if(a.context==='solo')steps.push(`<b>Solo adjustment:</b> Keep recovery and defensives available. Use the damage loop only when safe; the board route is the same PvE path.`);
+  $('now-steps').innerHTML=steps.map((v,i)=>`<li><span class="step-num">${i+1}</span><span>${v}</span></li>`).join('');
+  const next=[];if(m.mastery.next)next.push([`+${m.mastery.next.need} mastery`,`${m.mastery.next.name} rank ${m.mastery.next.rank}`]);if(m.stigma.next)next.push([`+${m.stigma.next.need} stigma`,`${m.stigma.next.name} rank ${m.stigma.next.rank}`]);if(m.boards.next)next.push([`+${m.boards.next.need} crystals`,`${m.boards.next.board}: ${effectText(nodeMap().get(m.boards.next.id).node)}`]);
+  const needs=top.map(n=>({name:n,level:effective(n,m)})).find(x=>x.level<16);if(needs)next.push(['Lv 16 specialty',`${needs.name}: ${16-needs.level} more effective levels from mastery, board or gear`]);
+  $('next-unlocks').innerHTML=next.length?next.map(([label,detail])=>`<div class="next-unlock"><strong>${esc(label)}</strong><span>${esc(detail)}</span></div>`).join(''):'<p>All planned ranks and nodes are funded.</p>';
+  renderGoal();
+}
+function renderGoal(){
+  const a=account(),heal=profile().kind==='healer';
+  $('goal-title').textContent=heal?'Effective healing & survival':'100k DPS target';
+  $('goal-explainer').textContent=heal?'Enter an effective HPS target for your group if you have one. Record healing actually needed, and judge it with deaths and missed mechanics.':'Enter measured single-target boss DPS from a comparable fight or dummy. This planner tracks the gap; it does not calculate DPS from point totals.';
+  $('target-label').textContent=heal?'Target effective HPS':'Target DPS';$('observed-label').textContent=heal?'Measured effective HPS':'Measured DPS';
+  $('goal-target').value=a.goalTarget||'';$('goal-observed').value=a.goalObserved||'';
+  const target=Number(a.goalTarget)||0,observed=Number(a.goalObserved)||0;
+  if(!target){$('goal-status').innerHTML=heal?'Set a target when your group has a useful effective HPS benchmark. Prioritize timely heals and survival now.':'Set a target DPS to track progress.';return}
+  if(!observed){$('goal-status').innerHTML=`Target: <b>${target.toLocaleString()}</b> ${heal?'effective HPS':'DPS'} · add a measured result to see the gap.`;return}
+  const percent=Math.min(100,Math.round(observed/target*100)),gap=Math.max(0,target-observed);
+  $('goal-status').innerHTML=`<b>${percent}% of target</b> · ${gap?`${gap.toLocaleString()} to go`:'target reached'}<div class="progress"><span style="width:${percent}%"></span></div>`;
+}
+function specPicks(name,eff){const spec=SPECS[state.class]?.[name];if(!spec)return [];let key=eff>=20?'20':eff>=16?'16':eff>=12?'12':eff>=8?'8':null;if(!key)return [];let picks=spec.picks[key]||[];if(state.class==='templar'&&account().context==='party'&&name==='Judgment'){picks=eff>=20?[3,4,5]:eff>=16?[4,5]:eff>=12?[3,4]:[3]}return picks}
+function renderMastery(m){
+  const a=account(),order=masteryStages().map(x=>x[0]).filter((v,i,s)=>s.indexOf(v)===i);$('mastery-spent').textContent=`${m.mastery.spent} / ${a.mastery} spent`;
+  $('skill-grid').innerHTML=order.map((name,i)=>{
+    const base=m.mastery.levels[name]||1,board=m.effects.skills[name]||0,gear=a.gear[name]||0,eff=effective(name,m),spec=SPECS[state.class]?.[name],picks=specPicks(name,eff);
+    const chips=spec?`<div class="specs"><div class="specs-title">${eff<8?'First specialty at Lv 8':`Equip now · ${picks.length} choice${picks.length===1?'':'s'}`}</div><div class="spec-row">${Object.entries(spec.options).map(([num,label])=>{const required=+num<=3?8:+num===4?12:16;return `<span class="spec ${picks.includes(+num)?'on':eff<required?'future':''}" title="Option ${num} · level ${required}">#${num} ${esc(label)}${eff<required?` · Lv ${required}`:''}</span>`}).join('')}</div></div>`:'';
+    return `<article class="skill-card ${i<4?'highlight':''}"><div class="skill-head"><div><h3>${esc(name)}</h3><div class="sub">Priority ${i+1}${spec?' · specialty choices':''}</div></div><div class="lv">Lv ${eff}</div></div><div class="build-parts"><span>Mastery ${base}</span><span>Board +${board}</span><span>Gear / Arcana +${gear}</span></div>${chips}<label class="gear-row">Extra gear / Arcana levels <input type="number" data-gear="${esc(name)}" min="0" max="10" value="${gear}" aria-label="Extra levels for ${esc(name)}"></label></article>`
+  }).join('');
+}
+function renderStigma(m){
+  const p=profile(),a=account();$('stigma-spent').textContent=`${m.stigma.spent} / ${a.stigma} spent`;$('loadout-title').textContent=`${p.name} ${p.kind==='healer'?'support':'PvE'} bar`;$('loadout-text').textContent=p.swap;
+  $('loadout-tags').innerHTML=p.stigmas.map(n=>`<span class="tag ${m.stigma.levels[n]>=5?'green':''}">${esc(n)} · Lv ${m.stigma.levels[n]||0}</span>`).join('');
+  $('stigma-grid').innerHTML=p.stigmas.map(name=>{const info=STIGMAS[state.class]?.[name],lv=m.stigma.levels[name]||0,perks=info?.perks||{};
+    return `<article class="stigma-card"><div class="stigma-head"><div><h3>${esc(name)}</h3><div class="sub">Equipped · ${esc(info?.base||'Class stigma')}</div></div><div class="lv">Lv ${lv}</div></div><div class="spec-row">${Object.entries(perks).map(([rank,label])=>`<span class="spec ${lv>=+rank?'on':'future'}">Lv ${rank}: ${esc(label)}</span>`).join('')}</div><div class="milestone">${lv<20?`Next perk at Lv ${[5,10,15,20].find(x=>x>lv)}`:'All four perks unlocked'}</div></article>`}).join('');
+}
+function numbered(items){return items.map((v,i)=>`<li><span class="rotation-num">${String(i+1).padStart(2,'0')}</span><span>${esc(v)}</span></li>`).join('')}
 function renderRotation(m){
-  const judgment=(m.mastery.levels.Judgment||1)+(m.effects.skills.Judgment||0)+(state.gear.Judgment||0);
-  const doom=(m.stigma.levels['Doom Shield']||0)>=1;
-  const shield=(m.stigma.levels['Shield of Protection']||0)>=1;
-  $('rotation-level').textContent=`Judgment effective Lv ${judgment}`;
-  $('rotation-gate').innerHTML=judgment>=16?'<b>Level 16 reached:</b> equip Judgment specialty #5 to remove its cooldown. A shield skill still has to open the Judgment window.':'<b>Current breakpoint:</b> Judgment still has a cooldown. Spend each shield-trigger window before using the next trigger. At effective Lv 16, choose specialty #5 for cooldown removal.';
-  $('rotation-opener-title').textContent=state.context==='party'?'Party boss opener':'Solo pull opener';
-  const opener=state.context==='party'?
-    ['Use <b>Noble Armor</b> before the pull and refresh it when needed.','<b>Taunt</b> to establish threat; face the boss away from the group.',doom?'Use <b>Doom Shield</b> when its movement will not turn the boss, then press <b>Judgment</b> at once.':'Open with <b>Shield Smite → Judgment</b>. Add Doom Shield when it is trained.','Fully charge <b>Punishment</b> when the boss is stable to start its Executor damage window.','Hold your macro key during safe uptime, weaving <b>Vicious Strike</b> on its own key.']:
-    ['Start with <b>Noble Armor</b> and choose a safe pack.','Use <b>Poach</b> to close, or <b>Doom Shield</b> if trained and you want the knockdown.',doom?'<b>Doom Shield → Judgment</b>; use <b>Annihilate</b> after a successful knockdown.':'<b>Shield Smite → Judgment</b> before other shield triggers.','Fully charge <b>Punishment</b> in a safe window.','Hold the macro through the pack; use <b>Pummel</b> and Vicious Strike for sustain and MP.'];
-  const loop=state.context==='party'?
-    ['Watch for <b>Shield Smite / Warding Strike → Judgment</b>. Spend Judgment before another trigger.','Use <b>Punishment</b> on cooldown when you can finish the charge; keep Executor active.','Use <b>Shield of Protection</b> before a blockable heavy attack to trigger <b>Fury</b> for your party.','Spend <b>Debilitating Smash</b> after a Block; use <b>Annihilate</b> when its condition opens.','Reapply <b>Taunt</b> if threat slips. Rotate Defiance and other defensives for real danger rather than stacking them.']:
-    ['Use <b>Judgment</b> as soon as a shield skill opens it; the E stack handles the filler loop.','Refresh <b>Punishment</b> for Executor when the full charge is safe.','Use <b>Vicious Strike</b> for MP; <b>Pummel</b> fills gaps and supports sustain.','Use <b>Poach</b> between targets, especially with its kill-reset specialty.','Block dangerous hits with <b>Shield of Protection</b>; save Defiance for an emergency.'];
-  $('rotation-opener').innerHTML=opener.map((s,i)=>`<li><span class="rotation-num">${String(i+1).padStart(2,'0')}</span><span>${s}</span></li>`).join('');
-  $('rotation-loop').innerHTML=loop.map((s,i)=>`<li><span class="rotation-num">${String(i+1).padStart(2,'0')}</span><span>${s}</span></li>`).join('');
-  const manual=[['Taunt',state.context==='party'?'Pull and recover threat':'Optional in solo play'],['Doom Shield',doom?'Trigger Judgment and reposition deliberately':'Add when trained'],['Punishment','Charge fully when safe'],['Shield of Protection',shield?'Time the Block and Fury proc':'Add when trained'],['Defiance','Emergency protection'],['Poach / Shield Rush','Move only when you choose']];
-  $('manual-keys').innerHTML=manual.map(([name,why])=>`<div class="manual-key"><b>${name}</b><small>${why}</small></div>`).join('');
+  const p=profile(),a=account(),main=masteryStages()[0][0];$('rotation-level').textContent=`${main} Lv ${effective(main,m)}`;$('rotation-rule-title').textContent=p.rule;$('rotation-rule-text').textContent=p.summary;
+  $('rotation-gate').textContent=p.kind==='healer'?'Heals, toggles and emergency buttons remain manual. Use the macro only while the group is stable.':`Current first priority: ${main} effective Lv ${effective(main,m)}. Keep charged and movement skills on their own keys.`;
+  $('rotation-opener-title').textContent=a.context==='party'?'Group opener':'Solo opener';$('rotation-opener').innerHTML=numbered(p.opener);$('rotation-loop').innerHTML=numbered(p.loop);
+  const stacks=p.stacks.map(s=>`<div class="macro-stack"><div class="stack-heading"><span class="keycap">${esc(s.key)}</span><div><strong>${esc(s.title)}</strong><small>${s.manual?'Manual key':'Macro hotbar key'}</small></div></div>${s.skills.map((name,i)=>`<div class="stack-row"><b>Row ${i}</b><span>${esc(name)}</span></div>`).join('')}</div>`).join('');
+  const script=`<div class="macro-stack macro-script"><div class="stack-heading"><span class="keycap">M</span><div><strong>Macro steps</strong><small>M is an example bind</small></div></div>${p.macro.map((key,i)=>`<div class="stack-row"><b>Step ${i+1}</b><span>${esc(key)} · 10 ms</span></div>`).join('')}<div class="stack-row"><b>Hold</b><span>${esc(p.hold)}</span></div></div>`;
+  $('macro-stacks').innerHTML=stacks+script;
+  $('setup-list').innerHTML=[`Settings (O) → Key Settings → General → Gameplay → Macro: bind a comfortable key.`,`Skills (K): stack each hotbar key as shown. Row 0 has first priority. A no-cooldown filler belongs at the bottom.`,`Skills (K) → Macro: add the listed hotbar keys in order and start each delay at 10 ms. Keep manual stacks out of the macro.`,`Save, hold the macro while active, and test on a dummy. ${p.hold}`].map(x=>`<li>${esc(x)}</li>`).join('');
+  $('manual-keys').innerHTML=p.manual.map(v=>`<div class="manual-key"><b>${esc(v.split(' — ')[0])}</b><small>${esc(v.split(' — ')[1]||'Manual timing')}</small></div>`).join('');
 }
-function renderBoards(m){$('board-spent').textContent=`${m.boards.spent} / ${state.crystals} spent`;const stats=m.effects.stats;$('board-summary').innerHTML=[['Damage Boost',stats.AmplifyAllDamage||0],['Damage Tolerance',stats.DecreaseDamage||0],['Combat Speed',stats.CombatSpeed||0],['CoolTimeDecrease',stats.CoolTimeDecrease||0]].map(([name,val])=>`<div><b>+${(val/100).toFixed(1)}%</b><span>${name==='CoolTimeDecrease'?'Cooldown Reduction':name}</span></div>`).join('');$('board-tabs').innerHTML=DATA.boards.map(b=>`<button type="button" data-board="${b.name}" class="${state.board===b.name?'active':''}">${b.name}<small>${m.boards.perBoard[b.name]} / ${b.totalCost}</small></button>`).join('');$('route-slider').max=state.crystals;$('route-slider').value=state.preview=Math.min(state.preview,state.crystals);$('route-slider-value').textContent=state.preview;const preview=boardPlan(state.preview);const b=BOARD_BY_NAME[state.board];const nodeMap=new Map(b.nodes.map(n=>[`${n[1]}:${n[2]}`,n]));let html='';for(let r=1;r<=15;r++){for(let c=1;c<=15;c++){const n=nodeMap.get(`${r}:${c}`);if(!n){html+='<span></span>';continue;}const owned=preview.owned.has(n[0])||n[5]===0;const next=preview.next?.id===n[0];const selected=state.node===n[0];const kind=n[5]===0?'start':n[5]===4?'unique':typeof n[6]?.[0]?.[0]==='number'?'skill':'stat';html+=`<button type="button" class="node ${kind} ${owned?'owned':''} ${next?'next':''} ${selected?'selected':''}" data-node="${n[0]}" title="${effectText(n)} · ${n[5]} crystal${n[5]===1?'':'s'}" aria-label="${effectText(n)} · row ${r}, column ${c} · ${owned?'in route':'not yet in route'}"><span>${nodeShort(n)}</span></button>`;}}$('board-grid').innerHTML=html;const selected=state.node&&NODE_BY_ID.get(state.node)?.board===state.board?NODE_BY_ID.get(state.node).node:null;$('selected-node').innerHTML=selected?`<strong>${effectText(selected)}</strong><small>Row ${selected[1]}, column ${selected[2]} · ${selected[5]} crystal${selected[5]===1?'':'s'} · ${preview.owned.has(selected[0])||selected[5]===0?'In preview route':'Future node'}</small>`:`<strong>${state.board}</strong><small>Tap any node. Green and gold nodes are included in the preview. The outlined node is next in the route.</small>`;
-  const rows=[];let spent=0;let boardSpent=0;let boardClick=0;for(const x of DATA.route){const n=NODE_BY_ID.get(x.id).node;spent+=n[5];if(x.board!==state.board)continue;boardClick++;if(spent<=state.preview)boardSpent+=n[5];rows.push({number:boardClick,spent,cost:n[5],label:effectText(n),id:x.id,row:n[1],col:n[2]});}$('purchase-intro').textContent=`${boardSpent} crystals on this board at preview ${state.preview}. ${rows.filter(x=>x.spent<=state.preview).length} of ${rows.length} clicks shown as owned.`;$('purchase-list').innerHTML=rows.map(x=>`<button type="button" data-purchase="${x.id}" class="purchase ${x.spent<=state.preview?'current':''}"><span class="n">${x.number}.</span><span>${x.label}<small>r${x.row} · c${x.col}</small></span><span class="c">${x.cost} ✧</span></button>`).join('');
-  const next=[];let p=0;for(const x of DATA.route){const n=NODE_BY_ID.get(x.id).node;p+=n[5];if(p<=m.boards.spent)continue;if(n[5]===4||typeof n[6]?.[0]?.[0]==='number'&&KEY_SKILLS.has(DATA.skills[n[6][0][0]]?.name)){next.push({threshold:p,...x,node:n});}if(next.length>=5)break;}$('board-next').innerHTML=next.length?next.map(x=>`<div class="next-unlock"><strong>${x.threshold} total</strong><span>${x.board}: ${effectText(x.node)}</span></div>`).join(''):'<p>All key nodes on this route are funded.</p>';
+function renderBoards(m){
+  const a=account(),nodes=nodeMap();$('board-spent').textContent=`${m.boards.spent} / ${a.crystals} spent`;
+  const wanted=profile().kind==='healer'?[['Defense','Defense'],['HPMax','Max HP'],['CombatSpeed','Combat Speed'],['CoolTimeDecrease','Cooldown Reduction']]:[['AmplifyAllDamage','Damage Boost'],['DecreaseDamage','Damage Tolerance'],['CombatSpeed','Combat Speed'],['CoolTimeDecrease','Cooldown Reduction']];
+  $('board-summary').innerHTML=wanted.map(([key,label])=>{const meta=data().stats[key],v=m.effects.stats[key]||0;return `<div><b>+${v/(meta?.div||1)}${meta?.pct?'%':''}</b><span>${label}</span></div>`}).join('');
+  $('board-tabs').innerHTML=data().boards.map(b=>`<button type="button" data-board="${b.name}" class="${state.board===b.name?'active':''}">${b.name}<small>${m.boards.perBoard[b.name]} / ${b.totalCost}</small></button>`).join('');
+  $('route-slider').max=a.crystals;state.preview=Math.min(state.preview,a.crystals);$('route-slider').value=state.preview;$('route-slider-value').textContent=state.preview;
+  const preview=boardPlan(state.preview),board=data().boards.find(b=>b.name===state.board),grid=new Map(board.nodes.map(n=>[`${n[1]}:${n[2]}`,n]));let html='';
+  for(let r=1;r<=15;r++)for(let c=1;c<=15;c++){const n=grid.get(`${r}:${c}`);if(!n){html+='<span></span>';continue}const owned=preview.owned.has(n[0])||n[5]===0,kind=n[5]===0?'start':n[5]===4?'unique':typeof n[6]?.[0]?.[0]==='number'?'skill':'stat';html+=`<button type="button" class="node ${kind} ${owned?'owned':''} ${preview.next?.id===n[0]?'next':''} ${state.node===n[0]?'selected':''}" data-node="${n[0]}" title="${esc(effectText(n))}" aria-label="${esc(effectText(n))}; row ${r}, column ${c}; ${owned?'owned':'future'}"><span>${nodeShort(n)}</span></button>`}
+  $('board-grid').innerHTML=html;const selected=state.node&&nodes.get(state.node)?.board===state.board?nodes.get(state.node).node:null;
+  $('selected-node').innerHTML=selected?`<strong>${esc(effectText(selected))}</strong><small>Row ${selected[1]}, column ${selected[2]} · ${selected[5]} crystal${selected[5]===1?'':'s'} · ${preview.owned.has(selected[0])||selected[5]===0?'In preview':'Future'}</small>`:`<strong>${state.board}</strong><small>Tap any node. Green and gold nodes are in the route; the outlined node is next.</small>`;
+  let spent=0,number=0,boardSpent=0;const rows=[];for(const x of data().route){const n=nodes.get(x.id).node;spent+=n[5];if(x.board!==state.board)continue;number++;if(spent<=state.preview)boardSpent+=n[5];rows.push({number,spent,cost:n[5],label:effectText(n),id:x.id,row:n[1],col:n[2]})}
+  $('purchase-intro').textContent=`${boardSpent} crystals on ${state.board} at preview ${state.preview}. Click a purchase to locate it on the grid.`;
+  $('purchase-list').innerHTML=rows.map(x=>`<button type="button" data-purchase="${x.id}" class="purchase ${x.spent<=state.preview?'current':''}"><span class="n">${x.number}.</span><span>${esc(x.label)}<small>r${x.row} · c${x.col} · total ${x.spent}</small></span><span class="c">${x.cost} ✧</span></button>`).join('');
+  const priority=new Set(masteryStages().slice(0,12).map(x=>x[0]));let total=0;const upcoming=[];for(const x of data().route){const n=nodes.get(x.id).node;total+=n[5];if(total<=m.boards.spent)continue;if(n[5]===4||typeof n[6]?.[0]?.[0]==='number'&&priority.has(data().skills[n[6][0][0]]?.name))upcoming.push({total,board:x.board,label:effectText(n)});if(upcoming.length>=5)break}
+  $('board-next').innerHTML=upcoming.length?upcoming.map(x=>`<div class="next-unlock"><strong>${x.total} total</strong><span>${x.board}: ${esc(x.label)}</span></div>`).join(''):'<p>All key nodes on this route are funded.</p>';
+  const starter=data().starterCost;$('route-footnote').textContent=starter?`The first ${starter} crystals follow a published connected ${profile().name} PvE path. Later clicks are generated using that guide’s skill and stat priorities. This is a recommended route, not a measured performance optimum.`:'This Chanter route is generated from published healer skill and stat priorities. It is a connected recommendation, not the source’s published damage route or a measured healing optimum.';
 }
-document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{state.tab=b.dataset.tab;render();}));
-for(const [id,key,max] of [['mastery-input','mastery',462],['stigma-input','stigma',375],['crystal-input','crystals',570]]){$(id).addEventListener('change',e=>{state[key]=clamp(e.target.value,0,max);if(key==='crystals')state.preview=state.crystals;render();});}
-$('party-button').addEventListener('click',()=>{state.context='party';render();});$('solo-button').addEventListener('click',()=>{state.context='solo';render();});$('reset-button').addEventListener('click',()=>{state={...state,mastery:285,stigma:30,crystals:218,context:'party',gear:{},preview:218,node:null};render();});
-$('skill-grid').addEventListener('change',e=>{if(e.target.dataset.gear){state.gear[e.target.dataset.gear]=clamp(e.target.value,0,10);render();}});
-$('board-tabs').addEventListener('click',e=>{const b=e.target.closest('[data-board]');if(b){state.board=b.dataset.board;state.node=null;renderBoards(prep());}});
-$('board-grid').addEventListener('click',e=>{const b=e.target.closest('[data-node]');if(b){state.node=Number(b.dataset.node);renderBoards(prep());}});
-$('purchase-list').addEventListener('click',e=>{const b=e.target.closest('[data-purchase]');if(b){state.node=Number(b.dataset.purchase);renderBoards(prep());}});
-$('route-slider').addEventListener('input',e=>{state.preview=clamp(e.target.value,0,state.crystals);renderBoards(prep());});
-render();
+function renderSources(){
+  const d=data(),p=profile();const cards=[
+    ['Global client nodes','Board positions, costs, effects and skill names from Aion2Data Global client tables. Compare tooltips after a patch.',d.sources.nodes,'Open board data'],
+    ['Connected route & weights',state.class==='chanter'?'Healer skill and stat weights guide the generated connected route.':'The published early route is preserved; the continuation follows class skill and stat priorities.',d.sources.route,'Open class route'],
+    ['Specialty choices','Aion2Codex class guide PvE picks and option text; gear or Arcana can unlock later choices. Compare live tooltips.',`https://aion2codex.com/guides/${state.class}`,'Open specialties'],
+    ['Stigmas and skills','Global class skill and stigma effects; the four chosen slots prioritize this planner’s role.',`https://aion2.grimvane.app/companion/wiki/${state.class}-skills/`,'Open class skills'],
+    ['Macro setup','The in-game macro uses hotbar keys, up to four skills per stack and delays per step. The layouts are starting points.',`https://aion2.grimvane.app/companion/wiki/macros-guide/`,'Open macro guide'],
+    ['Class build context',`${p.name} is planned as ${p.role.toLowerCase()}. Compare alternate damage or support presets before swapping roles.`,`https://metabot.gg/en/aion-2/guides/class-builds-guide`,'Open all-class guide']
+  ];$('source-cards').innerHTML=cards.map(([title,body,url,label])=>`<div class="source-card"><b>${esc(title)}</b><p>${esc(body)}</p><a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${esc(label)} ↗</a></div>`).join('');
+}
+document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{state.tab=b.dataset.tab;render()}));
+$('class-buttons').addEventListener('click',e=>{const b=e.target.closest('[data-class]');if(!b)return;state.class=b.dataset.class;state.board='Nezekan';state.preview=account().crystals;state.node=null;render()});
+for(const [id,key,max] of [['mastery-input','mastery',462],['stigma-input','stigma',300],['crystal-input','crystals',570]])$(id).addEventListener('change',e=>{account()[key]=clamp(e.target.value,0,max);if(key==='crystals')state.preview=account().crystals;render()});
+for(const [id,ctx] of [['party-button','party'],['solo-button','solo']])$(id).addEventListener('click',()=>{account().context=ctx;render()});
+$('reset-button').addEventListener('click',()=>{state.accounts[state.class]=DEFAULT_ACCOUNT(state.class);state.preview=218;state.node=null;render()});
+for(const [id,key] of [['goal-target','goalTarget'],['goal-observed','goalObserved']])$(id).addEventListener('change',e=>{account()[key]=clamp(e.target.value,0,1000000000);render()});
+$('skill-grid').addEventListener('change',e=>{if(e.target.dataset.gear){account().gear[e.target.dataset.gear]=clamp(e.target.value,0,10);render()}});
+$('board-tabs').addEventListener('click',e=>{const b=e.target.closest('[data-board]');if(b){state.board=b.dataset.board;state.node=null;renderBoards(model())}});
+$('board-grid').addEventListener('click',e=>{const b=e.target.closest('[data-node]');if(b){state.node=Number(b.dataset.node);renderBoards(model())}});
+$('purchase-list').addEventListener('click',e=>{const b=e.target.closest('[data-purchase]');if(b){state.node=Number(b.dataset.purchase);renderBoards(model())}});
+$('route-slider').addEventListener('input',e=>{state.preview=clamp(e.target.value,0,account().crystals);renderBoards(model())});
+state.preview=account().crystals;render();

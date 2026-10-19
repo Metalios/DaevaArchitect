@@ -39,3 +39,27 @@
 .rotation-caveat{margin-top:18px}
 @media(max-width:850px){.macro-layout{grid-template-columns:1fr 1fr}.macro-script{grid-column:1/-1}}
 @media(max-width:660px){.rotation-hero{padding:21px}.rotation-hero h3{font-size:24px}.rotation-columns,.macro-layout{grid-template-columns:1fr}.macro-script{grid-column:auto}.manual-keys{grid-template-columns:1fr 1fr}}
+
+/* Eight-class controls and performance tracker */
+.class-picker{position:relative;z-index:2;margin-top:-28px;padding:16px;background:#0b2029;border:1px solid #42606a;border-radius:17px;box-shadow:var(--shadow)}
+.class-picker-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.class-buttons{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:7px}
+.class-buttons button{min-width:0;text-align:left;background:#102731;border:1px solid #36535e;border-radius:10px;color:#d3e6e7;padding:11px 10px}
+.class-buttons button.active{background:linear-gradient(145deg,#5d4528,#382c20);border-color:#deb675;box-shadow:inset 0 0 0 1px #d2aa6655;color:#ffe4b0}
+.class-buttons span,.class-buttons small{display:block;overflow:hidden;text-overflow:ellipsis}
+.class-buttons span{font-weight:800;font-size:13px}.class-buttons small{font-size:10px;color:#a9bec1;margin-top:3px;white-space:nowrap}
+.class-buttons button.active small{color:#f0c985}
+.controls{margin-top:12px}
+.goal-panel{display:grid;grid-template-columns:1.1fr 1fr .8fr;align-items:center;gap:20px;margin-top:15px;border-color:#746443;background:linear-gradient(110deg,#1e2c2c,#10262a)}
+.goal-panel h3{font-size:25px;margin:4px 0 7px}.goal-panel p{margin:0}.goal-inputs{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.goal-inputs label{font-size:11px;font-weight:800;color:#b2c9cb;letter-spacing:.04em}.goal-inputs span{display:block;margin-bottom:5px}
+.goal-inputs input{width:100%;background:#091a22;border:1px solid #45646c;border-radius:8px;padding:10px;color:#fff;font-size:17px;font-weight:700}
+.goal-status{color:#e2d5b9;font-size:13px}.goal-status b{color:#f2d091}
+#loadout-tags{display:flex;gap:7px;flex-wrap:wrap}
+.stigma-card .sub{max-width:600px;line-height:1.4}
+.stigma-card .spec-row{margin-top:12px}
+.macro-layout{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.macro-script{grid-column:auto}
+.purchase-list{max-height:510px}
+@media(max-width:1200px){.class-buttons{grid-template-columns:repeat(4,minmax(0,1fr))}.goal-panel{grid-template-columns:1fr 1fr}.goal-status{grid-column:1/-1}}
+@media(max-width:660px){.class-picker{margin-top:-22px;padding:10px}.class-buttons{grid-template-columns:repeat(2,minmax(0,1fr))}.goal-panel{grid-template-columns:1fr;padding:17px}.goal-status{grid-column:auto}.goal-inputs{grid-template-columns:1fr 1fr}.controls{margin-top:8px}}
