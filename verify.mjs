@@ -10,13 +10,24 @@ const titles = vm.runInNewContext(fs.readFileSync(new URL('titles.js', root), 'u
 const catalog = JSON.parse(fs.readFileSync(new URL('titles_catalog.json', root), 'utf8'));
 const routes = JSON.parse(fs.readFileSync(new URL('context_routes.json', root), 'utf8'));
 const azphel = JSON.parse(fs.readFileSync(new URL('azphel_data.json', root), 'utf8'));
+const unlocks = JSON.parse(fs.readFileSync(new URL('skill_unlocks.json', root), 'utf8'));
+const rewards = JSON.parse(fs.readFileSync(new URL('level_rewards.json', root), 'utf8'));
 const classes = ['templar','gladiator','assassin','ranger','sorcerer','spiritmaster','cleric','chanter'];
 const assert = (okay, message) => {if(!okay) throw new Error(message)};
+assert(Object.keys(rewards).length===45,'leveling: expected rewards for every level');
+for(let level=1;level<=45;level++){
+  const row=rewards[level],prior=rewards[level-1]||{mastery:0,stigma:0,slots:0,crystals:0};
+  assert(row&&['mastery','stigma','slots','crystals'].every(key=>Number.isInteger(row[key])&&row[key]>=prior[key]),`leveling: invalid reward row ${level}`);
+}
+assert(JSON.stringify(rewards[45])===JSON.stringify({mastery:203,stigma:29,slots:4,crystals:136}),'leveling: fresh 45 totals changed');
+assert([22,27,32,37].every((level,index)=>rewards[level].slots===index+1&&rewards[level-1].slots===index),'leveling: stigma gates changed');
 
 for(const slug of classes){
   const d=data[slug],p=profiles[slug],names=new Set(Object.values(d.skills).map(s=>s.name));
   assert(d&&p,`${slug}: missing data`);
   assert(d.boards.length===4&&Object.keys(d.skills).length===22,`${slug}: incomplete class tables`);
+  assert(Object.keys(unlocks[slug]||{}).length===22,`${slug}: expected 22 skill unlock levels`);
+  for(const name of names)assert(Number.isInteger(unlocks[slug][name])&&unlocks[slug][name]>=1&&unlocks[slug][name]<=45,`${slug}: invalid ${name} unlock level`);
   assert(typeof p.weave==='string'&&p.weave.length>0,`${slug}: missing held weave skill`);
   assert(names.has(p.weave),`${slug}: held weave skill is absent from the class data`);
   assert(!p.stacks.some(s=>s.key==='RMB'),`${slug}: right mouse must be free for the default Macro bind`);
