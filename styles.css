@@ -85,6 +85,16 @@
 .weave-setup p{flex:1 1 300px;margin:0;color:#c7dada}
 .weave-setup label{display:grid;gap:5px;font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:#a8c0c2;font-weight:800}
 .weave-setup select{background:#091b24;color:#f2f7f4;border:1px solid #557176;border-radius:8px;padding:8px;font-size:13px;letter-spacing:0;text-transform:none}
+.rhythm-heading{margin:23px 0 11px}
+.rhythm-heading h3{font:normal 24px Georgia,serif;margin:0 0 3px;color:#f1e3c8}
+.rhythm-heading p{font-size:13px;color:#aec5c7;margin:0}
+.rhythm-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.rhythm-card{border:1px solid #42626a;border-radius:12px;background:linear-gradient(145deg,#19383d,#0d222a);padding:17px;min-height:132px}
+.rhythm-card:first-child{border-color:#87c8b3;background:linear-gradient(145deg,#1d463f,#103036)}
+.rhythm-card span{display:block;color:#e0be78;font-size:10px;font-weight:900;letter-spacing:.14em;margin-bottom:7px}
+.rhythm-card strong{display:block;color:#f3f7eb;font:normal 21px Georgia,serif}
+.rhythm-card p{margin:8px 0 0;color:#bcd0d0;font-size:12px;line-height:1.4}
+@media(max-width:750px){.rhythm-grid{grid-template-columns:1fr}.rhythm-card{min-height:0}}
 
 /* Eight suggested manual hotkeys alongside the held Macro and filler */
 .hotbar-heading{display:flex;justify-content:space-between;align-items:end;gap:16px;margin:24px 0 12px}
