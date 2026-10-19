@@ -20,7 +20,13 @@ await choose('weapon','Anguish Longsword');
 if(await page.locator('[name="stoneSlots"]').inputValue()!=='3')throw Error('Epic weapon should show three Manastone sockets');
 if(!await page.locator('[name="theostone"]').count())throw Error('Epic weapon is missing Theostone engraving');
 if(process.env.STONE_EDITOR_SCREENSHOT)await page.locator('.gear-stones-editor').first().screenshot({path:process.env.STONE_EDITOR_SCREENSHOT});
-if(process.env.STONE_MOBILE_SCREENSHOT){await page.setViewportSize({width:390,height:844});await page.locator('.gear-stones-editor').first().screenshot({path:process.env.STONE_MOBILE_SCREENSHOT});await page.setViewportSize({width:1100,height:850})}
+for(const [width,screenshot] of [[390,process.env.STONE_MOBILE_SCREENSHOT],[320,process.env.STONE_NARROW_SCREENSHOT]]){
+  await page.setViewportSize({width,height:844});
+  const unit=await page.locator('.gear-stone-row:not([hidden])').first().evaluate(row=>{const select=row.querySelector('[name^="stoneUnit"]'),a=select.getBoundingClientRect(),b=row.getBoundingClientRect();return {width:a.width,right:a.right,rowRight:b.right}});
+  if(unit.width<76||unit.right>unit.rowRight-3)throw Error(`${width}px stone unit selector is clipped: ${JSON.stringify(unit)}`);
+  if(screenshot)await page.locator('.gear-stones-editor').first().screenshot({path:screenshot});
+}
+await page.setViewportSize({width:1100,height:850});
 await page.locator('[name="stoneKind0"]').selectOption('Superior');
 await page.locator('[name="stoneStat0"]').fill('Attack');
 await page.locator('[name="stoneValue0"]').fill('10');
