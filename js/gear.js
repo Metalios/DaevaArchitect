@@ -107,9 +107,10 @@ function renderGear(){
   $('gear-skill-summary').innerHTML=bonuses.length?bonuses.map(([name,levels])=>`<div class="gear-bonus"><span>${esc(name)}</span><b>+${levels}</b></div>`).join(''):'<p>No item skill levels recorded yet. Edit a slot and add the roll shown on your item.</p>';
   const fixed=gearFixedTotals();
   $('gear-fixed-stats').innerHTML=fixed.stats.length?`<p>Base stats from ${fixed.pieces} active piece${fixed.pieces===1?'':'s'}; personal rolls and upgrades excluded.</p>${fixed.stats.slice(0,9).map(stat=>`<div class="gear-bonus"><span>${esc(stat.name)}</span><b>+${Number(stat.value.toFixed(1)).toLocaleString()}${stat.unit}</b></div>`).join('')}`:'<p>Equip catalog items to see their known fixed stats here.</p>';
-  const a=account(),cp=Number(profile().kind==='healer'?a.gearCombatPower:a.goalObserved)||0,target=profile().kind==='healer'?0:Number(a.goalTarget)||0;
-  $('gear-cp-input').value=cp||'';
-  $('gear-cp-status').textContent=cp?`${cp.toLocaleString()} recorded CP${target?` · ${Math.max(0,target-cp).toLocaleString()} to your ${target.toLocaleString()} target`:''}`:'Enter the CP shown on your character sheet after equipping gear.';
+  const a=account(),healer=profile().kind==='healer',cp=Number(healer?a.gearCombatPower:a.goalObserved)||0,target=Number(healer?a.gearCpTarget:a.goalTarget)||0;
+  $('gear-cp-input').value=cp||'';$('gear-cp-target').value=target||'';
+  const percent=target?Math.round(cp/target*100):0,gap=Math.max(0,target-cp);
+  $('gear-cp-status').innerHTML=target?`<b>${cp.toLocaleString()} / ${target.toLocaleString()} CP · ${percent}% of target</b><span>${cp?gap?`${gap.toLocaleString()} CP to go`:`Target reached · ${Math.max(0,cp-target).toLocaleString()} CP above target`:'Enter your current in-game CP to measure the gap.'}</span><div class="progress" role="progressbar" aria-label="Combat Power target progress" aria-valuenow="${Math.min(100,percent)}" aria-valuemin="0" aria-valuemax="100"><span style="width:${Math.min(100,percent)}%"></span></div>`:'<span>Set a target and enter the CP shown on your character sheet.</span>';
 }
 function gearResults(){
   const slot=gearSlot(gearSlotId),type=gearAllowedType(slot),query=gearQuery.trim().toLocaleLowerCase();
@@ -158,6 +159,7 @@ function initGear(){
   $('gear-level-filter').addEventListener('change',e=>{gearLevelFilter=e.target.value;gearResults()});
   $('gear-faction-filter').addEventListener('change',e=>{gearFactionFilter=e.target.value;gearResults()});
   $('gear-cp-input').addEventListener('change',e=>{const a=account(),value=clamp(e.target.value,0,1000000000);if(profile().kind==='healer')a.gearCombatPower=value;else a.goalObserved=value;render()});
+  $('gear-cp-target').addEventListener('change',e=>{const a=account(),value=clamp(e.target.value,0,1000000000);if(profile().kind==='healer')a.gearCpTarget=value;else a.goalTarget=value;render()});
   $('gear-results').addEventListener('click',e=>{const result=e.target.closest('[data-gear-result]');if(result)selectGearResult(result.dataset.gearResult)});
   $('gear-remove').addEventListener('click',()=>{delete gearEquipment()[gearSlotId];$('gear-dialog').close();render()});
   $('gear-form').addEventListener('submit',e=>{
