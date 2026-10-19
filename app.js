@@ -1,22 +1,26 @@
 const $ = id => document.getElementById(id);
 const CLASS_ORDER = ['templar','gladiator','assassin','ranger','sorcerer','spiritmaster','cleric','chanter'];
 const BOARD_NAMES = ['Nezekan','Zikel','Vaizel','Triniel'];
+const FRESH_45 = {mastery:203,stigma:29,crystals:136};
+const ORIGINAL_TEMPLAR = {mastery:285,stigma:30,crystals:218};
 const TEMPLAR_STAGES = [
-  ['Judgment',8],['Vicious Strike',8],['Pummel',8],['Punishment',8],['Warding Strike',8],['Shield Smite',8],['Annihilate',8],['Poach',8],['Defiance',8],['Debilitating Smash',8],
-  ['Fury',10],['Insulting Roar',10],['Impact Hit',10],['Punishing Benediction',10],
-  ['Judgment',10],['Vicious Strike',10],['Pummel',10],['Punishment',10],['Warding Strike',10],['Shield Smite',10],['Annihilate',10],
-  ['Enhance Health',8],['Ironclad Defense',3],['Enhance Health',10],['Ironclad Defense',10],['Shield Rush',8],
+  ['Vicious Strike',10],['Pummel',10],
+  ['Judgment',8],['Punishment',8],['Warding Strike',8],['Annihilate',8],
+  ['Fury',10],['Punishing Benediction',10],['Insulting Roar',10],['Enhance Health',8],
+  ['Shield Smite',8],['Poach',8],['Defiance',8],['Debilitating Smash',8],
+  ['Judgment',10],['Punishment',10],['Warding Strike',10],['Annihilate',10],['Shield Smite',10],['Impact Hit',10],['Ironclad Defense',3],
+  ['Enhance Health',10],['Ironclad Defense',10],['Shield Rush',8],
   ['Block Pain',8],['Warding Shield',8],['Guarding Seal',8],['Survival Willpower',8],['Flash Rampage',8],
   ['Poach',10],['Defiance',10],['Debilitating Smash',10],['Shield Rush',10],['Block Pain',10],['Warding Shield',10],['Guarding Seal',10],['Survival Willpower',10],['Flash Rampage',10]
 ];
-const DEFAULT_ACCOUNT = (cls='templar') => ({mastery:285,stigma:30,crystals:218,context:'party',gear:{},goalTarget:['cleric','chanter'].includes(cls)?0:100000,goalObserved:0});
+const DEFAULT_ACCOUNT = (cls='templar') => ({...FRESH_45,context:'party',gear:{},goalTarget:['cleric','chanter'].includes(cls)?0:100000,goalObserved:0});
 let saved = {};
 try { saved = JSON.parse(localStorage.getItem('aion2-pathfinder-all-v1') || '{}') || {}; } catch (_) {}
 try {
   const old = JSON.parse(localStorage.getItem('aion2-templar-pathfinder-v1') || 'null');
   if (old && !saved.accounts?.templar) saved.accounts = {...saved.accounts,templar:{...DEFAULT_ACCOUNT(),...old}};
 } catch (_) {}
-let state = {class:CLASS_ORDER.includes(saved.class)?saved.class:'templar',accounts:saved.accounts||{},tab:'overview',board:'Nezekan',preview:218,node:null};
+let state = {class:CLASS_ORDER.includes(saved.class)?saved.class:'templar',accounts:saved.accounts||{},tab:'overview',board:'Nezekan',preview:FRESH_45.crystals,node:null};
 function account(){ if(!state.accounts[state.class]) state.accounts[state.class]=DEFAULT_ACCOUNT(state.class); return state.accounts[state.class]; }
 function data(){return DATA[state.class]}
 function profile(){return PROFILES[state.class]}
@@ -26,6 +30,7 @@ function save(){try{localStorage.setItem('aion2-pathfinder-all-v1',JSON.stringif
 function skillNames(){return Object.values(data().skills).map(s=>s.name)}
 function nodeMap(){return new Map(data().boards.flatMap(b=>b.nodes.map(n=>[n[0],{board:b.name,node:n}]))) }
 function masteryCost(rank){return rank<=4?1:rank<=7?2:4}
+function masteryTotal(rank){let points=0;for(let n=2;n<=rank;n++)points+=masteryCost(n);return points}
 function stigmaCost(rank){return rank<=5?1:rank<=10?2:rank<=15?4:8}
 function masteryStages(){
   if(state.class==='templar') return TEMPLAR_STAGES;
@@ -56,6 +61,10 @@ function render(){
   $('class-role').textContent=p.role;$('overview-role').textContent=p.role;
   $('class-buttons').innerHTML=CLASS_ORDER.map(c=>`<button type="button" data-class="${c}" class="${state.class===c?'active':''}" aria-pressed="${state.class===c}"><span>${PROFILES[c].name}</span><small>${PROFILES[c].role}</small></button>`).join('');
   $('mastery-input').value=a.mastery;$('stigma-input').value=a.stigma;$('crystal-input').value=a.crystals;
+  $('original-templar-button').hidden=state.class!=='templar';
+  $('fresh-45-button').classList.toggle('active',Object.entries(FRESH_45).every(([key,value])=>a[key]===value));
+  $('original-templar-button').classList.toggle('active',state.class==='templar'&&Object.entries(ORIGINAL_TEMPLAR).every(([key,value])=>a[key]===value));
+  $('templar-point-note').hidden=state.class!=='templar'||a.mastery!==285;
   for(const [id,ctx] of [['party-button','party'],['solo-button','solo']]){$(id).classList.toggle('active',a.context===ctx);$(id).setAttribute('aria-pressed',a.context===ctx)}
   document.querySelectorAll('[data-tab]').forEach(b=>{b.classList.toggle('active',b.dataset.tab===state.tab);b.setAttribute('aria-current',b.dataset.tab===state.tab?'page':'false')});
   document.querySelectorAll('.tab-panel').forEach(el=>el.classList.toggle('active',el.id===state.tab));
@@ -96,7 +105,7 @@ function renderMastery(m){
   $('skill-grid').innerHTML=order.map((name,i)=>{
     const base=m.mastery.levels[name]||1,board=m.effects.skills[name]||0,gear=a.gear[name]||0,eff=effective(name,m),spec=SPECS[state.class]?.[name],picks=specPicks(name,eff);
     const chips=spec?`<div class="specs"><div class="specs-title">${eff<8?'First specialty at Lv 8':`Equip now · ${picks.length} choice${picks.length===1?'':'s'}`}</div><div class="spec-row">${Object.entries(spec.options).map(([num,label])=>{const required=+num<=3?8:+num===4?12:16;return `<span class="spec ${picks.includes(+num)?'on':eff<required?'future':''}" title="Option ${num} · level ${required}">#${num} ${esc(label)}${eff<required?` · Lv ${required}`:''}</span>`}).join('')}</div></div>`:'';
-    return `<article class="skill-card ${i<4?'highlight':''}"><div class="skill-head"><div><h3>${esc(name)}</h3><div class="sub">Priority ${i+1}${spec?' · specialty choices':''}</div></div><div class="lv">Lv ${eff}</div></div><div class="build-parts"><span>Mastery ${base}</span><span>Board +${board}</span><span>Gear / Arcana +${gear}</span></div>${chips}<label class="gear-row">Extra gear / Arcana levels <input type="number" data-gear="${esc(name)}" min="0" max="10" value="${gear}" aria-label="Extra levels for ${esc(name)}"></label></article>`
+    return `<article class="skill-card ${i<4?'highlight':''}"><div class="skill-head"><div><h3>${esc(name)}</h3><div class="sub">Priority ${i+1}${spec?' · specialty choices':''}</div></div><div class="lv"><strong>Rank ${base}</strong><small>Effective Lv ${eff}</small></div></div><div class="build-parts"><span>${masteryTotal(base)} Mastery spent</span><span>Board +${board}</span><span>Gear / Arcana +${gear}</span></div>${chips}<label class="gear-row">Extra gear / Arcana levels <input type="number" data-gear="${esc(name)}" min="0" max="10" value="${gear}" aria-label="Extra levels for ${esc(name)}"></label></article>`
   }).join('');
 }
 function renderStigma(m){
@@ -135,6 +144,7 @@ function renderBoards(m){
 }
 function renderSources(){
   const d=data(),p=profile();const cards=[
+    ['Fresh Global 45 totals','The Global client leveling tables give 203 Mastery points, 29 Stigma points, four slots and 136 Daevanion crystals by level 45. Other rewards are additional.',`https://metabot.gg/en/aion-2/leveling`,'Open level table'],
     ['Global client nodes','Board positions, costs, effects and skill names from Aion2Data Global client tables. Compare tooltips after a patch.',d.sources.nodes,'Open board data'],
     ['Connected route & weights',state.class==='chanter'?'Healer skill and stat weights guide the generated connected route.':'The published early route is preserved; the continuation follows class skill and stat priorities.',d.sources.route,'Open class route'],
     ['Specialty choices','Aion2Codex class guide PvE picks and option text; gear or Arcana can unlock later choices. Compare live tooltips.',`https://aion2codex.com/guides/${state.class}`,'Open specialties'],
@@ -145,9 +155,13 @@ function renderSources(){
 }
 document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{state.tab=b.dataset.tab;render()}));
 $('class-buttons').addEventListener('click',e=>{const b=e.target.closest('[data-class]');if(!b)return;state.class=b.dataset.class;state.board='Nezekan';state.preview=account().crystals;state.node=null;render()});
+function useBudget(values){Object.assign(account(),values);state.preview=account().crystals;state.node=null;render()}
+$('fresh-45-button').addEventListener('click',()=>useBudget(FRESH_45));
+$('original-templar-button').addEventListener('click',()=>useBudget(ORIGINAL_TEMPLAR));
+$('add-eight-button').addEventListener('click',()=>useBudget({mastery:293}));
 for(const [id,key,max] of [['mastery-input','mastery',462],['stigma-input','stigma',300],['crystal-input','crystals',570]])$(id).addEventListener('change',e=>{account()[key]=clamp(e.target.value,0,max);if(key==='crystals')state.preview=account().crystals;render()});
 for(const [id,ctx] of [['party-button','party'],['solo-button','solo']])$(id).addEventListener('click',()=>{account().context=ctx;render()});
-$('reset-button').addEventListener('click',()=>{state.accounts[state.class]=DEFAULT_ACCOUNT(state.class);state.preview=218;state.node=null;render()});
+$('reset-button').addEventListener('click',()=>{state.accounts[state.class]=DEFAULT_ACCOUNT(state.class);state.preview=FRESH_45.crystals;state.node=null;render()});
 for(const [id,key] of [['goal-target','goalTarget'],['goal-observed','goalObserved']])$(id).addEventListener('change',e=>{account()[key]=clamp(e.target.value,0,1000000000);render()});
 $('skill-grid').addEventListener('change',e=>{if(e.target.dataset.gear){account().gear[e.target.dataset.gear]=clamp(e.target.value,0,10);render()}});
 $('board-tabs').addEventListener('click',e=>{const b=e.target.closest('[data-board]');if(b){state.board=b.dataset.board;state.node=null;renderBoards(model())}});
