@@ -1,7 +1,7 @@
 name: Validate Daeva Architect v2
 on:
   push:
-    branches: [v2]
+    branches: [v2, fix/v2-readability-icons]
   workflow_dispatch:
 permissions:
   contents: read
@@ -17,6 +17,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Inspect Wikily icon sources
+        run: python scripts/probe_wikily.py
       - name: Build static site
         run: python build.py
       - name: Verify game-data invariants
@@ -40,6 +42,13 @@ jobs:
           name: daeva-v2-build-preview
           path: dist/
           if-no-files-found: error
+      - name: Save source audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wikily-markup-audit
+          path: wikily_probe/
+          if-no-files-found: ignore
       - name: Save screenshots for review
         if: always()
         uses: actions/upload-artifact@v4
