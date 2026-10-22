@@ -34,10 +34,10 @@ try{
   // Advanced equipment details must not dominate the main screen.
   const advanced=page.locator('.v2-gear-advanced');
   assert.equal(await advanced.evaluate(el=>el.open),false);
-  await advanced.locator('summary').click();
+  await advanced.locator(':scope > summary').click();
   assert.equal(await advanced.evaluate(el=>el.open),true);
   assert.equal(await page.locator('#gear-arcana-grid').count(),1);
-  await advanced.locator('summary').click();
+  await advanced.locator(':scope > summary').click();
   await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
   await page.waitForFunction(()=>window.scrollY===0);
   fs.mkdirSync('v2-previews',{recursive:true});
