@@ -59,8 +59,15 @@ try{
   await page.locator('#mastery-input').fill('220');
   await page.locator('#mastery-input').press('Tab');
   assert.match(await page.locator('#v2-status').innerText(),/Following recommended/,width+': points marked custom');
+  assert.equal(await page.locator('#v2-stigma-list .v2-stigma-art img').count(),4,
+    width+': all four equipped Stigmas need their actual icons');
+  const stigmaArt=await page.locator('#v2-stigma-list .v2-stigma-art img').first().getAttribute('src');
+  assert.match(stigmaArt,/assets\.playnccdn\.com\/static-aion2-gamedata\/resources\/ICON_[A-Z]+_SKILL_\d+\.png/,
+    width+': Stigma image is not the official client icon');
   await page.locator('#v2-skill-list [data-v2-select-skill="Pummel"]').click();
   assert.equal(await page.locator('#v2-spec-panel [data-v2-spec]').count(),5);
+  assert.equal(await page.locator('#v2-spec-panel .v2-spec-option-art img').count(),5,
+    width+': all five Specialty effects need an illustrated skill icon');
   assert.match(await page.locator('#v2-spec-panel').innerText(),/MP consumed/);
   // Explicit rank change becomes customized; restore returns to recommended.
   await page.locator('#v2-skill-list [data-v2-rank="Pummel"][data-dir="-1"]').click();
