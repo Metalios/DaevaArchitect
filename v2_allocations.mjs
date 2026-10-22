@@ -8,11 +8,11 @@ const context={
  AZPHEL:read('azphel_data.json'),SPECS:read('specialties.json'),
  STIGMAS:read('stigmas.json'),SKILL_UNLOCKS:read('skill_unlocks.json'),
  LEVEL_REWARDS:read('level_rewards.json'),
- PROFILES:vm.runInNewContext(fs.readFileSync(new URL('js/profiles.js',import.meta.url),'utf8')+'\\nPROFILES'),
+ PROFILES:vm.runInNewContext(fs.readFileSync(new URL('js/profiles.js',import.meta.url),'utf8')+'\nPROFILES'),
  localStorage:{getItem:()=>null},gearSkillLevels:()=>({}),console
 };
 vm.createContext(context);
-vm.runInContext(app.slice(0,app.indexOf('function render(){'))+`
+vm.runInContext(app.slice(0,app.indexOf('function render(){'))+'\n'+app.slice(app.indexOf('function recommendedSpecPicks('),app.indexOf('function renderMastery('))+`
 globalThis.v2check={
  set:(cls,level,journey='leveling')=>{state.class=cls;const a=account();a.journey=journey;a.context='solo';a.leveling.level=level;return a},
  recommendation:()=>allocate(masteryStages(),budget('mastery'),masteryCost,skillNames(),1,masteryRankCap),
