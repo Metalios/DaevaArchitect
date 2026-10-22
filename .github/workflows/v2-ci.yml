@@ -19,6 +19,8 @@ jobs:
           node-version: '22'
       - name: Inspect Wikily icon sources
         run: python scripts/probe_wikily.py
+      - name: Import original AION 2 icon assets
+        run: python scripts/sync_wikily_icons.py --strict
       - name: Build static site
         run: python build.py
       - name: Verify game-data invariants
