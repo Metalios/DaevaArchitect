@@ -31,6 +31,17 @@ try{
   assert.equal(await page.locator('#board-grid .node').count(),89,width+': Nezekan shape mismatch');
   assert((await page.locator('#board-grid .node.recommended').count())>0,width+': missing recommendation overlay');
   assert.match(await page.locator('#v2-status').innerText(),/Following recommended/);
+  // Advanced equipment details must not dominate the main screen.
+  const advanced=page.locator('.v2-gear-advanced');
+  assert.equal(await advanced.evaluate(el=>el.open),false);
+  await advanced.locator('summary').click();
+  assert.equal(await advanced.evaluate(el=>el.open),true);
+  assert.equal(await page.locator('#gear-arcana-grid').count(),1);
+  await advanced.locator('summary').click();
+  await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
+  await page.waitForFunction(()=>window.scrollY===0);
+  fs.mkdirSync('v2-previews',{recursive:true});
+  await page.screenshot({path:'v2-previews/workspace-'+width+'.png',fullPage:true});
   // Inputs are not a build decision.
   await page.locator('#mastery-input').fill('220');
   await page.locator('#mastery-input').press('Tab');
@@ -56,8 +67,6 @@ try{
   await page.locator('#share-dialog').waitFor({state:'visible'});
   assert.equal(await page.locator('#share-dialog').evaluate(el=>el.open),true);
   await page.locator('#share-dialog-close').click();
-  fs.mkdirSync('v2-previews',{recursive:true});
-  await page.screenshot({path:'v2-previews/workspace-'+width+'.png',fullPage:true});
   // Leveling mode must keep the game's progression budgets and slot gates.
   await page.locator('#v2-stage').selectOption('leveling');
   await page.locator('#v2-level').fill('32');
