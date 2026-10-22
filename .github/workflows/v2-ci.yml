@@ -23,6 +23,7 @@ jobs:
         run: |
           node verify.mjs
           node audit_leveling.mjs
+          node v2_allocations.mjs
           node leveling_macro_smoke.mjs
       - name: Install headless browser
         run: |
