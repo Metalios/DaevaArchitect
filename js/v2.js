@@ -33,6 +33,8 @@ const boardControls=make('div','v2-board-controls',`
  <button type="button" id="v2-mark-obtained">Mark tile obtained</button>
  <button type="button" id="v2-zoom-minus" aria-label="Zoom out">−</button><span id="v2-zoom-label">40px</span><button type="button" id="v2-zoom-plus" aria-label="Zoom in">+</button><button type="button" id="v2-board-expand">Expand board</button>
  <p id="v2-board-notice" role="status"></p>`);
+const ariel=make('button','v2-ariel-pending','Ariel · pending');
+ariel.type='button';ariel.disabled=true;ariel.title='Ariel arrived in the October 21 Global update. Client-verified node positions, effects and separate currency data must be imported before this board is editable.';
 const modal=make('dialog','v2-comparison',`<div class="v2-compare-head"><h2>Your build vs. recommended</h2><button type="button" id="v2-comparison-close">✕</button></div><p>Compared at the same class, level, play context, and point totals. Equipment does not affect the recommended route.</p><div id="v2-comparison-body"></div><button type="button" id="v2-comparison-reset">Restore recommended allocations (keep gear)</button>`);modal.id='v2-comparison';
 const archetype=make('p','v2-archetype');
 const slim=make('div','v2-slim-heading',`<span id="v2-master-status"></span><button type="button" id="v2-master-restore">Restore ranks</button>`);
@@ -117,6 +119,9 @@ function sync(m){
  archetype.setAttribute('aria-label',PROFILES[state.class].name+' class and weapon');
  $('v2-context').querySelector('option[value=pvp]').disabled=isLeveling();
  $('board-grid').style.setProperty('--v2-node',zoom+'px');$('v2-zoom-label').textContent=zoom+'px';
+ // Ariel is a newly added separate PvE board. Show that it exists, but do
+ // not invent nodes, costs, or claim support without verified Global data.
+ if(!$('board-tabs').querySelector('.v2-ariel-pending'))$('board-tabs').append(ariel);
  m ||= model();skillsView(m);stigmasView(m);actionsView(m);
  const secondary=['rotation','titles','sources'].includes(state.tab);
  document.body.classList.toggle('v2-secondary',secondary);
