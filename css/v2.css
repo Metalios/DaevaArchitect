@@ -314,3 +314,14 @@
 @media(min-width:1100px) and (max-height:800px){
  .v2-column{max-height:calc(100dvh - 170px)}
 }
+
+/* Compact headers allow all four build systems to remain visible at 1280px. */
+@media(min-width:1100px) and (max-width:1699px){
+ .v2-center #mastery>.section-title{display:flex;flex-wrap:wrap;align-items:center;gap:3px;min-height:30px}
+ .v2-center #mastery>.section-title h2{font:normal 18px/1.15 Georgia,serif;white-space:nowrap}
+ .v2-center #mastery>.section-title>.tag{display:none}
+ .v2-center .v2-slim-heading{margin-left:auto}
+ .v2-center .v2-slim-heading span{display:none}
+ .v2-left #gear>.section-title h2{font-size:16px}
+ .v2-right #boards>.section-title h2{font-size:16px}
+}
