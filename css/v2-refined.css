@@ -1,0 +1,457 @@
+/* v2 legibility overhaul — intentionally scoped to the build workspace.
+   Based on the approved three-surface mock, not the legacy stacked tabs. */
+
+body.v2-active {
+  background: radial-gradient(ellipse at 55% 3%,#123051 0,#07172b 45%,#06111f 100%);
+  color:#e6f0fd;
+  font-size:14px;
+  line-height:1.45;
+}
+.v2-active main { padding:0 clamp(10px,1.4vw,26px) 42px }
+.v2-active .v2-planner { max-width:3300px }
+.v2-active .v2-workspace, .v2-active .v2-next,
+.v2-active .v2-gear-note, .v2-active .v2-nav { line-height:1.42 }
+.v2-active .v2-workspace small,
+.v2-active .v2-workspace p,
+.v2-active .v2-workspace label,
+.v2-active .v2-workspace summary { line-height:1.45 }
+.v2-active input,.v2-active select,.v2-active button {
+  accent-color:#d4b36e;
+}
+.v2-active button { transition:background-color .12s,border-color .12s }
+.v2-active button:disabled {cursor:not-allowed;opacity:.48}
+.v2-active .v2-quickbar {
+  min-height:77px;padding:11px 16px;gap:16px;
+  border-color:#416482;background:linear-gradient(115deg,#08182e,#102940 60%,#0a1c34);
+  box-shadow:0 7px 23px #0008;
+}
+.v2-active .v2-brand {min-width:234px}
+.v2-active .v2-brand b {font:normal 30px/1 Georgia,serif;color:#fff5e6}
+.v2-active .v2-brand small {font-size:10px;letter-spacing:.13em;color:#a0bed6;margin-top:8px}
+.v2-active .v2-quickbar label {font-size:11px;letter-spacing:.04em;color:#c2d5e8}
+.v2-active .v2-quickbar input,
+.v2-active .v2-quickbar select {
+  max-width:none;height:39px;padding:8px 11px;
+  font-size:13px;font-weight:750;background:#0b2842;color:#f4f7ff;
+  border:1px solid #5980a1;
+}
+.v2-active .v2-quickbar #v2-level {width:82px}
+.v2-active #v2-status {min-width:175px;gap:3px}
+.v2-active #v2-status b {font-size:13px}
+.v2-active #v2-status small {font-size:11px;color:#b2c8d9}
+.v2-active .v2-quickbar>button {padding:9px 16px;font-size:13px;min-height:40px}
+.v2-active .v2-nav {margin:8px 0;gap:7px}
+.v2-active .v2-nav button {
+  min-height:35px;padding:8px 15px;font-size:13px;
+  color:#d0e2f3;border-color:#416583;background:#10283f;
+}
+.v2-active .v2-nav button.active {background:#20527c;color:#fff;border-color:#78c3ff}
+.v2-active .controls {
+  min-height:84px;margin:6px 0 8px;gap:10px;padding:9px;
+  border-color:#3c6283;background:#0a2035;
+}
+.v2-active .controls .control {
+  padding:9px 14px;border-color:#335878;
+  background:linear-gradient(#102d48,#0a2239);
+}
+.v2-active .controls .control .label,
+.v2-active .controls .control label {
+  color:#d9e9f8;font-size:12px;font-weight:800;letter-spacing:.04em;
+}
+.v2-active .controls .control input[type=number] {
+  background:#0b2138;border:1px solid #6386a2;
+  border-radius:5px;min-height:34px;
+  font:800 22px/1.15 Georgia,serif;
+  padding:4px 9px;color:#f2f7ff;
+}
+.v2-active .controls .control .unit {font-size:12px;color:#bed1df}
+.v2-active .v2-workspace {
+  display:grid;
+  grid-template-columns:minmax(270px,.94fr) minmax(440px,1.6fr) minmax(610px,2.6fr);
+  gap:13px;align-items:start;
+}
+.v2-active .v2-column {min-width:0;gap:12px;align-content:start}
+.v2-active .v2-workspace .tab-panel {
+  overflow:visible;padding:13px;
+  background:linear-gradient(138deg,#11263c,#0b1b2f 58%,#0a192b);
+  border:1px solid #426181;border-radius:8px;
+  box-shadow:inset 0 1px 0 #7398b220,0 4px 16px #0004;
+}
+.v2-active .v2-workspace .section-title {
+  display:flex;align-items:center;flex-wrap:wrap;
+  gap:8px 12px;padding:4px 2px 13px;margin:0 0 13px;
+  border-bottom:1px solid #395c78;
+}
+.v2-active .v2-workspace .section-title h2 {
+  font:normal 22px/1.2 Georgia,serif;color:#f9dba5;
+  margin:0;
+}
+.v2-active .v2-workspace .section-title .tag {
+  padding:4px 9px;font-size:11px;color:#ffdfab;border:1px solid #805b42;
+}
+.v2-active .v2-workspace .section-title p {display:none}
+.v2-active .v2-slim-heading {margin-left:auto}
+.v2-active #v2-master-status,.v2-active .v2-stigma-status {
+  font-size:12px;color:#b3dfc5;font-weight:750;
+}
+.v2-active #v2-master-restore {font-size:12px;padding:6px 10px}
+.v2-active .v2-archetype {
+  display:flex;align-items:center;gap:10px;color:#f9ddb0;
+  font-size:13px;margin:8px 0 12px;
+}
+.v2-active .v2-class-emblem {
+  width:48px;height:48px;object-fit:contain;flex:none;
+  border-radius:8px;background:#0a263d;border:1px solid #406587;
+  padding:3px;
+}
+.v2-active .v2-archetype span {display:grid;gap:2px;min-width:0}
+.v2-active .v2-archetype b {font-size:15px;color:#f6dfb4}
+.v2-active .v2-archetype small {font-size:12px;color:#b7cadb;font-weight:600}
+.v2-active .v2-left .gear-intro {padding:11px;margin-bottom:10px}
+.v2-active .v2-left #gear-class-heading {font-size:18px;line-height:1.28}
+.v2-active .v2-left .gear-intro p,.v2-active .v2-left .gear-doll-tip {
+  font-size:12px;color:#b5cee4;line-height:1.45;
+}
+.v2-active .v2-left .gear-paperdoll {
+  padding:13px;box-shadow:inset 0 0 40px #0005;
+  background:radial-gradient(circle at 50% 35%,#234462,#0a1c31 65%);
+}
+.v2-active .v2-left .gear-paperdoll-head {
+  margin-bottom:12px;color:#d5e5fa;font-size:12px;
+}
+.v2-active .v2-left .gear-summary {
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:7px;
+}
+.v2-active .v2-left .gear-summary>div {
+  border:1px solid #416584;background:#112d45;padding:8px;text-align:center;
+}
+.v2-active .v2-left .gear-summary strong {font-size:21px;color:#ffdc99}
+.v2-active .v2-left .gear-summary span {font-size:11px;color:#c1d1df}
+.v2-active .v2-left .gear-tile {
+  width:60px;height:60px;border-color:#547a9d;
+}
+.v2-active .v2-left .gear-tile-slot-label {
+  font-size:10px;color:#e5f2fe;background:#081a2ac9;
+}
+.v2-active .v2-left .gear-inventory-tiles,
+.v2-active .v2-left .gear-inspect-tiles {grid-template-columns:repeat(2,60px);gap:6px}
+.v2-active .v2-left .gear-inventory-backdrop {min-height:350px}
+.v2-active .v2-left .gear-figure {min-height:260px}
+.v2-active .v2-left .gear-paperdoll .gear-view-switch button {
+  padding:7px 10px;font-size:12px;
+}
+.v2-active .v2-left .gear-inspect-layout .gear-inspect-center b {font-size:16px}
+.v2-active .v2-left .gear-inspect-layout .gear-inspect-center small {font-size:12px}
+.v2-active .v2-gear-advanced {
+  border:1px solid #426683;background:#0c273e;border-radius:6px;
+}
+.v2-active .v2-gear-advanced>summary {
+  padding:12px;color:#f5d699;font-size:13px;font-weight:750;
+}
+.v2-active .v2-gear-advanced[open]>summary {border-bottom:1px solid #446584}
+.v2-active .v2-gear-advanced .panel {font-size:13px}
+.v2-active .v2-mastery-search input,
+.v2-active #mastery-search {
+  min-height:37px;font-size:13px;
+}
+.v2-active .v2-center .mastery-search input {
+  padding:9px 11px;border-color:#557c9f;font-size:13px;color:#e8f5ff;
+}
+.v2-active .v2-skill-tabs {
+  display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:9px 0 12px;
+}
+.v2-active .v2-skill-tabs button {
+  min-height:35px;padding:8px 13px;border:1px solid #466783;border-radius:5px;
+  color:#d7e9fa;background:#142f48;font-size:13px;font-weight:800;
+}
+.v2-active .v2-skill-tabs button.active {
+  border-color:#7ac6ff;background:linear-gradient(#31679b,#164167);
+  color:#f8fdff;
+}
+.v2-active .v2-skill-tabs span {font-size:11px;color:#b3cade;flex:1;min-width:150px}
+.v2-active .v2-editor-title {
+  grid-template-columns:minmax(0,1fr) 48px 48px 66px;
+  gap:6px;padding:6px 7px;
+  color:#c8d7e9;font-size:11px;text-transform:uppercase;letter-spacing:.02em;
+}
+.v2-active .v2-editor-title b {font-size:12px}
+.v2-active .v2-skill-list {
+  max-height:380px;min-height:190px;overflow-y:auto;border:1px solid #3d5c7a;
+  background:#091e33;scrollbar-color:#6183a1 #0d2133;
+}
+.v2-active .v2-skill {
+  grid-template-columns:minmax(0,1fr) 124px 48px 48px 66px;
+  gap:6px;padding:7px 9px;min-height:61px;
+  border-color:#274969;
+}
+.v2-active .v2-skill:nth-child(2n) {background:#102c44}
+.v2-active .v2-skill.chosen {background:#1a456a;box-shadow:inset 4px 0 #8bd2ff}
+.v2-active .v2-skill-label {gap:10px}
+.v2-active .v2-skill-label .game-icon,
+.v2-active .v2-skill-label img {
+  width:43px;height:43px;flex:none;border-radius:6px;
+  border:1px solid #ab8e58;
+}
+.v2-active .v2-skill-label b {
+  font-size:14px;font-weight:800;line-height:1.25;color:#f5f9ff;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.v2-active .v2-skill-label small {
+  font-size:11px;color:#b4c7db;margin-top:3px;line-height:1.25;
+}
+.v2-active .v2-rank {gap:5px;justify-content:center}
+.v2-active .v2-rank button,
+.v2-active .v2-stigma-rank button {
+  width:30px;height:32px;border-radius:5px;border-color:#6b8fb0;
+  background:#1b4565;color:#fff;font-size:20px;
+}
+.v2-active .v2-rank button:hover:enabled,
+.v2-active .v2-stigma-rank button:hover:enabled {
+  background:#2e6a95;border-color:#a3d9ff;
+}
+.v2-active .v2-rank b {font-size:16px;color:#f5d79c}
+.v2-active .v2-rank b small {font-size:11px;color:#bbcfe2}
+.v2-active .v2-green,.v2-active .v2-effective {font-size:14px}
+.v2-active .v2-green {color:#8bebae}
+.v2-active .v2-effective {color:#ffdd99}
+.v2-active .v2-spec-title {
+  margin-top:13px;padding:11px 4px;gap:8px 10px;border-color:#426080;
+}
+.v2-active .v2-spec-title b {font:normal 20px Georgia,serif;color:#f5d8a4}
+.v2-active .v2-spec-title span {font-size:12px;color:#d4e2ee}
+.v2-active .v2-spec-title button {padding:6px 10px;font-size:12px}
+.v2-active .v2-spec-slots {gap:8px;margin:10px 0 11px}
+.v2-active .v2-spec-slots>div {
+  min-height:84px;padding:9px;border-color:#507495;background:#143550;
+}
+.v2-active .v2-spec-slots small {font-size:11px;color:#b5d8f6}
+.v2-active .v2-specialty-equipped {
+  display:flex;align-items:center;gap:7px;min-width:0;
+}
+.v2-active .v2-spec-slots strong {font-size:12px;line-height:1.3;color:#f0f5fb}
+.v2-active .v2-spec-options {
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:7px;max-height:300px;overflow-y:auto;padding:2px;
+}
+.v2-active .v2-spec-options button {
+  min-height:66px;padding:9px;gap:9px;
+  border-color:#446b8c;background:#0d2a43;color:#e5f3ff;
+}
+.v2-active .v2-spec-options button.chosen {
+  background:#284052;border-color:#e3bd71;box-shadow:inset 3px 0 #e3bd71;
+}
+.v2-active .v2-spec-options button b {font-size:13px;line-height:1.28;color:#f2f8ff}
+.v2-active .v2-spec-options button small {font-size:11px;color:#c0d0df;line-height:1.3}
+.v2-active .v2-specialty-choice-art {position:relative;flex:none;display:grid;place-items:center}
+.v2-active .v2-spec-option-art,.v2-active .v2-spec-slot-art {
+  display:grid;place-items:center;overflow:hidden;width:42px;height:42px;
+  flex:none;border:1px solid #987c4d;border-radius:6px;background:#182b3b;
+}
+.v2-active .v2-spec-option-art img,.v2-active .v2-spec-slot-art img,
+.v2-active .v2-stigma-art img,.v2-active .v2-skill-art img {
+  width:100%;height:100%;object-fit:cover;
+}
+.v2-active .v2-spec-slot-art {width:30px;height:30px}
+.v2-active .v2-spec-id {position:absolute;right:-3px;bottom:-5px;width:17px;height:17px;font-size:10px;z-index:2}
+.v2-active .v2-advanced-skills summary {font-size:12px;padding:9px 10px}
+.v2-active .v2-stigmas>p {font-size:12px;line-height:1.4;color:#bcd0e1;margin:4px 0 12px}
+.v2-active #v2-stigma-list {gap:9px}
+.v2-active .v2-stigma-item {
+  padding:12px;min-height:160px;border-color:#4d708c;
+  background:linear-gradient(#14334e,#0f2840);border-radius:6px;
+}
+.v2-active .v2-stigma-identity {
+  display:flex;align-items:center;gap:9px;min-width:0;
+}
+.v2-active .v2-stigma-identity label {flex:1;min-width:0;gap:5px;font-size:12px;color:#b7d1e8;font-weight:750}
+.v2-active .v2-stigma-identity select {
+  min-height:38px;padding:8px 9px;font-size:13px;font-weight:750;
+  border-color:#5f86a7;color:#f2f8fc;background:#0b2238;
+}
+.v2-active .v2-stigma-art {
+  width:49px;height:49px;flex:none;display:grid;place-items:center;
+  border-radius:6px;border:1px solid #b4945b;background:#092138;
+  overflow:hidden;
+}
+.v2-active .v2-stigma-rank {margin:12px 0 7px}
+.v2-active .v2-stigma-rank b {font-size:16px;color:#f7d79c}
+.v2-active .v2-stigma-rank small {font-size:12px;color:#a7c4da}
+.v2-active .v2-stigma-effect {font-size:12px;color:#bfdaed;line-height:1.35}
+.v2-active #v2-stigma-reset {font-size:12px;padding:9px 12px;border-color:#5a7a9b;margin-top:11px}
+.v2-active .v2-right .board-tabs {gap:7px;margin-bottom:12px}
+.v2-active .v2-right .board-tabs button {
+  padding:10px 14px;font-size:13px;min-height:54px;border-radius:5px;
+  background:#12304a;border-color:#496983;color:#dbeaf6;
+}
+.v2-active .v2-right .board-tabs button.active {background:#285987;border-color:#8acbff;color:#fff}
+.v2-active .v2-right .board-tabs small {font-size:11px;color:#c4d4df;margin-top:3px}
+.v2-active .v2-board-controls {
+  gap:8px;padding:10px;border-color:#496989;margin-bottom:11px;
+}
+.v2-active .v2-board-callout {flex:1 1 210px}
+.v2-active .v2-board-callout b {font-size:14px;color:#f5d89e}
+.v2-active .v2-board-callout span {font-size:11px;color:#b7cbdb}
+.v2-active .v2-board-controls button {
+  min-height:34px;padding:7px 10px;font-size:12px;border-color:#5b84a5;
+}
+.v2-active #v2-board-toggle {background:linear-gradient(#e6bd72,#b78b44);border-color:#ffe0a5;color:#1c2530}
+.v2-active #v2-zoom-label,.v2-active #v2-board-notice {font-size:12px}
+.v2-active .v2-right .board-layout {
+  grid-template-columns:minmax(0,1fr) minmax(220px,250px);
+  align-items:start;gap:12px;
+}
+.v2-active .v2-right .board-map-head {padding:10px 9px}
+.v2-active .v2-right #board-map-title {font-size:16px;color:#efd2a0}
+.v2-active .v2-right #board-map-progress {font-size:12px;color:#c9d6e6}
+.v2-active .v2-right .board-legend {gap:11px;color:#b7d3e7;font-size:12px}
+.v2-active .v2-right .board-scroll {
+  padding:18px;min-height:525px;max-height:715px;
+  border-color:#496888;background:
+  radial-gradient(circle at 50% 48%,#112f47,#091b2f 74%);
+  scrollbar-color:#6585a7 #10233a;
+}
+.v2-active .v2-right .board-grid {
+  grid-template-columns:repeat(var(--v2-grid-columns,15),var(--v2-node,44px));
+  grid-template-rows:repeat(var(--v2-grid-rows,15),var(--v2-node,44px));
+  gap:4px;margin:0 auto;
+}
+.v2-active .v2-right .node {
+  width:var(--v2-node,44px);height:var(--v2-node,44px);
+  border-radius:5px;border-color:#426887;font-size:12px;font-weight:850;
+  color:#bed2e2;background:#132a40;overflow:visible;
+}
+.v2-active .v2-right .node.stat {font-size:11px;font-weight:800}
+.v2-active .v2-right .node.planned {background:#173f58;border-color:#72c6ed}
+.v2-active .v2-right .node.recommended {outline:1px solid #e6c079;outline-offset:-3px}
+.v2-active .v2-right .node.obtained {border-color:#f3cf75;background:#715329}
+.v2-active .v2-right .node-game-icon {object-fit:cover;border-radius:4px;max-width:100%;max-height:100%}
+.v2-active .v2-right .board-side .panel {
+  padding:13px;background:#112b41;border-color:#3c5c79;
+}
+.v2-active .v2-right .board-side h3 {
+  font:normal 17px Georgia,serif;color:#f0d3a3;
+  margin:0 0 10px;
+}
+.v2-active .v2-right .board-side,
+.v2-active .v2-right .board-side small,
+.v2-active .v2-right .board-side p {font-size:12px;color:#d1e1ef;line-height:1.45}
+.v2-active .v2-right .selected-node .selected-icon {
+  width:62px;height:62px;border-color:#d3b376;
+}
+.v2-active .v2-right .selected-node .selected-icon img {width:54px;height:54px}
+.v2-active .v2-right .board-effect-list,.v2-active .v2-right .purchase-list {
+  max-height:230px;scrollbar-color:#6289a8 #172f43;
+}
+.v2-active .v2-right .purchase {font-size:12px;line-height:1.4;min-height:42px}
+.v2-active .v2-right .purchase small {font-size:11px}
+.v2-active .v2-right .board-icon-credit,.v2-active .v2-right .route-footnote {font-size:11px}
+.v2-active .v2-footer {gap:12px;margin-top:14px}
+.v2-active .v2-next {gap:9px}
+.v2-active .v2-next-heading {flex-basis:210px;padding:14px;background:#132e48;border-color:#426a8b}
+.v2-active .v2-next-heading b {font:normal 20px Georgia,serif;color:#f5d99f}
+.v2-active .v2-next-heading small {font-size:12px;color:#c2d2df}
+.v2-active .v2-next button {
+  min-height:85px;background:#13334f;border-color:#4b7293;padding:12px;gap:11px;
+}
+.v2-active .v2-next button em {width:30px;height:30px;font-size:14px}
+.v2-active .v2-next button b {font-size:14px;color:#f0f5fd}
+.v2-active .v2-next button small {font-size:12px;color:#b5ccdf}
+.v2-active .v2-gear-note {padding:12px;border-color:#476988;background:#122b42}
+.v2-active .v2-gear-note span {font-size:12px}
+.v2-active .v2-gear-note button {min-height:34px;font-size:13px}
+.v2-active .v2-full-overview summary {font-size:13px;padding:10px 14px}
+.v2-active .v2-comparison {font-size:14px}
+.v2-active .game-icon .game-icon-fallback {font-size:14px}
+
+/* Laptop sizes keep the three editing surfaces together, with independent
+   content scrolling instead of reducing everything to unreadable 9px text. */
+@media(min-width:1100px) and (max-width:1749px){
+  .v2-active .v2-workspace {
+    grid-template-columns:minmax(208px,.72fr) minmax(355px,1.23fr) minmax(490px,1.86fr);
+    gap:9px;
+  }
+  .v2-active .v2-column {max-height:calc(100dvh - 205px);overflow-y:auto;scrollbar-color:#527494 #0b2338}
+  .v2-active .v2-workspace .tab-panel {padding:10px;overflow:visible}
+  .v2-active .v2-right .board-layout {grid-template-columns:minmax(0,1fr)}
+  .v2-active .v2-right .board-scroll {min-height:380px;max-height:calc(100dvh - 450px);padding:10px}
+  .v2-active .v2-right .board-side {display:block}
+  .v2-active .v2-skill {
+    grid-template-columns:minmax(0,1fr) 99px 35px 35px 52px;gap:3px;padding:6px 5px;
+  }
+  .v2-active .v2-skill-label .game-icon,
+  .v2-active .v2-skill-label img {width:35px;height:35px}
+  .v2-active .v2-skill-label {gap:5px}
+  .v2-active .v2-skill-label b {font-size:12px}
+  .v2-active .v2-skill-label small {font-size:10px}
+  .v2-active .v2-editor-title {grid-template-columns:minmax(0,1fr) 35px 35px 52px;font-size:10px}
+  .v2-active .v2-rank {gap:2px}
+  .v2-active .v2-rank button {width:23px;height:29px;font-size:17px}
+  .v2-active .v2-rank b {font-size:13px}
+  .v2-active .v2-rank b small {font-size:10px}
+  .v2-active .v2-green,.v2-active .v2-effective {font-size:12px}
+  .v2-active .v2-spec-options {grid-template-columns:1fr;max-height:280px}
+  .v2-active .v2-spec-slots {grid-template-columns:1fr;max-height:180px;overflow:auto}
+  .v2-active #v2-stigma-list {grid-template-columns:1fr}
+  .v2-active .v2-stigma-item {min-height:130px}
+  .v2-active .v2-next-heading {flex-basis:170px}
+  .v2-active .v2-brand {min-width:205px}
+  .v2-active .v2-quickbar {gap:9px}
+  .v2-active .v2-board-controls {gap:5px}
+  .v2-active .v2-board-controls button {padding:6px 8px}
+  .v2-active .v2-board-callout {flex-basis:150px}
+  .v2-active .v2-workspace .section-title h2 {font-size:19px}
+  .v2-active .v2-stigma-status {font-size:11px}
+  .v2-active .v2-right .board-tabs button {padding:7px 9px;font-size:12px}
+}
+
+/* Tablet / portrait stacks the areas; nothing drops below a readable 12px.
+   The exact node layout pans inside the canvas instead of being stretched. */
+@media(max-width:1099px){
+  .v2-active .v2-workspace {display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+  .v2-active .v2-right {grid-column:auto}
+  .v2-active .v2-column {overflow:visible;max-height:none}
+  .v2-active .v2-right .board-layout {grid-template-columns:minmax(0,1fr) minmax(190px,230px)}
+  .v2-active .v2-right .board-scroll {max-height:690px}
+  .v2-active .v2-brand {flex-basis:100%}
+  .v2-active #v2-status {margin-left:0}
+  .v2-active .v2-spec-options {grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:690px){
+  .v2-active main {padding:0 8px 32px}
+  .v2-active .v2-quickbar {padding:11px;gap:8px}
+  .v2-active .v2-quickbar label {flex:1 0 36%;font-size:11px}
+  .v2-active .v2-quickbar label select {width:100%}
+  .v2-active .v2-workspace .tab-panel {padding:10px}
+  .v2-active .v2-skill {
+    grid-template-columns:minmax(0,1fr) 99px 27px 27px 47px;gap:3px;
+  }
+  .v2-active .v2-skill-label b {font-size:12px}
+  .v2-active .v2-skill-label small {font-size:10px}
+  .v2-active .v2-skill-label .game-icon {width:33px;height:33px}
+  .v2-active .v2-rank button {width:22px;height:29px}
+  .v2-active .v2-green,.v2-active .v2-effective {font-size:12px}
+  .v2-active .v2-editor-title {grid-template-columns:minmax(0,1fr) 27px 27px 47px}
+  .v2-active .v2-spec-options {grid-template-columns:1fr}
+  .v2-active .v2-spec-slots {grid-template-columns:1fr}
+  .v2-active #v2-stigma-list {grid-template-columns:1fr}
+  .v2-active .v2-right .board-layout {grid-template-columns:minmax(0,1fr)}
+  .v2-active .v2-right .board-side {display:block}
+  .v2-active .v2-next {flex-direction:column}
+  .v2-active .v2-next-heading {flex-basis:auto}
+  .v2-active .v2-next button {min-height:68px}
+  .v2-active .v2-right .board-tabs {overflow-x:auto}
+  .v2-active .v2-right .board-scroll {min-height:400px}
+  .v2-active .v2-brand b {font-size:28px}
+}
+@media(min-width:2650px){
+  .v2-active {font-size:16px}
+  .v2-active .v2-workspace {gap:16px}
+  .v2-active .v2-skill-label b {font-size:15px}
+  .v2-active .v2-skill-label small {font-size:12px}
+  .v2-active .v2-workspace .section-title h2 {font-size:24px}
+  .v2-active .v2-right .board-side {font-size:14px}
+  .v2-active .v2-next button small {font-size:13px}
+  .v2-active .v2-right .board-scroll {min-height:780px}
+  .v2-active .v2-right .board-grid {gap:5px}
+}
