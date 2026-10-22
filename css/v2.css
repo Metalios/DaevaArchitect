@@ -395,3 +395,78 @@
  .v2-specialty-equipped{gap:4px}
  .v2-spec-slots small{font-size:8px}
 }
+
+
+/* v2 readability pass (2026-10-22): restore the visual hierarchy from the
+   approved mock; avoid microtype in the functional workspace. */
+.v2-active .v2-planner{font-size:14px;line-height:1.5}
+.v2-active .v2-brand small,.v2-active .v2-quickbar label,
+.v2-active .v2-nav button,.v2-active .control label,.v2-active .control .label{font-size:12px}
+.v2-active .v2-quickbar input,.v2-active .v2-quickbar select{font-size:14px;min-height:39px;max-width:200px}
+.v2-active .v2-quickbar>button{font-size:13px;min-height:39px}
+.v2-active #v2-status b{font-size:13px}
+.v2-active #v2-status small,.v2-active .control .unit{font-size:12px}
+.v2-active .v2-workspace .section-title h2{font-size:21px;line-height:1.3}
+.v2-active .v2-workspace .tab-panel{padding:14px;border-color:#4b6b8a}
+.v2-active .v2-skill-label b{font-size:14px;white-space:normal;line-height:1.3}
+.v2-active .v2-skill-label small{font-size:11px;white-space:normal;line-height:1.3}
+.v2-active .v2-skill{min-height:65px;gap:9px}
+.v2-active .v2-skill-label img,.v2-active .v2-skill-art{width:42px;height:42px;flex-shrink:0}
+.v2-active .v2-editor-title,.v2-active .v2-rank b small,
+.v2-active .v2-slim-heading span{font-size:11px}
+.v2-active .v2-effective,.v2-active .v2-green{font-size:13px}
+.v2-active .v2-skill-list{max-height:435px}
+.v2-active .v2-spec-title b{font-size:19px}
+.v2-active .v2-spec-title span,.v2-active .v2-spec-title button{font-size:12px}
+.v2-active .v2-spec-slots>div{min-height:86px;padding:9px}
+.v2-active .v2-spec-slots small{font-size:11px}
+.v2-active .v2-spec-slots strong{font-size:13px;line-height:1.42;overflow-wrap:anywhere}
+.v2-active .v2-spec-options{max-height:290px;gap:8px}
+.v2-active .v2-spec-options button{min-height:71px;padding:9px;gap:10px}
+.v2-active .v2-spec-options button b{font-size:13px;line-height:1.4}
+.v2-active .v2-spec-options button small{font-size:11px;line-height:1.4}
+.v2-active .v2-stigmas>p{font-size:13px;line-height:1.5}
+.v2-active #v2-stigma-list{gap:10px}
+.v2-active .v2-stigma-item{min-height:143px;padding:12px}
+.v2-active .v2-stigma-item label{font-size:12px}
+.v2-active .v2-stigma-item select{font-size:13px;min-height:37px}
+.v2-active .v2-stigma-rank b{font-size:15px}
+.v2-active .v2-stigma-rank small,.v2-active .v2-stigma-effect{font-size:12px;line-height:1.4}
+.v2-active .v2-stigma-rank button{width:32px;height:32px}
+.v2-active .v2-stigma-status,.v2-active #v2-stigma-reset{font-size:12px}
+.v2-active .v2-board-callout b{font-size:14px}
+.v2-active .v2-board-callout span,.v2-active .v2-board-controls button,
+.v2-active .v2-board-tabs small{font-size:12px}
+.v2-active .v2-right .board-tabs button{font-size:13px;padding:10px 12px}
+.v2-active .v2-right .board-tabs small{font-size:11px}
+.v2-active .v2-right .board-side h3{font-size:17px}
+.v2-active .v2-next-heading b{font-size:19px}
+.v2-active .v2-next-heading small,.v2-active .v2-next button small,
+.v2-active .v2-gear-note span{font-size:12px;line-height:1.45}
+.v2-active .v2-left .gear-tile-slot-label{font-size:10px}
+.v2-active .v2-left .gear-intro p,.v2-active .v2-left .gear-slot-copy b,
+.v2-active .v2-left .gear-slot-copy small,.v2-active .v2-left .gear-slot-copy em{font-size:12px}
+.v2-active .v2-left .v2-gear-advanced summary{font-size:13px}
+@media(min-width:1700px){
+ .v2-active .v2-workspace{grid-template-columns:minmax(300px,.9fr) minmax(530px,1.6fr) minmax(770px,2.4fr);gap:14px}
+ .v2-active .v2-column{gap:12px}
+ .v2-active .v2-right .board-layout{grid-template-columns:minmax(0,1fr) minmax(240px,280px)}
+}
+@media(min-width:1100px) and (max-width:1699px){
+ .v2-active .v2-workspace{grid-template-columns:minmax(215px,.76fr) minmax(360px,1.25fr) minmax(485px,1.8fr)}
+ .v2-active .v2-column{max-height:calc(100dvh - 195px)}
+ .v2-active .v2-skill{grid-template-columns:minmax(100px,1fr) 99px 30px 30px 44px;min-height:61px;gap:4px}
+ .v2-active .v2-skill-label b{font-size:12px}
+ .v2-active .v2-skill-label small{font-size:10px}
+ .v2-active .v2-skill-label img,.v2-active .v2-skill-art{width:32px;height:32px}
+ .v2-active .v2-spec-options{max-height:270px}
+ .v2-active .v2-spec-slots{grid-template-columns:1fr}
+ .v2-active .v2-spec-slots>div{min-height:54px}
+ .v2-active #v2-stigma-list{grid-template-columns:1fr}
+ .v2-active .v2-right .board-layout{grid-template-columns:1fr}
+}
+@media(max-width:1099px){
+ .v2-active .v2-workspace{grid-template-columns:1fr}
+ .v2-active .v2-spec-options{grid-template-columns:1fr}
+ .v2-active .v2-stigma-item{min-height:130px}
+}
