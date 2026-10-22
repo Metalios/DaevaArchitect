@@ -31,3 +31,10 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Exercise v2 interface at three resolutions
         run: node v2_smoke.mjs
+      - name: Save screenshots for review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: daeva-v2-workspace-previews
+          path: v2-previews/*.png
+          if-no-files-found: ignore
