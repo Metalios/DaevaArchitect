@@ -465,3 +465,17 @@ body.v2-active .v2-right .board-map,
 body.v2-active .v2-workspace .v2-column {min-width:0;max-width:100%}
 body.v2-active .v2-right .board-scroll {overflow:auto}
 body.v2-active #v2-workspace {min-width:0;max-width:100%}
+
+/* Prevent recommendation cards from forcing the mobile document to 1100px.
+   This is a responsive reflow, not an overflow clipping workaround. */
+@media screen and (max-width:690px){
+  body.v2-active .v2-footer{display:grid;grid-template-columns:minmax(0,1fr);max-width:100%;width:100%}
+  body.v2-active .v2-footer .v2-next{
+    display:grid;grid-template-columns:minmax(0,1fr);min-width:0;
+    width:100%;max-width:100%;gap:8px;
+  }
+  body.v2-active .v2-footer .v2-next>*{width:100%;min-width:0;max-width:100%}
+  body.v2-active .v2-footer .v2-gear-note,
+  body.v2-active .v2-footer .v2-full-overview {width:100%;min-width:0;max-width:100%}
+  body.v2-active .v2-footer .v2-next button{min-height:68px;flex:initial}
+}
