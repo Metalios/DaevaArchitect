@@ -1,0 +1,32 @@
+name: Validate Daeva Architect v2
+on:
+  push:
+    branches: [v2]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build static site
+        run: python build.py
+      - name: Verify game-data invariants
+        run: |
+          node verify.mjs
+          node audit_leveling.mjs
+          node leveling_macro_smoke.mjs
+      - name: Install headless browser
+        run: |
+          npm install --no-save playwright@1.56.0
+          npx playwright install --with-deps chromium
+      - name: Exercise v2 interface at three resolutions
+        run: node v2_smoke.mjs
