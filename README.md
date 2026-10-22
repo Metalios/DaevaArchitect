@@ -4,6 +4,8 @@
 
 An interactive, static build planner for all eight **AION 2 Global** classes. A fresh level 45 starts with 136 Daevanion crystals, 203 Mastery points and 29 Stigma points; players can enter higher earned totals. It covers level 1–45 progression, Mastery and specialties, Stigmas, connected Daevanion routes, rotations, titles, and a searchable equipment loadout. Taiwan and Korea use separate clients and are outside this data set.
 
+The **Rotation & macro** tab works while leveling. At each selected level it shows only unlocked class skills and Stigmas with assigned points, an available Q/E Macro sequence, and a compact 1–8 manual bar. The layout updates as levels, Stigma slots, and point totals change. Charged attacks, healing, movement, defenses, and Defiance remain manual. This is a safe starting layout to test with the current Global client and your input latency.
+
 ## Board planning and sharing
 
 The Daevanion page has **Recommended** and **Custom** modes. Recommended uses the class and context route; colored tiles mark its funded path, numbered badges show the next 16 unmarked clicks across boards, and one jump button opens the next tile. Click a recommended tile to mark it obtained. Custom starts empty: click connected tiles within your PvE or Azphel crystal budget to plan a route, or copy the current recommendation and edit it. In Custom mode, tile clicks edit the plan and the selected-tile button records obtained status. Funded custom nodes feed skill levels and board effects throughout the planner. Plans and obtained marks are saved separately for each class.
