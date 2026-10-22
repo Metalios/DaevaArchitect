@@ -3,7 +3,7 @@
 'use strict';
 const $=id=>document.getElementById(id);
 const make=(tag,cls,html='')=>{const e=document.createElement(tag);e.className=cls;e.innerHTML=html;return e};
-let skill='',zoom=40,message='';
+let skill='',zoom=window.innerWidth>=2500?52:window.innerWidth>=1900?44:40,message='';
 const ARCHETYPE_WEAPONS={
  gladiator:'Greatsword',templar:'Longsword + shield',assassin:'Daggers',ranger:'Bow',
  sorcerer:'Spellbook',spiritmaster:'Orb',cleric:'Mace + shield',chanter:'Staff'
@@ -21,6 +21,7 @@ const work=make('div','v2-workspace');work.id='v2-workspace';
 const left=make('div','v2-left v2-column'),center=make('div','v2-center v2-column'),right=make('div','v2-right v2-column');
 const footer=make('div','v2-footer'),next=make('div','v2-next'),note=make('div','v2-gear-note');
 const full=make('details','v2-full-overview','<summary>Full build recommendations, targets, and collection guidance</summary>');
+const gearDetails=make('details','v2-gear-advanced','<summary>Arcana, wings & detailed equipment calculations</summary>');
 const extra=make('div','v2-extra');extra.id='v2-extra';
 const master=make('div','v2-master-editor',`
  <div class="v2-editor-title"><b>Purchased rank</b><span>Board</span><span>Gear</span><span>Effective</span></div>
@@ -45,6 +46,17 @@ function mount(){
  const tabs=p.querySelector('.tabs');tabs.after(work);work.append(left,center,right);
  left.append($('gear'));center.append($('mastery'),$('stigma'));right.append($('boards'));
  $('gear-class-heading').after(archetype);
+ // Keep the twenty editable equipment slots visible, but don't force the
+ // optional Arcana/Wings/CP and fine-grained stat summaries to make every
+ // workspace page several screens tall. Their original controls stay live.
+ $('gear').append(gearDetails);
+ const gearMain=$('gear').querySelector('.gear-main');
+ const gearExtras=gearMain?.querySelector('.gear-side');
+ if(gearExtras)gearDetails.append(gearExtras);
+ for(const extra of ['.gear-cp','#gear>.notice','.gear-credit']){
+   const part=$('gear').querySelector(extra);
+   if(part)gearDetails.append(part);
+ }
  work.after(footer);footer.append(next,note,full);full.append($('overview'));
  footer.after(extra);extra.append($('rotation'),$('titles'),$('sources'));
  $('mastery').insertBefore(master,$('mastery-visible'));
