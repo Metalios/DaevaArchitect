@@ -268,3 +268,6 @@
 .v2-board-expanded .v2-right .board-grid{margin:0 auto}
 .v2-secondary.v2-board-expanded .v2-workspace{display:none!important}
 @media(max-width:900px){.v2-board-expanded .v2-right .board-layout{grid-template-columns:minmax(0,1fr)}}
+
+/* Game-data-grounded class identity; no invented character portrait. */
+.v2-archetype{color:#f0d6a8!important;font-size:11px!important;font-weight:800;margin:6px 0 8px!important;letter-spacing:.03em}
