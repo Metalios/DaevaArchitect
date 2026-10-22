@@ -42,6 +42,7 @@ for name in ('profiles.js', 'titles.js', 'gear.js', 'cp.js', 'board_optimizer.js
     shutil.copy2(root / 'js' / name, out_dir / 'js' / name)
 shutil.copy2(root / 'css' / 'styles.css', out_dir / 'css' / 'styles.css')
 shutil.copy2(root / 'css' / 'v2.css', out_dir / 'css' / 'v2.css')
+shutil.copy2(root / 'css' / 'v2-refined.css', out_dir / 'css' / 'v2-refined.css')
 for asset in (root / 'assets').rglob('*'):
     if asset.is_file():
         destination = out_dir / 'assets' / asset.relative_to(root / 'assets')
