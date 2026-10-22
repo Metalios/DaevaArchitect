@@ -3,7 +3,7 @@
 'use strict';
 const $=id=>document.getElementById(id);
 const make=(tag,cls,html='')=>{const e=document.createElement(tag);e.className=cls;e.innerHTML=html;return e};
-let skill='',zoom=window.innerWidth>=2500?52:window.innerWidth>=1900?44:40,message='';
+let skill='',skillKind='active',zoom=window.innerWidth>=2500?60:window.innerWidth>=1900?52:44,message='';
 const ARCHETYPE_WEAPONS={
  gladiator:'Greatsword',templar:'Longsword + shield',assassin:'Daggers',ranger:'Bow',
  sorcerer:'Spellbook',spiritmaster:'Orb',cleric:'Mace + shield',chanter:'Staff'
@@ -24,6 +24,11 @@ const full=make('details','v2-full-overview','<summary>Full build recommendation
 const gearDetails=make('details','v2-gear-advanced','<summary>Arcana, wings & detailed equipment calculations</summary>');
 const extra=make('div','v2-extra');extra.id='v2-extra';
 const master=make('div','v2-master-editor',`
+ <div class="v2-skill-tabs" role="group" aria-label="Mastery skill category">
+  <button type="button" data-v2-skill-kind="active" class="active">Active skills (12)</button>
+  <button type="button" data-v2-skill-kind="passive">Passive skills (10)</button>
+  <span>Choose a skill to edit its actual specialties</span>
+ </div>
  <div class="v2-editor-title"><b>Purchased rank</b><span>Board</span><span>Gear</span><span>Effective</span></div>
  <div id="v2-skill-list" class="v2-skill-list"></div><div id="v2-spec-panel"></div>
  <details class="v2-advanced-skills"><summary>Advanced skill cards & bonus adjustments</summary></details>`);
@@ -74,7 +79,7 @@ function skillsView(m){
  const a=account(),items=Object.values(data().skills),names=skillNames();
  if(!names.includes(skill))skill=names.find(n=>SPECS[state.class]?.[n])||names[0];
  const query=(state.masterySearch||'').toLowerCase();
- $('v2-skill-list').innerHTML=items.map((item,i)=>({item,i})).filter(({item})=>item.name.toLowerCase().includes(query)&&(!isLeveling()||(SKILL_UNLOCKS[state.class][item.name]||1)<=currentLevel())).map(({item,i})=>{
+ $('v2-skill-list').innerHTML=items.map((item,i)=>({item,i})).filter(({item,i})=>(query?item.name.toLowerCase().includes(query):i<12=== (skillKind==='active'))&&(!isLeveling()||(SKILL_UNLOCKS[state.class][item.name]||1)<=currentLevel())).map(({item,i})=>{
  const name=item.name,lv=m.mastery.levels[name]||1,board=m.effects.skills[name]||0,gear=(a.gear[name]||0)+(gearSkillLevels()[name]||0),cap=masteryRankCap(name);
  const art=gameSkillIconMarkup(state.class,name,'v2-skill-art');
  return `<div class="v2-skill ${skill===name?'chosen':''}" data-skill="${esc(name)}"><button type="button" data-v2-select-skill="${esc(name)}" class="v2-skill-label">${art}<span><b>${esc(name)}</b><small>${i<12?'Active':'Passive'} · ${SPECS[state.class]?.[name]?'View specialties':'Rank & effects'}</small></span></button>
@@ -82,12 +87,16 @@ function skillsView(m){
  <span class="v2-green">+${board}</span><span class="v2-green">${gear?'+'+gear:'—'}</span><b class="v2-effective">Lv ${effective(name,m)}</b></div>`;
  }).join('')||'<div class="v2-muted">No currently unlocked skills match.</div>';
  const def=items.find(s=>s.name===skill),eff=effective(skill,m),s=SPECS[state.class]?.[skill],chosen=specPicks(skill,eff),slots=specialtySlots(eff);
+ master.querySelectorAll('[data-v2-skill-kind]').forEach(b=>{
+   b.classList.toggle('active',b.dataset.v2SkillKind===skillKind);
+   b.setAttribute('aria-pressed',String(b.dataset.v2SkillKind===skillKind));
+ });
  $('v2-spec-panel').innerHTML=`<header class="v2-spec-title"><b>${esc(skill)} · Specialties</b><span>Effective Lv ${eff} · ${slots}/3 slots</span><button type="button" id="v2-spec-restore" ${a.customSpecialties?.[skill]?'':'disabled'}>Restore</button></header>`+
  (!s?'<p class="v2-muted">No verified specialization effects available for this skill.</p>':`
- <div class="v2-spec-slots">${[0,1,2].map(i=>`<div class="${i>=slots?'locked':''}"><small>Slot ${i+1}${i>=slots?` · opens Lv ${[8,12,20][i]}`:''}</small><span class="v2-specialty-equipped">${i<slots&&chosen[i]?gameSkillIconMarkup(state.class,skill,'v2-spec-slot-art'):''}<strong>${i<slots&&chosen[i]?esc(s.options[chosen[i]]):'—'}</strong></span></div>`).join('')}</div>
+ <div class="v2-spec-slots">${[0,1,2].map(i=>`<div class="${i>=slots?'locked':''}"><small>Slot ${i+1}${i>=slots?` · opens Lv ${[8,12,20][i]}`:''}</small><span class="v2-specialty-equipped">${i<slots&&chosen[i]?gameSpecialtyIconMarkup(state.class,chosen[i],'v2-spec-slot-art'):''}<strong>${i<slots&&chosen[i]?esc(s.options[chosen[i]]):'—'}</strong></span></div>`).join('')}</div>
  <div class="v2-spec-options">${Object.entries(s.options).map(([id,description])=>{
  const n=Number(id),required=n<=3?8:n===4?12:16,locked=eff<required,isSelected=chosen.includes(n);
- return `<button type="button" data-v2-spec="${n}" class="${isSelected?'chosen':''}" ${locked?'disabled':''}><span class="v2-specialty-choice-art">${gameSkillIconMarkup(state.class,skill,'v2-spec-option-art')}<span class="v2-spec-id">${n}</span></span><span><b>${esc(description)}</b><small>${locked?`Needs effective Lv ${required}`:isSelected?'Equipped · click to remove':'Available · click to equip'}</small></span><strong>${isSelected?'✓':locked?'🔒':'+'}</strong></button>`;
+ return `<button type="button" data-v2-spec="${n}" class="${isSelected?'chosen':''}" ${locked?'disabled':''}><span class="v2-specialty-choice-art">${gameSpecialtyIconMarkup(state.class,n,'v2-spec-option-art')}<span class="v2-spec-id">${n}</span></span><span><b>${esc(description)}</b><small>${locked?`Needs effective Lv ${required}`:isSelected?'Equipped · click to remove':'Available · click to equip'}</small></span><strong>${isSelected?'✓':locked?'🔒':'+'}</strong></button>`;
  }).join('')}</div>`);
  $('v2-master-status').textContent=`${m.mastery.spent} / ${budget('mastery')} Mastery spent`;
  $('v2-master-restore').disabled=!a.manualMastery;
@@ -128,7 +137,7 @@ function sync(m){
  const a=account();
  $('v2-class').value=state.class;$('v2-level').value=currentLevel();$('v2-level').disabled=!isLeveling();
  $('v2-stage').value=a.journey;$('v2-context').value=a.context;
- archetype.textContent=PROFILES[state.class].role+' · '+ARCHETYPE_WEAPONS[state.class];
+ archetype.innerHTML=gameClassEmblemMarkup(state.class)+'<span><b>'+esc(PROFILES[state.class].name)+'</b><small>'+esc(PROFILES[state.class].role)+' · '+esc(ARCHETYPE_WEAPONS[state.class])+'</small></span>';
  archetype.setAttribute('aria-label',PROFILES[state.class].name+' class and weapon');
  $('v2-context').querySelector('option[value=pvp]').disabled=isLeveling();
  $('board-grid').style.setProperty('--v2-node',zoom+'px');$('v2-zoom-label').textContent=zoom+'px';
@@ -168,6 +177,13 @@ function bind(){
  note.addEventListener('click',e=>{if(e.target.closest('#v2-open-comparison'))compare()});
  $('v2-comparison-close').addEventListener('click',()=>modal.close());
  $('v2-comparison-reset').addEventListener('click',()=>{modal.close();restore()});
+ master.querySelector('.v2-skill-tabs').addEventListener('click',e=>{
+ const b=e.target.closest('[data-v2-skill-kind]');if(!b)return;
+ skillKind=b.dataset.v2SkillKind;
+ const list=Object.values(data().skills),candidate=list[skillKind==='active'?0:12];
+ skill=candidate?.name||'';
+ sync(model());
+ });
  $('v2-skill-list').addEventListener('click',e=>{
  const b=e.target.closest('[data-v2-rank]');
  if(b){const name=b.dataset.v2Rank,dir=Number(b.dataset.dir),m=model(),a=account(),old=m.mastery.levels[name]||1,target=old+dir;
