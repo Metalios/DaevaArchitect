@@ -27,7 +27,7 @@ const boardControls=make('div','v2-board-controls',`
  <div class="v2-board-callout"><b>Original AION 2 board coordinates</b><span>The board is never stretched; pan within the canvas or adjust tile size.</span></div>
  <button type="button" id="v2-board-toggle">Edit selected node</button><button type="button" id="v2-board-restore">Recommended path</button>
  <button type="button" id="v2-mark-obtained">Mark tile obtained</button>
- <button type="button" id="v2-zoom-minus" aria-label="Zoom out">−</button><span id="v2-zoom-label">40px</span><button type="button" id="v2-zoom-plus" aria-label="Zoom in">+</button>
+ <button type="button" id="v2-zoom-minus" aria-label="Zoom out">−</button><span id="v2-zoom-label">40px</span><button type="button" id="v2-zoom-plus" aria-label="Zoom in">+</button><button type="button" id="v2-board-expand">Expand board</button>
  <p id="v2-board-notice" role="status"></p>`);
 const modal=make('dialog','v2-comparison',`<div class="v2-compare-head"><h2>Your build vs. recommended</h2><button type="button" id="v2-comparison-close">✕</button></div><p>Compared at the same class, level, play context, and point totals. Equipment does not affect the recommended route.</p><div id="v2-comparison-body"></div><button type="button" id="v2-comparison-reset">Restore recommended allocations (keep gear)</button>`);modal.id='v2-comparison';
 const slim=make('div','v2-slim-heading',`<span id="v2-master-status"></span><button type="button" id="v2-master-restore">Restore ranks</button>`);
@@ -183,6 +183,7 @@ function bind(){
  });
  $('v2-board-restore').addEventListener('click',()=>{account().boardMode='recommended';message='Recommended Daevanion route restored.';render()});
  $('v2-mark-obtained').addEventListener('click',()=>{const n=nodeMap().get(state.node);if(!n||!n.node[5]||!boardOpen(n.board))return;const marks=obtainedNodes();if(marks.has(state.node))marks.delete(state.node);else marks.add(state.node);storeObtained(marks);render()});
+ $('v2-board-expand').addEventListener('click',()=>{const expanded=document.body.classList.toggle('v2-board-expanded');$('v2-board-expand').textContent=expanded?'Exit expanded':'Expand board'});
  for(const [id,step] of [['v2-zoom-minus',-4],['v2-zoom-plus',4]])$(id).addEventListener('click',()=>{zoom=Math.min(52,Math.max(32,zoom+step));$('board-grid').style.setProperty('--v2-node',zoom+'px');$('v2-zoom-label').textContent=zoom+'px'});
  $('mastery-search').addEventListener('input',()=>sync(model()));
  $('board-tabs').addEventListener('click',()=>setTimeout(()=>sync(model()),0));
