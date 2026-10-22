@@ -259,3 +259,12 @@
  .v2-next button{flex:1 1 100%}
 }
 @media(prefers-reduced-motion:reduce){.v2-active *{scroll-behavior:auto!important}}
+
+/* Expand the unchanged coordinate grid instead of distorting tile widths. */
+.v2-board-expanded .v2-workspace{display:block!important}
+.v2-board-expanded .v2-left,.v2-board-expanded .v2-center{display:none!important}
+.v2-board-expanded .v2-right .board-layout{grid-template-columns:minmax(0,1fr) 300px}
+.v2-board-expanded .v2-right .board-scroll{max-height:none;min-height:735px}
+.v2-board-expanded .v2-right .board-grid{margin:0 auto}
+.v2-secondary.v2-board-expanded .v2-workspace{display:none!important}
+@media(max-width:900px){.v2-board-expanded .v2-right .board-layout{grid-template-columns:minmax(0,1fr)}}
