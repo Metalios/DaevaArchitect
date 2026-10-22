@@ -32,6 +32,13 @@ jobs:
         run: |
           node leveling_macro_smoke.mjs
           node v2_smoke.mjs
+      - name: Save compiled v2 preview for review
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: daeva-v2-build-preview
+          path: dist/
+          if-no-files-found: error
       - name: Save screenshots for review
         if: always()
         uses: actions/upload-artifact@v4
