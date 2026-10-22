@@ -38,8 +38,9 @@ if(result.scroll>result.viewport){
   const offenders=await page.evaluate(()=>[...document.querySelectorAll('body *')].map(e=>{
     const r=e.getBoundingClientRect(),style=getComputedStyle(e);
     return {tag:e.tagName.toLowerCase(),id:e.id,cls:String(e.className).slice(0,100),x:Math.round(r.x),right:Math.round(r.right),width:Math.round(r.width),overflow:style.overflowX};
-  }).filter(x=>x.right>innerWidth+12&&x.x<innerWidth+10).sort((a,b)=>b.right-a.right).slice(0,22));
+  }).filter(x=>x.right>innerWidth+12).sort((a,b)=>b.right-a.right).slice(0,28));
   console.log('MOBILE OVERFLOW NODES',JSON.stringify(offenders));
+  await page.screenshot({path:'/tmp/mobile-overflow.png',fullPage:true}).catch(()=>{});
 }
 assert.equal(result.scroll,result.viewport,'mobile horizontal overflow');
 console.log(`Checked ${result.checked} class, context, and level combinations for visible, unlocked macros and 1–8 bars.`);
