@@ -72,6 +72,7 @@ for(const slug of classes){
     }
   }
   if(slug==='templar')assert(specs.templar.Judgment.picks['16'].includes(5),'templar: cooldown-removal specialty must be available at rank 16');
+  if(slug==='chanter')assert(specs.chanter['Dark Crush'].picks['16'].includes(5),'chanter: Dark Crush cooldown removal must be selected at effective level 16');
   if(slug==='spiritmaster')assert(specs.spiritmaster['Elemental Fusion'].picks['12'].includes(4),'spiritmaster: charged Fusion macro gate is missing');
   const boards=Object.fromEntries(d.boards.map(b=>[b.name,b]));
   const owned=Object.fromEntries(d.boards.map(b=>[b.name,new Set(b.nodes.filter(n=>n[5]===0).map(n=>n[0]))]));
