@@ -53,6 +53,7 @@ try{
   await page.locator('#gear-dialog-close').click();
   // Existing share modal remains live.
   await page.locator('#v2-share').click();
+  await page.locator('#share-dialog').waitFor({state:'visible'});
   assert.equal(await page.locator('#share-dialog').evaluate(el=>el.open),true);
   await page.locator('#share-dialog-close').click();
   fs.mkdirSync('v2-previews',{recursive:true});
