@@ -449,8 +449,23 @@ function gameSkillIconFile(cls,name){
     last.replace(/\.webp$/i,'.png'):'';
 }
 function gameSkillIconUrl(cls,name){
+  // Locally shipped client art wins; CDN fallbacks preserve offline builds
+  // and cover assets missing from the independently verified wiki catalog.
+  const local=typeof ICONS!=='undefined'?ICONS.classes?.[cls]?.skills?.[name]:null;
+  if(local)return local;
   const file=gameSkillIconFile(cls,name);
   return file?GAME_ICON_CDN+file:'';
+}
+function gameSpecialtyIconMarkup(cls,number,clsName='specialty-icon'){
+  const local=typeof ICONS!=='undefined'?ICONS.classes?.[cls]?.specialties?.[String(number)]:null;
+  const label=String(number);
+  return local?
+    `<span class="${clsName} game-icon"><span class="game-icon-fallback">${label}</span><img src="${local}" alt="" loading="lazy" onerror="this.hidden=true"></span>`:
+    `<span class="${clsName} game-icon"><span class="game-icon-fallback">${label}</span></span>`;
+}
+function gameClassEmblemMarkup(cls){
+  const local=typeof ICONS!=='undefined'?ICONS.classes?.[cls]?.emblem:null;
+  return local?`<img src="${local}" class="v2-class-emblem" alt="" loading="lazy" onerror="this.hidden=true">`:'';
 }
 function gameSkillIconMarkup(cls,name,className='game-icon'){
   const url=gameSkillIconUrl(cls,name);
