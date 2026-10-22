@@ -27,8 +27,21 @@ try{
   await page.locator('#class-buttons [data-class="templar"]').click();
   await page.locator('#v2-skill-list .v2-skill').first().waitFor();
   assert.equal(await page.locator('.v2-workspace').isVisible(),true,width+': unified workspace hidden');
+  if(width===1280){
+    const rects=await page.evaluate(()=>['.v2-left','.v2-center','.v2-right'].map(selector=>{
+      const {top,left,width,height}=document.querySelector(selector).getBoundingClientRect();
+      return {top,left,width,height};
+    }));
+    assert(Math.max(...rects.map(r=>r.top))-Math.min(...rects.map(r=>r.top))<20,
+      '1280px: Equipment, Mastery and Daevanion must occupy the same viewport row');
+    assert(rects[0].left<rects[1].left&&rects[1].left<rects[2].left,
+      '1280px: workspace columns must be ordered equipment/mastery/board');
+  }
   assert.equal(await page.locator('#gear-doll-grid').count(),1);
   assert.equal(await page.locator('#board-grid .node').count(),89,width+': Nezekan shape mismatch');
+  assert((await page.locator('#board-grid .node .node-game-icon').count())>0,width+': missing actual class skill artwork');
+  const square=await page.locator('#board-grid .node').first().evaluate(el=>Math.abs(el.getBoundingClientRect().width-el.getBoundingClientRect().height)<1);
+  assert(square,width+': Daevanion tiles must be square');
   assert((await page.locator('#board-grid .node.recommended').count())>0,width+': missing recommendation overlay');
   assert.match(await page.locator('#v2-status').innerText(),/Following recommended/);
   // Advanced equipment details must not dominate the main screen.
