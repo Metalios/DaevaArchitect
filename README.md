@@ -57,6 +57,36 @@ Then visit `http://localhost:8000`. For validation, run
 `node v2_allocations.mjs`; the `v2` GitHub Actions workflow also runs
 Playwright at 1280, 1920, and 3440 pixels and uploads preview screenshots.
 
+### Original game skill and Stigma artwork
+
+v2 now renders all **104 Stigma icons** (13 for each of eight classes)
+alongside the 176 Mastery Active/Passive icons, selected Specialty
+descriptions, game skill tiles on the Daevanion board, and macro/hotbar
+entries. All icons are keyed to the **game's numerical skill IDs**, rather
+than guessing from the order of a list. The icon inventory and resolver
+are in `js/icon_catalog.js`. `node verify_icons.mjs` validates the
+full 280-entry mapping for omissions and known cross-class icon reuse.
+
+English skill names and IDs were cross-referenced with
+[`austinsc/aion2-planner`](https://github.com/austinsc/aion2-planner),
+while icon filenames and IDs were checked against the skill catalog
+extracted from NC's public character data by
+[`Aion2Meter`](https://github.com/a2meter/Aion2Meter).
+[Wikily's AION 2 skills catalog](https://wikily.gg/aion-2/skills) was
+used to confirm the game's Stigma/skill and Specialty breakdown.
+The planner requests published game-art images directly from NCSOFT's
+`assets.playnccdn.com` host, falling back to the community
+`aion2.app` icon endpoint when necessary. **No Wikily-hosted media is
+copied or distributed in this repository.** Game artwork and game
+trademarks belong to NCSOFT; the project is an independent fan tool.
+
+The five Specialty choices now display the source skill's **genuine
+game icon** alongside each option's actual text, unlocked/equipped
+state, and equip-slot display. Individual, option-specific game-art
+icons are not claimed to be authenticated yet. Daevanion skill tiles
+use the original icon for the corresponding skill ID; generic stat
+tiles still use labels until their own game-art mapping is verified.
+
 **Accuracy limitations:** The provided Global data supports exact
 board coordinates, given node costs, level rewards, game skill IDs/icons
 and item catalog records. The connected route is still a documented
@@ -90,7 +120,7 @@ The level-45 estimate is an empirical planning model in `js/cp.js`, not NCSOFT's
 
 Run `python build.py` to generate the static `dist/` site. Source scripts live in `js/`, styles in `css/`, and static image assets belong in `assets/`. The build writes the bundled Global data to `dist/js/data.js` and copies the source scripts, styles, and static assets into matching folders. The site has no runtime server or build dependencies. `node verify.mjs` and `node audit_leveling.mjs` check the class and progression data. `python sync_gear.py` refreshes the searchable Global equipment snapshot from Aion2Data. For a browser interaction check, install Playwright and run `node gear_smoke.mjs`.
 
-Push to `main` to build and deploy through `.github/workflows/pages.yml`. GitHub Pages must be configured with **GitHub Actions** as its publishing source. The HTML links to relative CSS and JavaScript files, so it also works at the `/DaevaArchitect/` project path. Game icons and optional live tooltips load from Aion2Data. `node board_smoke.mjs` and `node share_smoke.mjs` cover board modes and link import in a browser.
+Push to `main` to build and deploy through `.github/workflows/pages.yml`. GitHub Pages must be configured with **GitHub Actions** as its publishing source. The HTML links to relative CSS and JavaScript files, so it also works at the `/DaevaArchitect/` project path. Game skill/Stigma art loads from the official NCSOFT asset CDN with a separate image fallback, and optional item tooltips load from Aion2Data. `node board_smoke.mjs` and `node share_smoke.mjs` cover board modes and link import in a browser.
 
 Existing Pathfinder browser saves migrate on first open. New saves use Daeva Architect storage keys.
 
