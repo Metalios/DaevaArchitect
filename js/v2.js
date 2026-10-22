@@ -4,6 +4,10 @@
 const $=id=>document.getElementById(id);
 const make=(tag,cls,html='')=>{const e=document.createElement(tag);e.className=cls;e.innerHTML=html;return e};
 let skill='',zoom=40,message='';
+const ARCHETYPE_WEAPONS={
+ gladiator:'Greatsword',templar:'Longsword + shield',assassin:'Daggers',ranger:'Bow',
+ sorcerer:'Spellbook',spiritmaster:'Orb',cleric:'Mace + shield',chanter:'Staff'
+};
 const quick=make('div','v2-quickbar',`
  <div class="v2-brand"><b>Daeva<span>Architect</span></b><small>AION 2 GLOBAL · BUILD PLANNER</small></div>
  <label>Class<select id="v2-class"></select></label>
@@ -30,6 +34,7 @@ const boardControls=make('div','v2-board-controls',`
  <button type="button" id="v2-zoom-minus" aria-label="Zoom out">−</button><span id="v2-zoom-label">40px</span><button type="button" id="v2-zoom-plus" aria-label="Zoom in">+</button><button type="button" id="v2-board-expand">Expand board</button>
  <p id="v2-board-notice" role="status"></p>`);
 const modal=make('dialog','v2-comparison',`<div class="v2-compare-head"><h2>Your build vs. recommended</h2><button type="button" id="v2-comparison-close">✕</button></div><p>Compared at the same class, level, play context, and point totals. Equipment does not affect the recommended route.</p><div id="v2-comparison-body"></div><button type="button" id="v2-comparison-reset">Restore recommended allocations (keep gear)</button>`);modal.id='v2-comparison';
+const archetype=make('p','v2-archetype');
 const slim=make('div','v2-slim-heading',`<span id="v2-master-status"></span><button type="button" id="v2-master-restore">Restore ranks</button>`);
 const stigmaStatus=make('span','v2-stigma-status');stigmaStatus.id='v2-stigma-status';
 function mount(){
@@ -37,6 +42,7 @@ function mount(){
  p.insertBefore(quick,p.firstChild);quick.after(nav);
  const tabs=p.querySelector('.tabs');tabs.after(work);work.append(left,center,right);
  left.append($('gear'));center.append($('mastery'),$('stigma'));right.append($('boards'));
+ $('gear-class-heading').after(archetype);
  work.after(footer);footer.append(next,note,full);full.append($('overview'));
  footer.after(extra);extra.append($('rotation'),$('titles'),$('sources'));
  $('mastery').insertBefore(master,$('mastery-visible'));
@@ -107,6 +113,8 @@ function sync(m){
  const a=account();
  $('v2-class').value=state.class;$('v2-level').value=currentLevel();$('v2-level').disabled=!isLeveling();
  $('v2-stage').value=a.journey;$('v2-context').value=a.context;
+ archetype.textContent=PROFILES[state.class].role+' · '+ARCHETYPE_WEAPONS[state.class];
+ archetype.setAttribute('aria-label',PROFILES[state.class].name+' class and weapon');
  $('v2-context').querySelector('option[value=pvp]').disabled=isLeveling();
  $('board-grid').style.setProperty('--v2-node',zoom+'px');$('v2-zoom-label').textContent=zoom+'px';
  m ||= model();skillsView(m);stigmasView(m);actionsView(m);
