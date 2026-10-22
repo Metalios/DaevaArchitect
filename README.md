@@ -32,6 +32,28 @@ Push to `main` to build and deploy through `.github/workflows/pages.yml`. GitHub
 
 Existing Pathfinder browser saves migrate on first open. New saves use Daeva Architect storage keys.
 
+## October 2026 progression correctness update
+
+Leveling Mastery now treats the 21/23/25 passive skills in all eight Global
+classes as ungated after acquisition, rather than imposing the three-level
+active-skill advancement rule. The recommended leveling priorities give selected
+late passives explicit targets. Specialty recommendations preserve hand-verified
+entries when the text-scoring helper is rerun. Chanter Dark Crush uses its
+cooldown-removal option at effective level 16, and its recommended Macro
+configuration changes before and after that milestone.
+
+The interactive Daevanion optimizer considers only boards unlocked at the
+selected character level and evaluates effective-level 8/12/16/20 thresholds.
+It still uses weighted heuristics, not measured rotation DPS, and a route may
+change when the character gains access to another board. Mark already purchased
+nodes obtained to keep them protected during rerouting.
+
+**Not yet covered by this change:** the Ariel endgame board/currency introduced
+in the October Global update; full source-based rank acquisition metadata
+for future classes or patches; validated optimized rotations for every
+skill/specialty combination; and in-game DPS verification for all eight classes.
+These recommendations must not be labeled proven optimal.
+
 ## Research and limitations
 
 The app's Research notes link to class, level, skill, board, title, and equipment sources. Build priorities and hotbar layouts are starting recommendations. Exact Combat Power is calculated by the game, and item rolls must be recorded from the player's own gear.
