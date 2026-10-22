@@ -22,6 +22,7 @@ jobs:
       - name: Verify game-data invariants
         run: |
           node verify.mjs
+          node verify_icons.mjs
           node audit_leveling.mjs
           node v2_allocations.mjs
       - name: Install headless browser
