@@ -231,7 +231,7 @@ function effectText(n){if(!n||!n[6]?.length)return 'Start node';return n[6].map(
 function nodeShort(n){if(n[5]===0||n[5]===4)return '✦';if(typeof n[6]?.[0]?.[0]==='number')return n[5]===2?'P':'S';return ({FixingDamage:'ATK',Critical:'CR',Defense:'DEF',HPMax:'HP',MPMax:'MP',HealBoost:'HEAL'})[n[6]?.[0]?.[0]]||'·'}
 function nodeVisual(n){
   const key=n[6]?.[0]?.[0],icon=typeof key==='number'?data().skills[key]?.icon:null;
-  return icon&&icon.startsWith('/game/skills/')?`<img class="node-game-icon" src="https://aion2data.com${esc(icon)}" alt="" loading="lazy">`:`<span>${nodeShort(n)}</span>`;
+  return icon&&icon.startsWith('/game/skills/')?`<span class="node-icon-fallback" aria-hidden="true">${nodeShort(n)}</span><img class="node-game-icon" src="https://aion2data.com${esc(icon)}" alt="" loading="lazy" onerror="this.hidden=true">`:`<span>${nodeShort(n)}</span>`;
 }
 function model(){
   const a=account(),names=skillNames(),recommendedMastery=allocate(masteryStages(),budget('mastery'),masteryCost,names,1,isLeveling()?masteryRankCap:null),
