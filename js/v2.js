@@ -50,6 +50,7 @@ function mount(){
  // optional Arcana/Wings/CP and fine-grained stat summaries to make every
  // workspace page several screens tall. Their original controls stay live.
  $('gear').append(gearDetails);
+ if(window.innerWidth<1700&&!state.gearView)state.gearView='inventory';
  const gearMain=$('gear').querySelector('.gear-main');
  const gearExtras=gearMain?.querySelector('.gear-side');
  if(gearExtras)gearDetails.append(gearExtras);
@@ -215,5 +216,5 @@ function bind(){
  $('board-grid').addEventListener('click',()=>setTimeout(()=>sync(model()),0));
 }
 window.syncV2=sync;
-mount();if(state.class)sync(model());
+mount();if(state.class){renderGear(model());sync(model())}
 })();
