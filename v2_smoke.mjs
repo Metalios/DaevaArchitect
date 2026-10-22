@@ -93,6 +93,21 @@ try{
   await page.close();
   console.log('v2 browser smoke passed at '+width+'×1080');
  }
+ // Additional layout sanity checks for portrait and 4K displays.
+ for(const [width,height] of [[800,1280],[3840,2160]]){
+  const page=await browser.newPage({viewport:{width,height},deviceScaleFactor:1});
+  page.on('pageerror',error=>errors.push(width+': '+error.message));
+  await page.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'domcontentloaded'});
+  await page.locator('#class-buttons [data-class="templar"]').click();
+  await page.locator('#v2-skill-list .v2-skill').first().waitFor();
+  assert.equal(await page.locator('#board-grid .node').count(),89,width+': board geometry changed');
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+8),true,width+': page overflow');
+  await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
+  fs.mkdirSync('v2-previews',{recursive:true});
+  await page.screenshot({path:'v2-previews/workspace-'+width+'.png',fullPage:true});
+  await page.close();
+  console.log('v2 layout checked at '+width+'×'+height);
+ }
  assert.equal(errors.length,0,errors.join('\n'));
  console.log('v2 browser errors:',errors.length);
 }finally{await browser.close();await new Promise(resolve=>server.close(resolve))}
