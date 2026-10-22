@@ -62,8 +62,10 @@ try{
   assert.equal(await page.locator('#v2-stigma-list .v2-stigma-art img').count(),4,
     width+': all four equipped Stigmas need their actual icons');
   const stigmaArt=await page.locator('#v2-stigma-list .v2-stigma-art img').first().getAttribute('src');
-  assert.match(stigmaArt,/assets\.playnccdn\.com\/static-aion2-gamedata\/resources\/ICON_[A-Z]+_SKILL_\d+\.png/,
-    width+': Stigma image is not the official client icon');
+  assert.match(stigmaArt,/(?:^|\/)assets\/icons\/templar\/[^/]+\.png$/,
+    width+': Stigma image is not locally imported game-client art');
+  const stigmaLoaded=await page.locator('#v2-stigma-list .v2-stigma-art img').first().evaluate(img=>img.complete&&img.naturalWidth>0);
+  assert.equal(stigmaLoaded,true,width+': Stigma art failed to load');
   await page.locator('#v2-skill-list [data-v2-select-skill="Pummel"]').click();
   assert.equal(await page.locator('#v2-spec-panel [data-v2-spec]').count(),5);
   assert.equal(await page.locator('#v2-spec-panel .v2-spec-option-art img').count(),5,
