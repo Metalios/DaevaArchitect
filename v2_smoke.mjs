@@ -55,6 +55,8 @@ try{
   await page.locator('#v2-share').click();
   assert.equal(await page.locator('#share-dialog').evaluate(el=>el.open),true);
   await page.locator('#share-dialog-close').click();
+  fs.mkdirSync('v2-previews',{recursive:true});
+  await page.screenshot({path:'v2-previews/workspace-'+width+'.png',fullPage:true});
   // Leveling mode must keep the game's progression budgets and slot gates.
   await page.locator('#v2-stage').selectOption('leveling');
   await page.locator('#v2-level').fill('32');
