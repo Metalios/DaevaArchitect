@@ -13,6 +13,10 @@ const context = {
   LEVEL_REWARDS: read('level_rewards.json'),
   STIGMAS: read('stigmas.json'),
   PROFILES: vm.runInNewContext(fs.readFileSync(new URL('js/profiles.js', root), 'utf8')+'\nPROFILES'),
+  // The leveling audit deliberately models a fresh character with no equipped
+  // skill-level bonuses. The browser loads gear.js before app.js, but this
+  // isolated VM doesn't; provide the same empty-gear result explicitly.
+  gearSkillLevels: () => ({}),
   localStorage: {getItem:()=>null},
   console
 };
