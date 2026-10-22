@@ -455,3 +455,13 @@ body.v2-active {
   .v2-active .v2-right .board-scroll {min-height:780px}
   .v2-active .v2-right .board-grid {gap:5px}
 }
+
+/* The irregular game board is deliberately larger than its mobile viewport.
+   Constrain overflow to that scrollable canvas, not the whole document. */
+body.v2-active .v2-workspace .tab-panel {overflow:hidden}
+body.v2-active .v2-right .board-layout,
+body.v2-active .v2-right .board-scroll,
+body.v2-active .v2-right .board-map,
+body.v2-active .v2-workspace .v2-column {min-width:0;max-width:100%}
+body.v2-active .v2-right .board-scroll {overflow:auto}
+body.v2-active #v2-workspace {min-width:0;max-width:100%}
