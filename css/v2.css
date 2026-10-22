@@ -325,3 +325,22 @@
  .v2-left #gear>.section-title h2{font-size:16px}
  .v2-right #boards>.section-title h2{font-size:16px}
 }
+
+/* Remote client icon art sometimes loads late. Keep the tile readable
+   without falsifying the AION 2 node positions. */
+.v2-right .node.skill{position:relative}
+.v2-right .node .node-icon-fallback{
+  position:absolute;inset:0;display:grid;place-items:center;
+  font-size:11px;font-weight:800;color:#e0c79f;z-index:0
+}
+.v2-right .node img.node-game-icon{position:relative;z-index:1;background:#081b2b}
+.v2-right .node img.node-game-icon[hidden]{display:none!important}
+.v2-active .controls .control input[type=number]{
+  width:100%;min-width:60px;max-width:260px;
+  border:1px solid #4675a0;border-radius:5px;
+  background:#0c2b48;padding:4px 8px;cursor:text;
+  box-shadow:inset 0 1px 4px #0004;
+}
+.v2-active .controls .control input[type=number]:focus-visible{
+  background:#143d60;outline:2px solid #95c4f1;
+}
