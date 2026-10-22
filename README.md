@@ -74,16 +74,25 @@ extracted from NC's public character data by
 [`Aion2Meter`](https://github.com/a2meter/Aion2Meter).
 [Wikily's AION 2 skills catalog](https://wikily.gg/aion-2/skills) was
 used to confirm the game's Stigma/skill and Specialty breakdown.
-The planner requests published game-art images directly from NCSOFT's
-`assets.playnccdn.com` host, falling back to the community
-`aion2.app` icon endpoint when necessary. **No Wikily-hosted media is
-copied or distributed in this repository.** Game artwork and game
-trademarks belong to NCSOFT; the project is an independent fan tool.
+The production Pages build runs `scripts/sync_wikily_icons.py` to
+collect the publicly displayed, class-matched game icons from Wikily,
+verify their format and write them into the *generated* site artifact.
+It includes class crests, skill and Stigma artwork and five original
+Specialty-option icons per class. The output includes
+`assets/icons/manifest.json`; `build.py` embeds that manifest before
+the application starts. Source tree builds without the generated
+assets retain fallbacks to NCSOFT's official `assets.playnccdn.com`
+endpoint and the `aion2.app` community host. The generated site
+bundles the imported art so normal users do not have to hotlink Wikily.
+Game artwork and trademarks belong to NCSOFT; this project is an
+independent fan tool. Source reference:
+[Wikily's AION 2 skills catalog](https://wikily.gg/aion-2/skills).
 
-The five Specialty choices now display the source skill's **genuine
-game icon** alongside each option's actual text, unlocked/equipped
-state, and equip-slot display. Individual, option-specific game-art
-icons are not claimed to be authenticated yet. Daevanion skill tiles
+The five Specialty choices now display their class's verified,
+**option-specific game icons** (rather than five copies of the same
+skill icon), with exact effect text and unlocked/equipped state.
+Mastery switches between Active and Passive lists; Stigmas display
+their individual game icons next to editable ranks and selected effects. Daevanion skill tiles
 use the original icon for the corresponding skill ID; generic stat
 tiles still use labels until their own game-art mapping is verified.
 
@@ -120,7 +129,7 @@ The level-45 estimate is an empirical planning model in `js/cp.js`, not NCSOFT's
 
 Run `python build.py` to generate the static `dist/` site. Source scripts live in `js/`, styles in `css/`, and static image assets belong in `assets/`. The build writes the bundled Global data to `dist/js/data.js` and copies the source scripts, styles, and static assets into matching folders. The site has no runtime server or build dependencies. `node verify.mjs` and `node audit_leveling.mjs` check the class and progression data. `python sync_gear.py` refreshes the searchable Global equipment snapshot from Aion2Data. For a browser interaction check, install Playwright and run `node gear_smoke.mjs`.
 
-Push to `main` to build and deploy through `.github/workflows/pages.yml`. GitHub Pages must be configured with **GitHub Actions** as its publishing source. The HTML links to relative CSS and JavaScript files, so it also works at the `/DaevaArchitect/` project path. Game skill/Stigma art loads from the official NCSOFT asset CDN with a separate image fallback, and optional item tooltips load from Aion2Data. `node board_smoke.mjs` and `node share_smoke.mjs` cover board modes and link import in a browser.
+Push to `main` to build and deploy through `.github/workflows/pages.yml`. GitHub Pages must be configured with **GitHub Actions** as its publishing source. The HTML links to relative CSS and JavaScript files, so it also works at the `/DaevaArchitect/` project path. Game skill and Stigma art is imported into the static deploy from Wikily; the official NCSOFT asset CDN and a community endpoint remain fallbacks. Optional item tooltips load from Aion2Data. `node board_smoke.mjs` and `node share_smoke.mjs` cover board modes and link import in a browser.
 
 Existing Pathfinder browser saves migrate on first open. New saves use Daeva Architect storage keys.
 
