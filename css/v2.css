@@ -344,3 +344,11 @@
 .v2-active .controls .control input[type=number]:focus-visible{
   background:#143d60;outline:2px solid #95c4f1;
 }
+
+/* Portrait/tablet: once Arcana and CP move to the accordion, there is no
+   right-hand gear sidebar left to reserve an empty half-width column. */
+@media(min-width:681px) and (max-width:1050px){
+ .v2-left .gear-main{display:block}
+ .v2-left .gear-inventory-backdrop{width:100%}
+ .v2-left .gear-paperdoll{max-width:100%}
+}
