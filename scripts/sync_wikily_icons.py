@@ -72,7 +72,7 @@ def category_page(cls,category):
     # The expanded selected skill's five Specialty choices carry distinct
     # real game icon art, shared between this class's Active skill options.
     special=re.findall(r'class="ds-cat-inspector-lineicon"[^>]*>\s*<img[^>]*src="([^"]+)"',markup)
-    return p.items,special,url
+    return p.items,special,url,markup
 def write_asset(job):
     dst,url=job
     if dst.exists() and dst.stat().st_size>1000:return True, str(dst), 'cached'
@@ -97,11 +97,17 @@ def main():
         class_data={'skills':{},'specialties':{},'counts':{}}
         for category in CATEGORIES:
             try:
-                items,special,url=category_page(cls,category)
+                items,special,url,markup=category_page(cls,category)
             except Exception as e:
                 print('WARNING',cls,category,'page failed:',e,file=sys.stderr)
-                items,special=[],[]
+                items,special,markup=[],[],''
             class_data['counts'][category]=len(items)
+            if category=='stigma' and 'markup' in locals():
+                emblem=re.search(r'https://media\.wikily\.gg/[^"<> ]+-ut_class_'+re.escape(cls)+r'_large\.png',markup)
+                if emblem:
+                    dest=DEST/cls/'emblem.png'
+                    jobs[dest]=emblem.group(0)
+                    class_data['emblem']='./assets/icons/'+cls+'/emblem.png'
             for entry in items:
                 try:img_url=full_source(entry['img'])
                 except ValueError:continue
@@ -126,6 +132,8 @@ def main():
     # No manifest entries for missing images. A missing file should never
     # be presented as an image placeholder masquerading as game art.
     for cls,entry in manifest['classes'].items():
+        if entry.get('emblem') and not (ROOT/entry['emblem'].replace('./','')).is_file():
+            del entry['emblem']
         for name,src in list(entry['skills'].items()):
             if not (ROOT/src.replace('./','')).is_file():
                 del entry['skills'][name]
