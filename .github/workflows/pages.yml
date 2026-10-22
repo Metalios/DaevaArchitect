@@ -32,6 +32,8 @@ jobs:
         run: |
           node verify.mjs
           node audit_leveling.mjs
+      - name: Import AION 2 client artwork for all eight classes
+        run: python scripts/sync_wikily_icons.py
       - name: Build static site
         run: python build.py
       - uses: actions/configure-pages@v5
