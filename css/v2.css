@@ -271,3 +271,18 @@
 
 /* Game-data-grounded class identity; no invented character portrait. */
 .v2-archetype{color:#f0d6a8!important;font-size:11px!important;font-weight:800;margin:6px 0 8px!important;letter-spacing:.03em}
+
+/* Optional equipment systems stay editable but do not determine the
+   height of the everyday build workspace. */
+.v2-left .v2-gear-advanced{margin-top:9px;border:1px solid #3b5872;border-radius:6px;background:#0b2339;overflow:hidden}
+.v2-left .v2-gear-advanced summary{cursor:pointer;color:#f1d499;font-size:12px;font-weight:800;padding:11px 10px;background:linear-gradient(#183650,#0b2339)}
+.v2-left .v2-gear-advanced summary:hover{color:white;background:#24445f}
+.v2-left .v2-gear-advanced>.gear-side,
+.v2-left .v2-gear-advanced>.gear-cp,
+.v2-left .v2-gear-advanced>.notice,
+.v2-left .v2-gear-advanced>.gear-credit{margin:8px!important}
+.v2-left .v2-gear-advanced .gear-side{display:grid;grid-template-columns:1fr}
+@media(min-width:1850px){
+ .v2-left .gear-paperdoll{padding:8px}
+ .v2-left .gear-intro{margin-bottom:5px}
+}
