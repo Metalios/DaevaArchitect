@@ -42,6 +42,32 @@ for(const cls of Object.keys(context.DATA)){
     }
   }
 }
+
+// Late Global passives unlock all ten trainable ranks immediately, unlike
+// ordinary class attacks. Cover every class and all three passive gates.
+const ungated = {
+  templar:['Fury','Survival Willpower','Block Pain'],
+  gladiator:['Experienced Counterstrike','Survival Willpower','Murderous Burst'],
+  assassin:['Defense Break','Revitalization Contract','Determination'],
+  ranger:['Melee Fire','Revitalization Contract',"Hunter's Soul"],
+  sorcerer:['Grace of Enhancement','Revitalization Contract','Vitality Evaporation'],
+  spiritmaster:['Spirit Communion','Revitalization Contract','Element Unification'],
+  cleric:["Earth's Grace",'Survival Willpower','Radiant Benediction'],
+  chanter:["Earth's Promise",'Survival Willpower',"Wind's Promise"]
+};
+for(const [cls,names] of Object.entries(ungated)){
+  for(const name of names){
+    const level=context.SKILL_UNLOCKS[cls][name];
+    assert.equal(context.inspect(cls,level,'solo').cap[name],10,
+      `${cls}: ${name} must permit Mastery rank 10 on unlock at level ${level}`);
+    assert.equal(context.inspect(cls,level-1,'solo').cap[name],1,
+      `${cls}: ${name} must remain unavailable before level ${level}`);
+    assert.equal(context.inspect(cls,45,'solo').cap[name],10,
+      `${cls}: ${name} remains ungated at level 45`);
+  }
+}
+console.log('Verified 24 ungated passive rank caps across every class.');
+
 const sorcerer=context.inspect('sorcerer',11,'solo');
 assert.equal(sorcerer.budget,20);
 assert(sorcerer.levels['Flame Arrow']>=5,'Sorcerer 11: Flame Arrow should be a primary early upgrade');

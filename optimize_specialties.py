@@ -32,7 +32,7 @@ def role_for_skill(profile: dict, skill_name: str) -> str:
 def score(text: str, role: str) -> float:
     t = text.lower()
     points = 0.0
-    if 'remove cooldown' in t or 'reset cooldown' in t:
+    if re.search(r'\b(?:remove|removes|reset|resets)\b.*\bcooldown\b', t):
         points += 20
     elif 'cooldown' in t and any(x in t for x in ('-', 'reduce', 'decrease', 'shorten')):
         seconds = re.search(r'(\d+(?:\.\d+)?)\s*s\b', t)
@@ -82,13 +82,15 @@ def score(text: str, role: str) -> float:
     return points
 
 
-def recommend_all(specialties: dict, profiles: dict) -> dict:
+def recommend_all(specialties: dict, profiles: dict, overwrite: bool = False) -> dict:
     for slug, class_skills in specialties.items():
         profile = profiles[slug]
         for name, entry in class_skills.items():
             role = role_for_skill(profile, name)
             ranked = sorted(range(1, 6), key=lambda index:
                             (-score(entry['options'][str(index)], role), index))
+            if entry.get('picks') and not overwrite:
+                continue
             entry['picks'] = {
                 '8': [next(index for index in ranked if index <= 3)],
                 '12': [index for index in ranked if index <= 4][:2],
@@ -101,6 +103,7 @@ def recommend_all(specialties: dict, profiles: dict) -> dict:
 def main():
     path = ROOT / 'specialties.json'
     specialties = json.loads(path.read_text(encoding='utf8'))
+    # Existing curated selections are authoritative; only fill missing picks.
     recommend_all(specialties, load_profiles())
     path.write_text(json.dumps(specialties, ensure_ascii=False, separators=(',', ':')),
                     encoding='utf8')

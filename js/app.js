@@ -7,6 +7,28 @@ const BOARD_UNLOCKS = {Nezekan:12,Zikel:20,Vaizel:30,Triniel:40,Azphel:45};
 const LEVEL_MILESTONES = [[4,'First point'],[12,'Nezekan'],[20,'Zikel'],[22,'Stigma I'],[23,'Stigma points'],[27,'Stigma II'],[30,'Vaizel'],[32,'Stigma III'],[37,'Stigma IV'],[40,'Triniel'],[45,'Endgame']];
 // The first purchases during leveling go to skills available and useful in the
 // opening rotation. Higher targets are still limited by SkillAcquireData gates.
+// Verified Global passive-rank exception (2.0.7.0): level 21/23/25 passives
+// can be trained to rank 10 immediately on acquisition.
+const UNGATED_MASTERY_PASSIVES = {
+  templar:['Fury','Survival Willpower','Block Pain'],
+  gladiator:['Experienced Counterstrike','Survival Willpower','Murderous Burst'],
+  assassin:['Defense Break','Revitalization Contract','Determination'],
+  ranger:['Melee Fire','Revitalization Contract',"Hunter's Soul"],
+  sorcerer:['Grace of Enhancement','Revitalization Contract','Vitality Evaporation'],
+  spiritmaster:['Spirit Communion','Revitalization Contract','Element Unification'],
+  cleric:["Earth's Grace",'Survival Willpower','Radiant Benediction'],
+  chanter:["Earth's Promise",'Survival Willpower',"Wind's Promise"]
+};
+const LEVELING_PASSIVE_PRIORITY = {
+  templar:['Fury','Insulting Roar','Enhance Health'],
+  gladiator:['Experienced Counterstrike','Identify Weakness'],
+  assassin:['Defense Break','Apply Poison'],
+  ranger:['Focused Eye',"Hunter's Resolve",'Melee Fire'],
+  sorcerer:['Grace of Enhancement','Fire Mark'],
+  spiritmaster:['Spirit Communion','Mental Focus'],
+  cleric:['Healing Enhancement',"Earth's Grace"],
+  chanter:['Attack Preparation',"Earth's Promise"]
+};
 const LEVELING_MASTERY_CORE = {
   templar:[['Pummel',5],['Judgment',5],['Vicious Strike',5],['Enhance Health',5],['Insulting Roar',5],['Fury',5],['Punishment',5],['Annihilate',5]],
   gladiator:[['Keen Strike',5],['Rending Blow',5],['Overhead Slam',5],['Sword Aura Rampage',5],['Leaping Slam',4]],
@@ -19,13 +41,13 @@ const LEVELING_MASTERY_CORE = {
 };
 const LEVELING_MASTERY_NEXT = {
   templar:['Pummel','Judgment','Punishment','Annihilate','Vicious Strike','Enhance Health','Insulting Roar','Fury'],
-  gladiator:['Keen Strike','Rending Blow','Overhead Slam','Sword Aura Rampage','Ruinous Blow'],
-  assassin:['Quick Slice','Savage Roar','Heart Gore','Ambush','Insignia Explosion'],
-  ranger:['Snipe','Tempest Shot','Drill Dart','Gale Arrow','Deadshot'],
-  sorcerer:['Flame Arrow','Ice Chain','Firestorm','Hellfire','Blaze','Bittercold Wind'],
-  spiritmaster:['Cold Shock','Combustion','Spirit Strike','Summon: Fire Spirit','Elemental Fusion'],
-  cleric:['Healing Light','Light of Regeneration','Radiant Recovery',"Earth's Retribution",'Chain of Torment'],
-  chanter:['Onslaught','Incandescent Blow','Dark Crush','Recuperation','Protection Circle']
+  gladiator:['Overhead Slam','Rending Blow','Ruinous Blow','Keen Strike','Crushing Wave'],
+  assassin:['Heart Gore','Quick Slice','Insignia Explosion','Savage Roar','Ambush'],
+  ranger:['Snipe','Deadshot','Tempest Shot','Drill Dart','Gale Arrow'],
+  sorcerer:['Firestorm','Blaze','Hellfire','Flame Arrow','Ice Chain','Bittercold Wind'],
+  spiritmaster:['Combustion','Elemental Fusion','Cold Shock','Summon: Fire Spirit','Jointstrike: Curse'],
+  cleric:['Radiant Recovery','Condemnation',"Earth's Retribution",'Healing Light','Chain of Torment'],
+  chanter:['Dark Crush','Onslaught','Recuperation','Spinning Strike','Incandescent Blow']
 };
 const DEFAULT_ACCOUNT = (cls='templar') => ({...FRESH_45,azphel:0,context:'party',journey:'endgame',endgameContext:'party',levelingContext:'solo',leveling:{level:1,extraByLevel:{}},gear:{},equipment:{},currentRanks:{},obtainedNodes:[],boardMode:'recommended',customNodes:[],customAzphelNodes:[],titlesOwned:{},faction:'elyos',macroBind:'RMB',goalTarget:['cleric','chanter'].includes(cls)?0:cls==='templar'?60000:100000,goalObserved:0,gearCpTarget:0});
 let saved = {};
@@ -105,6 +127,7 @@ function masteryRankCap(name){
   if(!isLeveling())return 10;
   const unlocked=SKILL_UNLOCKS[state.class][name];
   if(!unlocked||currentLevel()<unlocked)return 1;
+  if(UNGATED_MASTERY_PASSIVES[state.class]?.includes(name))return 10;
   return Math.min(10,2+Math.floor((currentLevel()-unlocked)/3));
 }
 function masteryStages(){
@@ -114,7 +137,12 @@ function masteryStages(){
     const weights=activeWeights().skills;
     const rest=skillNames().map((name,i)=>({name,i,weight:weights[name]||0})).sort((a,b)=>b.weight-a.weight||a.i-b.i).map(x=>x.name);
     const support=account().context!=='party'?[]:state.class==='cleric'?[['Healing Light',5],['Light of Regeneration',5],['Radiant Recovery',5]]:state.class==='chanter'?[['Recuperation',5],['Protection Circle',5]]:[];
-    return available([...support,...core,...next.map(name=>[name,8]),...rest.map(name=>[name,8]),...next.map(name=>[name,10]),...rest.map(name=>[name,10])]);
+    const passives=(LEVELING_PASSIVE_PRIORITY[state.class]||[]).filter(name=>(SKILL_UNLOCKS[state.class][name]||Infinity)<=currentLevel());
+    // Count only obtained nodes and equipped skill bonuses when planning the
+    // next breakpoint: a projected (unbought) board tile is not a current rank.
+    const ownedSkillBonuses=effects(obtainedNodes()).skills,equipped=gearSkillLevels();
+    const target=(name,threshold)=>Math.max(1,Math.min(10,threshold-(ownedSkillBonuses[name]||0)-(equipped[name]||0)-(account().gear[name]||0)));
+    return available([...support,...core,...passives.map(name=>[name,5]),...next.map(name=>[name,target(name,8)]),...rest.map(name=>[name,target(name,8)]),...passives.map(name=>[name,10]),...next.map(name=>[name,target(name,12)]),...rest.map(name=>[name,target(name,12)])]);
   }
   const names=skillNames(); const weights=activeWeights().skills;
   const order=names.map((name,i)=>({name,i,weight:weights[name]||0})).sort((a,b)=>b.weight-a.weight||a.i-b.i).map(x=>x.name);
@@ -181,7 +209,7 @@ function model(){
       const empty={owned:new Set()},base={mastery,stigma,boards:empty,effects:{skills:{},stats:{}}};
       const estimate=estimateCombatPower(base),baseCp=estimate.ready?estimate.value:null;
       const bonus={...gearRanks};for(const [name,value] of Object.entries(a.gear||{}))bonus[name]=(bonus[name]||0)+Number(value||0);
-      liveRouteBasis=optimizeBoardRoute(data(),activeWeights(),mastery.levels,bonus,target,baseCp,obtainedNodes());
+      liveRouteBasis=optimizeBoardRoute(data(),activeWeights(),mastery.levels,bonus,target,baseCp,obtainedNodes(),currentLevel());
       liveRoute=liveRouteBasis.route;liveRouteKey=key;
     }
   }
@@ -340,8 +368,12 @@ function renderRotation(m){
   }
   const fusionCharged=state.class==='spiritmaster'&&specPicks('Elemental Fusion',effective('Elemental Fusion',m)).includes(4);
   let stacks=p.stacks.filter(s=>(!levelingMode||!s.manual)&&(!fusionCharged||s.key!=='E')).map(s=>({...s,skills:s.skills.filter(name=>usableSkills.has(name))})).filter(s=>s.skills.length);
+  const chanterReset=state.class==='chanter'&&specPicks('Dark Crush',effective('Dark Crush',m)).includes(5);
+  // Before cooldown removal, avoid spending two Dark Crush triggers in one window.
+  if(state.class==='chanter'&&!chanterReset)stacks=stacks.map(s=>s.key==='E'?{...s,skills:s.skills.filter(name=>name!=='Impactful Crush')}:s).filter(s=>s.skills.length);
   const macroSteps=p.macro.filter(key=>stacks.some(s=>s.key===key&&!s.manual));
   let hotbar=p.hotbar.map(([skills,cue,tone])=>[[...skills],cue,tone]);
+  if(state.class==='chanter'&&!chanterReset)hotbar[7]=[['Impactful Crush'],'Manual Dark Crush trigger until cooldown removal','attack'];
   if(a.context!=='party'){
     const chosen=equippedStigmas,missing=chosen.filter(name=>!p.stigmas.includes(name)&&!hotbar.some(([skills])=>skills.includes(name)));
     for(const slot of hotbar){const replaced=slot[0].some(name=>p.stigmas.includes(name)&&!chosen.includes(name));slot[0]=slot[0].map(name=>p.stigmas.includes(name)&&!chosen.includes(name)?missing.shift()||null:name).filter(Boolean);if(replaced){slot[1]=`${a.context==='pvp'?'PvP':'Solo'} Stigma · use manually`;slot[2]='defense'}if(!slot[0].length){slot[1]='Available for a matchup-specific skill';slot[2]='utility'}}
