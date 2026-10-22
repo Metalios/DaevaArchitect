@@ -6,11 +6,103 @@ An interactive, static build planner for all eight **AION 2 Global** classes. A 
 
 The **Rotation & macro** tab works while leveling. At each selected level it shows only unlocked class skills and Stigmas with assigned points, an available Q/E Macro sequence, and a compact 1–8 manual bar. The layout updates as levels, Stigma slots, and point totals change. Charged attacks, healing, movement, defenses, and Defiance remain manual. This is a safe starting layout to test with the current Global client and your input latency.
 
+## v2 — unified character build workspace (branch `v2`)
+
+The v2 prototype arranges Equipment, Mastery/Specialties, equipped Stigmas,
+and the class's exact Daevanion board **in one responsive workspace**.
+The game's node coordinates, grid shape, node costs, skill icons, gear search,
+equippable slots, inventory/inspect layouts, title data, and legacy save keys
+are preserved. Its zoom and board-expand controls do not distort tile geometry.
+Rotation/Macro, Titles, and source research remain accessible from the toolbar.
+
+Choose a class, character level, Solo/Group/PvP context and a Leveling or
+Fresh 45 stage; **edit earned Mastery, Stigma, PvE and Azphel point totals
+using the existing inputs**. Changing these inputs recalculates the
+recommended plan but does not make it custom.
+
+The planner becomes a **Modified progression** only when you manually
+change a Mastery rank, equipped Stigma or Stigma level, Specialty, or
+Daevanion route. Individual rank buttons enforce both point costs and
+character-level unlocks. Stigma level costs follow the verified level
+brackets, and Specialty options are unavailable until their effective-level
+thresholds (8, 12, 16 for option 5; third equipped slot at 20). If later
+switching to a lower level or reducing earned points invalidates a manual
+allocation, the displayed plan is limited to the legal budget without
+silently rewriting the saved intended ranks.
+
+**Equipment is entirely user-supplied.** Empty gear slots remain empty;
+click one to open the existing catalog/editor. Owned item bonuses affect
+effective skill levels and optional CP estimates, but never alter the
+recommended Mastery or Daevanion path. Resyncing to recommended keeps
+user-entered gear and earned-point totals unchanged. v2 shared links
+include manual skills, equipped Stigma choices/levels and Specialty picks
+as well as equipment and board nodes.
+
+Tile clicks in v2 **inspect a node**; the explicit "Edit selected node"
+action clones the funded recommended route and begins connected custom
+editing. "Mark tile obtained" tracks actual purchases separately.
+Recommended tiles remain outlined while customizing. A board-only
+expanded view is available at smaller screen sizes.
+
+To build locally:
+
+```sh
+git checkout v2
+python build.py
+python -m http.server 8000 --directory dist
+```
+
+Then visit `http://localhost:8000`. For validation, run
+`node verify.mjs`, `node audit_leveling.mjs`, and
+`node v2_allocations.mjs`; the `v2` GitHub Actions workflow also runs
+Playwright at 1280, 1920, and 3440 pixels and uploads preview screenshots.
+
+### Original game skill and Stigma artwork
+
+v2 now renders all **104 Stigma icons** (13 for each of eight classes)
+alongside the 176 Mastery Active/Passive icons, selected Specialty
+descriptions, game skill tiles on the Daevanion board, and macro/hotbar
+entries. All icons are keyed to the **game's numerical skill IDs**, rather
+than guessing from the order of a list. The icon inventory and resolver
+are in `js/icon_catalog.js`. `node verify_icons.mjs` validates the
+full 280-entry mapping for omissions and known cross-class icon reuse.
+
+English skill names and IDs were cross-referenced with
+[`austinsc/aion2-planner`](https://github.com/austinsc/aion2-planner),
+while icon filenames and IDs were checked against the skill catalog
+extracted from NC's public character data by
+[`Aion2Meter`](https://github.com/a2meter/Aion2Meter).
+[Wikily's AION 2 skills catalog](https://wikily.gg/aion-2/skills) was
+used to confirm the game's Stigma/skill and Specialty breakdown.
+The planner requests published game-art images directly from NCSOFT's
+`assets.playnccdn.com` host, falling back to the community
+`aion2.app` icon endpoint when necessary. **No Wikily-hosted media is
+copied or distributed in this repository.** Game artwork and game
+trademarks belong to NCSOFT; the project is an independent fan tool.
+
+The five Specialty choices now display the source skill's **genuine
+game icon** alongside each option's actual text, unlocked/equipped
+state, and equip-slot display. Individual, option-specific game-art
+icons are not claimed to be authenticated yet. Daevanion skill tiles
+use the original icon for the corresponding skill ID; generic stat
+tiles still use labels until their own game-art mapping is verified.
+
+**Accuracy limitations:** The provided Global data supports exact
+board coordinates, given node costs, level rewards, game skill IDs/icons
+and item catalog records. The connected route is still a documented
+greedy *recommendation*, not measured optimal combat output. Combat
+Power is an empirical estimate, not the server formula. Generic
+stat-tile glyphs remain where independently verified original icon
+assets are unavailable. The new Ariel endgame board/currency has not
+yet been imported into this repository's source dataset. Do not label
+any of these elements "100% game-accurate" until checked against the
+latest installed Global client.
+
 ## Board planning and sharing
 
-The Daevanion page has **Recommended** and **Custom** modes. Recommended uses the class and context route; colored tiles mark its funded path, numbered badges show the next 16 unmarked clicks across boards, and one jump button opens the next tile. Click a recommended tile to mark it obtained. Custom starts empty: click connected tiles within your PvE or Azphel crystal budget to plan a route, or copy the current recommendation and edit it. In Custom mode, tile clicks edit the plan and the selected-tile button records obtained status. Funded custom nodes feed skill levels and board effects throughout the planner. Plans and obtained marks are saved separately for each class.
+The build workspace preserves the original connected recommended route, node list and funded preview. Game nodes remain in their exact board positions. The v2 "Edit selected node" control copies the recommended funded route when customization begins; selected tiles must remain connected to the starting tile and respect the user's available crystal points. "Mark tile obtained" is separate from planned route editing, so inspecting an icon does not change the build. The user can restore the recommended route without resetting equipment or the point budget.
 
-`python optimize_board_progression.py` calculates reference Group, Solo and PvP routes from the Global node positions, costs and effects. In the browser, `js/board_optimizer.js` recalculates a complete connected purchase order when the class, context, CP target, gear, Mastery/Stigma allocation, or marked obtained tiles change. It scores the planner's rotation and hotbar priorities, role stats, effective skill level 12/16 breakpoints, and approximate CP gained by board nodes. When enough gear is recorded, it reduces CP emphasis as estimated board gains approach the player's target. With incomplete gear, the CP goal provides a provisional weight. The CP model gives the same estimated CP per Mastery rank and per Stigma rank, so role priorities decide *which* skills get those points while increasing totals still updates ranks and the board route. Each PvE route connects all four boards and runs from 0 to the full 570-point cost; Azphel has a separate 232-point PvP route. Any entered crystal total displays the affordable prefix. Some totals leave 1–3 crystals saved for the next higher-cost tile. This is a reproducible, greedy progression heuristic, not a combat simulator or proof of the single best build. Creator guides are used for comparison and mechanical checks, not copied as the board purchase order.
+`python optimize_board_progression.py` calculates reference Group, Solo and PvP routes from the Global node positions, costs and effects. In the browser, `js/board_optimizer.js` recalculates connected routes from class, context, level, earned points, Mastery/Stigma allocations, purchased board nodes and optional CP goal. **Equipped gear is deliberately excluded from recommended routing** and from recommended Mastery priorities. Exact rank availability follows Global skill unlocks, with the verified late-passive exceptions. The full first-four-board route uses 570 PvE points; Azphel has an independent 232-point PvP pool. A costly next tile can require saving up crystals. This is a reproducible, greedy progression heuristic, not a combat simulator or proof of the single best build. Creator guides are used for comparison and mechanical checks, not copied as the board purchase order.
 
 `python optimize_specialties.py` scores Global option text for damage, healing, defense, cooldowns and triggered follow-ups. Default PvE picks are calculated from those scores at each skill-level gate. The options themselves are sourced from class skill data and should be checked against live tooltips after a patch. The rotation and hotbar profiles supply skill-use priorities to the board optimizer; their sequence still encodes class mechanics such as charged attacks, procs, healing decisions and positioning. They are not generated by a frame-accurate combat simulation.
 
@@ -28,7 +120,7 @@ The level-45 estimate is an empirical planning model in `js/cp.js`, not NCSOFT's
 
 Run `python build.py` to generate the static `dist/` site. Source scripts live in `js/`, styles in `css/`, and static image assets belong in `assets/`. The build writes the bundled Global data to `dist/js/data.js` and copies the source scripts, styles, and static assets into matching folders. The site has no runtime server or build dependencies. `node verify.mjs` and `node audit_leveling.mjs` check the class and progression data. `python sync_gear.py` refreshes the searchable Global equipment snapshot from Aion2Data. For a browser interaction check, install Playwright and run `node gear_smoke.mjs`.
 
-Push to `main` to build and deploy through `.github/workflows/pages.yml`. GitHub Pages must be configured with **GitHub Actions** as its publishing source. The HTML links to relative CSS and JavaScript files, so it also works at the `/DaevaArchitect/` project path. Game icons and optional live tooltips load from Aion2Data. `node board_smoke.mjs` and `node share_smoke.mjs` cover board modes and link import in a browser.
+Push to `main` to build and deploy through `.github/workflows/pages.yml`. GitHub Pages must be configured with **GitHub Actions** as its publishing source. The HTML links to relative CSS and JavaScript files, so it also works at the `/DaevaArchitect/` project path. Game skill/Stigma art loads from the official NCSOFT asset CDN with a separate image fallback, and optional item tooltips load from Aion2Data. `node board_smoke.mjs` and `node share_smoke.mjs` cover board modes and link import in a browser.
 
 Existing Pathfinder browser saves migrate on first open. New saves use Daeva Architect storage keys.
 
