@@ -35,5 +35,6 @@ jobs:
           npm install --no-save playwright@1.56.0
           npx playwright install --with-deps chromium
           node leveling_macro_smoke.mjs
+          node recommendation_coherence_smoke.mjs
           node goal_route_smoke.mjs
           node v2_smoke.mjs
