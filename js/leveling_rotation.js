@@ -142,7 +142,7 @@ function renderLevelingCombatMarkup(plan,macroKey){
   '<p>The Skills menu and presets unlock at level 4. Until then, use your repeat attack and newly unlocked skills manually.</p></div>';
  return '<div class="leveling-combat-heading"><div><span class="eyebrow">LEVEL '+plan.level+' · '+(plan.stage==='starter'?'EARLY COMBAT':plan.stage==='core'?'CORE COMBAT':'STIGMA PROGRESSION')+'</span>'+
   '<h3>Starter combat setup</h3><p>'+esc(plan.focus)+'</p></div>'+next+'</div>'+
-  '<div class="leveling-combat-layout">'+weave+starter+'</div>'+
+  '<div class="leveling-combat-layout'+(plan.steps.length>1?' leveling-multi-stack':'')+'">'+weave+starter+'</div>'+
   '<div class="leveling-manual-summary"><div><span class="leveling-phase-label">Keep these manual</span>'+
   (manual?'<ul id="leveling-manual">'+manual+'</ul>':'<p>Use your repeat attack while the next combat skill unlocks.</p>')+
   (plan.level>=16?'<p class="leveling-defiance">Defiance (Space) is a manual control-break, not a damage-loop step.</p>':'')+
