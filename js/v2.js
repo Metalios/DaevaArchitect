@@ -69,7 +69,7 @@ function mount(){
  master.querySelector('.v2-advanced-skills').append($('skill-grid'));
  const search=$('mastery').querySelector('.mastery-search');
  if(search)master.querySelector('.v2-skill-toolbar').append(search);
- $('mastery').querySelector('.section-title').append(slim);
+ master.querySelector('.v2-mastery-hint').append(slim);
  $('stigma').append(stigmas);$('stigma').querySelector('.section-title').append(stigmaStatus);
  $('board-tabs').after(boardControls);
  const side=$('boards').querySelector('.board-side');
@@ -158,6 +158,7 @@ function stigmasView(m){
     <span class="v2-stigma-card-action">${stigmaSlotOpen===i?'Editing':'Edit loadout ›'}</span>
    </button>`;
  }).join('');
+ $('stigma-heading').textContent='Stigma loadout';
  $('v2-stigma-status').textContent=`${slots}/4 slots · ${m.stigma.spent}/${budget('stigma')} planned`;
  $('v2-stigma-remaining').textContent=`${Math.max(0,budget('stigma')-m.stigma.spent)} points unspent`;
  $('v2-stigma-reset').disabled=!account().manualStigma&&!account().customStigmas;
