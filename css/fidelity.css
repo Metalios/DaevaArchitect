@@ -260,3 +260,28 @@
  .v2-active .v2-right .board-layout{grid-template-columns:1fr}
  .v2-active .v2-left #gear{min-height:0}
 }
+
+/* Prevent intrinsic board widths from expanding a mobile document. */
+@media(max-width:1099px){
+ .v2-active main,.v2-active .v2-planner,.v2-active .v2-workspace{
+  width:100%;max-width:100%;min-width:0;box-sizing:border-box
+ }
+ .v2-active .v2-workspace{grid-template-columns:minmax(0,1fr)}
+ .v2-active .v2-column,.v2-active .v2-workspace .tab-panel,
+ .v2-active .v2-right .board-layout,.v2-active .v2-right .board-scroll{
+  min-width:0;max-width:100%
+ }
+ .v2-active .v2-right .board-layout{grid-template-columns:minmax(0,1fr)}
+ .v2-active .v2-right .board-scroll{overflow-x:auto}
+ .v2-active .v2-stigma-cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:610px){
+ .v2-active .v2-editor-title,.v2-active .v2-skill{
+  grid-template-columns:minmax(90px,1fr) 84px 25px 25px 43px;gap:2px;padding-inline:3px
+ }
+ .v2-active .v2-workspace .tab-panel{padding:8px}
+ .v2-active .v2-rank{gap:2px}
+ .v2-active .v2-rank b{min-width:26px;font-size:11px}
+ .v2-active .v2-rank button{width:18px}
+ .v2-active .v2-skill-label{gap:4px}
+}
