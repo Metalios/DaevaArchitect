@@ -72,6 +72,16 @@ function mount(){
  $('mastery').querySelector('.section-title').append(slim);
  $('stigma').append(stigmas);$('stigma').querySelector('.section-title').append(stigmaStatus);
  $('board-tabs').after(boardControls);
+ const side=$('boards').querySelector('.board-side');
+ if(side){
+  const extras=make('details','v2-board-extra','<summary>Board bonuses, purchase order & next key nodes</summary>');
+  const current=side.querySelector('.board-effects-panel');
+  const purchases=$('purchase-list')?.closest('.panel');
+  const upcoming=$('board-next')?.closest('.panel');
+  side.firstElementChild.append(extras);
+  for(const item of [current,purchases,upcoming])if(item)extras.append(item);
+ }
+
  document.body.append(modal);
  $('v2-class').innerHTML=CLASS_ORDER.map(c=>`<option value="${c}">${PROFILES[c].name}</option>`).join('');
  document.body.classList.add('v2-active');
