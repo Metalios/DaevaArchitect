@@ -6,7 +6,7 @@ An interactive, static build planner for all eight **AION 2 Global** classes. A 
 
 The **Rotation & macro** tab works while leveling. At each selected level it shows only unlocked class skills and Stigmas with assigned points, an available Q/E Macro sequence, and a compact 1–8 manual bar. The layout updates as levels, Stigma slots, and point totals change. Charged attacks, healing, movement, defenses, and Defiance remain manual. This is a safe starting layout to test with the current Global client and your input latency.
 
-## v2 — unified character build workspace (branch `v2`)
+## v2 — unified character build workspace
 
 The v2 prototype arranges Equipment, Mastery/Specialties, equipped Stigmas,
 and the class's exact Daevanion board **in one responsive workspace**.
@@ -32,8 +32,9 @@ silently rewriting the saved intended ranks.
 
 **Equipment is entirely user-supplied.** Empty gear slots remain empty;
 click one to open the existing catalog/editor. Owned item bonuses affect
-effective skill levels and optional CP estimates, but never alter the
-recommended Mastery or Daevanion path. Resyncing to recommended keeps
+effective skill levels, optional CP estimates, and **recommended progression
+breakpoints**. No equipment is automatically selected or invented. Recording
+gear alone does not mark the build manually modified. Resyncing to recommended keeps
 user-entered gear and earned-point totals unchanged. v2 shared links
 include manual skills, equipped Stigma choices/levels and Specialty picks
 as well as equipment and board nodes.
@@ -54,8 +55,62 @@ python -m http.server 8000 --directory dist
 
 Then visit `http://localhost:8000`. For validation, run
 `node verify.mjs`, `node audit_leveling.mjs`, and
-`node v2_allocations.mjs`; the `v2` GitHub Actions workflow also runs
-Playwright at 1280, 1920, and 3440 pixels and uploads preview screenshots.
+`node recommendations_audit.mjs`; the mock-fidelity GitHub Actions workflow runs
+Playwright at 800 (portrait), 1280, 1920, 3440 and 3840 pixels and uploads
+preview screenshots and compiled assets.
+
+### Mock-fidelity editing and recommendation evidence
+
+The new workspace keeps the game's **actual Daevanion board shape**,
+including original node positions and gaps. The selected board node is always
+visible; the bonus ledger and detailed connected purchase order are available
+in an expandable section.
+
+Mastery has Active (12) and Passive (10) views. **Specialties are not always
+open**: select a power to open a flyout over that same panel. It shows the
+actual unlocked Specialty slots at effective 8/12/20, the option-5 unlock at
+16, game-verified option effects and the recommended choices. Close or
+press Escape to return to the list.
+
+Stigmas show four **icon-first slots**, with original game art. Select a card
+to open the editor **within the Stigma section**, with rank +/-,
+5/10/15/20 perk descriptions, and all 13 valid class choices. Replacing a
+Stigma changes the loadout (and thus resets its recommended ranks); it does not
+copy purchased rank levels from another ability. Duplicate-equipped Stigmas
+are swapped rather than duplicated.
+
+**Build advice is conditional, not a static all-classes priority table.**
+`js/recommendations.js` contains 24 audited class/context profiles
+(8 classes × Solo PvE/Group PvE/PvP). Each profile has core skills, support
+passives, four equipped Stigmas, Stigma investment priorities, and a rationale.
+Where the skill's *verified effect text* makes an unambiguous mode-specific
+choice (e.g. PvP crowd control versus Solo self-healing), Specialty pick
+overrides use actual option IDs and unlocks. Unsupported cases fall back to
+documented Global Specialty recommendations. Manual customization always
+takes precedence.
+
+The recommendation engine prioritizes earned-point budgets, level gates,
+effective-level breakpoints, already-purchased board nodes, owned gear bonus
+levels, class synergy and requested play context, then uses a deterministic
+connected-board heuristic. PvP and party needs are not assumed identical;
+Templar group builds currently favor Taunt, Noble Armor, Doom Shield and
+Shield of Protection, with Battlefield Banner as an encounter-dependent
+damage alternative. The current recommendations are based on a synthesis of
+client-confirmed effects and recent community guides, **not a controlled
+rotation/DPS simulation proving a single best build**.
+
+Relevant references (last reviewed October 22, 2026):
+
+- [Aion2Data — Templar group PvE guide](https://aion2data.com/guides/templar/pve), including Lv16 Judgment/Warding Strike and Stigma milestones.
+- [Aion2Data — Sorcerer Global guide](https://aion2data.com/guides/sorcerer), including Hellfire and Wish of Concentration breakpoints.
+- [Wikily AION 2 skill catalog](https://wikily.gg/aion-2/skills), class skill/Stigma/Specialty option records.
+- [Aion2 Reddit — hard dungeon Templar discussion](https://www.reddit.com/r/Aion2/comments/1xc25fi/to_templars_in_hard_dungeons/), practical block and Fury considerations.
+- [Aion2Builds — Stigma selection snapshot](https://aion2builds.com/guides/stigma/), supplementary player selection information.
+
+Validation: `node recommendations_audit.mjs` checks all class/context
+profiles at ten character levels, and the responsive browser smoke test checks
+flyout interactions, budget rules, Stigma icons, square board tiles and
+share/build operation. Original `main` remains unchanged until code review.
 
 ### Original game skill and Stigma artwork
 
@@ -102,7 +157,10 @@ latest installed Global client.
 
 The build workspace preserves the original connected recommended route, node list and funded preview. Game nodes remain in their exact board positions. The v2 "Edit selected node" control copies the recommended funded route when customization begins; selected tiles must remain connected to the starting tile and respect the user's available crystal points. "Mark tile obtained" is separate from planned route editing, so inspecting an icon does not change the build. The user can restore the recommended route without resetting equipment or the point budget.
 
-`python optimize_board_progression.py` calculates reference Group, Solo and PvP routes from the Global node positions, costs and effects. In the browser, `js/board_optimizer.js` recalculates connected routes from class, context, level, earned points, Mastery/Stigma allocations, purchased board nodes and optional CP goal. **Equipped gear is deliberately excluded from recommended routing** and from recommended Mastery priorities. Exact rank availability follows Global skill unlocks, with the verified late-passive exceptions. The full first-four-board route uses 570 PvE points; Azphel has an independent 232-point PvP pool. A costly next tile can require saving up crystals. This is a reproducible, greedy progression heuristic, not a combat simulator or proof of the single best build. Creator guides are used for comparison and mechanical checks, not copied as the board purchase order.
+`python optimize_board_progression.py` calculates reference Group, Solo and PvP routes from the Global node positions, costs and effects. In the browser, `js/board_optimizer.js` recalculates connected routes from class, context, level, earned points, Mastery/Stigma allocations, purchased board nodes and optional CP goal. Actual player-recorded gear skill levels are included when deciding what effective
+rank is needed for a Specialty breakpoint; no hypothetical equipment is assumed.
+CP-target weighting is used only when the planner has a sufficiently complete
+real gear loadout to estimate a baseline. Exact rank availability follows Global skill unlocks, with the verified late-passive exceptions. The full first-four-board route uses 570 PvE points; Azphel has an independent 232-point PvP pool. A costly next tile can require saving up crystals. This is a reproducible, greedy progression heuristic, not a combat simulator or proof of the single best build. Creator guides are used for comparison and mechanical checks, not copied as the board purchase order.
 
 `python optimize_specialties.py` scores Global option text for damage, healing, defense, cooldowns and triggered follow-ups. Default PvE picks are calculated from those scores at each skill-level gate. The options themselves are sourced from class skill data and should be checked against live tooltips after a patch. The rotation and hotbar profiles supply skill-use priorities to the board optimizer; their sequence still encodes class mechanics such as charged attacks, procs, healing decisions and positioning. They are not generated by a frame-accurate combat simulation.
 
