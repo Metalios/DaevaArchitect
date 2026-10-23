@@ -238,6 +238,13 @@ function stigmaStages(){
   const s=activeStigmas().slice(0,isLeveling()?levelReward().slots:4);
   const advised=typeof adviceFor==='function'?adviceFor(state.class,account().context):null;
   if(advised){
+    if(Array.isArray(advised.stigmaMilestones)){
+      const milestones=advised.stigmaMilestones.filter(([name,rank])=>s.includes(name)&&[5,10,15,20].includes(rank));
+      // Explicit research milestones (e.g. Taunt 15, Noble Armor 15 and
+      // Shield of Protection 5) take precedence over generic equal leveling.
+      // Finish with legal rank-20 targets for customized loadouts.
+      return [...milestones,...s.map(name=>[name,20])];
+    }
     const priority=[...(advised.stigmaPriority||[]).filter(name=>s.includes(name)),...s.filter(name=>!(advised.stigmaPriority||[]).includes(name))];
     // Slot order follows a verified recommendation, then prioritize the
     // character's most meaningful milestones instead of blindly leveling
