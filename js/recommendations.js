@@ -49,3 +49,49 @@ const BUILD_ADVICE={
  }
 };
 function adviceFor(cls,context){return BUILD_ADVICE[cls]?.[context]||BUILD_ADVICE[cls]?.party||null}
+
+/* Context-specific Specialty choices where the *verified option effect*
+   clearly serves different play goals. Other skills retain the baseline
+   picks in specialties.json (no unsupported blanket substitutions).
+   The keys are effective levels, not purchasable Mastery rank. */
+const SPECIALTY_CONTEXT={
+ gladiator:{solo:{
+  'Keen Strike':{'8':[2],'12':[2,4],'16':[4,5],'20':[2,4,5]}
+ }},
+ templar:{pvp:{
+  'Pummel':{'8':[2],'12':[2,4],'16':[2,4],'20':[2,4,5]},
+  'Warding Strike':{'8':[2],'12':[2,4],'16':[4,5],'20':[2,4,5]}
+ }},
+ assassin:{pvp:{
+  'Ambush':{'8':[3],'12':[1,3],'16':[3,5],'20':[1,3,5]}
+ }},
+ ranger:{pvp:{
+  'Gale Arrow':{'8':[2],'12':[2,4],'16':[2,5],'20':[2,4,5]}
+ }},
+ sorcerer:{pvp:{
+  'Firestorm':{'8':[3],'12':[2,3],'16':[2,3],'20':[2,3,4]}
+ }},
+ spiritmaster:{pvp:{
+  'Dimensional Control':{'8':[1],'12':[1,4],'16':[4,5],'20':[1,4,5]}
+ }},
+ cleric:{party:{
+  'Healing Light':{'8':[1],'12':[1,3],'16':[1,3],'20':[1,2,3]}
+ },pvp:{
+  'Healing Light':{'8':[3],'12':[2,3],'16':[2,3],'20':[2,3,5]}
+ }},
+ chanter:{party:{
+  'Recuperation':{'8':[1],'12':[1,2],'16':[1,2],'20':[1,2,4]}
+ },pvp:{
+  'Recuperation':{'8':[1],'12':[1,2],'16':[1,2],'20':[1,2,5]}
+ }}
+};
+function adviceSpecialtyChoices(cls,context,name,effective,options){
+ const breakKey=effective>=20?'20':effective>=16?'16':effective>=12?'12':effective>=8?'8':null;
+ if(!breakKey)return null;
+ const preferred=SPECIALTY_CONTEXT[cls]?.[context]?.[name]?.[breakKey];
+ if(!preferred)return null;
+ const count=effective>=20?3:effective>=12?2:1;
+ const eligible=n=>options?.[n]&&effective>=(n<=3?8:n===4?12:16);
+ if(preferred.length>count||preferred.some(n=>!eligible(n)))return null;
+ return preferred;
+}
