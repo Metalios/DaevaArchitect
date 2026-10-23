@@ -14,7 +14,7 @@ const ctx={DATA,STIGMAS,SKILL_UNLOCKS:read('skill_unlocks.json'),LEVEL_REWARDS:r
  gearSkillLevels:()=>({}),localStorage:{getItem:()=>null},console};
 vm.createContext(ctx);
 vm.runInContext(lib+'\n'+app.slice(0,app.indexOf('function render(){'))+`
-globalThis.api={state,account,adviceFor,activeStigmas,masteryStages,
+globalThis.api={state,account,adviceFor,adviceSpecialtyChoices,SPECIALTY_CONTEXT,activeStigmas,masteryStages,
  stigmaStages,allocate,masteryCost,masteryRankCap,stigmaCost,skillNames,budget,modifiedBuild};
 `,ctx);
 let count=0;
@@ -47,4 +47,19 @@ for(const cls of Object.keys(DATA)){
   }
  }
 }
+// Context-specific Specialty effects must respect actual option/slot gates.
+const allSpecs=ctx.SPECS;let specialtyChecks=0;
+for(const [cls,modes] of Object.entries(ctx.api.SPECIALTY_CONTEXT||{})){
+ for(const [mode,skills] of Object.entries(modes))for(const [name,breakpoints] of Object.entries(skills)){
+  const options=allSpecs[cls]?.[name]?.options;
+  assert(options,cls+' '+name+': missing skills for Specialty context');
+  for(const [level,expected] of Object.entries(breakpoints)){
+   const actual=ctx.api.adviceSpecialtyChoices(cls,mode,name,Number(level),options);
+   assert.deepEqual(Array.from(actual),Array.from(expected),cls+' '+mode+' '+name+' '+level);
+   assert(actual.length<=(Number(level)>=20?3:Number(level)>=12?2:1));
+   specialtyChecks++;
+  }
+ }
+}
+console.log('Verified '+specialtyChecks+' role/context-specific Specialty breakpoint selections.');
 console.log('Verified '+count+' researched class/context/level allocations (8 classes × 3 contexts × 10 levels) with legal spending and valid data identifiers.');
