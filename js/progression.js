@@ -20,7 +20,7 @@ const PROGRESSION_PLANS={
  assassin:{
   leveling:['Quick Slice','Heart Gore','Insignia Explosion','Savage Roar','Ambush'],
   endgame:['Heart Gore','Insignia Explosion','Quick Slice','Savage Roar','Storm Rampage','Whirlwind Slice'],
-  breakpoints:[['Heart Gore',16],['Insignia Explosion',16],['Quick Slice',16],['Heart Gore',20]],
+  breakpoints:[['Heart Gore',16],['Quick Slice',16],['Insignia Explosion',16],['Heart Gore',20]],
   stigma:[['Swift Contract',10],["Triniel's Dagger",10],['Illusive Clone',20],['Savage Fang',10]]
  },
  ranger:{
@@ -68,74 +68,109 @@ function progressionMasteryStages(cls,mode,level,leveling,advice,unlocks,skillNa
  const policy=PROGRESSION_PLANS[cls];if(!policy)return null;
  const names=new Set(skillNames),known=name=>names.has(name)&&(unlocks[name]||1)<=level;
  const unique=sequence=>[...new Set(sequence)].filter(known);
- // PvP does not inherit PvE-specific level-16 damage objectives.
- const early=mode==='pvp'?unique(advice.core):unique(policy.leveling);
- const late=mode==='pvp'?unique(advice.core):mode==='party'&&cls==='cleric'
-  ?unique(['Healing Light','Radiant Recovery','Light of Regeneration',...policy.endgame])
-  :unique(policy.endgame);
+ // Combine DaevaArchitect's class engine with the selected context, rather
+ // than silently applying the same Group PvE priorities to Solo and PvP.
+ const context=unique(advice.core||[]),base=unique(leveling?policy.leveling:policy.endgame);
  const support=unique(advice.support||[]);
- const rest=unique(skillNames.filter(name=>!late.includes(name)&&!early.includes(name)&&!support.includes(name)));
+ const isGroupHealer=mode==='party'&&cls==='cleric';
+ const healOrder=unique(['Light of Regeneration','Radiant Recovery','Healing Light']);
+ const principal=isGroupHealer?unique([...healOrder,...context,...base])
+  :mode==='pvp'?context
+  :mode==='solo'?unique([...base.slice(0,2),...context,...base])
+  :unique([...context.slice(0,3),...base,...context]);
+ const rest=unique(skillNames.filter(name=>!principal.includes(name)&&!support.includes(name)));
  const stages=[],add=(items,target)=>items.forEach(name=>stages.push([name,adjust(name,target)]));
  if(leveling){
-  // At low level, guarantee an immediately usable kit before spending on
-  // abilities not yet unlocked. At higher levels move toward breakpoints.
+  // Establish an immediate usable kit. Healing group Clerics get access to
+  // core heals first; solo Clerics retain the quest damage engine.
+  const early=isGroupHealer?principal:unique([...base.slice(0,3),...principal]);
   add(early.slice(0,3),5);
-  add(early.slice(3,5),4);
+  add(early.slice(3,6),4);
   add(support.slice(0,2),4);
-  if(level>=16){add(early.slice(0,3),8);add(late.slice(0,3),5)}
-  if(level>=30){add(late.slice(0,4),8);add(support.slice(0,3),7)}
+  if(level>=16){add(early.slice(0,3),8);add(principal.slice(0,3),5)}
+  if(level>=30){add(principal.slice(0,4),8);add(support.slice(0,3),7)}
  }else{
-  // Fresh 45 buys the class's principal engine, then a functional support
-  // baseline. Boards and actual equipped +skill bonuses supply levels > 10.
-  add(late.slice(0,3),8);
-  add(late.slice(3,6),5);
+  add(principal.slice(0,3),8);
+  add(principal.slice(3,6),5);
   add(support.slice(0,3),5);
-  add(late.slice(0,3),10);
-  add(late.slice(3,6),8);
+  add(principal.slice(0,3),10);
+  add(principal.slice(3,6),8);
  }
- add(late,10);
+ add(principal,10);
  add(support,10);
- add(early,10);
  add(rest,5);
  add(rest,10);
  return stages;
 }
+// First four active slots must become usable, then the most valuable early
+// *perk* should receive the available points. An even 5/5/5/5 baseline
+// leaves 29 points without a level-10 milestone; 10/5/5/4 is preferable for
+// many solo and damage builds. No presumption of 75 points at fresh level 45.
+const STIGMA_STARTER={
+ gladiator:{party:['Rage Burst','Lunge Stance'],solo:['Lifestealing Blade','Lunge Stance']},
+ templar:{party:['Doom Shield','Noble Armor'],solo:['Doom Shield','Noble Armor']},
+ assassin:{party:['Illusive Clone'],solo:['Illusive Clone']},
+ ranger:{party:["Vaizel's Authority"],solo:["Vaizel's Authority"]},
+ sorcerer:{party:['Element Enhancement'],solo:['Element Enhancement']},
+ spiritmaster:{party:['Summon: Ancient Spirit'],solo:['Summon: Ancient Spirit']},
+ cleric:{party:['Earth Punishment','Light of Protection'],solo:['Earth Punishment']},
+ chanter:{party:['Undefeated Mantra'],solo:['Undefeated Mantra']}
+};
 function progressionStigmaStages(cls,mode,equipped,advice){
  const policy=PROGRESSION_PLANS[cls];if(!policy)return null;
- const selected=new Set(equipped);
+ const selected=new Set(equipped),priority=[...(advice.stigmaPriority||[]).filter(name=>selected.has(name)),
+  ...equipped.filter(name=>!(advice.stigmaPriority||[]).includes(name))];
+ const startup=(STIGMA_STARTER[cls]?.[mode]||priority).filter(name=>selected.has(name));
+ const first=startup[0]||priority[0];
+ const second=startup[1]||priority.find(name=>name!==first);
+ const stages=equipped.map(name=>[name,1]);
+ if(first){
+  stages.push([first,5]);
+  if(second && second!==first)stages.push([second,5]);
+  // Group Cleric requires Earth Punishment's level-5 critical synergy;
+  // Light of Protection is the next useful 10-point support breakpoint.
+  const next10=cls==='cleric'&&mode==='party'&&second?second:first;
+  stages.push([next10,10]);
+ }
+ for(const name of priority)if(name!==first&&name!==second)stages.push([name,5]);
  const preference=(mode==='party'&&cls==='templar'&&Array.isArray(advice.stigmaMilestones))
   ?advice.stigmaMilestones
-  :mode==='party'||mode==='solo' ? policy.stigma : [];
- // PvP first works from the chosen PvP loadout, not a mismatched PvE list.
- const priority=[...(advice.stigmaPriority||[]).filter(name=>selected.has(name)),
-  ...equipped.filter(name=>!(advice.stigmaPriority||[]).includes(name))];
- const stages=[...equipped.map(name=>[name,5])];
- const already=new Map(equipped.map(name=>[name,5]));
- for(const [name,rank] of preference){
-  if(!selected.has(name)||rank<=already.get(name))continue;
-  stages.push([name,rank]);already.set(name,rank);
- }
- for(const rank of [10,15,20])for(const name of priority)
-  if(rank>(already.get(name)||0)){stages.push([name,rank]);already.set(name,rank)}
+  :mode!=='pvp'?policy.stigma:[];
+ for(const [name,rank] of preference)if(selected.has(name))stages.push([name,rank]);
+ for(const rank of [10,15,20])for(const name of priority)stages.push([name,rank]);
  return stages;
 }
+// Keep all checkpoints. Object.fromEntries keyed only by skill incorrectly
+// overwrote intermediate Lv16 objectives with the eventual Lv20 objective.
+function progressionBreakpoints(cls,mode){
+ const policy=PROGRESSION_PLANS[cls];if(!policy||mode==='pvp')return [];
+ if(cls==='cleric'&&mode==='party')return [
+  ['Light of Regeneration',16],['Radiant Recovery',16],['Healing Light',16]];
+ return policy.breakpoints;
+}
 function progressionBoardTargets(cls,mode){
- const p=PROGRESSION_PLANS[cls];
- if(!p||mode==='pvp')return {};
- return Object.fromEntries(p.breakpoints.map(([name,rank],index)=>[name,{rank,weight:Math.max(1.1,2.3-index*0.28)}]));
+ const result={};
+ progressionBreakpoints(cls,mode).forEach(([name,rank],index)=>{
+  const milestone={rank,weight:Math.max(1.1,2.3-index*0.28)};
+  (result[name]??={milestones:[]}).milestones.push(milestone);
+ });
+ for(const target of Object.values(result)){
+  target.milestones.sort((a,b)=>a.rank-b.rank);
+ }
+ return result;
 }
 function progressionNextBreakpoint(cls,mode,effectiveLevel,ownedCrystals){
  const p=PROGRESSION_PLANS[cls];
  if(!p)return '';
  if(mode==='pvp')return 'PvP priorities depend on matchup; verify your defensive Stigma and control tools.';
- const next=p.breakpoints.find(([name,rank])=>effectiveLevel(name)<rank);
+ const next=progressionBreakpoints(cls,mode).find(([name,rank])=>effectiveLevel(name)<rank);
  if(!next)return 'Key damage breakpoints reached. Recheck your chosen Specialties and combat rotation.';
  const [name,rank]=next,gap=rank-effectiveLevel(name);
  return name+' effective Lv '+rank+' next ('+gap+' level'+(gap===1?'':'s')+
   ' remaining through Mastery, connected Daevanion nodes and recorded equipment). '+
   (ownedCrystals>=327?'Recheck the remaining route with your 327+ crystal budget.':'Keep recording earned and purchased Daevanion nodes.');
 }
-function progressionRotationProfile(base,cls,mode,effectiveLevel){
+function progressionRotationProfile(base,cls,mode,effectiveLevel,equippedStigmas=[]){
  const p={...base,stacks:base.stacks.map(s=>({...s,skills:[...s.skills]})),
   hotbar:base.hotbar.map(([skills,cue,tone])=>[[...skills],cue,tone])};
  // One canonical class profile supplies the main combat engine. Context
@@ -146,6 +181,13 @@ function progressionRotationProfile(base,cls,mode,effectiveLevel){
   p.stacks.unshift({key:'Q',title:'Overhead Slam — separate priority',skills:['Overhead Slam']});
   p.macro=['Q','E'];
   p.rule='Keep Overhead Slam separate from Rending Blow; hold Keen Strike to weave and restore MP. At Overhead Slam 16, watch MP consumption.';
+ }else if(cls==='cleric'){
+  if(equippedStigmas.includes('Earth Punishment')){
+   p.stacks=p.stacks.map(stack=>stack.key==='E'
+    ?{...stack,title:'Earth Punishment → Condemnation',skills:['Earth Punishment','Condemnation','Chain of Torment']}
+    :stack);
+   p.rule='Use Earth Punishment before Condemnation for the level-5 critical synergy; keep all emergency and regular heals manual.';
+  }
  }else if(cls==='templar'){
   p.rule=effectiveLevel('Judgment')>=16
    ?'Judgment Lv 16: use its cooldown-removal Specialty and prioritize it in the trigger stack; keep charged Punishment manual.'
