@@ -25,7 +25,7 @@ const gearDetails=make('details','v2-gear-advanced','<summary>Arcana, wings & de
 const extra=make('div','v2-extra');extra.id='v2-extra';
 const master=make('div','v2-master-editor',`
  <div class="v2-skill-toolbar" role="group" aria-label="Mastery skill category"><button type="button" id="v2-active-filter" class="active" aria-pressed="true">Active skills (12)</button><button type="button" id="v2-passive-filter" aria-pressed="false">Passive (10)</button><span class="v2-skill-search-label">Find a skill</span></div>
- <div class="v2-editor-title"><b>Skill</b><span>Board</span><span>Gear</span><span>Effective</span></div>
+ <div class="v2-editor-title"><b>Skill</b><span>Mastery</span><span>Board</span><span>Gear</span><span>Effective</span></div>
  <div id="v2-skill-list" class="v2-skill-list"></div>
  <div class="v2-mastery-hint">Select a skill to open Specialties. Mastery ranks are purchased; Board and Gear determine effective level.</div>
  <div id="v2-spec-panel" class="v2-in-panel-flyout" role="region" aria-label="Selected skill specialty choices" hidden></div>
