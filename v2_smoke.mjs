@@ -57,6 +57,10 @@ try{
   await page.locator('#mastery-input').fill('220');
   await page.locator('#mastery-input').press('Tab');
   assert.match(await page.locator('#v2-status').innerText(),/Following recommended/,width+': points marked custom');
+  if(width>=1920){
+    const cardColumns=await page.locator('#v2-stigma-list').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length);
+    assert.equal(cardColumns,4,'Stigmas must show four icon cards across in the desktop mock');
+  }
   assert.equal(await page.locator('#v2-stigma-list .v2-stigma-art img').count(),4,
     width+': all four equipped Stigmas need their actual icons');
   const stigmaArt=await page.locator('#v2-stigma-list .v2-stigma-art img').first().getAttribute('src');
@@ -68,6 +72,7 @@ try{
   assert.equal(await page.locator('#v2-spec-panel').isVisible(),true);
   assert.equal(await page.locator('#v2-spec-panel [data-v2-spec]').count(),5);
   assert.match(await page.locator('#v2-spec-panel').innerText(),/MP consumed/);
+  if(width===1920)await page.screenshot({path:'v2-previews/specialties-flyout-1920.png',fullPage:true});
   await page.locator('#v2-spec-close').click();
   assert.equal(await page.locator('#v2-spec-panel').isVisible(),false);
   await page.locator('#v2-passive-filter').click();
@@ -83,6 +88,7 @@ try{
   await page.locator('#v2-stigma-list [data-v2-open-stigma="0"]').click();
   assert.equal(await page.locator('#v2-stigma-panel').isVisible(),true);
   assert.equal(await page.locator('#v2-stigma-panel [data-v2-stigma-choice]').count(),13);
+  if(width===1920)await page.screenshot({path:'v2-previews/stigma-flyout-1920.png',fullPage:true});
   await page.locator('#v2-stigma-panel [data-v2-stigma-rank][data-dir="-1"]').click();
   assert.match(await page.locator('#v2-status').innerText(),/Modified progression/);
   await page.locator('#v2-stigma-done').click();
