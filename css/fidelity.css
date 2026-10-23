@@ -352,3 +352,12 @@
  overflow-y:auto;min-height:0;
 }
 .v2-active #v2-stigma-panel .v2-stigma-picker{max-width:100%}
+
+/* Header hierarchy consistent with approved mock: show full section title;
+   rank actions remain by the list, not at the expense of heading width. */
+.v2-active #mastery>.section-title .tag{display:none!important}
+.v2-active #mastery>.section-title h2{font-size:22px;white-space:nowrap}
+.v2-active .v2-mastery-hint{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.v2-active .v2-mastery-hint .v2-slim-heading{margin:0 0 0 auto;display:flex}
+.v2-active .v2-mastery-hint .v2-slim-heading span{display:block;color:#9bd5b0}
+.v2-active #stigma>.section-title h2{white-space:nowrap}
