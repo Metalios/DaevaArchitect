@@ -1,0 +1,262 @@
+/* DaevaArchitect mock-fidelity workspace
+   Target: approved DaevaArchitect leveling/custom mock, game data unchanged.
+   Typography deliberately remains legible, rather than shrinking every
+   column to fit narrow viewports. Flyouts live within their panels. */
+.v2-active{--fui-ink:#07111e;--fui-panel:#0b1a2c;--fui-line:#33495e;
+ --fui-gold:#e7c789;--fui-muted:#a8bdd1;--fui-blue:#66bcf0;
+ background:#06111d;color:#e0ecf8}
+.v2-active .v2-planner{max-width:2800px}
+.v2-active .v2-workspace{
+ display:grid;grid-template-columns:minmax(260px,.85fr) minmax(430px,1.44fr) minmax(680px,2.55fr);
+ align-items:stretch;gap:12px;margin-top:7px
+}
+.v2-active .v2-column{gap:11px;min-width:0;overflow:visible}
+.v2-active .v2-workspace .tab-panel{
+ position:relative;min-width:0;border:1px solid #38536c;
+ padding:12px;background:linear-gradient(147deg,#0f2133,#071523);
+ box-shadow:inset 0 1px 0 #85bbde13,0 9px 25px #0004;
+ border-radius:7px;overflow:visible
+}
+.v2-active .v2-workspace .section-title{
+ min-height:41px;margin-bottom:9px;border-bottom:1px solid #2e4861;
+ padding:0 5px 10px;align-items:center;gap:10px
+}
+.v2-active .v2-workspace .section-title h2{
+ font:normal 21px/1.2 Georgia,serif;color:#f0e5d4
+}
+.v2-active .v2-quickbar{position:relative;top:auto;min-height:67px}
+.v2-active .v2-nav{margin:3px 0 0}
+.v2-active .v2-quickbar label{font-size:11px}
+.v2-active #mastery{min-height:525px}
+.v2-active #stigma{min-height:215px}
+.v2-active #mastery .v2-slim-heading{margin-left:auto}
+.v2-active #mastery .v2-slim-heading span{display:none}
+.v2-active #mastery .mastery-tools{display:none}
+.v2-active .v2-master-editor{position:relative;display:flex;flex-direction:column;min-height:470px}
+.v2-active .v2-skill-toolbar{display:flex;gap:6px;align-items:center;min-width:0;margin:0 0 10px}
+.v2-active .v2-skill-toolbar>button{
+ flex:none;padding:8px 12px;border:1px solid #48627d;border-radius:5px;
+ color:#c6d9eb;background:linear-gradient(#18344c,#0d2033);
+ font-size:12px;font-weight:700
+}
+.v2-active .v2-skill-toolbar>button.active{
+ border-color:#6dbdf6;color:#fff;background:linear-gradient(#205d8e,#103a62)
+}
+.v2-active .v2-skill-toolbar .v2-skill-search-label{display:none}
+.v2-active .v2-skill-toolbar .mastery-search{margin-left:auto;display:flex!important;align-items:center;min-width:110px;flex:1;font-size:0}
+.v2-active .v2-skill-toolbar .mastery-search input{
+ display:block;min-width:0;width:100%;height:35px;border:1px solid #3c5b78;
+ border-radius:4px;background:#061827;color:#d6eafa;font-size:12px;padding:7px 10px
+}
+.v2-active .v2-editor-title{
+ display:grid;grid-template-columns:minmax(120px,1fr) 110px 42px 42px 63px;
+ align-items:center;gap:5px;padding:4px 6px;color:#94acc1;font-size:11px;
+ border-bottom:1px solid #28425a;letter-spacing:.015em;text-align:center
+}
+.v2-active .v2-editor-title b{text-align:left}
+.v2-active .v2-skill-list{overflow-y:auto;overflow-x:hidden;flex:1;min-height:235px;max-height:535px;
+ border:1px solid #254158;background:#071929;scrollbar-color:#426282 #0a1b2a}
+.v2-active .v2-skill{
+ display:grid;grid-template-columns:minmax(120px,1fr) 110px 42px 42px 63px;
+ gap:5px;min-height:53px;align-items:center;padding:5px 7px;
+ background:linear-gradient(90deg,#0b1c2b,#081725);
+ border-bottom:1px solid #26394d
+}
+.v2-active .v2-skill:nth-child(even){background:linear-gradient(90deg,#0f263a,#0a1b2a)}
+.v2-active .v2-skill.chosen{background:linear-gradient(90deg,#1d4059,#123049);box-shadow:inset 3px 0 #66baf4}
+.v2-active .v2-skill-label{display:flex;align-items:center;text-align:left;gap:8px;min-width:0}
+.v2-active .v2-skill-label .game-icon{flex:none;width:37px;height:37px}
+.v2-active .v2-skill-label>span:nth-child(2){flex:1;min-width:0}
+.v2-active .v2-skill-label b{display:block;font-size:13px;line-height:1.3;color:#e7f0f9}
+.v2-active .v2-skill-label small{display:block;font-size:10px;line-height:1.35;color:#8fbad5}
+.v2-active .v2-open-caret{font-size:22px;color:#769ab5;margin-left:auto}
+.v2-active .v2-rank{display:flex;gap:3px;justify-content:center;align-items:center}
+.v2-active .v2-rank b{font-size:13px;min-width:30px;text-align:center}
+.v2-active .v2-rank button{width:24px;height:28px}
+.v2-active .v2-green{font-size:14px;color:#69e7af;font-weight:750}
+.v2-active .v2-effective{color:#f4d18e;font-size:13px;font-weight:800}
+.v2-active .v2-mastery-hint{padding:9px 4px 3px;color:#9bb8d0;font-size:11px;line-height:1.5}
+.v2-active .v2-advanced-skills{margin-top:4px}
+.v2-active .v2-advanced-skills summary{font-size:11px;padding:6px 10px}
+.v2-active .v2-advanced-skills:not([open]){opacity:.83}
+.v2-active .v2-stigmas{position:relative}
+.v2-active .v2-stigma-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.v2-active .v2-stigma-card{
+ display:flex;flex-direction:column;align-items:center;text-align:center;gap:5px;
+ min-width:0;min-height:124px;padding:9px 5px 7px;
+ border:1px solid #375470;border-radius:5px;color:#e3effb;
+ background:linear-gradient(160deg,#112d48,#0a1b2d)
+}
+.v2-active .v2-stigma-card:hover,.v2-active .v2-stigma-card.chosen{
+ border-color:#88bee8;box-shadow:inset 0 0 12px #2e80b744
+}
+.v2-active .v2-stigma-card .game-icon{width:39px;height:39px;flex:none}
+.v2-active .v2-stigma-card strong{font-size:12px;line-height:1.25;max-width:100%;overflow-wrap:anywhere}
+.v2-active .v2-stigma-card small{font-size:11px;color:#b9d4e9;margin-top:auto}
+.v2-active .v2-stigma-card-action{font-size:10px;color:#79bff1}
+.v2-active .v2-stigma-card.locked{opacity:.48;border-style:dashed;cursor:not-allowed}
+.v2-active .v2-stigma-locked-art{font-size:30px;color:#87a1b8}
+.v2-active .v2-stigma-summary{
+ margin:9px 0;display:flex;justify-content:space-between;gap:8px;
+ font-size:11px;color:#9eb8cf;flex-wrap:wrap
+}
+.v2-active .v2-stigma-summary strong{color:#e7eff7}
+.v2-active .v2-stigma-breakpoints{
+ color:#b6cbe0;display:flex;flex-wrap:wrap;gap:9px;font-size:11px;padding:7px 2px
+}
+.v2-active .v2-stigma-breakpoints span{color:#e5ce98}
+.v2-active #v2-stigma-reset{display:block;margin-left:auto;margin-top:5px;padding:5px 10px;font-size:11px}
+.v2-active #v2-stigma-reset:disabled{display:none}
+.v2-active .v2-in-panel-flyout{
+ position:absolute;left:8px;right:8px;top:8px;z-index:35;
+ display:flex;flex-direction:column;max-height:min(680px,75vh);
+ border:1px solid #6ea6d1;border-radius:7px;
+ box-shadow:0 18px 55px #000d,0 0 0 2px #133552;
+ background:linear-gradient(160deg,#18324c,#081827 80%);
+ overflow:hidden
+}
+.v2-active .v2-in-panel-flyout[hidden]{display:none!important}
+.v2-active #v2-stigma-panel{top:5px;max-height:min(675px,76vh)}
+.v2-active .v2-flyout-head{
+ display:block;position:relative;flex:none;
+ padding:12px 13px 10px;border-bottom:1px solid #36546f;
+ background:linear-gradient(#1b3b57,#102b45)
+}
+.v2-active .v2-flyout-eyebrow{display:block;color:#9ec7e6;font-size:10px;letter-spacing:.12em;font-weight:800}
+.v2-active .v2-flyout-close{position:absolute;right:9px;top:8px;
+ border:1px solid #6488a9;border-radius:4px;background:#13314c;color:white;
+ width:29px;height:29px;padding:0;font-size:15px}
+.v2-active .v2-flyout-skill-title{display:flex;align-items:center;gap:9px;margin-top:10px}
+.v2-active .v2-flyout-art{display:block;width:46px;height:46px;flex:none}
+.v2-active .v2-flyout-skill-title h3{font:normal 21px/1.2 Georgia,serif;color:#f5ddb0;margin:0}
+.v2-active .v2-flyout-skill-title small{display:block;font-size:12px;color:#bdcee2;margin-top:4px}
+.v2-active .v2-flyout-content{overflow:auto;padding:12px;flex:1;overscroll-behavior:contain}
+.v2-active .v2-flyout-guidance{
+ margin:0 0 12px;padding:9px 10px;background:#0b2137;border-left:3px solid #d0a565;
+ color:#bcd4e6;font-size:12px;line-height:1.5
+}
+.v2-active .v2-in-panel-flyout .v2-spec-slots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.v2-active .v2-in-panel-flyout .v2-spec-slots>div{min-height:75px;padding:8px;background:#142c43}
+.v2-active .v2-in-panel-flyout .v2-spec-slots small{font-size:11px}
+.v2-active .v2-in-panel-flyout .v2-spec-slots strong{font-size:12px;line-height:1.45}
+.v2-active .v2-flyout-subhead{
+ display:flex;align-items:center;justify-content:space-between;
+ margin:12px 0 7px;gap:8px;color:#ecd6a4;font-size:13px
+}
+.v2-active .v2-flyout-subhead small{color:#9fbdd5;font-size:11px}
+.v2-active .v2-spec-options{display:grid;grid-template-columns:1fr;max-height:none;gap:7px}
+.v2-active .v2-spec-options button{
+ display:flex;min-height:52px;padding:9px;gap:9px;
+ background:#0a2034;border:1px solid #365570;border-radius:5px;color:#dcebf7
+}
+.v2-active .v2-spec-options button.chosen{background:#283244;border-color:#e5bd70}
+.v2-active .v2-spec-options button b{font-size:13px;line-height:1.4}
+.v2-active .v2-spec-options button small{font-size:11px;color:#a7c6dc}
+.v2-active .v2-spec-number{
+ width:31px;height:32px;flex:none;display:grid;place-items:center;
+ background:#493b28;color:#ffe2a1;border:1px solid #a28a50;border-radius:4px;font-weight:800
+}
+.v2-active .v2-flyout-foot{display:flex;align-items:center;justify-content:space-between;margin-top:13px;gap:8px}
+.v2-active .v2-flyout-foot button{
+ border:1px solid #486e92;background:linear-gradient(#1c405f,#0d263d);
+ border-radius:5px;color:#deedff;padding:8px 12px;font-size:12px
+}
+.v2-active .v2-flyout-foot button:last-child{border-color:#bc995e;background:linear-gradient(#cfac6f,#8c6c36);color:#121f2e;font-weight:800}
+.v2-active .v2-stigma-level-editor{
+ display:flex;align-items:center;gap:10px;padding:9px;
+ background:#0d2840;border:1px solid #395e7c;border-radius:5px;flex-wrap:wrap
+}
+.v2-active .v2-stigma-level-editor span{margin-right:auto;font-size:12px;color:#c6d7e7}
+.v2-active .v2-stigma-level-editor strong{font-size:14px;color:#efd3a1}
+.v2-active .v2-stigma-level-editor button{width:29px;height:29px;padding:0;font-size:17px;border-radius:4px;border:1px solid #5c88ac;color:white;background:#163d5a}
+.v2-active .v2-stigma-base{color:#d8e8f5;font-size:12px;line-height:1.5;margin:11px 1px}
+.v2-active .v2-stigma-milestones{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.v2-active .v2-stigma-milestones>div{
+ display:grid;gap:4px;padding:9px;border:1px solid #3b5065;border-radius:4px;opacity:.75
+}
+.v2-active .v2-stigma-milestones>div.on{border-color:#8ac2a6;background:#103f3a;opacity:1}
+.v2-active .v2-stigma-milestones b{font-size:11px;color:#f1cc8b}
+.v2-active .v2-stigma-milestones span{font-size:11px;line-height:1.4;color:#d5e8f4}
+.v2-active .v2-stigma-picker{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.v2-active .v2-stigma-picker button{display:flex;align-items:center;gap:8px;min-height:56px;
+ padding:7px;text-align:left;color:#dce8f4;border:1px solid #365773;background:#0c2238;border-radius:4px}
+.v2-active .v2-stigma-picker button.chosen{border-color:#e6c27e;background:#38332d}
+.v2-active .v2-stigma-picker-art{width:36px;height:36px;flex:none}
+.v2-active .v2-stigma-picker button>span:last-child{flex:1;min-width:0}
+.v2-active .v2-stigma-picker b{font-size:12px;display:block;line-height:1.35;overflow-wrap:anywhere}
+.v2-active .v2-stigma-picker small{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+ overflow:hidden;color:#9fbbd1;font-size:10px;line-height:1.3;margin-top:3px}
+.v2-active .v2-left #gear>.controls{
+ position:static;z-index:auto;display:grid!important;grid-template-columns:1fr;margin:10px 0 0!important;
+ padding:8px!important;gap:4px!important;border-radius:5px;box-shadow:none!important;
+ background:#081727;border-color:#31516c
+}
+.v2-active .v2-left #gear>.controls .control{
+ display:flex;align-items:center;justify-content:space-between;gap:8px;
+ padding:5px 7px!important;min-height:38px!important;
+ flex:auto!important;box-shadow:none!important;border:0!important;
+ border-bottom:1px solid #294158!important;border-radius:0!important;background:transparent!important
+}
+.v2-active .v2-left #gear>.controls .control:nth-child(4){display:none!important}
+.v2-active .v2-left #gear>.controls .control label,
+.v2-active .v2-left #gear>.controls .control .label{font-size:11px!important;color:#96aec6;margin:0}
+.v2-active .v2-left #gear>.controls .control input[type=number]{
+ min-width:70px;width:82px;height:29px;padding:3px 5px;font-size:15px!important;text-align:right;
+ background:#0b2c49;border:1px solid #416789;border-radius:4px
+}
+.v2-active .v2-left #gear>.controls .control .unit{display:none}
+.v2-active .v2-left #gear>.controls .control .inputrow{margin-left:auto}
+.v2-active .v2-left #gear>.controls .control small{display:none}
+.v2-active .v2-left #gear>.controls #azphel-control[hidden]{display:none!important}
+.v2-active .v2-left .gear-intro{padding:7px;margin:0}
+.v2-active .v2-left .gear-paperdoll{margin:0;min-height:410px;background:radial-gradient(circle at 50% 34%,#233c50,#081726 73%)}
+.v2-active .v2-left .gear-inventory-backdrop{min-height:410px}
+.v2-active .v2-left .gear-inventory-tiles{grid-template-columns:repeat(2,58px)}
+.v2-active .v2-left .gear-tile{width:58px;height:58px}
+.v2-active .v2-left #gear{min-height:690px;display:flex;flex-direction:column}
+.v2-active .v2-left .v2-gear-advanced{margin-top:auto}
+.v2-active .v2-right .board-scroll{background:#091725;max-height:780px;min-height:500px}
+.v2-active .v2-right .board-layout{grid-template-columns:minmax(0,1fr) minmax(215px,250px);gap:9px}
+.v2-active .v2-right .board-grid{margin:auto;gap:4px}
+.v2-active .v2-right .node{border-radius:3px}
+.v2-active .v2-right .board-controls{min-height:35px}
+.v2-active .v2-next{border-radius:5px}
+@media(min-width:1700px){
+ .v2-active .v2-workspace{grid-template-columns:minmax(280px,.8fr) minmax(465px,1.38fr) minmax(730px,2.55fr)}
+ .v2-active .v2-column{max-height:none;overflow:visible}
+ .v2-active .v2-skill-list{max-height:510px}
+ .v2-active .v2-right .board-scroll{max-height:750px}
+}
+@media(min-width:1100px) and (max-width:1699px){
+ .v2-active .v2-workspace{grid-template-columns:minmax(250px,.85fr) minmax(430px,1.35fr);gap:10px}
+ .v2-active .v2-right{grid-column:1 / -1}
+ .v2-active .v2-column{max-height:none;overflow:visible}
+ .v2-active .v2-right .board-layout{grid-template-columns:minmax(0,1fr) 250px}
+ .v2-active .v2-editor-title,.v2-active .v2-skill{
+  grid-template-columns:minmax(145px,1fr) 110px 36px 36px 58px
+ }
+ .v2-active .v2-stigma-cards{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+@media(max-width:1099px){
+ .v2-active .v2-workspace{grid-template-columns:1fr}
+ .v2-active .v2-column{max-height:none;overflow:visible}
+ .v2-active .v2-stigma-cards{grid-template-columns:repeat(4,minmax(0,1fr))}
+ .v2-active .v2-right{grid-column:auto}
+}
+@media(max-width:610px){
+ .v2-active .v2-skill-toolbar{flex-wrap:wrap}
+ .v2-active .v2-skill-toolbar .mastery-search{flex-basis:100%}
+ .v2-active .v2-editor-title,.v2-active .v2-skill{
+  grid-template-columns:minmax(100px,1fr) 90px 27px 27px 50px;gap:3px
+ }
+ .v2-active .v2-skill-label .game-icon{width:29px;height:29px}
+ .v2-active .v2-skill-label b{font-size:11px}
+ .v2-active .v2-skill-label small{font-size:9px}
+ .v2-active .v2-rank button{width:19px;height:25px}
+ .v2-active .v2-green,.v2-active .v2-effective{font-size:11px}
+ .v2-active .v2-stigma-cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .v2-active .v2-stigma-picker,.v2-active .v2-stigma-milestones{grid-template-columns:1fr}
+ .v2-active .v2-in-panel-flyout .v2-spec-slots{grid-template-columns:1fr}
+ .v2-active .v2-right .board-layout{grid-template-columns:1fr}
+ .v2-active .v2-left #gear{min-height:0}
+}
