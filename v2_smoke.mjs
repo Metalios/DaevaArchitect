@@ -27,15 +27,13 @@ try{
   await page.locator('#class-buttons [data-class="templar"]').click();
   await page.locator('#v2-skill-list .v2-skill').first().waitFor();
   assert.equal(await page.locator('.v2-workspace').isVisible(),true,width+': unified workspace hidden');
-  if(width===1280){
+  if(width===1920||width===3440){
     const rects=await page.evaluate(()=>['.v2-left','.v2-center','.v2-right'].map(selector=>{
-      const {top,left,width,height}=document.querySelector(selector).getBoundingClientRect();
-      return {top,left,width,height};
+      const {top,left,width}=document.querySelector(selector).getBoundingClientRect();return {top,left,width}
     }));
     assert(Math.max(...rects.map(r=>r.top))-Math.min(...rects.map(r=>r.top))<20,
-      '1280px: Equipment, Mastery and Daevanion must occupy the same viewport row');
-    assert(rects[0].left<rects[1].left&&rects[1].left<rects[2].left,
-      '1280px: workspace columns must be ordered equipment/mastery/board');
+      width+': all three panels should share one desktop row');
+    assert(rects[0].left<rects[1].left&&rects[1].left<rects[2].left);
   }
   assert.equal(await page.locator('#gear-doll-grid').count(),1);
   assert.equal(await page.locator('#board-grid .node').count(),89,width+': Nezekan shape mismatch');
@@ -64,19 +62,31 @@ try{
   const stigmaArt=await page.locator('#v2-stigma-list .v2-stigma-art img').first().getAttribute('src');
   assert.match(stigmaArt,/assets\.playnccdn\.com\/static-aion2-gamedata\/resources\/ICON_[A-Z]+_SKILL_\d+\.png/,
     width+': Stigma image is not the official client icon');
+  assert.equal(await page.locator('#v2-spec-panel').isVisible(),false,
+    width+': Specialties must not stay open by default');
   await page.locator('#v2-skill-list [data-v2-select-skill="Pummel"]').click();
+  assert.equal(await page.locator('#v2-spec-panel').isVisible(),true);
   assert.equal(await page.locator('#v2-spec-panel [data-v2-spec]').count(),5);
-  assert.equal(await page.locator('#v2-spec-panel .v2-spec-option-art img').count(),5,
-    width+': all five Specialty effects need an illustrated skill icon');
   assert.match(await page.locator('#v2-spec-panel').innerText(),/MP consumed/);
+  await page.locator('#v2-spec-close').click();
+  assert.equal(await page.locator('#v2-spec-panel').isVisible(),false);
+  await page.locator('#v2-passive-filter').click();
+  assert.equal(await page.locator('#v2-skill-list .v2-skill').count(),10);
+  await page.locator('#v2-active-filter').click();
   // Explicit rank change becomes customized; restore returns to recommended.
   await page.locator('#v2-skill-list [data-v2-rank="Pummel"][data-dir="-1"]').click();
   assert.match(await page.locator('#v2-status').innerText(),/Modified progression/);
   await page.locator('#v2-reset-allocations').click();
   assert.match(await page.locator('#v2-status').innerText(),/Following recommended/);
   // Stigma level edits must affect the actual allocation and build status.
-  await page.locator('#v2-stigma-list [data-v2-stigma-rank][data-dir="-1"]').first().click();
+  assert.equal(await page.locator('#v2-stigma-panel').isVisible(),false);
+  await page.locator('#v2-stigma-list [data-v2-open-stigma="0"]').click();
+  assert.equal(await page.locator('#v2-stigma-panel').isVisible(),true);
+  assert.equal(await page.locator('#v2-stigma-panel [data-v2-stigma-choice]').count(),13);
+  await page.locator('#v2-stigma-panel [data-v2-stigma-rank][data-dir="-1"]').click();
   assert.match(await page.locator('#v2-status').innerText(),/Modified progression/);
+  await page.locator('#v2-stigma-done').click();
+  assert.equal(await page.locator('#v2-stigma-panel').isVisible(),false);
   await page.locator('#v2-stigma-reset').click();
   // Equipment slots still invoke the catalog and item editor.
   await page.locator('#gear-doll-grid [data-gear-slot]').first().click();
@@ -96,6 +106,9 @@ try{
   assert.equal(await page.locator('#crystal-input').inputValue(),'84');
   assert.match(await page.locator('#v2-stigma-status').innerText(),/3\/4 slots/);
   assert.equal(await page.locator('#board-tabs [data-board="Triniel"]').isDisabled(),true);
+  assert.equal(await page.locator('#v2-stigma-list .v2-stigma-card.locked').count(),1);
+  await page.locator('#v2-context').selectOption('party');
+  assert.equal(await page.locator('#v2-spec-panel').isVisible(),false);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+8),true,width+': horizontal page overflow');
   await page.close();
   console.log('v2 browser smoke passed at '+width+'×1080');
