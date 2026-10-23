@@ -86,3 +86,44 @@ function buildLevelingCombat(cls,level,context,unlocks,stigmaNames,stigmaLevels,
    next:next?{name:next[0],level:next[1]}:null,
    rows:stack.map((name,row)=>({name,row})),steps:stack.length?[plan.key]:[]};
 }
+
+function renderLevelingCombatMarkup(plan,macroKey){
+ const iconFor=name=>gameSkillIconMarkup(plan.cls,name,'leveling-skill-icon');
+ const skill=name=>'<span class="leveling-skill">'+iconFor(name)+'<strong>'+esc(name)+'</strong></span>';
+ const rows=[...plan.rows].reverse().map(({row,name})=>
+  '<div class="leveling-stack-row'+(row===0?' is-priority':'')+'" data-leveling-skill="'+esc(name)+'" data-row="'+row+'">'+
+  '<span class="leveling-row-number">Row '+row+'</span>'+skill(name)+
+  (row===0?'<span class="leveling-first">1st priority</span>':'')+'</div>').join('');
+ const manual=plan.manual.slice(0,5).map(name=>'<li>'+skill(name)+'</li>').join('');
+ const stigma=plan.stigmas.length?'<p class="leveling-stigmas"><b>Learned Stigmas:</b> '+esc(plan.stigmas.join(' · '))+
+  '. Keep buffs, protection and situational Stigmas manual.</p>':
+  plan.level>=22?'<p class="leveling-stigmas">Stigma slots open while leveling; only use Stigmas after assigning earned points.</p>':'';
+ const next=plan.next?'<span class="leveling-up-next">Next combat unlock: Lv '+plan.next.level+' · '+esc(plan.next.name)+'</span>':'';
+ const weave='<div class="leveling-basic">'+
+  '<span class="leveling-phase-label">01 / Your repeat attack</span>'+skill(plan.weave)+
+  '<p>Hold or press <b>'+esc(plan.weaveKey)+'</b> when attacking safely. This is separate from the macro.</p></div>';
+ const starter=plan.macroUnlocked?'<div class="leveling-skill-column">'+
+  '<div class="leveling-phase-label">02 / ONE damage stack <span>Hotbar '+esc(plan.key)+'</span></div>'+
+  '<p class="leveling-short-note">Arrange the stack as it appears in the game: <b>Row 0 is at the bottom and fires first.</b> A no-cooldown fallback belongs at the top.</p>'+
+  '<div id="leveling-stack" class="leveling-stack-rows">'+rows+'</div></div>'+
+  '<div class="leveling-macro-callout"><span class="leveling-phase-label">03 / In-game macro</span>'+
+  '<div id="leveling-macro-step"><b>ONE step:</b> hotbar <kbd>'+esc(plan.key)+'</kbd> <span>· start at 10 ms</span></div>'+
+  '<p>Bind the game Macro key to <kbd>'+esc(macroKey)+'</kbd> and hold it alongside '+
+  '<kbd>'+esc(plan.weaveKey)+'</kbd> while damage is safe. The macro <b>presses this stack’s hotkey</b>; it is not a list of individual skills. '+
+  'Release it for movement, mechanics, healing or charged attacks.</p></div>':
+  '<div class="leveling-no-macro" id="leveling-macro-step"><b>Macro not available yet.</b>'+
+  '<p>The Skills menu and presets unlock at level 4. Until then, use your repeat attack and newly unlocked skills manually.</p></div>';
+ return '<div class="leveling-combat-heading"><div><span class="eyebrow">LEVEL '+plan.level+' · '+(plan.stage==='starter'?'EARLY COMBAT':plan.stage==='core'?'CORE COMBAT':'STIGMA PROGRESSION')+'</span>'+
+  '<h3>Starter combat setup</h3><p>'+esc(plan.focus)+'</p></div>'+next+'</div>'+
+  '<div class="leveling-combat-layout">'+weave+starter+'</div>'+
+  '<div class="leveling-manual-summary"><div><span class="leveling-phase-label">Keep these manual</span>'+
+  (manual?'<ul id="leveling-manual">'+manual+'</ul>':'<p>Use your repeat attack while the next combat skill unlocks.</p>')+
+  (plan.level>=16?'<p class="leveling-defiance">Defiance (Space) is a manual control-break, not a damage-loop step.</p>':'')+
+  stigma+'</div><div class="leveling-setup-instructions"><span class="leveling-phase-label">Set it up in game</span>'+
+  (plan.macroUnlocked?'<p><b>Skills (K)</b> → stack the shown skills on '+esc(plan.key)+'. Add exactly one Macro step targeting that key. '+
+  'Bind Macro under <b>Settings → Key Settings → General → Macro</b>. 10 ms is a starting delay, not a guaranteed cast order or optimal timing.</p>':
+  '<p>Skills (K) becomes available at level 4. No key remapping or macro setup needed yet.</p>')+
+  '<p class="leveling-setup-warning">Use only the game’s built-in macro. Manual inputs take priority; mouse-bound macros do not work in AION 1 control mode. '+
+  'Test each new skill and Specialty on a training target—this is a leveling starting point, not a measured maximum-DPS rotation.</p>'+
+  '</div></div>';
+}
