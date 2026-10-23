@@ -113,12 +113,23 @@ function setCustomNode(id){
   save();
 }
 let boardEditNotice='';
-function activeWeights(){return ROUTES[state.class].weights[account().context]}
+function activeWeights(){
+  const base=ROUTES[state.class].weights[account().context];
+  const advised=typeof adviceFor==='function'?adviceFor(state.class,account().context):null;
+  if(!advised)return base;
+  const skills={...base.skills};
+  // Strongest supported class/core skill recommendations lead board optimization,
+  // rather than relying only on the previous generic DPS coefficient weights.
+  (advised.core||[]).forEach((name,i)=>{skills[name]=Math.max(skills[name]||0,64-i*6)});
+  (advised.support||[]).forEach((name,i)=>{skills[name]=Math.max(skills[name]||0,28-i*3)});
+  return {...base,skills};
+}
 function recommendedStigmas(){
   const standard=profile().stigmas;
   const variants={templar:{solo:['Doom Shield','Noble Armor',"Empyrean Lord's Punishment",'Executing Blade'],pvp:['Noble Armor','Doom Shield','Taunt','Second Skin']},cleric:{solo:['Earth Punishment','Noble Aura','Prayer of Amplification','Light of Protection'],pvp:['Prayer of Amplification','Light of Protection',"Yustiel's Power",'Absolution']},sorcerer:{pvp:['Element Enhancement','Steel Barrier','Soul Freeze','Hibernation']},gladiator:{pvp:["Zikel's Blessing",'Focused Block','Lifestealing Blade','Armor of Balance']},assassin:{pvp:['Evasion Contract','Smoke Bomb','Swift Contract','Illusive Clone']},ranger:{pvp:["Vaizel's Authority",'Mother Nature\'s Breath','Ensnaring Trap','Stealth']},spiritmaster:{pvp:['Summon: Ancient Spirit',"Enhance: Spirit's Benediction",'Seize Magic','Cry of Terror']},chanter:{solo:['Undefeated Mantra','Sprint Mantra','Power of the Storm',"Marchutan's Wrath"],pvp:['Undefeated Mantra','Barrier Spell','Healing Touch','Focused Defense']}};
-  const result=variants[state.class]?.[account().context]||standard;
-  return result.every(name=>STIGMAS[state.class]?.[name])?result:standard;
+  const advised=typeof adviceFor==='function'?adviceFor(state.class,account().context):null;
+  const result=advised?.stigmas||variants[state.class]?.[account().context]||standard;
+  return result.length===4&&new Set(result).size===4&&result.every(name=>STIGMAS[state.class]?.[name])?result:standard;
 }
 function activeStigmas(){
   const chosen=account().customStigmas;
@@ -163,6 +174,44 @@ function masteryRankCap(name){
   return Math.min(10,2+Math.floor((currentLevel()-unlocked)/3));
 }
 function masteryStages(){
+  const advised=typeof adviceFor==='function'?adviceFor(state.class,account().context):null;
+  if(advised){
+    const a=account(),skillSet=new Set(skillNames()),unlocks=SKILL_UNLOCKS[state.class];
+    const pick=names=>(names||[]).filter((name,i)=>skillSet.has(name)&&(unlocks[name]||1)<=currentLevel()&&(names.indexOf(name)===i));
+    const core=pick(advised.core),support=pick(advised.support),rest=pick(skillNames().filter(name=>!core.includes(name)&&!support.includes(name)));
+    const bonuses=effects(obtainedNodes()).skills,equipped=gearSkillLevels();
+    // A character's ACTUAL equipment is optional input, never invented gear.
+    // Use those bonuses to avoid wasting scarce purchased ranks on thresholds
+    // already attained by the player. This changes a recommendation, not its
+    // modified-build flag.
+    const threshold=(name,target)=>Math.max(1,Math.min(10,target-(bonuses[name]||0)-(equipped[name]||0)-(a.gear[name]||0)));
+    const stages=[];
+    const add=(names,level)=>names.forEach(name=>stages.push([name,threshold(name,level)]));
+    const early=isLeveling()&&currentLevel()<=15;
+    if(early){
+      const foundation=(LEVELING_MASTERY_CORE[state.class]||[]).filter(([name])=>core.includes(name)||support.includes(name));
+      for(const [name,wanted] of foundation)stages.push([name,Math.min(5,threshold(name,wanted))]);
+    }
+    // Explicit priority: establish the class's skill engine, hit real
+    // 8/12/16 specialty gates, then build defensive and passive support.
+    // Additional board ranks take skills beyond purchasable rank 10.
+    add(core.slice(0,4),5);
+    add(core.slice(4,7),5);
+    add(support.slice(0,3),5);
+    add(core.slice(0,3),8);
+    add(core.slice(3),8);
+    add(support.slice(0,3),8);
+    add(core.slice(0,3),12);
+    add(core.slice(3),12);
+    add(support.slice(0,3),10);
+    add(core.slice(0,3),16);
+    add(core.slice(3),16);
+    add(support.slice(3),8);
+    add(rest,5);
+    add(support,10);
+    add(rest,10);
+    return stages;
+  }
   const available=stages=>isLeveling()?stages.filter(([name])=>(SKILL_UNLOCKS[state.class][name]||1)<=currentLevel()):stages;
   if(isLeveling()){
     const core=LEVELING_MASTERY_CORE[state.class],next=LEVELING_MASTERY_NEXT[state.class];
@@ -187,6 +236,27 @@ function masteryStages(){
 }
 function stigmaStages(){
   const s=activeStigmas().slice(0,isLeveling()?levelReward().slots:4);
+  const advised=typeof adviceFor==='function'?adviceFor(state.class,account().context):null;
+  if(advised){
+    if(Array.isArray(advised.stigmaMilestones)){
+      const milestones=advised.stigmaMilestones.filter(([name,rank])=>s.includes(name)&&[5,10,15,20].includes(rank));
+      // Explicit research milestones (e.g. Taunt 15, Noble Armor 15 and
+      // Shield of Protection 5) take precedence over generic equal leveling.
+      // Finish with legal rank-20 targets for customized loadouts.
+      return [...milestones,...s.map(name=>[name,20])];
+    }
+    const priority=[...(advised.stigmaPriority||[]).filter(name=>s.includes(name)),...s.filter(name=>!(advised.stigmaPriority||[]).includes(name))];
+    // Slot order follows a verified recommendation, then prioritize the
+    // character's most meaningful milestones instead of blindly leveling
+    // every skill to each shared bracket first.
+    return [...s.map(name=>[name,5]),
+      ...priority.slice(0,2).map(name=>[name,10]),
+      ...priority.slice(2).map(name=>[name,10]),
+      ...priority.slice(0,2).map(name=>[name,15]),
+      ...priority.slice(2).map(name=>[name,15]),
+      ...priority.slice(0,2).map(name=>[name,20]),
+      ...priority.slice(2).map(name=>[name,20])];
+  }
   if(state.class==='templar'){
     // Reach each equipped skill's first breakpoint, then its context-defining breakpoints.
     const priority=account().context==='solo'?['Doom Shield','Noble Armor',"Empyrean Lord's Punishment",'Executing Blade']:account().context==='pvp'?['Noble Armor','Doom Shield','Taunt','Second Skin']:['Noble Armor','Taunt','Doom Shield','Shield of Protection'];
@@ -242,12 +312,21 @@ function model(){
     stigmas=activeStigmas(),recommendedStigma=allocate(stigmaStages(),budget('stigma'),stigmaCost,stigmas,0),
     stigma=a.manualStigma?manualAllocation(a.manualStigma,stigmas,budget('stigma'),stigmaCost,0,20):recommendedStigma;
   {
-    // Player-owned equipment affects effective ranks, but never changes the
-    // recommended Mastery/Daevanion allocation. No gear is assumed.
+    // Recalculate the connected route with verified owned skill bonuses,
+    // selected context, researched skill weights and actual equipped items.
+    // Owned gear alters advice but never marks the build manually modified.
     const target=profile().kind==='healer'?0:Number(a.goalTarget)||0;
-    const key=JSON.stringify([state.class,a.context,currentLevel(),mastery.levels,stigma.levels,target,a.obtainedNodes]);
+    const gearRanks={...gearSkillLevels()};
+    for(const [name,n] of Object.entries(a.gear||{}))gearRanks[name]=(gearRanks[name]||0)+Number(n||0);
+    const key=JSON.stringify([state.class,a.context,currentLevel(),mastery.levels,stigma.levels,gearRanks,target,a.obtainedNodes,gearEquipment(),a.cpAnchor]);
     if(key!==liveRouteKey){
-      liveRouteBasis=optimizeBoardRoute(data(),activeWeights(),mastery.levels,{},target,null,obtainedNodes(),currentLevel());
+      // A CP goal is meaningful only with a recorded level-45 equipment
+      // baseline; otherwise it must not arbitrarily bias Daevanion choices.
+      const actual=obtainedNodes();
+      const reference={mastery,stigma,boards:{owned:actual},effects:effects(actual)};
+      const estimated=estimateCombatPower(reference);
+      const baseCp=estimated.ready?estimated.value:null;
+      liveRouteBasis=optimizeBoardRoute(data(),activeWeights(),mastery.levels,gearRanks,baseCp===null?0:target,baseCp,actual,currentLevel());
       liveRoute=liveRouteBasis.route;liveRouteKey=key;
     }
   }
@@ -355,7 +434,10 @@ function renderGoal(m){
   const percent=Math.min(100,Math.round(observed/target*100)),gap=Math.max(0,target-observed);
   $('goal-status').innerHTML=`<b>${percent}% of target</b> · ${gap?`${gap.toLocaleString()} to go`:'target reached'}<div class="progress"><span style="width:${percent}%"></span></div>`;
 }
-function recommendedSpecPicks(name,eff){const spec=SPECS[state.class]?.[name];if(!spec)return [];let key=eff>=20?'20':eff>=16?'16':eff>=12?'12':eff>=8?'8':null;if(!key)return [];let picks=spec.picks[key]||[];if(state.class==='templar'&&account().context==='pvp'&&name==='Poach'&&eff>=12)picks=eff>=20?[2,4,3]:[2,4];if(state.class==='templar'&&account().context==='pvp'&&name==='Defiance'&&eff>=12)picks=eff>=20?[1,3,5]:eff>=16?[1,3]:[1,3];return picks}
+function recommendedSpecPicks(name,eff){const spec=SPECS[state.class]?.[name];if(!spec)return [];let key=eff>=20?'20':eff>=16?'16':eff>=12?'12':eff>=8?'8':null;if(!key)return [];
+  const contextual=typeof adviceSpecialtyChoices==='function'?adviceSpecialtyChoices(state.class,account().context,name,eff,spec.options):null;
+  if(contextual)return contextual;
+  let picks=spec.picks[key]||[];if(state.class==='templar'&&account().context==='pvp'&&name==='Poach'&&eff>=12)picks=eff>=20?[2,4,3]:[2,4];if(state.class==='templar'&&account().context==='pvp'&&name==='Defiance'&&eff>=12)picks=eff>=20?[1,3,5]:eff>=16?[1,3]:[1,3];return picks}
 function specPicks(name,eff){
   const spec=SPECS[state.class]?.[name],manual=account().customSpecialties?.[name];
   if(!spec||!Array.isArray(manual))return recommendedSpecPicks(name,eff);
@@ -493,8 +575,8 @@ function renderBoards(m){
   $('board-next').innerHTML=customMode()?`<p>${boardSteps.length} tiles selected on ${state.board}. ${crystalBudget-plan.spent} ${isAz?'Azphel':'PvE'} crystals remain unassigned. Select a connected tile to extend your plan.</p>`:upcoming.length?upcoming.map(x=>`<div class="next-unlock"><strong>${x.total} total</strong><span>${x.board}: ${esc(x.label)}</span></div>`).join(''):'<p>All key nodes on this route are funded.</p>';
   const method=isAz?ROUTES[state.class].methods.azphel:ROUTES[state.class].methods[a.context];
   const cpRoute=profile().kind!=='healer'&&Number(a.goalTarget)>0;
-  const cpBasis=cpRoute?'The route may favor board CP stats toward your entered CP goal; it does not assume or score your gear.':'The route follows class and context priorities without assuming your equipment.';
-  $('route-footnote').textContent=customMode()?`Custom mode uses the connected tiles you selected, in click order. Raising your crystal total lets you add more; lowering it makes later tiles unfunded until the budget returns. Marked obtained tiles are recorded separately from planned tiles. Azphel has its own currency and no skill levels.`:`${method}. The planner recalculates a connected route across ${isLeveling()?'unlocked boards':'all four PvE boards'} when your CP goal, Mastery, Stigma, context, or obtained tiles change. Equipment is excluded from recommended routing. Each crystal total funds a prefix; save crystals when the next tile costs more than you have. ${cpBasis} Marked tiles are carried into the route first, using connecting nodes where needed. This is an approximate scoring model, not a proven combat optimum. Azphel has its own currency and no skill levels.`;
+  const cpBasis=cpRoute?(liveRouteBasis?.baseCp===null?'Your gear is not recorded fully enough for CP calibration, so this route follows class/context mechanics without CP weighting.':'A complete recorded loadout can give a secondary CP-goal influence after class/context priorities.'):'The route follows researched class and context priorities using only gear bonuses you entered.';
+  $('route-footnote').textContent=customMode()?`Custom mode uses the connected tiles you selected, in click order. Raising your crystal total lets you add more; lowering it makes later tiles unfunded until the budget returns. Marked obtained tiles are recorded separately from planned tiles. Azphel has its own currency and no skill levels.`:`${method}. The planner recalculates a connected route across ${isLeveling()?'unlocked boards':'all four PvE boards'} when your CP goal, Mastery, Stigma, context, obtained tiles, or recorded skill bonuses change. No equipment is assumed. Each crystal total funds a prefix; save crystals when the next tile costs more than you have. ${cpBasis} Marked tiles are carried into the route first, using connecting nodes where needed. This is an approximate scoring model, not a proven combat optimum. Azphel has its own currency and no skill levels.`;
   const weights=isAz?{skills:{},stats:activeWeights()?.stats||{}}:activeWeights();
   const topSkills=Object.entries(weights.skills||{}).sort((x,y)=>y[1]-x[1]).slice(0,3).map(x=>x[0]);
   const topStats=Object.entries(weights.stats||{}).filter(([key])=>isAz?key.startsWith('PvP')||key.startsWith('Abnormal'):!key.startsWith('PvP')).sort((x,y)=>y[1]-x[1]).slice(0,3).map(([key])=>data().stats[key]?.name||key);
