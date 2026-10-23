@@ -170,7 +170,7 @@ function progressionNextBreakpoint(cls,mode,effectiveLevel,ownedCrystals){
   ' remaining through Mastery, connected Daevanion nodes and recorded equipment). '+
   (ownedCrystals>=327?'Recheck the remaining route with your 327+ crystal budget.':'Keep recording earned and purchased Daevanion nodes.');
 }
-function progressionRotationProfile(base,cls,mode,effectiveLevel,equippedStigmas=[]){
+function progressionRotationProfile(base,cls,mode,effectiveLevel,equippedStigmas=[],specialtyEnabled=()=>false){
  const p={...base,stacks:base.stacks.map(s=>({...s,skills:[...s.skills]})),
   hotbar:base.hotbar.map(([skills,cue,tone])=>[[...skills],cue,tone])};
  // One canonical class profile supplies the main combat engine. Context
@@ -189,16 +189,16 @@ function progressionRotationProfile(base,cls,mode,effectiveLevel,equippedStigmas
    p.rule='Use Earth Punishment before Condemnation for the level-5 critical synergy; keep all emergency and regular heals manual.';
   }
  }else if(cls==='templar'){
-  p.rule=effectiveLevel('Judgment')>=16
-   ?'Judgment Lv 16: use its cooldown-removal Specialty and prioritize it in the trigger stack; keep charged Punishment manual.'
+  p.rule=effectiveLevel('Judgment')>=16&&specialtyEnabled('Judgment',5)
+   ?'Judgment cooldown-removal Specialty is selected: prioritize it in the trigger stack; keep charged Punishment manual.'
    :'Until Judgment Lv 16, trigger one Judgment per shield-skill window; keep charged Punishment manual.';
  }else if(cls==='ranger'){
   p.rule='Charge Deadshot and apply Marking Shot manually. Keep ranged filler on the macro; never cut short the charged shot.';
  }else if(cls==='sorcerer'){
   p.rule='Keep Hellfire fully charged on a manual key; place persistent ground effects only where targets remain.';
  }else if(cls==='chanter'){
-  p.rule=effectiveLevel('Dark Crush')>=16
-   ?'Dark Crush Lv 16: with its cooldown-removal Specialty selected, let each available trigger flow to Dark Crush.'
+  p.rule=effectiveLevel('Dark Crush')>=16&&specialtyEnabled('Dark Crush',5)
+   ?'Dark Crush cooldown-removal Specialty is selected: let each available trigger flow to Dark Crush.'
    :'Before Dark Crush Lv 16, use its trigger carefully; keep the remaining triggers available for later windows.';
  }
  if(mode==='solo'){
