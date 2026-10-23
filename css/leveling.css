@@ -1,0 +1,44 @@
+/* Levelling has its own minimal combat composer. Never display endgame
+   multi-stack/hotbar/macro instructions alongside it. */
+#rotation.leveling-view > *{display:none!important}
+#rotation.leveling-view > .section-title:first-child{display:flex!important}
+#rotation.leveling-view > #leveling-rotation{display:block!important}
+#rotation.leveling-view #leveling-rotation{
+  margin:0;border:1px solid #355777;padding:18px;
+  border-radius:10px;background:linear-gradient(130deg,#102b45,#091a2d);
+  overflow:hidden;min-width:0
+}
+.leveling-combat-heading{display:flex;align-items:end;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.leveling-combat-heading h3{font-size:clamp(20px,2.2vw,28px);margin:4px 0 6px;color:#f2d6a3}
+.leveling-combat-heading p{font-size:13px;line-height:1.6;max-width:850px}
+.leveling-up-next{font-size:12px;color:#bfe7ff;white-space:normal;padding:6px 10px;border:1px solid #486b8a;border-radius:6px}
+.leveling-combat-layout{display:grid;grid-template-columns:minmax(220px,.78fr) minmax(290px,1.4fr) minmax(240px,1fr);gap:12px;align-items:stretch;margin-top:18px}
+.leveling-combat-layout:has(.leveling-no-macro){grid-template-columns:minmax(210px,.7fr) minmax(240px,1.3fr)}
+.leveling-basic,.leveling-skill-column,.leveling-macro-callout,.leveling-no-macro{
+  background:#0b1c2e;border:1px solid #3b5d7b;border-radius:8px;padding:14px;min-width:0;
+}
+.leveling-phase-label{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px;text-transform:uppercase;letter-spacing:.08em;color:#a9d2ea;font-size:10px;font-weight:800;margin-bottom:10px}
+.leveling-basic p,.leveling-macro-callout p,.leveling-no-macro p{font-size:12px;line-height:1.6;color:#c8deed;margin:10px 0 0}
+.leveling-basic .leveling-skill{margin-top:14px}
+.leveling-skill{display:flex;gap:8px;align-items:center;min-width:0;font-size:13px}
+.leveling-skill strong{font-size:13px;overflow-wrap:anywhere}
+.leveling-skill-icon{width:34px;height:34px;border:1px solid #a78b55;border-radius:5px;object-fit:cover;flex-shrink:0}
+.leveling-short-note{font-size:12px;line-height:1.5;margin:2px 0 11px}
+.leveling-stack-rows{display:flex;flex-direction:column;gap:4px}
+.leveling-stack-row{display:flex;align-items:center;gap:9px;padding:8px 10px;border:1px solid #2b4b66;border-radius:5px;background:#102a42;min-width:0}
+.leveling-stack-row.is-priority{background:#194267;border-color:#9acbed}
+.leveling-row-number{flex-shrink:0;min-width:48px;font-size:11px;color:#9cb9d0}
+.leveling-first{margin-left:auto;flex-shrink:0;font-size:10px;color:#c5efbd}
+.leveling-macro-callout kbd,.leveling-setup-instructions kbd{display:inline-block;border:1px solid #6c8faf;background:#183e5f;border-radius:4px;padding:2px 6px;color:#fff;font-size:12px}
+#leveling-macro-step{font-size:13px;line-height:1.5}
+#leveling-macro-step span{font-size:11px;color:#aac4d7}
+.leveling-manual-summary{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
+.leveling-manual-summary>div{background:#0a1e31;border:1px solid #365876;border-radius:8px;padding:14px;min-width:0}
+#leveling-manual{margin:0;display:flex;list-style:none;flex-wrap:wrap;gap:7px;padding:0}
+#leveling-manual li{background:#14314c;padding:6px 9px;border-radius:5px}
+#leveling-manual .leveling-skill strong{font-size:11px}
+#leveling-manual .leveling-skill-icon{width:26px;height:26px}
+.leveling-defiance,.leveling-stigmas,.leveling-setup-instructions p{font-size:12px;line-height:1.55;margin:10px 0 0;color:#c7dce9}
+.leveling-setup-warning{color:#f3d9a9!important}
+@media(max-width:1200px){.leveling-combat-layout{grid-template-columns:minmax(210px,.7fr) minmax(270px,1.3fr)}.leveling-macro-callout{grid-column:1/-1}}
+@media(max-width:740px){.leveling-combat-layout,.leveling-combat-layout:has(.leveling-no-macro),.leveling-manual-summary{grid-template-columns:1fr}.leveling-macro-callout{grid-column:auto}#rotation.leveling-view #leveling-rotation{padding:12px}.leveling-first{font-size:9px}}

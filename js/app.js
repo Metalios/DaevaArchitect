@@ -481,6 +481,18 @@ function renderStigma(m){
 function numbered(items){return items.map((v,i)=>`<li><span class="rotation-num">${String(i+1).padStart(2,'0')}</span><span>${esc(v)}</span></li>`).join('')}
 function renderRotation(m){
   const a=account(),p=typeof progressionRotationProfile==='function' ? progressionRotationProfile(profile(),state.class,a.context,name=>effective(name,m),activeStigmas().filter(name=>(m.stigma.levels[name]||0)>0),(name,option)=>specPicks(name,effective(name,m)).includes(option)) : profile(),level=currentLevel(),levelingMode=isLeveling(),main=masteryStages()[0]?.[0]||skillNames()[0],macroKey=['RMB','Mouse 4','MMB','M'].includes(a.macroBind)?a.macroBind:'RMB',weaveKey=p.weaveKey||'LMB';
+  // Leveling is a distinct, deliberately small combat setup, not an
+  // endgame stack with unavailable skills deleted. It uses one macro step.
+  if(levelingMode && typeof buildLevelingCombat==='function'){
+    const plan=buildLevelingCombat(state.class,level,a.context,SKILL_UNLOCKS[state.class],
+      activeStigmas().slice(0,levelReward().slots),m.stigma.levels,
+      (name,option)=>specPicks(name,effective(name,m)).includes(option));
+    $('rotation').classList.add('leveling-view');
+    $('rotation-level').textContent='Lv '+level+' · starter combat';
+    $('leveling-rotation').hidden=false;
+    $('leveling-rotation').innerHTML=renderLevelingCombatMarkup(plan,macroKey);
+    return;
+  }
   const classActive=new Set(Object.values(data().skills).slice(0,12).map(s=>s.name));
   const unlockedClass=new Set([...classActive].filter(name=>!levelingMode||(SKILL_UNLOCKS[state.class][name]||1)<=level));
   const slots=levelingMode?levelReward().slots:4;
