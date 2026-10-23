@@ -78,39 +78,107 @@ function mount(){
  bind();
 }
 function skillsView(m){
- const a=account(),items=Object.values(data().skills),names=skillNames();
- if(!names.includes(skill))skill=names.find(n=>SPECS[state.class]?.[n])||names[0];
- const query=(state.masterySearch||'').toLowerCase();
- $('v2-skill-list').innerHTML=items.map((item,i)=>({item,i})).filter(({item})=>item.name.toLowerCase().includes(query)&&(!isLeveling()||(SKILL_UNLOCKS[state.class][item.name]||1)<=currentLevel())).map(({item,i})=>{
- const name=item.name,lv=m.mastery.levels[name]||1,board=m.effects.skills[name]||0,gear=(a.gear[name]||0)+(gearSkillLevels()[name]||0),cap=masteryRankCap(name);
- const art=gameSkillIconMarkup(state.class,name,'v2-skill-art');
- return `<div class="v2-skill ${skill===name?'chosen':''}" data-skill="${esc(name)}"><button type="button" data-v2-select-skill="${esc(name)}" class="v2-skill-label">${art}<span><b>${esc(name)}</b><small>${i<12?'Active':'Passive'} · ${SPECS[state.class]?.[name]?'View specialties':'Rank & effects'}</small></span></button>
- <div class="v2-rank"><button type="button" data-v2-rank="${esc(name)}" data-dir="-1" ${lv===1?'disabled':''} aria-label="Decrease ${esc(name)}">−</button><b>${lv}<small>/10</small></b><button type="button" data-v2-rank="${esc(name)}" data-dir="1" ${lv>=cap||m.mastery.spent+masteryCost(lv+1)>budget('mastery')?'disabled':''} aria-label="Increase ${esc(name)}">+</button></div>
- <span class="v2-green">+${board}</span><span class="v2-green">${gear?'+'+gear:'—'}</span><b class="v2-effective">Lv ${effective(name,m)}</b></div>`;
- }).join('')||'<div class="v2-muted">No currently unlocked skills match.</div>';
- const def=items.find(s=>s.name===skill),eff=effective(skill,m),s=SPECS[state.class]?.[skill],chosen=specPicks(skill,eff),slots=specialtySlots(eff);
- $('v2-spec-panel').innerHTML=`<header class="v2-spec-title"><b>${esc(skill)} · Specialties</b><span>Effective Lv ${eff} · ${slots}/3 slots</span><button type="button" id="v2-spec-restore" ${a.customSpecialties?.[skill]?'':'disabled'}>Restore</button></header>`+
- (!s?'<p class="v2-muted">No verified specialization effects available for this skill.</p>':`
- <div class="v2-spec-slots">${[0,1,2].map(i=>`<div class="${i>=slots?'locked':''}"><small>Slot ${i+1}${i>=slots?` · opens Lv ${[8,12,20][i]}`:''}</small><span class="v2-specialty-equipped">${i<slots&&chosen[i]?gameSkillIconMarkup(state.class,skill,'v2-spec-slot-art'):''}<strong>${i<slots&&chosen[i]?esc(s.options[chosen[i]]):'—'}</strong></span></div>`).join('')}</div>
- <div class="v2-spec-options">${Object.entries(s.options).map(([id,description])=>{
- const n=Number(id),required=n<=3?8:n===4?12:16,locked=eff<required,isSelected=chosen.includes(n);
- return `<button type="button" data-v2-spec="${n}" class="${isSelected?'chosen':''}" ${locked?'disabled':''}><span class="v2-specialty-choice-art">${gameSkillIconMarkup(state.class,skill,'v2-spec-option-art')}<span class="v2-spec-id">${n}</span></span><span><b>${esc(description)}</b><small>${locked?`Needs effective Lv ${required}`:isSelected?'Equipped · click to remove':'Available · click to equip'}</small></span><strong>${isSelected?'✓':locked?'🔒':'+'}</strong></button>`;
- }).join('')}</div>`);
+ const a=account(),catalog=Object.values(data().skills),names=skillNames(),hint=typeof adviceFor==='function'?adviceFor(state.class,a.context):null;
+ const priority=[...(hint?.core||[]),...(hint?.support||[]),...names];
+ const order=new Map([...new Set(priority)].map((name,i)=>[name,i]));
+ const query=(state.masterySearch||'').toLowerCase().trim();
+ const rows=catalog.map((item,i)=>({item,i}))
+   .filter(({item,i})=>(skillTab==='active'?i<12:i>=12)
+     &&item.name.toLowerCase().includes(query)
+     &&(!isLeveling()||(SKILL_UNLOCKS[state.class][item.name]||1)<=currentLevel()))
+   .sort((x,y)=>(order.get(x.item.name)??99)-(order.get(y.item.name)??99)||x.i-y.i);
+ $('v2-skill-list').innerHTML=rows.map(({item,i})=>{
+   const name=item.name,rank=m.mastery.levels[name]||1,
+     board=m.effects.skills[name]||0,gear=(a.gear[name]||0)+(gearSkillLevels()[name]||0),
+     cap=masteryRankCap(name),level=effective(name,m);
+   const picks=specPicks(name,level);
+   const summary=!SPECS[state.class]?.[name]?'Rank & bonuses':level<8?'Specialties unlock at effective Lv 8':
+     `${picks.length} of ${specialtySlots(level)} Specialties chosen`;
+   return `<div class="v2-skill ${specialtyOpen&&skill===name?'chosen':''}" role="group">
+    <button type="button" data-v2-select-skill="${esc(name)}" class="v2-skill-label" aria-expanded="${specialtyOpen&&skill===name}"
+      aria-controls="v2-spec-panel" title="View ${esc(name)} effects and Specialty choices">
+      ${gameSkillIconMarkup(state.class,name,'v2-skill-art')}
+      <span><b>${esc(name)}</b><small>${esc(summary)}</small></span><span class="v2-open-caret" aria-hidden="true">›</span>
+    </button>
+    <div class="v2-rank"><button type="button" data-v2-rank="${esc(name)}" data-dir="-1" ${rank<=1?'disabled':''} aria-label="Decrease ${esc(name)} Mastery rank">−</button><b>${rank}<small>/10</small></b><button type="button" data-v2-rank="${esc(name)}" data-dir="1" ${rank>=cap||m.mastery.spent+masteryCost(rank+1)>budget('mastery')?'disabled':''} aria-label="Increase ${esc(name)} Mastery rank">+</button></div>
+    <span class="v2-green">${board?'+'+board:'—'}</span><span class="v2-green">${gear?'+'+gear:'—'}</span><b class="v2-effective">Lv ${level}</b>
+   </div>`;
+ }).join('')||'<p class="v2-muted">No unlocked skills match this filter.</p>';
+ $('v2-active-filter').classList.toggle('active',skillTab==='active');
+ $('v2-passive-filter').classList.toggle('active',skillTab==='passive');
+ $('v2-active-filter').setAttribute('aria-pressed',String(skillTab==='active'));
+ $('v2-passive-filter').setAttribute('aria-pressed',String(skillTab==='passive'));
+ const panel=$('v2-spec-panel');
+ if(!specialtyOpen||!names.includes(skill)){panel.hidden=true;panel.innerHTML=''}
+ else{
+   const level=effective(skill,m),spec=SPECS[state.class]?.[skill],picks=specPicks(skill,level),
+         recommended=recommendedSpecPicks(skill,level),slots=specialtySlots(level);
+   panel.hidden=false;
+   panel.innerHTML=`<header class="v2-flyout-head"><span class="v2-flyout-eyebrow">SELECTED MASTERY POWER</span>
+       <button type="button" class="v2-flyout-close" id="v2-spec-close" aria-label="Close Specialties">✕</button>
+       <div class="v2-flyout-skill-title">${gameSkillIconMarkup(state.class,skill,'v2-flyout-art')}<div><h3>${esc(skill)}</h3>
+          <small>Effective Lv ${level} · ${slots} of 3 Specialty slots unlocked</small></div></div>
+     </header>
+     <div class="v2-flyout-content">
+     <p class="v2-flyout-guidance">${esc((hint?.core||[]).includes(skill)?hint.why:'Choose the bonuses that fit your selected context. Recommendations are guide-based, not combat-simulated.')}</p>
+     ${!spec?'<p class="v2-muted">No verified Specialty effects available for this power.</p>':`
+     <div class="v2-spec-slots">${[0,1,2].map(i=>`<div class="${i>=slots?'locked':''}"><small>Slot ${i+1}${i>=slots?` · unlocks at Lv ${[8,12,20][i]}`:''}</small><strong>${i<slots&&picks[i]?esc(spec.options[picks[i]]):i>=slots?'Locked':'Choose an option'}</strong></div>`).join('')}</div>
+     <div class="v2-flyout-subhead"><b>Specialty effects</b><small>Recommended picks: ${recommended.length?recommended.join(', '):'none unlocked'}</small></div>
+     <div class="v2-spec-options">${Object.entries(spec.options).map(([id,description])=>{
+       const n=Number(id),gate=n<=3?8:n===4?12:16,locked=level<gate,
+         selected=picks.includes(n),advisedPick=recommended.includes(n);
+       return `<button type="button" data-v2-spec="${n}" class="${selected?'chosen':''}" ${locked?'disabled':''} aria-pressed="${selected}">
+         <span class="v2-spec-number">${id}</span><span><b>${esc(description)}</b><small>${locked?`Opens at effective Lv ${gate}`:selected?'Equipped':advisedPick?'Recommended for this stage':'Available'}</small></span>
+         <strong>${selected?'✓':locked?'🔒':'+'}</strong></button>`;
+     }).join('')}</div>`}
+     <div class="v2-flyout-foot"><button type="button" id="v2-spec-restore" ${a.customSpecialties?.[skill]?'':'disabled'}>Use recommended Specialties</button><button type="button" id="v2-spec-done">Done</button></div>
+     </div>`;
+ }
  $('v2-master-status').textContent=`${m.mastery.spent} / ${budget('mastery')} Mastery spent`;
  $('v2-master-restore').disabled=!a.manualMastery;
 }
 function stigmasView(m){
- const slots=isLeveling()?levelReward().slots:4,load=activeStigmas(),names=Object.keys(STIGMAS[state.class]);
+ const slots=isLeveling()?levelReward().slots:4,load=activeStigmas(),names=Object.keys(STIGMAS[state.class]),
+       advised=typeof adviceFor==='function'?adviceFor(state.class,account().context):null;
  $('v2-stigma-list').innerHTML=[0,1,2,3].map(i=>{
- if(i>=slots)return `<div class="v2-stigma-item unavailable"><b>Slot ${i+1}</b><span>Locked · character Lv ${[22,27,32,37][i]}</span></div>`;
- const name=load[i],lv=m.stigma.levels[name]||0,perks=STIGMAS[state.class][name]?.perks||{};
- const unlocked=Object.entries(perks).filter(([rank])=>+rank<=lv).at(-1),upcoming=[5,10,15,20].find(n=>n>lv);
- return `<div class="v2-stigma-item"><div class="v2-stigma-identity">${gameSkillIconMarkup(state.class,name,'v2-stigma-art')}<label>Slot ${i+1}<select data-v2-stigma-choice="${i}">${names.map(n=>`<option value="${esc(n)}" ${n===name?'selected':''}>${esc(n)}</option>`).join('')}</select></label></div><div class="v2-stigma-rank">
- <button type="button" data-v2-stigma-rank="${i}" data-dir="-1" ${lv===0?'disabled':''}>−</button><b>Lv ${lv} <small>/20</small></b><button type="button" data-v2-stigma-rank="${i}" data-dir="1" ${lv>=20||m.stigma.spent+stigmaCost(lv+1)>budget('stigma')?'disabled':''}>+</button></div>
- <small class="v2-stigma-effect">${esc(unlocked?.[1]||(upcoming?'Next perk at Lv '+upcoming:'All milestones unlocked'))}</small></div>`;
+  if(i>=slots)return `<div class="v2-stigma-card locked"><span class="v2-stigma-locked-art">🔒</span><strong>Slot ${i+1}</strong><small>Opens at Lv ${[22,27,32,37][i]}</small></div>`;
+  const name=load[i],level=m.stigma.levels[name]||0;
+  return `<button type="button" data-v2-open-stigma="${i}" class="v2-stigma-card ${stigmaSlotOpen===i?'chosen':''}" aria-expanded="${stigmaSlotOpen===i}" aria-controls="v2-stigma-panel">
+    ${gameSkillIconMarkup(state.class,name,'v2-stigma-art')}<strong>${esc(name)}</strong><small>Lv ${level} / 20</small>
+    <span class="v2-stigma-card-action">${stigmaSlotOpen===i?'Editing':'Edit loadout ›'}</span>
+   </button>`;
  }).join('');
- $('v2-stigma-status').textContent=`${m.stigma.spent} / ${budget('stigma')} spent · ${slots}/4 slots`;
+ $('v2-stigma-status').textContent=`${slots}/4 slots · ${m.stigma.spent}/${budget('stigma')} planned`;
+ $('v2-stigma-remaining').textContent=`${Math.max(0,budget('stigma')-m.stigma.spent)} points unspent`;
  $('v2-stigma-reset').disabled=!account().manualStigma&&!account().customStigmas;
+ const panel=$('v2-stigma-panel');
+ if(stigmaSlotOpen<0||stigmaSlotOpen>=slots){panel.hidden=true;panel.innerHTML='';return}
+ const selected=load[stigmaSlotOpen],lv=m.stigma.levels[selected]||0,
+       stigma=STIGMAS[state.class][selected],perks=stigma?.perks||{};
+ const used=new Map(load.slice(0,slots).map((name,i)=>[name,i]));
+ panel.hidden=false;
+ panel.innerHTML=`<header class="v2-flyout-head"><span class="v2-flyout-eyebrow">EDIT STIGMA · SLOT ${stigmaSlotOpen+1}</span>
+   <button type="button" class="v2-flyout-close" id="v2-stigma-close" aria-label="Close Stigma editor">✕</button>
+   <div class="v2-flyout-skill-title">${gameSkillIconMarkup(state.class,selected,'v2-flyout-art')}<div><h3>${esc(selected)}</h3><small>${slots} unlocked Stigma slots · ${budget('stigma')-m.stigma.spent} unspent points</small></div></div></header>
+   <div class="v2-flyout-content">
+     <p class="v2-flyout-guidance">${esc(advised?.why||'Stigma loadout is based on the selected class and context.')}</p>
+     <div class="v2-stigma-level-editor"><span>Equipped Stigma rank</span>
+        <button type="button" data-v2-stigma-rank="${stigmaSlotOpen}" data-dir="-1" ${lv<=0?'disabled':''} aria-label="Decrease Stigma rank">−</button>
+        <strong>Lv ${lv} / 20</strong>
+        <button type="button" data-v2-stigma-rank="${stigmaSlotOpen}" data-dir="1" ${lv>=20||m.stigma.spent+stigmaCost(lv+1)>budget('stigma')?'disabled':''} aria-label="Increase Stigma rank">+</button>
+     </div>
+     <p class="v2-stigma-base">${esc(stigma?.base||'Check Global client tooltip for this Stigma effect.')}</p>
+     <div class="v2-stigma-milestones">${[5,10,15,20].map(rank=>`<div class="${lv>=rank?'on':''}"><b>Lv ${rank} ${lv>=rank?'✓':''}</b><span>${esc(perks[rank]||'No verified effect text')}</span></div>`).join('')}</div>
+     <div class="v2-flyout-subhead"><b>Change equipped Stigma</b><small>13 catalog choices · duplicates are swapped</small></div>
+     <div class="v2-stigma-picker">${names.map(name=>{
+       const idx=used.get(name),isCurrent=name===selected,inOther=idx!==undefined&&!isCurrent;
+       const desc=STIGMAS[state.class][name]?.base||'';
+       return `<button type="button" data-v2-stigma-choice="${stigmaSlotOpen}" data-stigma="${esc(name)}" class="${isCurrent?'chosen':''}" aria-pressed="${isCurrent}">
+          ${gameSkillIconMarkup(state.class,name,'v2-stigma-picker-art')}<span><b>${esc(name)}</b>
+          <small>${inOther?`Equipped slot ${idx+1} · swaps positions`:isCurrent?'Currently equipped':esc(desc.slice(0,86))}</small></span></button>`;
+     }).join('')}</div>
+     <div class="v2-flyout-foot"><button type="button" id="v2-stigma-restore">Use recommended Stigmas</button><button type="button" id="v2-stigma-done">Done</button></div>
+   </div>`;
 }
 function actionsView(m){
  const first=masteryStages().find(([name,wanted])=>(m.mastery.levels[name]||1)<Math.min(wanted,masteryRankCap(name)));
