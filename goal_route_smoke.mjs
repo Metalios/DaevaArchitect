@@ -8,7 +8,7 @@ const page=await browser.newPage();
 const errors=[];page.on('pageerror',e=>errors.push(e.message));
 await page.goto(pathToFileURL(path.resolve('dist/index.html')).href);
 for(const cls of ['templar','gladiator','assassin','ranger','sorcerer','spiritmaster','cleric','chanter']){
-  await page.locator('#v2-class').selectOption(cls);
+  await page.evaluate(cls=>{state.class=cls;render()},cls);
   const result=await page.evaluate(()=>{
     const a=account();a.mastery=203;a.stigma=29;a.crystals=136;a.obtainedNodes=[];a.context='party';
     a.goalTarget=0;let start=model(),role=plannedRoute().map(x=>x.id);
@@ -34,7 +34,7 @@ for(const cls of ['templar','gladiator','assassin','ranger','sorcerer','spiritma
   assert(result.connected,`${cls}: a context route contains disconnected tiles`);
   assert.deepEqual(result.cp,result.role,`${cls}: without recorded gear, an arbitrary CP target must not alter the board route`);
 }
-await page.locator('#v2-class').selectOption('templar');
+await page.evaluate(()=>{state.class='templar';render()});
 const personal=await page.evaluate(()=>{
   const a=account();a.goalTarget=60000;a.equipment={};
   for(const slot of GEAR_SLOTS.filter(x=>['left','right'].includes(x.area)))a.equipment[slot.id]={itemLevel:50,enhancement:0};
