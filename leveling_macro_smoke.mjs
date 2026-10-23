@@ -63,6 +63,14 @@ try{
   state.class='chanter';a=account();a.journey='leveling';a.context='solo';leveling().level=14;render();
   if(document.querySelector('#leveling-stack')?.textContent.includes('Spinning Strike'))
     failures.push('Chanter pre-cooldown-reset stack used a second trigger');
+  // The advanced level-45 UI must still return after leaving Leveling mode.
+  state.class='templar';a=account();a.journey='endgame';a.context='party';render();
+  if(document.querySelector('#rotation').classList.contains('leveling-view'))
+    failures.push('Switching to Fresh 45 failed to restore the advanced rotation');
+  if(getComputedStyle(document.querySelector('#macro-stacks')).display==='none')
+    failures.push('Fresh 45 macro editor remained hidden after leaving Leveling mode');
+  if(!document.querySelector('#macro-stacks').textContent.includes('Judgment'))
+    failures.push('Fresh 45 Templar endgame macro was not restored');
   return {checked,failures,overflow:document.documentElement.scrollWidth-innerWidth};
  });
  assert.deepEqual(errors,[],'browser runtime errors');
