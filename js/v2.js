@@ -235,8 +235,14 @@ function compare(){
  names=skillNames(),diff=names.filter(n=>m.mastery.levels[n]!==baseline.levels[n]);
  const picked=activeStigmas(),stig=allocate(stigmaStages(),budget('stigma'),stigmaCost,picked,0);
  const changes=picked.filter(n=>(m.stigma.levels[n]||0)!==(stig.levels[n]||0));
+ const recommendedLoadout=recommendedStigmas();
+ const loadoutChanged=picked.some((n,i)=>n!==recommendedLoadout[i]);
+ const reason=(typeof adviceFor==='function'?adviceFor(state.class,account().context)?.why:null)||'Balance damage and survival according to class.';
  $('v2-comparison-body').innerHTML=`<h3>Mastery</h3>${diff.length?diff.map(n=>`<p>${esc(n)} · Recommended ${baseline.levels[n]} → Your ${m.mastery.levels[n]}</p>`).join(''):'<p>No Mastery rank differences.</p>'}
- <h3>Stigmas</h3>${changes.length?changes.map(n=>`<p>${esc(n)} · Recommended Lv ${stig.levels[n]||0} → Your Lv ${m.stigma.levels[n]||0}</p>`).join(''):'<p>No equipped Stigma level differences.</p>'}
+ <h3>Stigmas</h3><p>Guide-based loadout (${esc(account().context)}): ${recommendedLoadout.map(esc).join(' · ')}</p>
+ ${loadoutChanged?`<p>Your equipped Stigmas: ${picked.map(esc).join(' · ')}</p>`:'<p>Your Stigma choices match the recommended loadout.</p>'}
+ ${changes.length?changes.map(n=>`<p>${esc(n)} · Suggested investment Lv ${stig.levels[n]||0} → Your Lv ${m.stigma.levels[n]||0}</p>`).join(''):'<p>No equipped Stigma level differences.</p>'}
+ <h3>Why this context?</h3><p>${esc(reason)}</p>
  <h3>Daevanion</h3><p>${account().boardMode==='custom'?'Custom connected route; recommended tile highlights remain available.':'Following the recommended connected route.'}</p>`;
  modal.showModal();
 }
