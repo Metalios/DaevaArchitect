@@ -3,7 +3,7 @@
 'use strict';
 const $=id=>document.getElementById(id);
 const make=(tag,cls,html='')=>{const e=document.createElement(tag);e.className=cls;e.innerHTML=html;return e};
-let skill='',zoom=window.innerWidth>=2500?52:window.innerWidth>=1900?44:40,message='';
+let skill='',skillTab='active',specialtyOpen=false,stigmaSlotOpen=-1,lastClass='',zoom=window.innerWidth>=2500?52:window.innerWidth>=1900?44:40,message='';
 const ARCHETYPE_WEAPONS={
  gladiator:'Greatsword',templar:'Longsword + shield',assassin:'Daggers',ranger:'Bow',
  sorcerer:'Spellbook',spiritmaster:'Orb',cleric:'Mace + shield',chanter:'Staff'
@@ -24,10 +24,13 @@ const full=make('details','v2-full-overview','<summary>Full build recommendation
 const gearDetails=make('details','v2-gear-advanced','<summary>Arcana, wings & detailed equipment calculations</summary>');
 const extra=make('div','v2-extra');extra.id='v2-extra';
 const master=make('div','v2-master-editor',`
- <div class="v2-editor-title"><b>Purchased rank</b><span>Board</span><span>Gear</span><span>Effective</span></div>
- <div id="v2-skill-list" class="v2-skill-list"></div><div id="v2-spec-panel"></div>
+ <div class="v2-skill-toolbar" role="group" aria-label="Mastery skill category"><button type="button" id="v2-active-filter" class="active" aria-pressed="true">Active skills (12)</button><button type="button" id="v2-passive-filter" aria-pressed="false">Passive (10)</button><span class="v2-skill-search-label">Find a skill</span></div>
+ <div class="v2-editor-title"><b>Skill</b><span>Board</span><span>Gear</span><span>Effective</span></div>
+ <div id="v2-skill-list" class="v2-skill-list"></div>
+ <div class="v2-mastery-hint">Select a skill to open Specialties. Mastery ranks are purchased; Board and Gear determine effective level.</div>
+ <div id="v2-spec-panel" class="v2-in-panel-flyout" role="region" aria-label="Selected skill specialty choices" hidden></div>
  <details class="v2-advanced-skills"><summary>Advanced skill cards & bonus adjustments</summary></details>`);
-const stigmas=make('div','v2-stigmas',`<p>Four selectable Stigma slots. Edit each equipped skill's level using − / +. Perk breakpoints: 5, 10, 15 and 20.</p><div id="v2-stigma-list"></div><button type="button" id="v2-stigma-reset">Restore recommended Stigmas</button>`);
+const stigmas=make('div','v2-stigmas',`<div id="v2-stigma-list" class="v2-stigma-cards"></div><div class="v2-stigma-summary"><span>13 class Stigmas in catalog · select a card to edit</span><strong id="v2-stigma-remaining"></strong></div><div class="v2-stigma-breakpoints">Perk levels <span>⑤ First</span><span>⑩ Second</span><span>⑮ Third</span><span>⑳ Fourth</span></div><button type="button" id="v2-stigma-reset">Restore recommended Stigmas</button><div id="v2-stigma-panel" class="v2-in-panel-flyout" role="region" aria-label="Stigma loadout editor" hidden></div>`);
 const boardControls=make('div','v2-board-controls',`
  <div class="v2-board-callout"><b>Original AION 2 board coordinates</b><span>The board is never stretched; pan within the canvas or adjust tile size.</span></div>
  <button type="button" id="v2-board-toggle">Edit selected node</button><button type="button" id="v2-board-restore">Recommended path</button>
@@ -51,6 +54,8 @@ function mount(){
  // workspace page several screens tall. Their original controls stay live.
  $('gear').append(gearDetails);
  if(window.innerWidth<1700&&!state.gearView)state.gearView='inventory';
+ const earned=p.querySelector('.controls');
+ if(earned)$('gear').append(earned);
  const gearMain=$('gear').querySelector('.gear-main');
  const gearExtras=gearMain?.querySelector('.gear-side');
  if(gearExtras)gearDetails.append(gearExtras);
@@ -62,6 +67,8 @@ function mount(){
  footer.after(extra);extra.append($('rotation'),$('titles'),$('sources'));
  $('mastery').insertBefore(master,$('mastery-visible'));
  master.querySelector('.v2-advanced-skills').append($('skill-grid'));
+ const search=$('mastery').querySelector('.mastery-search');
+ if(search)master.querySelector('.v2-skill-toolbar').append(search);
  $('mastery').querySelector('.section-title').append(slim);
  $('stigma').append(stigmas);$('stigma').querySelector('.section-title').append(stigmaStatus);
  $('board-tabs').after(boardControls);
