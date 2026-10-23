@@ -25,6 +25,7 @@ jobs:
       - name: Audit progression model
         run: |
           node recommendation_regression.mjs
+          node leveling_rotation_audit.mjs
           node recommendations_audit.mjs
           node audit_leveling.mjs
           node verify.mjs
