@@ -337,3 +337,18 @@
 @media(max-width:610px){
  .v2-active #v2-stigma-list.v2-stigma-cards{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+
+/* Stigma editor expands inside its own section instead of obscuring
+   the dashboard footer or purchasing controls. */
+.v2-active #v2-stigma-panel:not([hidden]){
+ position:relative;inset:auto;top:auto;right:auto;left:auto;
+ z-index:3;max-height:min(650px,72vh);margin-top:10px;width:100%;
+}
+.v2-active #stigma:has(#v2-stigma-panel:not([hidden])){
+ min-height:0;overflow:visible;
+}
+.v2-active #stigma .v2-stigmas{min-width:0}
+.v2-active #v2-stigma-panel .v2-flyout-content{
+ overflow-y:auto;min-height:0;
+}
+.v2-active #v2-stigma-panel .v2-stigma-picker{max-width:100%}
