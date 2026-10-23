@@ -5,7 +5,7 @@ Reviewed 2026-10-22; uses October 21 Global client skill and macro data. This is
 
 AION 2's macro is not a deterministic skill-by-skill script. Each step presses a hotbar key; a key can own a stack of up to four skills. The **bottom slot (row 0)** has highest priority, then rows 1, 2, 3 moving upward. A no-cooldown attack below an on-cooldown skill can starve that skill. The client warns that macro step order is not guaranteed, manual input overrides it, and macro hotkeys tied to mouse actions are unsupported in AION 1 Control Mode.
 
-The Skills menu and presets open at **character level 4**. Levels 1–3 therefore display only attacks the player can press, with no fictitious macro setup. Levels 4–44 (and level 45 while explicitly in *Leveling* mode) use **one hotbar stack and one macro step**. The "Fresh 45 / Endgame" mode keeps the existing advanced rotation builder and macro customization.
+The Skills menu and presets open at **character level 4**. Levels 1–3 therefore display only attacks the player can press, with no fictitious macro setup. Levels 4–44 (and level 45 while explicitly in *Leveling* mode) start with **one hotbar stack and one macro step**. **Sorcerer switches at level 10 to two purposeful stacks**: an elemental setup/cooldown column and a conditional Fire Mark/Frost spender column, each represented by one macro step. The "Fresh 45 / Endgame" mode keeps the existing advanced rotation builder and macro customization.
 
 ## Implementation
 
@@ -15,7 +15,8 @@ The Skills menu and presets open at **character level 4**. Levels 1–3 therefor
 - **Chanter:** before Dark Crush's cooldown-removal Specialty is **actually selected**, only one trigger is used in the macro. Further triggers remain manual. Once selected, Spinning Strike joins the damage stack.
 - **Templar:** Judgment goes in bottom Row 0; the repeatable Pummel stays in the *top* fallback row. Group PvE keeps Warding Strike manual for defensive timing.
 - **Spiritmaster:** summons and Elemental Fusion stay manual, rather than placing pets and cooldown-free fusion in an automatic loop.
-- **Sorcerer and Ranger:** charged attacks remain manual; repeat attacks stay outside the macro.
+- **Sorcerer:** At Lv10+, E uses Winter's Shackles → Bittercold Wind → Frost → Firestorm (row 0 first); Q uses Blaze → Frost Burst (row 0 first). These represent setup and condition-dependent payoffs, rather than a single filler stack. Hellfire, Wish of Concentration, Flame Scattershot and Ice Chain remain manual; equipped Stigmas require earned points and can be positioned to the player's preference. At Lv31 only two Stigma slots are open, so do not show the four-Stigma level-45 macro. The user's screenshot also demonstrates a valid manual-fire/Q/E organization, but icon-only evidence is insufficient to claim these are the user's exact assignments.
+- **Ranger:** charged attacks remain manual; repeat attacks stay outside the macro.
 - **Cleric:** heals never join the damage stack.
 
 ## Sources and confidence
@@ -28,6 +29,10 @@ The Skills menu and presets open at **character level 4**. Levels 1–3 therefor
 
 ## Regression acceptance
 
-`node leveling_rotation_audit.mjs` tests **720** policy states (8 classes × 2 contexts × 45 levels). `node leveling_macro_smoke.mjs` covers 240 representative browser layouts, a single macro step, no locked moves, visual Row 0 at the bottom, early-level absence of a macro, class exceptions and horizontal overflow. Other v2 and level-45 regression suites still run in CI.
+`node leveling_rotation_audit.mjs` tests **720** policy states (8 classes × 2 contexts × 45 levels). `node leveling_macro_smoke.mjs` covers 240 representative browser layouts, class-dependent one or two macro steps, no locked moves, visual Row 0 at the bottom, early-level absence of a macro, class exceptions and horizontal overflow. Other v2 and level-45 regression suites still run in CI.
 
 Neither test simulates the game server's animation cancels, ping, PvP timing or DPS, and no macro is guaranteed "best". Trial runs on actual Global characters are still recommended.
+
+## 22 October Sorcerer level-31 correction
+
+Sorcerer is not inherently a one-stack class even while leveling. The research-supported Global PvE pattern separates an elemental **setup** stack from **Blaze / Frost Burst conditional follow-ups**, with fully charged Hellfire manual and Flame Arrow used for repeat attacks. Community builds disagree on whether to macro buffs and ground spells, especially when moving targets and animation lock are relevant. The two-stack recommendation is a **starting suggestion**, not an assertion that a screenshot's unlabeled icons or bind choices have been identified exactly. See [October 20 three-chain comparison](https://aion2vault.com/builds/sorcerer/macro/), [Sorcerer Global macros](https://aion2data.com/macros/sorcerer), and [player discussion about manual ground effects](https://www.reddit.com/r/Aion2/comments/1x8z8jy/help_with_sorcerer_build_and_macro/).
