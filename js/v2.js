@@ -195,11 +195,12 @@ function actionsView(m){
  const n=nodeMap().get(state.node);
  $('v2-mark-obtained').disabled=!n||!n.node[5]||!boardOpen(n.board);
  $('v2-mark-obtained').textContent=n&&obtainedNodes().has(n.node[0])?'Unmark obtained':'Mark tile obtained';
- note.innerHTML=`<span>${gear?`${gear} equipment slots entered.`:'No gear assumed.'} Equipment only affects actual effective levels and estimates, not the recommended route.</span><button type="button" id="v2-open-comparison">Compare builds</button>`;
+ note.innerHTML=`<span>${gear?`${gear} equipment pieces recorded.`:'No gear assumed.'} ${esc((typeof adviceFor==='function'?adviceFor(state.class,account().context)?.why:null)||'Class/context progression priorities.')} Actual equipped bonuses affect breakpoint advice; no gear is invented.</span><button type="button" id="v2-open-comparison">Compare builds</button>`;
 }
 function sync(m){
  if(!state.class)return;
  document.body.classList.add('v2-has-class');
+ if(lastClass!==state.class){lastClass=state.class;specialtyOpen=false;stigmaSlotOpen=-1;skillTab='active';skill=''}
  const a=account();
  $('v2-class').value=state.class;$('v2-level').value=currentLevel();$('v2-level').disabled=!isLeveling();
  $('v2-stage').value=a.journey;$('v2-context').value=a.context;
@@ -239,6 +240,13 @@ function bind(){
  nav.addEventListener('click',e=>{const b=e.target.closest('[data-v2-tab]');if(!b)return;state.tab=b.dataset.v2Tab==='workspace'?'mastery':b.dataset.v2Tab;render();if(state.tab!=='mastery')extra.scrollIntoView({block:'start',behavior:'smooth'})});
  $('v2-reset-allocations').addEventListener('click',restore);
  $('v2-master-restore').addEventListener('click',()=>{account().manualMastery=null;render()});
+ for(const [id,tab] of [['v2-active-filter','active'],['v2-passive-filter','passive']]){
+  $(id).addEventListener('click',()=>{skillTab=tab;specialtyOpen=false;sync(model())});
+ }
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'){
+  if(specialtyOpen){specialtyOpen=false;sync(model())}
+  if(stigmaSlotOpen>=0){stigmaSlotOpen=-1;sync(model())}
+ }});
  next.addEventListener('click',e=>{const b=e.target.closest('[data-v2-focus]');if(!b)return;state.tab='mastery';render();$(b.dataset.v2Focus)?.scrollIntoView({behavior:'smooth',block:'nearest'})});
  note.addEventListener('click',e=>{if(e.target.closest('#v2-open-comparison'))compare()});
  $('v2-comparison-close').addEventListener('click',()=>modal.close());
@@ -249,9 +257,10 @@ function bind(){
  if(target<1||target>masteryRankCap(name)||dir>0&&m.mastery.spent+masteryCost(target)>budget('mastery'))return;
  a.manualMastery ||= {...m.mastery.levels};a.manualMastery[name]=target;message='Changed '+name+' Mastery rank.';render();return}
  const target=e.target.closest('[data-v2-select-skill]');
- if(target){skill=target.dataset.v2SelectSkill;sync(model())}
+ if(target){const selected=target.dataset.v2SelectSkill;specialtyOpen=!(specialtyOpen&&skill===selected);skill=selected;sync(model());if(specialtyOpen)$('v2-spec-close')?.focus()}
  });
  $('v2-spec-panel').addEventListener('click',e=>{
+ if(e.target.closest('#v2-spec-close')||e.target.closest('#v2-spec-done')){specialtyOpen=false;sync(model());return}
  if(e.target.closest('#v2-spec-restore')){delete account().customSpecialties?.[skill];render();return}
  const b=e.target.closest('[data-v2-spec]');if(!b)return;
  const n=Number(b.dataset.v2Spec),level=effective(skill,model()),min=n<=3?8:n===4?12:16;if(level<min)return;
@@ -260,19 +269,32 @@ function bind(){
  if(index>=0)selections.splice(index,1);else if(selections.length<specialtySlots(level))selections.push(n);else {selections.shift();selections.push(n)}
  a.customSpecialties[skill]=selections;message='Edited '+skill+' specializations.';render();
  });
- $('v2-stigma-list').addEventListener('change',e=>{
- const b=e.target.closest('[data-v2-stigma-choice]');if(!b)return;
- const pos=Number(b.dataset.v2StigmaChoice),a=account(),load=[...activeStigmas()],old=load[pos],other=load.indexOf(b.value);
- if(other>=0)load[other]=old;load[pos]=b.value;
- a.manualStigma ||= {...model().stigma.levels};a.customStigmas=load;message='Edited Stigma loadout.';render();
- });
  $('v2-stigma-list').addEventListener('click',e=>{
- const b=e.target.closest('[data-v2-stigma-rank]');if(!b)return;
- const name=activeStigmas()[Number(b.dataset.v2StigmaRank)],m=model(),dir=Number(b.dataset.dir),rank=(m.stigma.levels[name]||0)+dir,a=account();
- if(rank<0||rank>20||dir>0&&m.stigma.spent+stigmaCost(rank)>budget('stigma'))return;
- a.manualStigma ||= {...m.stigma.levels};a.manualStigma[name]=rank;message='Set '+name+' Stigma level '+rank+'.';render();
+  const b=e.target.closest('[data-v2-open-stigma]');if(!b)return;
+  const pos=Number(b.dataset.v2OpenStigma);stigmaSlotOpen=stigmaSlotOpen===pos?-1:pos;
+  sync(model());if(stigmaSlotOpen>=0)$('v2-stigma-close')?.focus();
  });
- $('v2-stigma-reset').addEventListener('click',()=>{account().manualStigma=null;account().customStigmas=null;render()});
+ $('v2-stigma-panel').addEventListener('click',e=>{
+  if(e.target.closest('#v2-stigma-close')||e.target.closest('#v2-stigma-done')){stigmaSlotOpen=-1;sync(model());return}
+  if(e.target.closest('#v2-stigma-restore')){account().manualStigma=null;account().customStigmas=null;render();return}
+  const select=e.target.closest('[data-v2-stigma-choice]');
+  if(select){
+   const index=Number(select.dataset.v2StigmaChoice),name=select.dataset.stigma;
+   if(!STIGMAS[state.class]?.[name])return;
+   const a=account(),chosen=[...activeStigmas()],other=chosen.indexOf(name),old=chosen[index];
+   if(other>=0&&other!==index)chosen[other]=old;
+   chosen[index]=name;a.customStigmas=chosen;
+   // Changing the skill does not silently assign the previous skill's ranks.
+   message='Equipped '+name+' in Stigma slot '+(index+1)+'.';render();return;
+  }
+  const b=e.target.closest('[data-v2-stigma-rank]');if(!b)return;
+  const name=activeStigmas()[Number(b.dataset.v2StigmaRank)],m=model(),dir=Number(b.dataset.dir),
+    rank=(m.stigma.levels[name]||0)+dir,a=account();
+  if(rank<0||rank>20||dir>0&&m.stigma.spent+stigmaCost(rank)>budget('stigma'))return;
+  a.manualStigma ||= {...m.stigma.levels};a.manualStigma[name]=rank;
+  message='Adjusted '+name+' to Stigma rank '+rank+'.';render();
+ });
+ $('v2-stigma-reset').addEventListener('click',()=>{account().manualStigma=null;account().customStigmas=null;stigmaSlotOpen=-1;render()});
  $('v2-board-toggle').addEventListener('click',()=>{
  const entry=nodeMap().get(state.node);if(!entry||!entry.node[5]){message='Select a purchasable node first.';sync(model());return}
  if(!boardOpen(entry.board)){message='This board is not unlocked.';sync(model());return}
