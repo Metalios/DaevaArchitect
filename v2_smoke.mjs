@@ -115,7 +115,8 @@ try{
   assert.equal(await page.locator('#v2-stigma-list .v2-stigma-card.locked').count(),1);
   await page.locator('#v2-context').selectOption('party');
   assert.equal(await page.locator('#v2-spec-panel').isVisible(),false);
-  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+8),true,width+': horizontal page overflow');
+  const overflow=await page.evaluate(()=>({width:innerWidth,documentWidth:document.documentElement.scrollWidth,offenders:[...document.querySelectorAll('body *')].filter(el=>{const box=el.getBoundingClientRect(),style=getComputedStyle(el);return style.display!=='none'&&box.right>innerWidth+8&&box.width>0}).sort((a,b)=>b.getBoundingClientRect().right-a.getBoundingClientRect().right).slice(0,8).map(el=>({tag:el.tagName,className:String(el.className).slice(0,90),id:el.id,right:Math.round(el.getBoundingClientRect().right)}))}));
+  assert(overflow.documentWidth<=overflow.width+8,width+': horizontal page overflow '+JSON.stringify(overflow));
   await page.close();
   console.log('v2 browser smoke passed at '+width+'×1080');
  }

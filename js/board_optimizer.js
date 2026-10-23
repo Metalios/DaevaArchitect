@@ -1,7 +1,7 @@
 // Connected, goal-aware progression across all four PvE boards. Every crystal
 // budget uses a prefix of this route; the score is a planning heuristic because
 // the game's exact CP and combat formulas are not public.
-function optimizeBoardRoute(classData, weights, masteryRanks, gearRanks, targetCp, baseCp, lockedIds = [], characterLevel = 45) {
+function optimizeBoardRoute(classData, weights, masteryRanks, gearRanks, targetCp, baseCp, lockedIds = [], characterLevel = 45, skillTargets = {}) {
   const unlocks = {Nezekan:12,Zikel:20,Vaizel:30,Triniel:40};
   const graphs = classData.boards.filter(board => characterLevel >= (unlocks[board.name] ?? Infinity)).map(board => {
     const nodes = new Map(board.nodes.map(node => [node[0], node]));
@@ -27,9 +27,19 @@ function optimizeBoardRoute(classData, weights, masteryRanks, gearRanks, targetC
         if(typeof key === 'number') {
           const name = skillName(key);
           value += (weights.skills[name] || 1.5)*amount;
+          const before=(masteryRanks[name]||1)+(gearRanks[name]||0)+(bonuses[name]||0)+(added[name]||0);
+          const target=skillTargets[name];
+          const next=target?.milestones?.find(milestone=>before<milestone.rank);
+          if(next){
+            // The path may pass through several nodes for this same skill.
+            // Score only levels still short of the *next* milestone, not
+            // levels already obtained in this candidate path or other boards.
+            value+=Math.min(amount,next.rank-before)*12*next.weight;
+          }
           cp += CP_MODEL.mastery*amount;
-          const before = (masteryRanks[name] || 1)+(gearRanks[name] || 0)+(bonuses[name] || 0)+(added[name] || 0);
-          for(const [gate,extra] of [[8,7],[12,9],[16,13],[20,6]]) if(before < gate && gate <= before+amount) value += extra;
+          for(const [gate,extra] of [[8,7],[12,9],[16,13],[20,6]])
+            if(before<gate&&gate<=before+amount)
+              value+=extra*(next&&gate===next.rank?next.weight:1);
           added[name] = (added[name] || 0)+amount;
         } else {
           value += weights.stats[key] || 1.5;

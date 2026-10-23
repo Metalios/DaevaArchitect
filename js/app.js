@@ -185,6 +185,8 @@ function masteryStages(){
     // already attained by the player. This changes a recommendation, not its
     // modified-build flag.
     const threshold=(name,target)=>Math.max(1,Math.min(10,target-(bonuses[name]||0)-(equipped[name]||0)-(a.gear[name]||0)));
+    const researched=typeof progressionMasteryStages==='function' ? progressionMasteryStages(state.class,a.context,currentLevel(),isLeveling(),advised,unlocks,skillNames(),threshold) : null;
+    if(researched)return researched;
     const stages=[];
     const add=(names,level)=>names.forEach(name=>stages.push([name,threshold(name,level)]));
     const early=isLeveling()&&currentLevel()<=15;
@@ -238,6 +240,8 @@ function stigmaStages(){
   const s=activeStigmas().slice(0,isLeveling()?levelReward().slots:4);
   const advised=typeof adviceFor==='function'?adviceFor(state.class,account().context):null;
   if(advised){
+    const researched=typeof progressionStigmaStages==='function' ? progressionStigmaStages(state.class,account().context,s,advised) : null;
+    if(researched)return researched;
     if(Array.isArray(advised.stigmaMilestones)){
       const milestones=advised.stigmaMilestones.filter(([name,rank])=>s.includes(name)&&[5,10,15,20].includes(rank));
       // Explicit research milestones (e.g. Taunt 15, Noble Armor 15 and
@@ -326,7 +330,7 @@ function model(){
       const reference={mastery,stigma,boards:{owned:actual},effects:effects(actual)};
       const estimated=estimateCombatPower(reference);
       const baseCp=estimated.ready?estimated.value:null;
-      liveRouteBasis=optimizeBoardRoute(data(),activeWeights(),mastery.levels,gearRanks,baseCp===null?0:target,baseCp,actual,currentLevel());
+      liveRouteBasis=optimizeBoardRoute(data(),activeWeights(),mastery.levels,gearRanks,baseCp===null?0:target,baseCp,actual,currentLevel(),typeof progressionBoardTargets==='function'?progressionBoardTargets(state.class,a.context):{});
       liveRoute=liveRouteBasis.route;liveRouteKey=key;
     }
   }
@@ -476,7 +480,7 @@ function renderStigma(m){
 }
 function numbered(items){return items.map((v,i)=>`<li><span class="rotation-num">${String(i+1).padStart(2,'0')}</span><span>${esc(v)}</span></li>`).join('')}
 function renderRotation(m){
-  const p=profile(),a=account(),level=currentLevel(),levelingMode=isLeveling(),main=masteryStages()[0]?.[0]||skillNames()[0],macroKey=['RMB','Mouse 4','MMB','M'].includes(a.macroBind)?a.macroBind:'RMB',weaveKey=p.weaveKey||'LMB';
+  const a=account(),p=typeof progressionRotationProfile==='function' ? progressionRotationProfile(profile(),state.class,a.context,name=>effective(name,m),activeStigmas().filter(name=>(m.stigma.levels[name]||0)>0),(name,option)=>specPicks(name,effective(name,m)).includes(option)) : profile(),level=currentLevel(),levelingMode=isLeveling(),main=masteryStages()[0]?.[0]||skillNames()[0],macroKey=['RMB','Mouse 4','MMB','M'].includes(a.macroBind)?a.macroBind:'RMB',weaveKey=p.weaveKey||'LMB';
   const classActive=new Set(Object.values(data().skills).slice(0,12).map(s=>s.name));
   const unlockedClass=new Set([...classActive].filter(name=>!levelingMode||(SKILL_UNLOCKS[state.class][name]||1)<=level));
   const slots=levelingMode?levelReward().slots:4;
@@ -498,10 +502,12 @@ function renderRotation(m){
   const macroSteps=p.macro.filter(key=>stacks.some(s=>s.key===key&&!s.manual));
   let hotbar=p.hotbar.map(([skills,cue,tone])=>[[...skills],cue,tone]);
   if(state.class==='chanter'&&!chanterReset)hotbar[7]=[['Impactful Crush'],'Manual Dark Crush trigger until cooldown removal','attack'];
-  if(a.context!=='party'){
+  // Reconcile manual Stigma keys for every context (including Group PvE),
+  // not just Solo/PvP. An unequipped Stigma must never appear as usable.
+  if(equippedStigmas.length){
     const chosen=equippedStigmas,missing=chosen.filter(name=>!p.stigmas.includes(name)&&!hotbar.some(([skills])=>skills.includes(name)));
-    for(const slot of hotbar){const replaced=slot[0].some(name=>p.stigmas.includes(name)&&!chosen.includes(name));slot[0]=slot[0].map(name=>p.stigmas.includes(name)&&!chosen.includes(name)?missing.shift()||null:name).filter(Boolean);if(replaced){slot[1]=`${a.context==='pvp'?'PvP':'Solo'} Stigma · use manually`;slot[2]='defense'}if(!slot[0].length){slot[1]='Available for a matchup-specific skill';slot[2]='utility'}}
-    for(const name of missing){const index=hotbar.findLastIndex(([skills])=>skills.length===0);const target=index>=0?index:hotbar.length-1;hotbar[target]=[[name],`${a.context==='pvp'?'PvP':'Solo'} Stigma · use manually`,'defense']}
+    for(const slot of hotbar){const replaced=slot[0].some(name=>p.stigmas.includes(name)&&!chosen.includes(name));slot[0]=slot[0].map(name=>p.stigmas.includes(name)&&!chosen.includes(name)?missing.shift()||null:name).filter(Boolean);if(replaced){slot[1]=`${a.context==='pvp'?'PvP':a.context==='party'?'Group':'Solo'} Stigma · use manually`;slot[2]='defense'}if(!slot[0].length){slot[1]='Available for a matchup-specific skill';slot[2]='utility'}}
+    for(const name of missing){const index=hotbar.findLastIndex(([skills])=>skills.length===0);const target=index>=0?index:hotbar.length-1;hotbar[target]=[[name],`${a.context==='pvp'?'PvP':a.context==='party'?'Group':'Solo'} Stigma · use manually`,'defense']}
   }
   if(fusionCharged)hotbar[6]=[['Elemental Fusion'],'Fully charge when Four Elements is ready','attack'];
   if(levelingMode){
@@ -513,7 +519,7 @@ function renderRotation(m){
   if(levelingMode){
     stacks=[...stacks,...hotbar.flatMap(([skills,cue],i)=>skills.length>1?[{key:String(i+1),title:cue,skills,manual:true}]:[])];
   }else for(const stack of stacks)if(stack.manual&&/^[1-8]$/.test(stack.key))stack.skills=[...hotbar[Number(stack.key)-1][0]];
-  $('rotation-gate').textContent=levelingMode?`Level ${level}: Macro uses only ${macroSteps.length?macroSteps.join(' then '):'the weave skill for now'}. ${slots?`${equippedStigmas.length} equipped Stigma skill${equippedStigmas.length===1?'':'s'} currently usable.`:'Stigmas open at level 22.'} ${level<16?'Defiance opens at level 16; reserve Space for it.':'Defiance is available on Space.'} Keep healing, charged attacks and defensive timing manual.`:state.class==='templar'?`Judgment is effective Lv ${effective('Judgment',m)}. ${effective('Judgment',m)>=16?'With its cooldown-removal Specialty selected, the E stack can spend repeated casts during one proc.':'Its Lv 16 cooldown-removal Specialty is not active yet; expect one Judgment cast per available proc.'} The macro tries Judgment first within E. Fully charge Punishment manually, then use Doom Shield when that interaction is available; pause the held macro if it clips the charge or trigger.`:p.kind==='healer'?'Heals, toggles and emergency buttons remain manual. Use the macro only while the group is stable.':`Current first priority: ${main} effective Lv ${effective(main,m)}. Keep charged and movement skills on their own keys.`;
+  $('rotation-gate').textContent=levelingMode?`Level ${level}: Macro uses only ${macroSteps.length?macroSteps.join(' then '):'the weave skill for now'}. ${slots?`${equippedStigmas.length} equipped Stigma skill${equippedStigmas.length===1?'':'s'} currently usable.`:'Stigmas open at level 22.'} ${level<16?'Defiance opens at level 16; reserve Space for it.':'Defiance is available on Space.'} Keep healing, charged attacks and defensive timing manual.`:state.class==='templar'?`Judgment is effective Lv ${effective('Judgment',m)}. ${specPicks('Judgment',effective('Judgment',m)).includes(5)?'The cooldown-removal Specialty is selected, so the E stack can spend repeated Judgment casts during trigger windows.':'The cooldown-removal Specialty is not selected yet; expect a single Judgment cast for each available proc.'} The macro tries Judgment first within E. Fully charge Punishment manually, then use Doom Shield when that interaction is available; pause the held macro if it clips the charge or trigger.`:p.kind==='healer'?'Heals, toggles and emergency buttons remain manual. Use the macro only while the group is stable.':`Current first priority: ${main} effective Lv ${effective(main,m)}. Keep charged and movement skills on their own keys.`;
   const macroRanks=stacks.filter(stack=>!stack.manual).flatMap(stack=>stack.skills).map(name=>name in m.mastery.levels?`${name} effective Lv ${effective(name,m)}`:name in m.stigma.levels?`${name} Stigma Lv ${m.stigma.levels[name]}`:name);
   $('macro-rank-summary').textContent=`Macro skill levels at your current point and gear totals: ${macroRanks.join(' · ')}. Change crystals, Mastery, Stigma or gear to update these ranks.`;
   $('rotation-opener-title').textContent={party:'Group opener',solo:'Solo opener',pvp:'PvP engage'}[a.context];

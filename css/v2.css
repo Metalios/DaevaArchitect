@@ -470,3 +470,10 @@
  .v2-active .v2-spec-options{grid-template-columns:1fr}
  .v2-active .v2-stigma-item{min-height:130px}
 }
+
+/* Explain the class's next effective-level objective beside live allocations. */
+.v2-next-progress{margin:.3rem .7rem .65rem;padding:.55rem .8rem;border-left:2px solid var(--gold,#d8b56b);font-size:.85rem;line-height:1.45;color:inherit}
+
+/* A breakpoint explanation is a full row, not a competing fixed-width card. */
+.v2-next{flex-wrap:wrap}
+.v2-next-progress{flex:1 1 100%;min-width:0;overflow-wrap:anywhere;margin:0;padding:10px 12px;border:1px solid #405a71;border-left:3px solid #c3a36f;border-radius:5px;background:#122639;line-height:1.45;font-size:12px}
