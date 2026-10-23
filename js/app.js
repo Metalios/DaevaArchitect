@@ -185,6 +185,8 @@ function masteryStages(){
     // already attained by the player. This changes a recommendation, not its
     // modified-build flag.
     const threshold=(name,target)=>Math.max(1,Math.min(10,target-(bonuses[name]||0)-(equipped[name]||0)-(a.gear[name]||0)));
+    const researched=typeof progressionMasteryStages==='function' ? progressionMasteryStages(state.class,a.context,currentLevel(),isLeveling(),advised,unlocks,skillNames(),threshold) : null;
+    if(researched)return researched;
     const stages=[];
     const add=(names,level)=>names.forEach(name=>stages.push([name,threshold(name,level)]));
     const early=isLeveling()&&currentLevel()<=15;
@@ -238,6 +240,8 @@ function stigmaStages(){
   const s=activeStigmas().slice(0,isLeveling()?levelReward().slots:4);
   const advised=typeof adviceFor==='function'?adviceFor(state.class,account().context):null;
   if(advised){
+    const researched=typeof progressionStigmaStages==='function' ? progressionStigmaStages(state.class,account().context,s,advised) : null;
+    if(researched)return researched;
     if(Array.isArray(advised.stigmaMilestones)){
       const milestones=advised.stigmaMilestones.filter(([name,rank])=>s.includes(name)&&[5,10,15,20].includes(rank));
       // Explicit research milestones (e.g. Taunt 15, Noble Armor 15 and
@@ -326,7 +330,7 @@ function model(){
       const reference={mastery,stigma,boards:{owned:actual},effects:effects(actual)};
       const estimated=estimateCombatPower(reference);
       const baseCp=estimated.ready?estimated.value:null;
-      liveRouteBasis=optimizeBoardRoute(data(),activeWeights(),mastery.levels,gearRanks,baseCp===null?0:target,baseCp,actual,currentLevel());
+      liveRouteBasis=optimizeBoardRoute(data(),activeWeights(),mastery.levels,gearRanks,baseCp===null?0:target,baseCp,actual,currentLevel(),typeof progressionBoardTargets==='function'?progressionBoardTargets(state.class,a.context):{});
       liveRoute=liveRouteBasis.route;liveRouteKey=key;
     }
   }
@@ -476,7 +480,7 @@ function renderStigma(m){
 }
 function numbered(items){return items.map((v,i)=>`<li><span class="rotation-num">${String(i+1).padStart(2,'0')}</span><span>${esc(v)}</span></li>`).join('')}
 function renderRotation(m){
-  const p=profile(),a=account(),level=currentLevel(),levelingMode=isLeveling(),main=masteryStages()[0]?.[0]||skillNames()[0],macroKey=['RMB','Mouse 4','MMB','M'].includes(a.macroBind)?a.macroBind:'RMB',weaveKey=p.weaveKey||'LMB';
+  const a=account(),p=typeof progressionRotationProfile==='function' ? progressionRotationProfile(profile(),state.class,a.context,name=>effective(name,m)) : profile(),level=currentLevel(),levelingMode=isLeveling(),main=masteryStages()[0]?.[0]||skillNames()[0],macroKey=['RMB','Mouse 4','MMB','M'].includes(a.macroBind)?a.macroBind:'RMB',weaveKey=p.weaveKey||'LMB';
   const classActive=new Set(Object.values(data().skills).slice(0,12).map(s=>s.name));
   const unlockedClass=new Set([...classActive].filter(name=>!levelingMode||(SKILL_UNLOCKS[state.class][name]||1)<=level));
   const slots=levelingMode?levelReward().slots:4;
@@ -498,7 +502,9 @@ function renderRotation(m){
   const macroSteps=p.macro.filter(key=>stacks.some(s=>s.key===key&&!s.manual));
   let hotbar=p.hotbar.map(([skills,cue,tone])=>[[...skills],cue,tone]);
   if(state.class==='chanter'&&!chanterReset)hotbar[7]=[['Impactful Crush'],'Manual Dark Crush trigger until cooldown removal','attack'];
-  if(a.context!=='party'){
+  // Reconcile manual Stigma keys for every context (including Group PvE),
+  // not just Solo/PvP. An unequipped Stigma must never appear as usable.
+  if(equippedStigmas.length){
     const chosen=equippedStigmas,missing=chosen.filter(name=>!p.stigmas.includes(name)&&!hotbar.some(([skills])=>skills.includes(name)));
     for(const slot of hotbar){const replaced=slot[0].some(name=>p.stigmas.includes(name)&&!chosen.includes(name));slot[0]=slot[0].map(name=>p.stigmas.includes(name)&&!chosen.includes(name)?missing.shift()||null:name).filter(Boolean);if(replaced){slot[1]=`${a.context==='pvp'?'PvP':'Solo'} Stigma · use manually`;slot[2]='defense'}if(!slot[0].length){slot[1]='Available for a matchup-specific skill';slot[2]='utility'}}
     for(const name of missing){const index=hotbar.findLastIndex(([skills])=>skills.length===0);const target=index>=0?index:hotbar.length-1;hotbar[target]=[[name],`${a.context==='pvp'?'PvP':'Solo'} Stigma · use manually`,'defense']}

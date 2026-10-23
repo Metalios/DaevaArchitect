@@ -470,3 +470,6 @@
  .v2-active .v2-spec-options{grid-template-columns:1fr}
  .v2-active .v2-stigma-item{min-height:130px}
 }
+
+/* Explain the class's next effective-level objective beside live allocations. */
+.v2-next-progress{margin:.3rem .7rem .65rem;padding:.55rem .8rem;border-left:2px solid var(--gold,#d8b56b);font-size:.85rem;line-height:1.45;color:inherit}
