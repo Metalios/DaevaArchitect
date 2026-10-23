@@ -113,7 +113,17 @@ function setCustomNode(id){
   save();
 }
 let boardEditNotice='';
-function activeWeights(){return ROUTES[state.class].weights[account().context]}
+function activeWeights(){
+  const base=ROUTES[state.class].weights[account().context];
+  const advised=typeof adviceFor==='function'?adviceFor(state.class,account().context):null;
+  if(!advised)return base;
+  const skills={...base.skills};
+  // Strongest supported class/core skill recommendations lead board optimization,
+  // rather than relying only on the previous generic DPS coefficient weights.
+  (advised.core||[]).forEach((name,i)=>{skills[name]=Math.max(skills[name]||0,64-i*6)});
+  (advised.support||[]).forEach((name,i)=>{skills[name]=Math.max(skills[name]||0,28-i*3)});
+  return {...base,skills};
+}
 function recommendedStigmas(){
   const standard=profile().stigmas;
   const variants={templar:{solo:['Doom Shield','Noble Armor',"Empyrean Lord's Punishment",'Executing Blade'],pvp:['Noble Armor','Doom Shield','Taunt','Second Skin']},cleric:{solo:['Earth Punishment','Noble Aura','Prayer of Amplification','Light of Protection'],pvp:['Prayer of Amplification','Light of Protection',"Yustiel's Power",'Absolution']},sorcerer:{pvp:['Element Enhancement','Steel Barrier','Soul Freeze','Hibernation']},gladiator:{pvp:["Zikel's Blessing",'Focused Block','Lifestealing Blade','Armor of Balance']},assassin:{pvp:['Evasion Contract','Smoke Bomb','Swift Contract','Illusive Clone']},ranger:{pvp:["Vaizel's Authority",'Mother Nature\'s Breath','Ensnaring Trap','Stealth']},spiritmaster:{pvp:['Summon: Ancient Spirit',"Enhance: Spirit's Benediction",'Seize Magic','Cry of Terror']},chanter:{solo:['Undefeated Mantra','Sprint Mantra','Power of the Storm',"Marchutan's Wrath"],pvp:['Undefeated Mantra','Barrier Spell','Healing Touch','Focused Defense']}};
@@ -301,9 +311,15 @@ function model(){
     const target=profile().kind==='healer'?0:Number(a.goalTarget)||0;
     const gearRanks={...gearSkillLevels()};
     for(const [name,n] of Object.entries(a.gear||{}))gearRanks[name]=(gearRanks[name]||0)+Number(n||0);
-    const key=JSON.stringify([state.class,a.context,currentLevel(),mastery.levels,stigma.levels,gearRanks,target,a.obtainedNodes]);
+    const key=JSON.stringify([state.class,a.context,currentLevel(),mastery.levels,stigma.levels,gearRanks,target,a.obtainedNodes,gearEquipment(),a.cpAnchor]);
     if(key!==liveRouteKey){
-      liveRouteBasis=optimizeBoardRoute(data(),activeWeights(),mastery.levels,gearRanks,target,null,obtainedNodes(),currentLevel());
+      // A CP goal is meaningful only with a recorded level-45 equipment
+      // baseline; otherwise it must not arbitrarily bias Daevanion choices.
+      const actual=obtainedNodes();
+      const reference={mastery,stigma,boards:{owned:actual},effects:effects(actual)};
+      const estimated=estimateCombatPower(reference);
+      const baseCp=estimated.ready?estimated.value:null;
+      liveRouteBasis=optimizeBoardRoute(data(),activeWeights(),mastery.levels,gearRanks,baseCp===null?0:target,baseCp,actual,currentLevel());
       liveRoute=liveRouteBasis.route;liveRouteKey=key;
     }
   }
@@ -549,7 +565,7 @@ function renderBoards(m){
   $('board-next').innerHTML=customMode()?`<p>${boardSteps.length} tiles selected on ${state.board}. ${crystalBudget-plan.spent} ${isAz?'Azphel':'PvE'} crystals remain unassigned. Select a connected tile to extend your plan.</p>`:upcoming.length?upcoming.map(x=>`<div class="next-unlock"><strong>${x.total} total</strong><span>${x.board}: ${esc(x.label)}</span></div>`).join(''):'<p>All key nodes on this route are funded.</p>';
   const method=isAz?ROUTES[state.class].methods.azphel:ROUTES[state.class].methods[a.context];
   const cpRoute=profile().kind!=='healer'&&Number(a.goalTarget)>0;
-  const cpBasis=cpRoute?'The route may favor board CP stats toward your entered CP goal; it does not assume or score your gear.':'The route follows class and context priorities without assuming your equipment.';
+  const cpBasis=cpRoute?(liveRouteBasis?.baseCp===null?'Your gear is not recorded fully enough for CP calibration, so this route follows class/context mechanics without CP weighting.':'A complete recorded loadout can give a secondary CP-goal influence after class/context priorities.'):'The route follows researched class and context priorities using only gear bonuses you entered.';
   $('route-footnote').textContent=customMode()?`Custom mode uses the connected tiles you selected, in click order. Raising your crystal total lets you add more; lowering it makes later tiles unfunded until the budget returns. Marked obtained tiles are recorded separately from planned tiles. Azphel has its own currency and no skill levels.`:`${method}. The planner recalculates a connected route across ${isLeveling()?'unlocked boards':'all four PvE boards'} when your CP goal, Mastery, Stigma, context, obtained tiles, or recorded skill bonuses change. No equipment is assumed. Each crystal total funds a prefix; save crystals when the next tile costs more than you have. ${cpBasis} Marked tiles are carried into the route first, using connecting nodes where needed. This is an approximate scoring model, not a proven combat optimum. Azphel has its own currency and no skill levels.`;
   const weights=isAz?{skills:{},stats:activeWeights()?.stats||{}}:activeWeights();
   const topSkills=Object.entries(weights.skills||{}).sort((x,y)=>y[1]-x[1]).slice(0,3).map(x=>x[0]);
