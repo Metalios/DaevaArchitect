@@ -1,0 +1,39 @@
+name: Validate progression recommendations
+on:
+  push:
+    branches: [feature/research-grounded-progression]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify generated script syntax
+        run: |
+          for file in js/*.js; do node --check "$file"; done
+      - name: Audit progression model
+        run: |
+          node recommendation_regression.mjs
+          node recommendations_audit.mjs
+          node audit_leveling.mjs
+          node verify.mjs
+      - name: Build site
+        run: python build.py
+      - name: Browser smoke checks
+        run: |
+          npm install --no-save playwright@1.56.0
+          npx playwright install --with-deps chromium
+          node leveling_macro_smoke.mjs
+          node goal_route_smoke.mjs
+          node v2_smoke.mjs
