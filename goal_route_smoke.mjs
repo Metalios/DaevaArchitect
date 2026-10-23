@@ -32,7 +32,7 @@ for(const cls of ['templar','gladiator','assassin','ranger','sorcerer','spiritma
   assert.equal(result.routeLength,380,`${cls}: incomplete full progression`);
   assert.equal(result.total,570,`${cls}: incorrect full crystal total`);
   assert(result.connected,`${cls}: a context route contains disconnected tiles`);
-  if(!['cleric','chanter'].includes(cls))assert.notDeepEqual(result.cp,result.role,`${cls}: CP target did not influence route`);
+  assert.deepEqual(result.cp,result.role,`${cls}: without recorded gear, an arbitrary CP target must not alter the board route`);
 }
 await page.locator('[data-class="templar"]').click();
 const personal=await page.evaluate(()=>{
