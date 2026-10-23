@@ -17,7 +17,6 @@ function optimizeBoardRoute(classData, weights, masteryRanks, gearRanks, targetC
     ? Math.min(1.5,targetCp / 100000)
     : Math.min(1.5,Math.max(0,(targetCp-baseCp) / Math.max(5000,targetCp*0.25))) : 0;
   let boardCp = 0;
-  const beforeTarget=(name,amount)=> (masteryRanks[name]||1)+(gearRanks[name]||0)+(bonuses[name]||0);
   function score(path,graph,focus) {
     let value = 0, cp = 0, lockedCount = 0;
     const added = {};
@@ -28,15 +27,19 @@ function optimizeBoardRoute(classData, weights, masteryRanks, gearRanks, targetC
         if(typeof key === 'number') {
           const name = skillName(key);
           value += (weights.skills[name] || 1.5)*amount;
-          // Favor the next verified class breakpoint over undirected stat
-          // accumulation, without claiming a simulated DPS optimum.
+          const before=(masteryRanks[name]||1)+(gearRanks[name]||0)+(bonuses[name]||0)+(added[name]||0);
           const target=skillTargets[name];
-          if(target && beforeTarget(name,amount) < target.rank){
-            value+=Math.min(amount,target.rank-beforeTarget(name,amount))*12*target.weight;
+          const next=target?.milestones?.find(milestone=>before<milestone.rank);
+          if(next){
+            // The path may pass through several nodes for this same skill.
+            // Score only levels still short of the *next* milestone, not
+            // levels already obtained in this candidate path or other boards.
+            value+=Math.min(amount,next.rank-before)*12*next.weight;
           }
           cp += CP_MODEL.mastery*amount;
-          const before = (masteryRanks[name] || 1)+(gearRanks[name] || 0)+(bonuses[name] || 0)+(added[name] || 0);
-          for(const [gate,extra] of [[8,7],[12,9],[16,13],[20,6]]) if(before < gate && gate <= before+amount) value += extra*(skillTargets[name]&&gate<=skillTargets[name].rank?skillTargets[name].weight:1);
+          for(const [gate,extra] of [[8,7],[12,9],[16,13],[20,6]])
+            if(before<gate&&gate<=before+amount)
+              value+=extra*(next&&gate===next.rank?next.weight:1);
           added[name] = (added[name] || 0)+amount;
         } else {
           value += weights.stats[key] || 1.5;
