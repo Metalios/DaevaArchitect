@@ -26,6 +26,7 @@ jobs:
           node verify.mjs
           node audit_leveling.mjs
           node recommendations_audit.mjs
+          node leveling_rotation_audit.mjs
       - name: Set up Chromium
         run: |
           npm install --no-save playwright@1.56.0
