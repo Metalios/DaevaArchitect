@@ -42,3 +42,12 @@
 .leveling-setup-warning{color:#f3d9a9!important}
 @media(max-width:1200px){.leveling-combat-layout{grid-template-columns:minmax(210px,.7fr) minmax(270px,1.3fr)}.leveling-macro-callout{grid-column:1/-1}}
 @media(max-width:740px){.leveling-combat-layout,.leveling-combat-layout:has(.leveling-no-macro),.leveling-manual-summary{grid-template-columns:1fr}.leveling-macro-callout{grid-column:auto}#rotation.leveling-view #leveling-rotation{padding:12px}.leveling-first{font-size:9px}}
+
+.leveling-multi-stack{grid-template-columns:minmax(165px,.55fr) minmax(430px,1.75fr) minmax(240px,.78fr)}
+.leveling-stack-panels{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:10px;align-items:start}
+.leveling-stack-panel{background:#07192a;border:1px solid #2e5777;padding:9px;border-radius:6px;min-width:0}
+.leveling-stack-label{display:flex;align-items:center;gap:7px;min-height:33px;margin-bottom:9px;color:#c8e5fb;font-size:12px;font-weight:650}
+.leveling-stack-label kbd{display:inline-grid;place-items:center;width:28px;height:28px;border:1px solid #648fb0;border-radius:5px;background:#173755;color:#fff;flex-shrink:0}
+.leveling-macro-entry{display:inline-block;margin:4px 10px 2px 0;font-size:12px!important}
+@media(max-width:1430px){.leveling-multi-stack{grid-template-columns:minmax(160px,.38fr) minmax(400px,1fr)}.leveling-multi-stack .leveling-macro-callout{grid-column:1/-1}}
+@media(max-width:740px){.leveling-multi-stack{grid-template-columns:1fr}.leveling-multi-stack .leveling-macro-callout{grid-column:auto}.leveling-stack-panels{grid-template-columns:1fr}}
