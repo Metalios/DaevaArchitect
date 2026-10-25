@@ -589,7 +589,7 @@ function renderBoards(m){
   const boardSteps=steps.filter(x=>x.board===state.board),boardMarked=boardSteps.filter(x=>actual.has(x.id)).length,boardPlanned=boardSteps.filter(x=>preview.owned.has(x.id)).length;
   const recommendedTiles=new Set(routeSteps(isAz?ROUTES[state.class].azphel:activeRoute(),nodes).filter(x=>x.total<=crystalBudget).map(x=>x.id));
   $('board-map-title').textContent=`${state.board} · choose tiles on the board`;
-  $('board-map-progress').textContent=`${boardPlanned} planned within preview · ${boardMarked} marked obtained. Numbers show the next clicks across ${isAz?'Azphel':'all four PvE boards'}.`;
+  $('board-map-progress').textContent=`${boardPlanned} in preview · ${boardMarked} obtained. ${customMode()?'Click to edit connected planned path; mark obtained in the selected-node panel.':'Click any unlocked non-start tile to mark obtained; click again to undo.'}`;
   for(let r=1;r<=15;r++)for(let c=1;c<=15;c++){const n=grid.get(`${r}:${c}`);if(!n){html+='<span></span>';continue}const planned=preview.owned.has(n[0])||n[5]===0,obtained=actual.has(n[0]),order=queue.get(n[0]),kind=n[5]===0?'start':n[5]===4?'unique':typeof n[6]?.[0]?.[0]==='number'?'skill':'stat';html+=`<button type="button" class="node ${kind} ${planned?'planned':''} ${recommendedTiles.has(n[0])?'recommended':''} ${obtained?'obtained':''} ${order?'queued':''} ${order&&!planned?'queued-later':''} ${boardNext?.id===n[0]?'next':''} ${state.node===n[0]?'selected':''}" data-node="${n[0]}" title="${esc(effectText(n))}${order?` · upcoming click ${order} across boards`:''}${n[5]&&boardOpen(state.board)?` · click to ${customMode()?'edit custom plan':'mark obtained'}`:''}" aria-label="${esc(effectText(n))}; row ${r}, column ${c}; ${obtained?'obtained':planned?'planned':'later'}${order?`; upcoming click ${order}`:''}" aria-pressed="${customMode()?!!planned:obtained}" ${boardOpen(state.board)?'': 'disabled'}>${nodeVisual(n)}${order?`<span class="queue-badge" aria-hidden="true">${order}</span>`:''}</button>`}
   $('board-grid').innerHTML=html;const selected=state.node&&nodes.get(state.node)?.board===state.board?nodes.get(state.node).node:null;
   $('selected-node').innerHTML=selected?`<div class="selected-icon">${nodeVisual(selected)}</div><div><strong>${esc(effectText(selected))}</strong><small>Row ${selected[1]}, column ${selected[2]} · ${selected[5]} crystal${selected[5]===1?'':'s'} · ${selected[5]===0?'Start node':actual.has(selected[0])?'Obtained':preview.owned.has(selected[0])?'Planned within budget':'Unplanned'}. ${selected[5]?customMode()?'Click the tile to add or remove it from your custom plan.':'Click the tile to '+(actual.has(selected[0])?'unmark':'mark')+' obtained.':''}</small></div>`:`<strong>${state.board}</strong><small>${boardOpen(state.board)?customMode()?'Click a connected tile to plan it. Numbered badges show the order of your next selected tiles.':'Teal = planned path · gold fill = marked obtained · outlined = next unmarked node on this board. Click a node to mark or unmark it.':`Locked until level ${BOARD_UNLOCKS[state.board]}. Nodes become selectable then.`}</small>`;
@@ -756,11 +756,24 @@ $('copy-recommended-board').addEventListener('click',()=>{const nodes=nodeMap();
 $('clear-custom-board').addEventListener('click',()=>{account().customNodes=[];account().customAzphelNodes=[];boardEditNotice='Custom plan cleared. Obtained marks are kept separately.';state.node=null;render()});
 $('global-board-allocation').addEventListener('click',e=>{const b=e.target.closest('[data-board-jump]');if(!b||!boardOpen(b.dataset.boardJump))return;state.board=b.dataset.boardJump;state.preview=budget('crystals');state.node=null;renderBoards(model())});
 $('global-route-next').addEventListener('click',e=>{const b=e.target.closest('[data-route-node]');if(!b)return;state.board=b.dataset.routeBoard;state.preview=budget('crystals');state.node=Number(b.dataset.routeNode);renderBoards(model());document.querySelector('.node.selected')?.scrollIntoView({behavior:'smooth',block:'center',inline:'center'})});
-$('board-grid').addEventListener('click',e=>{const b=e.target.closest('[data-node]');if(!b||!boardOpen(state.board))return;const id=Number(b.dataset.node),node=nodeMap().get(id)?.node;state.node=id;
-  // v2: clicking a tile inspects it. Modification and obtained tracking are
-  // explicit actions, so opening its tooltip never changes the build.
-  if(document.body.classList.contains('v2-active')){renderBoards(model());return}
-  if(node?.[5]>0){if(customMode()){setCustomNode(id);render();return}const marked=obtainedNodes();if(marked.has(id))marked.delete(id);else marked.add(id);storeObtained(marked)}renderBoards(model())});
+$('board-grid').addEventListener('click',e=>{
+  const b=e.target.closest('[data-node]');if(!b||!boardOpen(state.board))return;
+  const id=Number(b.dataset.node),entry=nodeMap().get(id);
+  if(!entry||entry.board!==state.board)return;
+  state.node=id;
+  if(entry.node[5]===0){renderBoards(model());return}
+  // The v2 change accidentally turned a tile click into inspect-only.
+  // Restore the pre-v2 one-click toggle in Recommended mode. Custom mode
+  // continues to use tile clicks for planning connected paths, with the
+  // existing explicit Obtained control for marking purchases separately.
+  if(customMode()){setCustomNode(id);render();return}
+  const marked=obtainedNodes();
+  if(marked.has(id))marked.delete(id);else marked.add(id);
+  storeObtained(marked);
+  // Re-evaluate the complete model: acquired board bonuses, Mastery ranks,
+  // Specials and macro suggestions must refresh on the SAME interaction.
+  render();
+});
 $('selected-node-obtained').addEventListener('click',()=>{const entry=nodeMap().get(state.node);if(!entry||entry.node[5]===0||!boardOpen(entry.board))return;const marked=obtainedNodes();if(marked.has(state.node))marked.delete(state.node);else marked.add(state.node);storeObtained(marked);render()});
 $('mark-planned-button').addEventListener('click',()=>{const marked=obtainedNodes(),nodes=nodeMap();for(const step of routeSteps(plannedRoute(),nodes))if(step.total<=budget('crystals'))marked.add(step.id);storeObtained(marked);renderBoards(model())});
 $('clear-obtained-button').addEventListener('click',()=>{const nodes=nodeMap();storeObtained(new Set([...obtainedNodes()].filter(id=>nodes.get(id).board==='Azphel')));renderBoards(model())});
