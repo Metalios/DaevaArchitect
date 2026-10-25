@@ -447,3 +447,25 @@
 .rotation-advanced>summary:hover,.rotation-advanced>summary:focus-visible{color:#fff1cb}
 .rotation-advanced[open]>summary{margin-bottom:8px;border-bottom:1px solid #36566e}
 .rotation-advanced .rhythm-heading{margin-top:8px}
+
+/* Make the everyday controls legible without opening the advanced 1–8 bar. */
+.rotation-easy-headline{font-size:15px!important;margin-bottom:14px}
+.rotation-easy-headline b{color:#f5d8a3}
+.rotation-easy-buttons{display:flex;align-items:stretch;flex-wrap:wrap;gap:10px;margin:12px 0 16px}
+.rotation-easy-button{display:flex;align-items:center;flex:1 1 200px;gap:12px;padding:14px;background:#0c263e;border:1px solid #5686a2;border-radius:9px;min-width:0}
+.easy-large-key{display:grid;place-items:center;min-width:68px;min-height:56px;padding:5px 7px;border:2px solid #e2be79;border-radius:9px;background:#2a5272;color:#fff1c7;font-size:17px;font-weight:900}
+.rotation-easy-button strong,.rotation-easy-button small{display:block}
+.rotation-easy-button strong{font-size:17px;color:#fff0ce}
+.rotation-easy-button small{font-size:13px;color:#cbdfed;line-height:1.45;margin-top:3px}
+.rotation-easy-plus{align-self:center;font-size:24px;color:#ebd39e;font-weight:800}
+.rotation-easy-manual-area{border-top:1px solid #375c77;padding-top:12px;margin:7px 0}
+.rotation-easy-manual-area h4{font-size:17px;color:#f5deb4;margin:0 0 10px}
+.rotation-easy-manual-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.rotation-easy-manual{display:flex;align-items:center;gap:10px;padding:9px 11px;border:1px solid #416881;background:#102b41;border-radius:7px;min-width:0}
+.rotation-easy-manual kbd{display:grid;place-items:center;min-width:38px;min-height:40px;border:1px solid #a5acbf;border-radius:6px;color:#fff0c4;font-size:18px;font-weight:800;background:#234a66}
+.rotation-easy-manual>span{min-width:0}
+.rotation-easy-manual b,.rotation-easy-manual small{display:block;overflow-wrap:anywhere}
+.rotation-easy-manual b{font-size:14px;color:#f5ebd9}
+.rotation-easy-manual small{font-size:12px;line-height:1.45;color:#bdd6e5;margin-top:3px}
+.rotation-easy-optional{font-size:12px!important;line-height:1.55;color:#c4ddee;margin:10px 0}
+@media(max-width:820px){.rotation-easy-manual-grid{grid-template-columns:1fr}.rotation-easy-plus{width:100%;text-align:center}.rotation-easy-buttons{gap:5px}.rotation-easy-button{flex-basis:100%}}

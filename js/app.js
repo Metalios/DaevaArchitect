@@ -513,7 +513,7 @@ function renderRotation(m){
   const classActive=new Set(Object.values(data().skills).slice(0,12).map(s=>s.name));
   const unlockedClass=new Set([...classActive].filter(name=>!levelingMode||(SKILL_UNLOCKS[state.class][name]||1)<=level));
   const slots=levelingMode?levelReward().slots:4;
-  const equippedStigmas=activeStigmas().slice(0,slots).filter(name=>!levelingMode||(m.stigma.levels[name]||0)>0);
+  const equippedStigmas=activeStigmas().slice(0,slots).filter(name=>(m.stigma.levels[name]||0)>0);
   const usableSkills=new Set([...unlockedClass,...equippedStigmas]);
   $('rotation-level').textContent=levelingMode?`Lv ${level} · ready to use`:`${main} Lv ${skillLevelBreakdown(main,m).withOwned} (with obtained boards)`;
   $('rotation-rule-title').textContent=levelingMode?`Your level ${level} combat loop`:p.rule;
@@ -538,6 +538,8 @@ function renderRotation(m){
     for(const slot of hotbar){const replaced=slot[0].some(name=>p.stigmas.includes(name)&&!chosen.includes(name));slot[0]=slot[0].map(name=>p.stigmas.includes(name)&&!chosen.includes(name)?missing.shift()||null:name).filter(Boolean);if(replaced){slot[1]=`${a.context==='pvp'?'PvP':a.context==='party'?'Group':'Solo'} Stigma · use manually`;slot[2]='defense'}if(!slot[0].length){slot[1]='Available for a matchup-specific skill';slot[2]='utility'}}
     for(const name of missing){const index=hotbar.findLastIndex(([skills])=>skills.length===0);const target=index>=0?index:hotbar.length-1;hotbar[target]=[[name],`${a.context==='pvp'?'PvP':a.context==='party'?'Group':'Solo'} Stigma · use manually`,'defense']}
   }
+  // Do not advertise unequipped Stigmas in a manual slot.
+  hotbar=hotbar.map(([skills,cue,tone])=>[skills.filter(name=>usableSkills.has(name)),cue,tone]);
   if(fusionCharged)hotbar[6]=[['Elemental Fusion'],'Fully charge when Four Elements is ready','attack'];
   if(levelingMode){
     // Keep the currently usable manual powers together on 1–8. Future skills
@@ -579,14 +581,29 @@ function renderRotation(m){
    ${macroSteps.map((key,i)=>`<div class="stack-row macro-step" data-macro-step="${i+1}"><b>Step ${i+1}</b><span>Press <strong class="macro-step-key">${esc(key)}</strong> · begin at 10 ms</span></div>`).join('')}
    <p class="macro-execution-note">While held, the in-game macro keeps trying these hotbar keys. The game can skip unavailable actions, and the timing/order is not guaranteed. Do not manually press each skill in sequence.</p></div>`;
   $('macro-stacks').innerHTML=stackHtml+script;
-  $('rotation-quick-guide').innerHTML=`<h3>Easy combat setup · ${esc(p.name)}</h3>
-   <p>Set up the stacks once. During a safe fight you only need your <strong>Macro key</strong>; add the repeat attack if comfortable, and press important manual abilities when needed.</p>
-   <div class="rotation-quick-steps">
-    <div><span class="rotation-quick-number">1</span><b>Build ${macroColumns.length} damage stack${macroColumns.length===1?'':'s'}</b><p>Open Skills (K). Place each column below on its matching key${macroColumns.length?': '+esc(macroColumns.map(s=>s.key).join(' + ')):''}. Put <strong>Row 0 at the bottom</strong>, never the top.</p></div>
-    <div><span class="rotation-quick-number">2</span><b>Bind one in-game Macro key</b><p>Use <strong>${esc(macroKey)}</strong>. Add ${macroSteps.length} Macro step${macroSteps.length===1?'':'s'}: ${esc(macroSteps.join(' → ')||'no steps yet')}. Start at 10 ms and test on a dummy.</p></div>
-    <div><span class="rotation-quick-number">3</span><b>Play without memorizing a long sequence</b><p>Hold <strong>${esc(macroKey)}</strong> for safe damage; optionally hold <strong>${esc(weaveKey)}</strong> (${esc(p.weave)}) too. Use charges, healing, movement and defense on direct keys; release Macro for mechanics.</p></div>
+  const easyManual=hotbar.slice(0,4).map(([skills,cue],index)=>({key:index+1,skills,cue})).filter(entry=>entry.skills.length);
+  const easyManualHtml=easyManual.map(entry=>`<div class="rotation-easy-manual" data-easy-key="${entry.key}"><kbd>${entry.key}</kbd><span><b>${esc(entry.skills.join(' / '))}</b><small>${esc(entry.cue)}</small></span></div>`).join('');
+  const optionalStacks=manualColumns.filter(s=>!/^\\d+$/.test(s.key)).map(s=>s.key+' ('+s.title+')');
+  $('rotation-quick-guide').innerHTML=`<h3>Easy setup · ${esc(p.name)}</h3>
+   <p class="rotation-easy-headline">Most of your normal damage can use <b>two mouse buttons</b>. Your Macro is the in-game feature, not a third-party mouse script.</p>
+   <div class="rotation-easy-buttons">
+    <div class="rotation-easy-button"><span class="easy-large-key">${esc(weaveKey)}</span><span><strong>${esc(p.weave)}</strong><small>Hold for your repeat attack</small></span></div>
+    <div class="rotation-easy-plus">+</div>
+    <div class="rotation-easy-button"><span class="easy-large-key">${esc(macroKey)}</span><span><strong>In-game Macro</strong><small>Hold to press ${esc(macroSteps.join(' → ')||'no stacks unlocked')}</small></span></div>
    </div>
-   <p class="rotation-quick-caveat">This is an accessible, class-specific starting arrangement, not a measured fastest-DPS claim. In AION 1 control mode choose the keyboard Macro bind (M); manual input always takes precedence.</p>`;
+   <div class="rotation-quick-steps">
+    <div><span class="rotation-quick-number">1</span><b>Build your damage column${macroColumns.length===1?'':'s'}</b>
+     <p>In Skills (K), put the spells in the <b>${esc(macroColumns.map(s=>s.key).join(' + '))}</b> stacks below. <strong>Row 0 goes at the bottom</strong> and is tried first.</p></div>
+    <div><span class="rotation-quick-number">2</span><b>Give RMB the Macro action</b>
+     <p>In Skills (K) → Macro, add ${macroSteps.length} step${macroSteps.length===1?'':'s'}: <b>${esc(macroSteps.join(' → '))}</b>. Start at 10 ms. Then bind Macro to <b>${esc(macroKey)}</b> in Settings → Key Settings → General.</p></div>
+    <div><span class="rotation-quick-number">3</span><b>Play with just a few buttons</b>
+     <p><strong>Hold ${esc(weaveKey)} + ${esc(macroKey)}</strong> during safe damage. Press manual keys (shown below) when useful. Release Macro to charge a spell, heal or move.</p></div>
+   </div>
+   <div class="rotation-easy-manual-area"><h4>Other powers — press only when needed</h4>
+    <div class="rotation-easy-manual-grid">${easyManualHtml||'<p>Keep movement and recovery abilities accessible.</p>'}</div>
+    ${optionalStacks.length?'<p class="rotation-easy-optional">Also available manually: '+esc(optionalStacks.join(' · '))+'. These are NOT extra Macro steps.</p>':''}
+   </div>
+   <p class="rotation-quick-caveat">You do <b>not</b> have to press ${esc(macroSteps.join(' and '))} repeatedly: the Macro does that. It cannot guarantee the order of actual casts; charged, defensive, healing and situational spells stay manual. In AION 1 control mode use the keyboard M binding instead. Test on a training target and adjust if needed.</p>`;
   $('setup-list').innerHTML=[`Settings (O) → Key Settings → General → Macro: bind ${macroKey}; it is unbound by default. In AION 1 control mode, use a keyboard key instead of a mouse button.`,`Put ${p.weave} on ${weaveKey}. Set currently available manual powers on 1–8 as shown.${levelingMode&&level<16?' Defiance unlocks at level 16.':' Defiance is on Space by default, shared with jump/glide; a separate Defiance key is optional.'}`,`Skills (K): make ${macroSteps.length?`the ${macroSteps.join(' and ')} stack${macroSteps.length===1?'':'s'}`:'a safe damage stack after the next unlock'}. Add only those hotbar keys to Macro, in order, starting each step at 10 ms.`,`Hold ${weaveKey} and ${macroKey} through safe damage, pressing or holding 1–8 at their cues. Manual input takes priority. Release ${macroKey} to stop Macro, and ${weaveKey} too when all attacks must stop.`].map(x=>`<li>${esc(x)}</li>`).join('');
   $('manual-keys').innerHTML=levelingMode?hotbar.flatMap(([skills,cue],i)=>skills.length?[`<div class="manual-key"><b>${i+1} · ${esc(skills.join(' / '))}</b><small>${esc(cue)}</small></div>`]:[]).join('')+(level>=16?'<div class="manual-key"><b>Space · Defiance</b><small>Break control or answer danger manually.</small></div>':''):p.manual.map(v=>`<div class="manual-key"><b>${esc(v.split(' — ')[0])}</b><small>${esc(v.split(' — ')[1]||'Manual timing')}</small></div>`).join('');
 }
@@ -747,6 +764,7 @@ $('azphel-input').addEventListener('input',e=>{account().azphel=clamp(e.target.v
 $('azphel-input').addEventListener('change',e=>{account().azphel=clamp(e.target.value,0,232);if(state.board==='Azphel')state.preview=account().azphel;render()});
 for(const [id,ctx] of [['party-button','party'],['solo-button','solo'],['pvp-button','pvp']])$(id).addEventListener('click',()=>{if(isLeveling()&&ctx==='pvp')return;account().context=ctx;account()[isLeveling()?'levelingContext':'endgameContext']=ctx;if(ctx!=='pvp'&&state.board==='Azphel')state.board='Nezekan';state.preview=state.board==='Azphel'?(account().azphel||0):budget('crystals');render()});
 $('macro-bind').addEventListener('change',e=>{account().macroBind=e.target.value;render()});
+$('leveling-rotation').addEventListener('change',e=>{if(e.target.id!=='leveling-macro-bind')return;const value=e.target.value;if(!['RMB','Mouse 4','MMB','M'].includes(value))return;account().macroBind=value;render()});
 $('title-open').addEventListener('click',()=>{state.tab='titles';render();document.querySelector('.tabs').scrollIntoView({behavior:'smooth',block:'start'})});
 $('faction-select').addEventListener('change',e=>{account().faction=e.target.value==='asmodian'?'asmodian':'elyos';render()});
 $('title-grid').addEventListener('change',e=>{const id=e.target.dataset.title;if(!id||!TITLE_BY_ID.has(id))return;account().titlesOwned ||= {};delete account().titlesOwned[e.target.dataset.legacyTitle];account().titlesOwned[id]=e.target.checked;render()});

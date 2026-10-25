@@ -31,21 +31,20 @@ const LEVELING_COMBAT={
   focus:'Keep Snipe going for MP and Precision. Charge Deadshot fully by hand; use Marking Shot only when you intend to move.'
  },
  sorcerer:{
-  weave:'Flame Arrow',weaveKey:'R',key:'E',
-  // A tiny fire starter is useful before Frost Burst unlocks. From Lv 10,
-  // Sorcerer has meaningful setup/proc chains and should not be squeezed into
-  // the generic one-column melee-style leveling recommendation.
-  stack:['Firestorm','Bittercold Wind','Blaze'],
+  weave:'Flame Arrow',weaveKey:'LMB',key:'Q',
+  stack:['Blaze','Firestorm','Bittercold Wind'],
   upgradedAt:10,
+  // Two *hotbar columns* do NOT mean two macro steps. The Q damage line
+  // is the ONLY automated macro step. E is an intentional manual ice option.
   upgradedStacks:[
-    {key:'E',label:'Apply marks and cooldown damage',
-      stack:["Winter's Shackles",'Bittercold Wind','Frost','Firestorm']},
-    {key:'Q',label:'Spend Fire Mark / Frost',
-      stack:['Blaze','Frost Burst']}
+    {key:'Q',label:'Automatic fire damage',macro:true,
+      stack:['Bittercold Wind','Blaze','Firestorm','Wish of Concentration']},
+    {key:'E',label:'Manual ice and control',macro:false,
+      stack:['Frost Burst','Frost','Ice Chain']}
   ],
   noCooldown:[],
-  manual:['Hellfire','Wish of Concentration','Ice Chain','Flame Scattershot',"Winter's Shackles",'Frost Burst'],
-  focus:'Keep Flame Arrow available as your repeat attack. At Lv 10, split setup and conditional follow-ups into two key stacks instead of one giant rotation. Charge Hellfire and time Wish of Concentration manually.'
+  manual:['Hellfire',"Winter's Shackles",'Flame Scattershot','Ice Chain','Frost Burst'],
+  focus:'Easy Sorcerer: hold LMB (Flame Arrow) and RMB (game Macro). RMB presses only the Q fire column; press E for ice/control when needed. Fully charge Hellfire on 1.'
  },
  spiritmaster:{
   weave:'Cold Shock',key:'Q',
@@ -71,12 +70,21 @@ function buildLevelingCombat(cls,level,context,unlocks,stigmaNames,stigmaLevels,
  const available=name=>typeof unlocks[name]==='number'&&unlocks[name]<=level;
  const stage=level<4?'starter':level<22?'core':'stigmas';
  const macroUnlocked=level>=4;
- const candidates=macroUnlocked
+ const candidates=(macroUnlocked
    ?(plan.upgradedStacks&&level>=plan.upgradedAt?plan.upgradedStacks:
-      [{key:plan.key,label:'Cooldown damage',stack:plan.stack}])
-   :[];
+      [{key:plan.key,label:'Automatic damage',macro:true,stack:plan.stack}])
+   :[]).map(group=>({...group,stack:[...group.stack]}));
+ // When the actually selected Lv16 Wish Specialty resets cooldowns, prioritize
+ // it before filler skills. Never assume a planned, unpurchased board bonus.
+ if(cls==='sorcerer'&&specialtyEnabled('Wish of Concentration',5)){
+   const fire=candidates.find(group=>group.macro&&group.key==='Q');
+   if(fire&&fire.stack.includes('Wish of Concentration')){
+     fire.stack=fire.stack.filter(name=>name!=='Wish of Concentration');
+     fire.stack.unshift('Wish of Concentration');
+   }
+ }
  const stacks=candidates.map(group=>({
-   key:group.key,label:group.label,
+   key:group.key,label:group.label,macro:group.macro!==false,
    stack:group.stack.filter(name=>{
      if(!available(name)||name===plan.weave)return false;
      // Warding Strike protects the group: avoid consuming it automatically.
@@ -95,6 +103,14 @@ function buildLevelingCombat(cls,level,context,unlocks,stigmaNames,stigmaLevels,
    plan.upgradedStacks?.some(group=>group.stack.includes(name)))
   .sort((a,b)=>a[1]-b[1])[0];
  const noCooldown=plan.noCooldown;
+ const manualChoices=[...manual,...stigma].filter((name,i,list)=>list.indexOf(name)===i);
+ const directKeys=manualChoices.slice(0,4).map((name,i)=>({
+   key:String(i+1),name,
+   tip:name==='Hellfire'?'Hold to charge fully':
+     name==='Flame Scattershot'?'Use during stagger':
+     name==="Winter's Shackles"?'Use before a safe burst':
+     /Heal|Protection|Shield|Armor|Barrier/.test(name)?'Use when needed':'Press when needed'
+ }));
  // Row zero must ALWAYS be the highest priority, at the bottom visually.
  // A no-cooldown fallback can be used only after ALL conditional/cooldown skills.
  for(const group of stacks)if(group.stack.some((name,index)=>
@@ -102,9 +118,9 @@ function buildLevelingCombat(cls,level,context,unlocks,stigmaNames,stigmaLevels,
   throw new Error('Leveling macro priority invalid for '+cls);
  return {cls,level,stage,macroUnlocked,weave:plan.weave,weaveKey:plan.weaveKey||'LMB',key:plan.key,
    stack,stacks:stacks.map(group=>({...group,rows:group.stack.map((name,row)=>({name,row}))})),
-   manual,stigmas:stigma,focus:plan.focus,
+   manual,manualKeys:directKeys,stigmas:stigma,focus:plan.focus,
    next:next?{name:next[0],level:next[1]}:null,
-   rows:stack.map((name,row)=>({name,row})),steps:stacks.map(group=>group.key)};
+   rows:stack.map((name,row)=>({name,row})),steps:stacks.filter(group=>group.macro).map(group=>group.key)};
 }
 
 function renderLevelingCombatMarkup(plan,macroKey){
@@ -115,28 +131,30 @@ function renderLevelingCombatMarkup(plan,macroKey){
    '<div class="leveling-stack-row'+(row===0?' is-priority':'')+'" data-leveling-skill="'+esc(name)+'" data-row="'+row+'">'+
    '<span class="leveling-row-number">Row '+row+'</span>'+skill(name)+
    (row===0?'<span class="leveling-first">1st priority</span>':'')+'</div>').join('');
-  return '<section class="leveling-stack-panel" data-stack-key="'+esc(group.key)+'">'+
+  return '<section class="leveling-stack-panel" data-stack-key="'+esc(group.key)+'" data-stack-role="'+(group.macro?'macro':'manual')+'">'+
    '<span class="leveling-stack-label"><kbd>'+esc(group.key)+'</kbd> '+esc(group.label)+'</span>'+
+   '<p class="leveling-stack-role">'+(group.macro?'RMB automatically tries this stack':'You press this stack yourself when needed')+'</p>'+
    '<div '+(group.key===plan.key?'id="leveling-stack" ':'')+'class="leveling-stack-rows">'+rows+'</div></section>';
  }).join('');
- const manual=plan.manual.slice(0,5).map(name=>'<li>'+skill(name)+'</li>').join('');
+ const manual=(plan.manualKeys||[]).map(({key,name,tip})=>'<li data-manual-key="'+esc(key)+'"><kbd>'+esc(key)+'</kbd>'+skill(name)+'<small>'+esc(tip)+'</small></li>').join('');
  const stigma=plan.stigmas.length?'<p class="leveling-stigmas"><b>Learned Stigmas:</b> '+esc(plan.stigmas.join(' · '))+
   '. Keep buffs, protection and situational Stigmas manual.</p>':
   plan.level>=22?'<p class="leveling-stigmas">Stigma slots open while leveling; only use Stigmas after assigning earned points.</p>':'';
  const next=plan.next?'<span class="leveling-up-next">Next combat unlock: Lv '+plan.next.level+' · '+esc(plan.next.name)+'</span>':'';
  const weave='<div class="leveling-basic">'+
-  '<span class="leveling-phase-label">01 / Your repeat attack</span>'+skill(plan.weave)+
-  '<p>Hold or press <b>'+esc(plan.weaveKey)+'</b> when attacking safely. This is separate from the macro.</p></div>';
+  '<span class="leveling-phase-label">01 / Your left mouse button</span>'+skill(plan.weave)+
+  '<p>Hold <b>'+esc(plan.weaveKey)+'</b> to keep your repeat attack going during safe damage. No macro setup is required on this button.</p></div>';
  const starter=plan.macroUnlocked?'<div class="leveling-skill-column">'+
-  '<div class="leveling-phase-label">02 / '+(plan.steps.length===1?'ONE damage stack':'Two focused damage stacks')+
-  '<span>'+esc(plan.steps.join(' + '))+'</span></div>'+
+  '<div class="leveling-phase-label">02 / Place spells in these stacks <span>'+esc(plan.stacks.map(g=>g.key).join(' + '))+'</span></div>'+
   '<p class="leveling-short-note">Arrange each stack as it appears in game: <b>Row 0 is at the bottom and fires first.</b> Cooldown/condition priorities must sit below filler skills.</p>'+
   '<div id="leveling-stacks" class="leveling-stack-panels">'+stackPanels+'</div></div>'+
   '<div class="leveling-macro-callout"><span class="leveling-phase-label">03 / In-game macro</span>'+
+  '<div class="leveling-control-pair"><span><kbd>LMB</kbd> Hold '+esc(plan.weave)+'</span><b>+</b><span><kbd>'+esc(macroKey)+'</kbd> Hold in-game Macro</span></div>'+
   '<div id="leveling-macro-step"><b>'+(plan.steps.length===1?'ONE step:':'TWO steps:')+'</b> '+
-  plan.steps.map((key,i)=>'<span class="leveling-macro-entry">Step '+(i+1)+': <kbd>'+esc(key)+'</kbd> · 10 ms</span>').join('')+'</div>'+
-  '<p>Bind the game Macro key to <kbd>'+esc(macroKey)+'</kbd> and hold it alongside '+
-  '<kbd>'+esc(plan.weaveKey)+'</kbd> while damage is safe. The macro <b>presses the hotbar stack keys</b>, not individual skills; step timing is not a guaranteed attack order. '+
+  plan.steps.map((key,i)=>'<span class="leveling-macro-entry">Step '+(i+1)+': <kbd>'+esc(key)+'</kbd> · start at 10 ms</span>').join('')+'</div>'+
+  '<label class="leveling-bind-control">Macro hotkey <select id="leveling-macro-bind"><option value="RMB"'+(macroKey==='RMB'?' selected':'')+'>Right Mouse Button (RMB)</option><option value="Mouse 4"'+(macroKey==='Mouse 4'?' selected':'')+'>Side mouse (Mouse 4)</option><option value="MMB"'+(macroKey==='MMB'?' selected':'')+'>Middle mouse (MMB)</option><option value="M"'+(macroKey==='M'?' selected':'')+'>Keyboard M</option></select></label>'+
+  '<p>In <b>Skills (K) → Macro</b>, make the step(s) shown above. In <b>Settings → Key Settings → General → Macro</b>, bind the selected button. '+
+  'You hold <b>LMB + '+esc(macroKey)+'</b> during safe damage. The macro presses only the marked automatic stack key; it does not cast a guaranteed scripted sequence. '+
   'Release it for movement, mechanics, healing or charged attacks.</p></div>':
   '<div class="leveling-no-macro" id="leveling-macro-step"><b>Macro not available yet.</b>'+
   '<p>The Skills menu and presets unlock at level 4. Until then, use your repeat attack and newly unlocked skills manually.</p></div>';
@@ -144,13 +162,13 @@ function renderLevelingCombatMarkup(plan,macroKey){
   '<h3>Starter combat setup</h3><p>'+esc(plan.focus)+'</p></div>'+next+'</div>'+
   '<div class="leveling-combat-layout'+(plan.steps.length>1?' leveling-multi-stack':'')+'">'+weave+starter+'</div>'+
   '<div class="leveling-manual-summary"><div><span class="leveling-phase-label">Keep these manual</span>'+
-  (manual?'<ul id="leveling-manual">'+manual+'</ul>':'<p>Use your repeat attack while the next combat skill unlocks.</p>')+
+  (manual?'<ul id="leveling-manual" class="leveling-numbered-manual">'+manual+'</ul>':'<p>Use your repeat attack while the next combat skill unlocks.</p>')+
   (plan.level>=16?'<p class="leveling-defiance">Defiance (Space) is a manual control-break, not a damage-loop step.</p>':'')+
   stigma+'</div><div class="leveling-setup-instructions"><span class="leveling-phase-label">Set it up in game</span>'+
-  (plan.macroUnlocked?'<p><b>Skills (K)</b> → stack the shown skills on '+esc(plan.steps.join(' and '))+'. Add '+(plan.steps.length===1?'one Macro step':'one Macro step for each of those two keys')+'. '+
+  (plan.macroUnlocked?'<p><b>Skills (K)</b> → build the shown stacks on '+esc(plan.stacks.map(g=>g.key).join(' and '))+'. Add '+(plan.steps.length===1?'one Macro step':'one Macro step per automatic stack')+' for '+esc(plan.steps.join(' and '))+'. '+
   'Bind Macro under <b>Settings → Key Settings → General → Macro</b>. 10 ms is a starting delay, not a guaranteed cast order or optimal timing.</p>':
   '<p>Skills (K) becomes available at level 4. No key remapping or macro setup needed yet.</p>')+
-  '<p class="leveling-setup-warning">Use only the game’s built-in macro. Manual inputs take priority; mouse-bound macros do not work in AION 1 control mode. '+
+  '<p class="leveling-setup-warning">Use only the game’s built-in macro. Manual inputs take priority; mouse-bound macros do not work in AION 1 control mode (choose keyboard M instead). '+
   'Test each new skill and Specialty on a training target—this is a leveling starting point, not a measured maximum-DPS rotation.</p>'+
   '</div></div>';
 }
