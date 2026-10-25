@@ -38,4 +38,6 @@ jobs:
           node leveling_macro_smoke.mjs
           node recommendation_coherence_smoke.mjs
           node goal_route_smoke.mjs
+          node mastery_board_gear_smoke.mjs
+          node board_macro_usability_smoke.mjs
           node v2_smoke.mjs

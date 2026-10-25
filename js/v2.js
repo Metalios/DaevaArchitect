@@ -25,14 +25,15 @@ const gearDetails=make('details','v2-gear-advanced','<summary>Arcana, wings & de
 const extra=make('div','v2-extra');extra.id='v2-extra';
 const master=make('div','v2-master-editor',`
  <div class="v2-skill-toolbar" role="group" aria-label="Mastery skill category"><button type="button" id="v2-active-filter" class="active" aria-pressed="true">Active skills (12)</button><button type="button" id="v2-passive-filter" aria-pressed="false">Passive (10)</button><span class="v2-skill-search-label">Find a skill</span></div>
- <div class="v2-editor-title"><b>Skill</b><span>Mastery</span><span>Board</span><span>Gear</span><span>Effective</span></div>
+ <div class="v2-source-legend" role="note"><b>Skill levels:</b> Board <strong>obtained / planned</strong> · Lv <strong>with obtained / with plan</strong></div>
+ <div class="v2-editor-title"><b>Skill</b><span title="Skill points allocated to this planned Mastery rank">Mastery</span><span title="Daevanion bonus: marked obtained / funded in the recommended route">Board O/P</span><span title="Recorded equipment and manual bonus levels; no gear is assumed">Gear</span><span title="Level with obtained boards / level with planned boards">Lv O/P</span></div>
  <div id="v2-skill-list" class="v2-skill-list"></div>
- <div class="v2-mastery-hint">Select a skill to open Specialties. Mastery ranks are purchased; Board and Gear determine effective level.</div>
+ <div class="v2-mastery-hint">Mastery ranks use your <b>entered total skill points</b>. Board columns show <b>obtained / planned</b> node bonuses; skill levels show <b>with obtained / with planned</b> nodes. Only tiles marked obtained count as acquired. Unspent points and missing gear are not assumed spent/equipped. Select a skill for its exact breakdown and Specialties.</div>
  <div id="v2-spec-panel" class="v2-in-panel-flyout" role="region" aria-label="Selected skill specialty choices" hidden></div>
  <details class="v2-advanced-skills"><summary>Advanced skill cards & bonus adjustments</summary></details>`);
 const stigmas=make('div','v2-stigmas',`<div id="v2-stigma-list" class="v2-stigma-cards"></div><div class="v2-stigma-summary"><span>13 class Stigmas in catalog · select a card to edit</span><strong id="v2-stigma-remaining"></strong></div><div class="v2-stigma-breakpoints">Perk levels <span>⑤ First</span><span>⑩ Second</span><span>⑮ Third</span><span>⑳ Fourth</span></div><button type="button" id="v2-stigma-reset">Restore recommended Stigmas</button><div id="v2-stigma-panel" class="v2-in-panel-flyout" role="region" aria-label="Stigma loadout editor" hidden></div>`);
 const boardControls=make('div','v2-board-controls',`
- <div class="v2-board-callout"><b>Original AION 2 board coordinates</b><span>The board is never stretched; pan within the canvas or adjust tile size.</span></div>
+ <div class="v2-board-callout"><b>Original Global board coordinates</b><span>Highlighted routes are <b>planned</b>. Mark a tile <b>obtained</b> to count its bonus under obtained skill levels. Pan or zoom without stretching the nodes.</span></div>
  <button type="button" id="v2-board-toggle">Edit selected node</button><button type="button" id="v2-board-restore">Recommended path</button>
  <button type="button" id="v2-mark-obtained">Mark tile obtained</button>
  <button type="button" id="v2-zoom-minus" aria-label="Zoom out">−</button><span id="v2-zoom-label">40px</span><button type="button" id="v2-zoom-plus" aria-label="Zoom in">+</button><button type="button" id="v2-board-expand">Expand board</button>
@@ -98,9 +99,9 @@ function skillsView(m){
      &&(!isLeveling()||(SKILL_UNLOCKS[state.class][item.name]||1)<=currentLevel()))
    .sort((x,y)=>(order.get(x.item.name)??99)-(order.get(y.item.name)??99)||x.i-y.i);
  $('v2-skill-list').innerHTML=rows.map(({item,i})=>{
-   const name=item.name,rank=m.mastery.levels[name]||1,
-     board=m.effects.skills[name]||0,gear=(a.gear[name]||0)+(gearSkillLevels()[name]||0),
-     cap=masteryRankCap(name),level=effective(name,m);
+   const name=item.name,parts=skillLevelBreakdown(name,m),
+     rank=parts.mastery,board=parts.boardPlanned,boardOwned=parts.boardOwned,
+     gear=parts.gear,cap=masteryRankCap(name),level=parts.withPlan,ownedLevel=parts.withOwned;
    const picks=specPicks(name,level);
    const summary=!SPECS[state.class]?.[name]?'Rank & bonuses':level<8?'Specialties unlock at effective Lv 8':
      `${picks.length} of ${specialtySlots(level)} Specialties chosen`;
@@ -111,7 +112,7 @@ function skillsView(m){
       <span><b>${esc(name)}</b><small>${esc(summary)}</small></span><span class="v2-open-caret" aria-hidden="true">›</span>
     </button>
     <div class="v2-rank"><button type="button" data-v2-rank="${esc(name)}" data-dir="-1" ${rank<=1?'disabled':''} aria-label="Decrease ${esc(name)} Mastery rank">−</button><b>${rank}<small>/10</small></b><button type="button" data-v2-rank="${esc(name)}" data-dir="1" ${rank>=cap||m.mastery.spent+masteryCost(rank+1)>budget('mastery')?'disabled':''} aria-label="Increase ${esc(name)} Mastery rank">+</button></div>
-    <span class="v2-green">${board?'+'+board:'—'}</span><span class="v2-green">${gear?'+'+gear:'—'}</span><b class="v2-effective">Lv ${level}</b>
+    <span class="v2-green v2-board-delta" data-board-owned="${boardOwned}" data-board-planned="${board}" title="Daevanion marked obtained: +${boardOwned}; funded in planned route: +${board}"><small>+${boardOwned}</small><small>+${board}</small></span><span class="v2-green" title="Recorded equipment/Arcana bonuses"> ${gear?'+'+gear:'—'}</span><b class="v2-effective v2-level-delta" data-effective-owned="${ownedLevel}" data-effective-planned="${level}" title="Mastery ${rank} + board obtained ${boardOwned} + gear ${gear} = ${ownedLevel}; with planned board +${board} = ${level}"><span>${ownedLevel}</span><small>${level}</small></b>
    </div>`;
  }).join('')||'<p class="v2-muted">No unlocked skills match this filter.</p>';
  $('v2-active-filter').classList.toggle('active',skillTab==='active');
@@ -127,10 +128,10 @@ function skillsView(m){
    panel.innerHTML=`<header class="v2-flyout-head"><span class="v2-flyout-eyebrow">SELECTED MASTERY POWER</span>
        <button type="button" class="v2-flyout-close" id="v2-spec-close" aria-label="Close Specialties">✕</button>
        <div class="v2-flyout-skill-title">${gameSkillIconMarkup(state.class,skill,'v2-flyout-art')}<div><h3>${esc(skill)}</h3>
-          <small>Effective Lv ${level} · ${slots} of 3 Specialty slots unlocked</small></div></div>
+          <small>Planned Lv ${level} · ${slots} of 3 potential Specialty slots</small></div></div>
      </header>
      <div class="v2-flyout-content">
-     <p class="v2-flyout-guidance">${esc((hint?.core||[]).includes(skill)?hint.why:'Choose the bonuses that fit your selected context. Recommendations are guide-based, not combat-simulated.')}</p>
+     <p class="v2-flyout-guidance"><b>Skill level sources:</b> Mastery ${skillLevelBreakdown(skill,m).mastery} + Daevanion obtained ${skillLevelBreakdown(skill,m).boardOwned} + recorded gear ${skillLevelBreakdown(skill,m).gear} = ${skillLevelBreakdown(skill,m).withOwned} with obtained nodes. The funded board plan projects +${skillLevelBreakdown(skill,m).boardPlanned} instead (Lv ${skillLevelBreakdown(skill,m).withPlan}). Mark nodes obtained before treating that higher level or its Specialties as available in game. ${esc((hint?.core||[]).includes(skill)?hint.why:'Choose the bonuses that fit your selected context. Recommendations are guide-based, not combat-simulated.')}</p>
      ${!spec?'<p class="v2-muted">No verified Specialty effects available for this power.</p>':`
      <div class="v2-spec-slots">${[0,1,2].map(i=>`<div class="${i>=slots?'locked':''}"><small>Slot ${i+1}${i>=slots?` · unlocks at Lv ${[8,12,20][i]}`:''}</small><strong>${i<slots&&picks[i]?esc(spec.options[picks[i]]):i>=slots?'Locked':'Choose an option'}</strong></div>`).join('')}</div>
      <div class="v2-flyout-subhead"><b>Specialty effects</b><small>Recommended picks: ${recommended.length?recommended.join(', '):'none unlocked'}</small></div>
@@ -138,13 +139,13 @@ function skillsView(m){
        const n=Number(id),gate=n<=3?8:n===4?12:16,locked=level<gate,
          selected=picks.includes(n),advisedPick=recommended.includes(n);
        return `<button type="button" data-v2-spec="${n}" class="${selected?'chosen':''}" ${locked?'disabled':''} aria-pressed="${selected}">
-         <span class="v2-spec-number">${id}</span><span><b>${esc(description)}</b><small>${locked?`Opens at effective Lv ${gate}`:selected?'Equipped':advisedPick?'Recommended for this stage':'Available'}</small></span>
+         <span class="v2-spec-number">${id}</span><span><b>${esc(description)}</b><small>${locked?`Opens at effective Lv ${gate}`:selected?'In this plan':advisedPick?'Recommended for this stage':'Available'}</small></span>
          <strong>${selected?'✓':locked?'🔒':'+'}</strong></button>`;
      }).join('')}</div>`}
      <div class="v2-flyout-foot"><button type="button" id="v2-spec-restore" ${a.customSpecialties?.[skill]?'':'disabled'}>Use recommended Specialties</button><button type="button" id="v2-spec-done">Done</button></div>
      </div>`;
  }
- $('v2-master-status').textContent=`${m.mastery.spent} / ${budget('mastery')} Mastery spent`;
+ $('v2-master-status').textContent=`Mastery: ${m.mastery.spent} / ${budget('mastery')} points allocated · ${Math.max(0,budget('mastery')-m.mastery.spent)} unspent${a.manualMastery?' · custom ranks':' · suggested ranks'}`;
  $('v2-master-restore').disabled=!a.manualMastery;
 }
 function stigmasView(m){
