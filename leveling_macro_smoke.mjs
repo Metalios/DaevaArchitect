@@ -84,6 +84,12 @@ try{
     failures.push('Sorcerer Lv31 manual key 1 should charge Hellfire');
   if(document.querySelector('#leveling-stacks')?.textContent.includes('Hellfire'))
     failures.push('Sorcerer Lv31: charged Hellfire incorrectly placed in macro');
+  const bind=document.querySelector('#leveling-macro-bind');
+  bind.value='M';bind.dispatchEvent(new Event('change',{bubbles:true}));
+  if(account().macroBind!=='M'||document.querySelector('#leveling-macro-bind')?.value!=='M'||
+     !document.querySelector('#leveling-rotation')?.textContent.includes('LMB + M'))
+    failures.push('Changing macro hotkey to keyboard M does not update/survive a render');
+  account().macroBind='RMB';render();
   state.class='chanter';a=account();a.journey='leveling';a.context='solo';leveling().level=14;render();
   if(document.querySelector('#leveling-stack')?.textContent.includes('Spinning Strike'))
     failures.push('Chanter pre-cooldown-reset stack used a second trigger');
