@@ -55,6 +55,12 @@ assert.equal(sorc31.stacks[1].macro,false,'Ice should be a manual hotbar stack')
 assert.equal(sorc31.manualKeys[0].name,'Hellfire');
 assert(sorc31.manual.includes('Hellfire')&&sorc31.manual.includes("Winter's Shackles"));
 assert(!sorc31.stacks.flatMap(x=>x.stack).includes('Hellfire'));
+const sorcReset=buildLevelingCombat('sorcerer',45,'solo',unlocks.sorcerer,[],{},
+  (name,option)=>name==='Wish of Concentration'&&option===5);
+assert.equal(sorcReset.stacks[0].stack[0],'Wish of Concentration',
+  'Purchased Lv16 Wish cooldown reset must be first priority on Q');
+assert.deepEqual(Array.from(sorcReset.steps),['Q']);
+
 const chanter=buildLevelingCombat('chanter',14,'solo',unlocks.chanter,[],{});
 assert(!chanter.stack.includes('Spinning Strike'),'pre-reset Chanter must not waste trigger');
 const chanterReset=buildLevelingCombat('chanter',44,'solo',unlocks.chanter,[],{},(name,opt)=>name==='Dark Crush'&&opt===5);
