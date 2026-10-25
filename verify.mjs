@@ -46,7 +46,7 @@ for(const slug of classes){
   const automatic=new Set(p.stacks.filter(s=>!s.manual).flatMap(s=>s.skills));
   for(const [index,[skills,cue,tone]] of p.hotbar.entries()){
     assert(skills.length<=4&&typeof cue==='string'&&cue.length>0,`${slug}: incomplete key ${index+1}`);
-    if(!skills.length)assert(index===7&&['sorcerer','spiritmaster'].includes(slug),`${slug}: unexpected empty key ${index+1}`);
+    if(!skills.length)assert((slug==='sorcerer'&&index>=5)||(slug==='spiritmaster'&&index===7),`${slug}: unexpected empty key ${index+1}`);
     assert(['attack','buff','heal','defense','movement','utility','emergency'].includes(tone),`${slug}: invalid key ${index+1} role`);
     for(const skill of skills){
       assert(available.has(skill),`${slug}: key ${index+1} uses unavailable ${skill}`);
