@@ -130,7 +130,9 @@ function buildLevelingCombat(cls,level,context,unlocks,stigmaNames,stigmaLevels,
    rows:stack.map((name,row)=>({name,row})),steps:stacks.filter(group=>group.macro).map(group=>group.key)};
 }
 
-function renderLevelingCombatMarkup(plan,macroKey){
+function renderLevelingCombatMarkup(plan,macroKey,quickUse2Bind='R'){
+ const physicalHotkey=key=>key==='R'&&quickUse2Bind==='T'?'T':key;
+ const displaySteps=plan.steps.map(physicalHotkey);
  const iconFor=name=>gameSkillIconMarkup(plan.cls,name,'leveling-skill-icon');
  const skill=name=>'<span class="leveling-skill">'+iconFor(name)+'<strong>'+esc(name)+'</strong></span>';
  const stackPanels=(plan.stacks||[]).map(group=>{
@@ -139,8 +141,8 @@ function renderLevelingCombatMarkup(plan,macroKey){
    '<span class="leveling-row-number">Row '+row+'</span>'+skill(name)+
    (row===0?'<span class="leveling-first">1st priority</span>':'')+'</div>').join('');
   return '<section class="leveling-stack-panel" data-stack-key="'+esc(group.key)+'" data-stack-role="'+(group.macro?'macro':'manual')+'">'+
-   '<span class="leveling-stack-label"><kbd>'+esc(group.key)+'</kbd> '+esc(group.label)+'</span>'+
-   '<p class="leveling-stack-role">'+(group.macro?'RMB automatically tries this stack':'You press this stack yourself when needed')+'</p>'+
+   '<span class="leveling-stack-label"><kbd>'+esc(physicalHotkey(group.key))+'</kbd> '+esc(group.label)+'</span>'+
+   '<p class="leveling-stack-role">'+(group.macro?macroKey+' automatically tries this stack':'You press this stack yourself when needed')+'</p>'+
    '<div '+(group.key===plan.key?'id="leveling-stack" ':'')+'class="leveling-stack-rows">'+rows+'</div></section>';
  }).join('');
  const manualItem=({key,name,tip})=>'<li data-manual-key="'+esc(key)+'"><kbd>'+esc(key)+'</kbd>'+skill(name)+'<small>'+esc(tip)+'</small></li>';
@@ -155,16 +157,16 @@ function renderLevelingCombatMarkup(plan,macroKey){
   '<span class="leveling-phase-label">01 / Your left mouse button</span>'+skill(plan.weave)+
   '<p>Hold <b>'+esc(plan.weaveKey)+'</b> to keep your repeat attack going during safe damage. No macro setup is required on this button.</p></div>';
  const starter=plan.macroUnlocked?'<div class="leveling-skill-column">'+
-  '<div class="leveling-phase-label">02 / Place spells in these stacks <span>'+esc(plan.stacks.map(g=>g.key).join(' + '))+'</span></div>'+
+  '<div class="leveling-phase-label">02 / Place spells in these stacks <span>'+esc(plan.stacks.map(g=>physicalHotkey(g.key)).join(' + '))+'</span></div>'+
   '<p class="leveling-short-note">Arrange each stack as it appears in game: <b>Row 0 is at the bottom and fires first.</b> Cooldown/condition priorities must sit below filler skills.</p>'+
   '<div id="leveling-stacks" class="leveling-stack-panels">'+stackPanels+'</div></div>'+
   '<div class="leveling-macro-callout"><span class="leveling-phase-label">03 / In-game macro</span>'+
   '<div class="leveling-control-pair"><span><kbd>LMB</kbd> Hold '+esc(plan.weave)+'</span><b>+</b><span><kbd>'+esc(macroKey)+'</kbd> Hold in-game Macro</span></div>'+
   '<div id="leveling-macro-step"><b>'+(['ZERO','ONE','TWO','THREE'][plan.steps.length]||plan.steps.length)+' step'+(plan.steps.length===1?'':'s')+':</b> '+
-  plan.steps.map((key,i)=>'<span class="leveling-macro-entry">Step '+(i+1)+': <kbd>'+esc(key)+'</kbd> · start at 10 ms</span>').join('')+'</div>'+
+  displaySteps.map((key,i)=>'<span class="leveling-macro-entry">Step '+(i+1)+': <kbd>'+esc(key)+'</kbd> · start at 10 ms</span>').join('')+'</div>'+
   '<label class="leveling-bind-control">Macro hotkey <select id="leveling-macro-bind"><option value="RMB"'+(macroKey==='RMB'?' selected':'')+'>Right Mouse Button (RMB)</option><option value="Mouse 4"'+(macroKey==='Mouse 4'?' selected':'')+'>Side mouse (Mouse 4)</option><option value="MMB"'+(macroKey==='MMB'?' selected':'')+'>Middle mouse (MMB)</option><option value="M"'+(macroKey==='M'?' selected':'')+'>Keyboard M</option></select></label>'+
   '<p>In <b>Skills (K) → Macro</b>, add the step(s) shown above. In <b>Settings → Key Settings → General → Macro</b>, bind the selected button. '+
-  'You hold <b>LMB + '+esc(macroKey)+'</b> during safe damage. The macro presses all displayed automatic stack keys for you; do not repeatedly press Q/E/R yourself. It does not guarantee a scripted cast sequence. '+
+  'In <b>AION 2 control mode</b>, hold <b>LMB + '+esc(macroKey)+'</b> during safe damage. The macro presses only the displayed automatic stack keys ('+esc(displaySteps.join(' / '))+'); do not repeatedly press them yourself. '+(quickUse2Bind==='R'?'Quick Use 2 is remapped from T to R; clear the default R alternate for LMB first. ':'')+'Cast order is not guaranteed. '+
   'Release it for movement, mechanics, healing or charged attacks.</p></div>':
   '<div class="leveling-no-macro" id="leveling-macro-step"><b>Macro not available yet.</b>'+
   '<p>The Skills menu and presets unlock at level 4. Until then, use your repeat attack and newly unlocked skills manually.</p></div>';
@@ -176,10 +178,10 @@ function renderLevelingCombatMarkup(plan,macroKey){
   (extraManual?'<details class="leveling-extra-manual"><summary>Other manual buffs and situational spells (5–8)</summary><ul class="leveling-numbered-manual">'+extraManual+'</ul></details>':'')+
   (plan.level>=16?'<p class="leveling-defiance">Defiance (Space) is a manual control-break, not a damage-loop step.</p>':'')+
   stigma+'</div><div class="leveling-setup-instructions"><span class="leveling-phase-label">Set it up in game</span>'+
-  (plan.macroUnlocked?'<p><b>Skills (K)</b> → build the shown stacks on '+esc(plan.stacks.map(g=>g.key).join(' and '))+'. Add '+(plan.steps.length===1?'one Macro step':'one Macro step per automatic stack')+' for '+esc(plan.steps.join(' and '))+'. '+
+  (plan.macroUnlocked?'<p>In <b>AION 2 mode</b>, use LMB for basic attack, RMB for the in-game Macro, and 1–8/Q/E/'+esc(quickUse2Bind)+' for quickslots. Quick Use 2 is '+(quickUse2Bind==='R'?'T remapped to R (clear the R alternate for LMB first)':'its original T binding')+'. In <b>Skills (K)</b> build stacks on '+esc(plan.stacks.map(g=>physicalHotkey(g.key)).join(' and '))+'. Add '+(plan.steps.length===1?'one Macro step':'one Macro step per automatic stack')+' for '+esc(displaySteps.join(' and '))+'. '+
   'Bind Macro under <b>Settings → Key Settings → General → Macro</b>. 10 ms is a starting delay, not a guaranteed cast order or optimal timing.</p>':
   '<p>Skills (K) becomes available at level 4. No key remapping or macro setup needed yet.</p>')+
-  '<p class="leveling-setup-warning">Use only the game’s built-in macro. Manual inputs take priority; mouse-bound macros do not work in AION 1 control mode (choose keyboard M instead). '+
+  '<p class="leveling-setup-warning">Designed for AION 2 control mode (not AION 1). Use only the game’s built-in macro. Manual inputs take priority. '+
   'Test each new skill and Specialty on a training target—this is a leveling starting point, not a measured maximum-DPS rotation.</p>'+
   '</div></div>';
 }
