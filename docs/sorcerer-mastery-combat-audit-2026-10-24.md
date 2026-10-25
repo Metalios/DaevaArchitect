@@ -1,5 +1,9 @@
 # Sorcerer Global: sustained DPS with minimum manual input
 
+## Required AION 2 control mode
+
+The expected physical scheme is **LMB** for Flame Arrow, **RMB** for the built-in in-game Macro, **1–8** for human decisions, and **Q/E/R** for stack-capable skill quickslots. Global defaults put R as the keyboard alternate for Quick Use 1 (LMB) and T as the alternate for Quick Use 2 (RMB). In the user's AION 2 mode configuration, **clear the R alias for Quick Use 1, then remap Quick Use 2 from T to R** so RMB can be bound exclusively to Macro. This is **not AION 1 mode**. The UI offers R/T label selection while retaining the same logical skill stacks. Reference: [Global key defaults](https://aion2data.com/controls).
+
 Reviewed 2026-10-24. Scope: PvE only; PvP priorities are intentionally unchanged.
 
 ## Gameplay contract
