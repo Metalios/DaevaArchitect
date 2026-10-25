@@ -15,7 +15,7 @@ for(const [cls,u] of Object.entries(unlocks)){
  const config=LEVELING_COMBAT[cls];
  assert(config,cls+': missing leveling config');
  assert.equal(u[config.weave],1,cls+': repeat attack unavailable initially');
- for(const name of [...config.stack,...config.manual,...(config.upgradedStacks||[]).flatMap(group=>group.stack)])assert(name in u,cls+': skill not in unlock data '+name);
+ for(const name of [...config.stack,...config.manual,...(config.upgradedStacks||[]).flatMap(group=>group.stack)])assert(name in u||name in (stigmas[cls]||{}),cls+': skill not in class or Stigma data '+name);
  for(const context of ['solo','party'])for(let level=1;level<=45;level++){
   const earned=Object.fromEntries(Object.keys(stigmas[cls]).map(name=>[name,level>=23?1:0]));
   const slots=Number(rewards[level].slots);
