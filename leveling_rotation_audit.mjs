@@ -32,7 +32,7 @@ for(const [cls,u] of Object.entries(unlocks)){
   assert.equal(new Set(plan.steps).size,plan.steps.length,'duplicate macro hotbar key');
   for(const group of plan.stacks)
     assert.equal(plan.steps.includes(group.key),group.macro,cls+' '+level+' wrong manual/automatic stack classification');
-  assert(plan.manualKeys.length<=4&&plan.manualKeys.every(x=>u[x.name]<=level));
+  assert(plan.manualKeys.length<=4&&plan.manualKeys.every(x=>(u[x.name]!==undefined&&u[x.name]<=level)||(stigmas[cls][x.name]&&earned[x.name]>0)),cls+' '+level+': unlearned manual ability');
   assert(plan.manual.every(name=>u[name]<=level));
   assert(plan.rows.every((r,index)=>r.row===index&&r.name===plan.stack[index]));
   assert(!plan.stacks.flatMap(group=>group.stack).includes(plan.weave));
