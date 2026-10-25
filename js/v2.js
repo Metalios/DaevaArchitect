@@ -25,6 +25,7 @@ const gearDetails=make('details','v2-gear-advanced','<summary>Arcana, wings & de
 const extra=make('div','v2-extra');extra.id='v2-extra';
 const master=make('div','v2-master-editor',`
  <div class="v2-skill-toolbar" role="group" aria-label="Mastery skill category"><button type="button" id="v2-active-filter" class="active" aria-pressed="true">Active skills (12)</button><button type="button" id="v2-passive-filter" aria-pressed="false">Passive (10)</button><span class="v2-skill-search-label">Find a skill</span></div>
+ <div class="v2-source-legend" role="note"><b>Skill levels:</b> Board <strong>obtained / planned</strong> · Lv <strong>with obtained / with plan</strong></div>
  <div class="v2-editor-title"><b>Skill</b><span title="Skill points allocated to this planned Mastery rank">Mastery</span><span title="Daevanion bonus: marked obtained / funded in the recommended route">Board O/P</span><span title="Recorded equipment and manual bonus levels; no gear is assumed">Gear</span><span title="Level with obtained boards / level with planned boards">Lv O/P</span></div>
  <div id="v2-skill-list" class="v2-skill-list"></div>
  <div class="v2-mastery-hint">Mastery ranks use your <b>entered total skill points</b>. Board columns show <b>obtained / planned</b> node bonuses; skill levels show <b>with obtained / with planned</b> nodes. Only tiles marked obtained count as acquired. Unspent points and missing gear are not assumed spent/equipped. Select a skill for its exact breakdown and Specialties.</div>
@@ -32,7 +33,7 @@ const master=make('div','v2-master-editor',`
  <details class="v2-advanced-skills"><summary>Advanced skill cards & bonus adjustments</summary></details>`);
 const stigmas=make('div','v2-stigmas',`<div id="v2-stigma-list" class="v2-stigma-cards"></div><div class="v2-stigma-summary"><span>13 class Stigmas in catalog · select a card to edit</span><strong id="v2-stigma-remaining"></strong></div><div class="v2-stigma-breakpoints">Perk levels <span>⑤ First</span><span>⑩ Second</span><span>⑮ Third</span><span>⑳ Fourth</span></div><button type="button" id="v2-stigma-reset">Restore recommended Stigmas</button><div id="v2-stigma-panel" class="v2-in-panel-flyout" role="region" aria-label="Stigma loadout editor" hidden></div>`);
 const boardControls=make('div','v2-board-controls',`
- <div class="v2-board-callout"><b>Original AION 2 board coordinates</b><span>The board is never stretched; pan within the canvas or adjust tile size.</span></div>
+ <div class="v2-board-callout"><b>Original Global board coordinates</b><span>Highlighted routes are <b>planned</b>. Mark a tile <b>obtained</b> to count its bonus under obtained skill levels. Pan or zoom without stretching the nodes.</span></div>
  <button type="button" id="v2-board-toggle">Edit selected node</button><button type="button" id="v2-board-restore">Recommended path</button>
  <button type="button" id="v2-mark-obtained">Mark tile obtained</button>
  <button type="button" id="v2-zoom-minus" aria-label="Zoom out">−</button><span id="v2-zoom-label">40px</span><button type="button" id="v2-zoom-plus" aria-label="Zoom in">+</button><button type="button" id="v2-board-expand">Expand board</button>
