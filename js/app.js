@@ -472,7 +472,7 @@ function renderMastery(m){
   const levelContext=$('mastery-level-context');levelContext.hidden=!isLeveling();
   if(isLeveling()){
     const extra=activeLevelingExtra().mastery||0;
-    levelContext.innerHTML=`<div><b>Level ${currentLevel()} Mastery plan</b><span>${levelReward().mastery} points from levels + ${extra} extra earned by this level. Only skills receiving Mastery points appear below; search to inspect any other unlocked skill.</span></div>${extra?'<button type="button" data-reset-level-mastery>Use level-only points</button>':''}`;
+    levelContext.innerHTML=`<div><b>Level ${currentLevel()} Mastery plan</b><span>Recorded ${budget('mastery')} Mastery points (reference ${levelReward().mastery}). Only skills receiving points appear below; search for other unlocked skills.</span></div>${extra!==0?'<button type="button" data-reset-level-mastery>Use reference total</button>':''}`;
   }
   $('mastery-icon-source').href=`https://aion2data.com/classes/${state.class}`;
   $('skill-grid').innerHTML=shown.map(({name,i})=>{
