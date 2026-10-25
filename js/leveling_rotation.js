@@ -32,19 +32,25 @@ const LEVELING_COMBAT={
  },
  sorcerer:{
   weave:'Flame Arrow',weaveKey:'LMB',key:'Q',
-  // Community Global three-chain PvE macro with the buff chain taken OUT.
-  // Both remaining damage chains belong to ONE held RMB macro.
+  // Global Easy PvE: RMB automates all routine class damage, attack debuffs
+  // and conditional Stagger followups. Hellfire and real buffs remain manual.
+  // Avoid Ice Chain as no-CD spam competing for MP/animation uptime.
   stack:['Bittercold Wind','Firestorm','Blaze'],
   upgradedAt:10,
   upgradedStacks:[
-    {key:'Q',label:'Automatic damage and Frost setup',macro:true,
-      stack:['Bittercold Wind','Frost','Firestorm']},
-    {key:'E',label:'Automatic Fire Mark / Frost follow-ups',macro:true,
-      stack:['Blaze','Frost Burst']}
+    {key:'Q',label:'Auto damage, Frost and debuff setup',macro:true,
+      stack:["Winter's Shackles",'Bittercold Wind','Frost','Firestorm']},
+    {key:'E',label:'Auto Fire Mark, Frost and Stagger finishers',macro:true,
+      stack:['Blaze','Frost Burst','Flame Scattershot']},
+    {key:'R',label:'Auto ground damage if equipped',macro:true,
+      stack:['Fire Wall','Cold Storm']}
   ],
-  noCooldown:[],
-  manual:['Hellfire',"Winter's Shackles",'Wish of Concentration','Flame Scattershot'],
-  focus:'Templar-easy Sorcerer: hold LMB + RMB for regular damage AND Frost follow-ups. Buffs never cast from the macro. Fully charge Hellfire manually on 1; save damage buffs for elites and bosses.'
+  // Scattershot has no cooldown but is usable only on a Staggered enemy;
+  // place it after both ordinary conditional finishers. Ice Chain is left
+  // out entirely because its unrestricted casts spend MP needed for damage.
+  noCooldown:['Flame Scattershot'],
+  manual:['Hellfire','Wish of Concentration'],
+  focus:'Easy sustained Sorcerer: hold LMB + RMB and let the Macro handle damage, Frost, finishers and learned ground attacks. Only fully charged Hellfire and manual buffs need extra keys.'
  },
  spiritmaster:{
   weave:'Cold Shock',key:'Q',
@@ -67,7 +73,8 @@ const LEVELING_COMBAT={
 };
 function buildLevelingCombat(cls,level,context,unlocks,stigmaNames,stigmaLevels,specialtyEnabled=()=>false){
  const plan=LEVELING_COMBAT[cls];if(!plan)return null;
- const available=name=>typeof unlocks[name]==='number'&&unlocks[name]<=level;
+ const stigma=(stigmaNames||[]).filter(name=>(stigmaLevels||{})[name]>0);
+ const available=name=>(typeof unlocks[name]==='number'&&unlocks[name]<=level)||stigma.includes(name);
  const stage=level<4?'starter':level<22?'core':'stigmas';
  const macroUnlocked=level>=4;
  const candidates=(macroUnlocked
@@ -90,16 +97,15 @@ function buildLevelingCombat(cls,level,context,unlocks,stigmaNames,stigmaLevels,
  const stack=stacks[0]?.stack||[];
  const stacked=new Set(stacks.flatMap(group=>group.stack));
  const manual=plan.manual.filter(name=>available(name)&&!stacked.has(name));
- const stigma=(stigmaNames||[]).filter(name=>(stigmaLevels||{})[name]>0);
  const next=Object.entries(unlocks).filter(([name,at])=>at>level&&!name.includes('Defiance'))
   .filter(([name])=>plan.stack.includes(name)||plan.manual.includes(name)||
    plan.upgradedStacks?.some(group=>group.stack.includes(name)))
   .sort((a,b)=>a[1]-b[1])[0];
  const noCooldown=plan.noCooldown;
  const manualChoices=cls==='sorcerer'
-  ? ['Hellfire',"Winter's Shackles",'Wish of Concentration',
-     'Element Enhancement','Delayed Explosion','Fire Wall','Cold Storm','Flame Scattershot']
-      .filter(name=>available(name)||(stigma.includes(name)))
+  ? ['Hellfire','Wish of Concentration','Element Enhancement',
+     'Delayed Explosion','Steel Barrier','Arctic Armor','Ice Chain']
+      .filter(name=>available(name)&&!stacked.has(name))
   : [...manual,...stigma].filter((name,i,list)=>list.indexOf(name)===i);
  const directKeys=manualChoices.slice(0,cls==='sorcerer'?8:4).map((name,i)=>({
    key:String(i+1),name,
@@ -108,8 +114,8 @@ function buildLevelingCombat(cls,level,context,unlocks,stigmaNames,stigmaLevels,
      name==='Element Enhancement'?'Damage buff: use for elites/bosses':
      name==='Delayed Explosion'?'Manual burst debuff':
      name==='Fire Wall'||name==='Cold Storm'?'Ground spell: stable targets only':
-     name==='Flame Scattershot'?'Use during stagger':
-     name==="Winter's Shackles"?'Apply PvE damage setup before Hellfire':
+     name==='Steel Barrier'||name==='Arctic Armor'?'Emergency defense only':
+     name==='Ice Chain'?'Optional manual control, not part of damage loop':
      /Heal|Protection|Shield|Armor|Barrier/.test(name)?'Use when needed':'Press when needed'
  }));
  // Row zero must ALWAYS be the highest priority, at the bottom visually.
@@ -154,11 +160,11 @@ function renderLevelingCombatMarkup(plan,macroKey){
   '<div id="leveling-stacks" class="leveling-stack-panels">'+stackPanels+'</div></div>'+
   '<div class="leveling-macro-callout"><span class="leveling-phase-label">03 / In-game macro</span>'+
   '<div class="leveling-control-pair"><span><kbd>LMB</kbd> Hold '+esc(plan.weave)+'</span><b>+</b><span><kbd>'+esc(macroKey)+'</kbd> Hold in-game Macro</span></div>'+
-  '<div id="leveling-macro-step"><b>'+(plan.steps.length===1?'ONE step:':'TWO steps:')+'</b> '+
+  '<div id="leveling-macro-step"><b>'+(['ZERO','ONE','TWO','THREE'][plan.steps.length]||plan.steps.length)+' step'+(plan.steps.length===1?'':'s')+':</b> '+
   plan.steps.map((key,i)=>'<span class="leveling-macro-entry">Step '+(i+1)+': <kbd>'+esc(key)+'</kbd> · start at 10 ms</span>').join('')+'</div>'+
   '<label class="leveling-bind-control">Macro hotkey <select id="leveling-macro-bind"><option value="RMB"'+(macroKey==='RMB'?' selected':'')+'>Right Mouse Button (RMB)</option><option value="Mouse 4"'+(macroKey==='Mouse 4'?' selected':'')+'>Side mouse (Mouse 4)</option><option value="MMB"'+(macroKey==='MMB'?' selected':'')+'>Middle mouse (MMB)</option><option value="M"'+(macroKey==='M'?' selected':'')+'>Keyboard M</option></select></label>'+
   '<p>In <b>Skills (K) → Macro</b>, add the step(s) shown above. In <b>Settings → Key Settings → General → Macro</b>, bind the selected button. '+
-  'You hold <b>LMB + '+esc(macroKey)+'</b> during safe damage. The macro presses the listed automatic stack keys for you; no need to manually press Q or E. It does not guarantee a scripted cast sequence. '+
+  'You hold <b>LMB + '+esc(macroKey)+'</b> during safe damage. The macro presses all displayed automatic stack keys for you; do not repeatedly press Q/E/R yourself. It does not guarantee a scripted cast sequence. '+
   'Release it for movement, mechanics, healing or charged attacks.</p></div>':
   '<div class="leveling-no-macro" id="leveling-macro-step"><b>Macro not available yet.</b>'+
   '<p>The Skills menu and presets unlock at level 4. Until then, use your repeat attack and newly unlocked skills manually.</p></div>';
