@@ -32,19 +32,19 @@ const LEVELING_COMBAT={
  },
  sorcerer:{
   weave:'Flame Arrow',weaveKey:'LMB',key:'Q',
-  stack:['Blaze','Firestorm','Bittercold Wind'],
+  // Community Global three-chain PvE macro with the buff chain taken OUT.
+  // Both remaining damage chains belong to ONE held RMB macro.
+  stack:['Bittercold Wind','Firestorm','Blaze'],
   upgradedAt:10,
-  // Two *hotbar columns* do NOT mean two macro steps. The Q damage line
-  // is the ONLY automated macro step. E is an intentional manual ice option.
   upgradedStacks:[
-    {key:'Q',label:'Automatic fire damage',macro:true,
-      stack:['Bittercold Wind','Blaze','Firestorm','Wish of Concentration']},
-    {key:'E',label:'Manual ice and control',macro:false,
-      stack:['Frost Burst','Frost','Ice Chain']}
+    {key:'Q',label:'Automatic damage and Frost setup',macro:true,
+      stack:['Bittercold Wind','Frost','Firestorm']},
+    {key:'E',label:'Automatic Fire Mark / Frost follow-ups',macro:true,
+      stack:['Blaze','Frost Burst']}
   ],
   noCooldown:[],
-  manual:['Hellfire',"Winter's Shackles",'Flame Scattershot','Ice Chain','Frost Burst'],
-  focus:'Easy Sorcerer: hold LMB (Flame Arrow) and RMB (game Macro). RMB presses only the Q fire column; press E for ice/control when needed. Fully charge Hellfire on 1.'
+  manual:['Hellfire',"Winter's Shackles",'Wish of Concentration','Flame Scattershot'],
+  focus:'Templar-easy Sorcerer: hold LMB + RMB for regular damage AND Frost follow-ups. Buffs never cast from the macro. Fully charge Hellfire manually on 1; save damage buffs for elites and bosses.'
  },
  spiritmaster:{
   weave:'Cold Shock',key:'Q',
@@ -74,15 +74,8 @@ function buildLevelingCombat(cls,level,context,unlocks,stigmaNames,stigmaLevels,
    ?(plan.upgradedStacks&&level>=plan.upgradedAt?plan.upgradedStacks:
       [{key:plan.key,label:'Automatic damage',macro:true,stack:plan.stack}])
    :[]).map(group=>({...group,stack:[...group.stack]}));
- // When the actually selected Lv16 Wish Specialty resets cooldowns, prioritize
- // it before filler skills. Never assume a planned, unpurchased board bonus.
- if(cls==='sorcerer'&&specialtyEnabled('Wish of Concentration',5)){
-   const fire=candidates.find(group=>group.macro&&group.key==='Q');
-   if(fire&&fire.stack.includes('Wish of Concentration')){
-     fire.stack=fire.stack.filter(name=>name!=='Wish of Concentration');
-     fire.stack.unshift('Wish of Concentration');
-   }
- }
+ // Wish of Concentration is an intentional manual buff. Its cooldown-reset
+ // Specialty can alter WHEN the player presses it, but never auto-casts it.
  const stacks=candidates.map(group=>({
    key:group.key,label:group.label,macro:group.macro!==false,
    stack:group.stack.filter(name=>{
@@ -103,12 +96,20 @@ function buildLevelingCombat(cls,level,context,unlocks,stigmaNames,stigmaLevels,
    plan.upgradedStacks?.some(group=>group.stack.includes(name)))
   .sort((a,b)=>a[1]-b[1])[0];
  const noCooldown=plan.noCooldown;
- const manualChoices=[...manual,...stigma].filter((name,i,list)=>list.indexOf(name)===i);
- const directKeys=manualChoices.slice(0,4).map((name,i)=>({
+ const manualChoices=cls==='sorcerer'
+  ? ['Hellfire',"Winter's Shackles",'Wish of Concentration',
+     'Element Enhancement','Delayed Explosion','Fire Wall','Cold Storm','Flame Scattershot']
+      .filter(name=>available(name)||(stigma.includes(name)))
+  : [...manual,...stigma].filter((name,i,list)=>list.indexOf(name)===i);
+ const directKeys=manualChoices.slice(0,cls==='sorcerer'?8:4).map((name,i)=>({
    key:String(i+1),name,
-   tip:name==='Hellfire'?'Hold to charge fully':
+   tip:name==='Hellfire'?'Hold to fully charge':
+     name==='Wish of Concentration'?'Buff: after major cooldowns with reset Specialty':
+     name==='Element Enhancement'?'Damage buff: use for elites/bosses':
+     name==='Delayed Explosion'?'Manual burst debuff':
+     name==='Fire Wall'||name==='Cold Storm'?'Ground spell: stable targets only':
      name==='Flame Scattershot'?'Use during stagger':
-     name==="Winter's Shackles"?'Use before a safe burst':
+     name==="Winter's Shackles"?'Apply PvE damage setup before Hellfire':
      /Heal|Protection|Shield|Armor|Barrier/.test(name)?'Use when needed':'Press when needed'
  }));
  // Row zero must ALWAYS be the highest priority, at the bottom visually.
@@ -136,7 +137,10 @@ function renderLevelingCombatMarkup(plan,macroKey){
    '<p class="leveling-stack-role">'+(group.macro?'RMB automatically tries this stack':'You press this stack yourself when needed')+'</p>'+
    '<div '+(group.key===plan.key?'id="leveling-stack" ':'')+'class="leveling-stack-rows">'+rows+'</div></section>';
  }).join('');
- const manual=(plan.manualKeys||[]).map(({key,name,tip})=>'<li data-manual-key="'+esc(key)+'"><kbd>'+esc(key)+'</kbd>'+skill(name)+'<small>'+esc(tip)+'</small></li>').join('');
+ const manualItem=({key,name,tip})=>'<li data-manual-key="'+esc(key)+'"><kbd>'+esc(key)+'</kbd>'+skill(name)+'<small>'+esc(tip)+'</small></li>';
+ const coreManual=(plan.manualKeys||[]).slice(0,4).map(manualItem).join('');
+ const extraManual=(plan.manualKeys||[]).slice(4).map(manualItem).join('');
+ const manual=coreManual;
  const stigma=plan.stigmas.length?'<p class="leveling-stigmas"><b>Learned Stigmas:</b> '+esc(plan.stigmas.join(' · '))+
   '. Keep buffs, protection and situational Stigmas manual.</p>':
   plan.level>=22?'<p class="leveling-stigmas">Stigma slots open while leveling; only use Stigmas after assigning earned points.</p>':'';
@@ -153,8 +157,8 @@ function renderLevelingCombatMarkup(plan,macroKey){
   '<div id="leveling-macro-step"><b>'+(plan.steps.length===1?'ONE step:':'TWO steps:')+'</b> '+
   plan.steps.map((key,i)=>'<span class="leveling-macro-entry">Step '+(i+1)+': <kbd>'+esc(key)+'</kbd> · start at 10 ms</span>').join('')+'</div>'+
   '<label class="leveling-bind-control">Macro hotkey <select id="leveling-macro-bind"><option value="RMB"'+(macroKey==='RMB'?' selected':'')+'>Right Mouse Button (RMB)</option><option value="Mouse 4"'+(macroKey==='Mouse 4'?' selected':'')+'>Side mouse (Mouse 4)</option><option value="MMB"'+(macroKey==='MMB'?' selected':'')+'>Middle mouse (MMB)</option><option value="M"'+(macroKey==='M'?' selected':'')+'>Keyboard M</option></select></label>'+
-  '<p>In <b>Skills (K) → Macro</b>, make the step(s) shown above. In <b>Settings → Key Settings → General → Macro</b>, bind the selected button. '+
-  'You hold <b>LMB + '+esc(macroKey)+'</b> during safe damage. The macro presses only the marked automatic stack key; it does not cast a guaranteed scripted sequence. '+
+  '<p>In <b>Skills (K) → Macro</b>, add the step(s) shown above. In <b>Settings → Key Settings → General → Macro</b>, bind the selected button. '+
+  'You hold <b>LMB + '+esc(macroKey)+'</b> during safe damage. The macro presses the listed automatic stack keys for you; no need to manually press Q or E. It does not guarantee a scripted cast sequence. '+
   'Release it for movement, mechanics, healing or charged attacks.</p></div>':
   '<div class="leveling-no-macro" id="leveling-macro-step"><b>Macro not available yet.</b>'+
   '<p>The Skills menu and presets unlock at level 4. Until then, use your repeat attack and newly unlocked skills manually.</p></div>';
@@ -163,6 +167,7 @@ function renderLevelingCombatMarkup(plan,macroKey){
   '<div class="leveling-combat-layout'+(plan.steps.length>1?' leveling-multi-stack':'')+'">'+weave+starter+'</div>'+
   '<div class="leveling-manual-summary"><div><span class="leveling-phase-label">Keep these manual</span>'+
   (manual?'<ul id="leveling-manual" class="leveling-numbered-manual">'+manual+'</ul>':'<p>Use your repeat attack while the next combat skill unlocks.</p>')+
+  (extraManual?'<details class="leveling-extra-manual"><summary>Other manual buffs and situational spells (5–8)</summary><ul class="leveling-numbered-manual">'+extraManual+'</ul></details>':'')+
   (plan.level>=16?'<p class="leveling-defiance">Defiance (Space) is a manual control-break, not a damage-loop step.</p>':'')+
   stigma+'</div><div class="leveling-setup-instructions"><span class="leveling-phase-label">Set it up in game</span>'+
   (plan.macroUnlocked?'<p><b>Skills (K)</b> → build the shown stacks on '+esc(plan.stacks.map(g=>g.key).join(' and '))+'. Add '+(plan.steps.length===1?'one Macro step':'one Macro step per automatic stack')+' for '+esc(plan.steps.join(' and '))+'. '+
