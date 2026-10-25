@@ -18,22 +18,31 @@ try{
   if(!button)throw Error('No recommended queued tiles at Global level 34');
   const id=Number(button.dataset.node),entry=nodeMap().get(id),node=entry.node;
   button.click();
+  if(account().obtainedNodes.includes(id)||document.querySelector('[data-node="'+id+'"]')?.classList.contains('obtained'))
+    failures.push('Single click must preview, not purchase');
+  if(!document.querySelector('#selected-node')?.textContent.includes(effectText(node)))
+    failures.push('Single click did not preview selected node effects');
+  document.querySelector('[data-node="'+id+'"]').dispatchEvent(new MouseEvent('dblclick',{bubbles:true}));
   const stored=account().obtainedNodes.includes(id),rendered=document.querySelector('[data-node="'+id+'"]');
   if(!stored||!rendered?.classList.contains('obtained')||rendered.getAttribute('aria-pressed')!=='true')
-   failures.push('Click did not immediately mark an obtained tile in v2');
+   failures.push('Double click did not mark obtained in v2');
   if(!model().acquiredEffects)failures.push('Acquired effects were not recalculated');
-  rendered.click();
+  rendered.dispatchEvent(new MouseEvent('dblclick',{bubbles:true}));
   if(account().obtainedNodes.includes(id)||document.querySelector('[data-node="'+id+'"]')?.classList.contains('obtained'))
-   failures.push('Click again did not unmark tile');
+   failures.push('Double click again did not unmark tile');
   if(!document.querySelector('#v2-master-status')?.textContent.includes('Mastery'))
-   failures.push('Mastery panel was not rendered after click');
-  // Custom mode still means edit the connected planned path, not record a buy.
+   failures.push('Mastery panel was not rendered after double click');
+  // Custom mode: one click previews; the separate explicit plan button
+  // edits the path, while double click still marks obtained.
   a.boardMode='custom';a.customNodes=[];a.obtainedNodes=[];render();
   const start=data().boards[0].nodes.find(n=>n[5]===0);
   const adjacent=data().boards[0].nodes.find(n=>n[5]>0&&Math.abs(n[1]-start[1])+Math.abs(n[2]-start[2])===1);
   document.querySelector('[data-node="'+adjacent[0]+'"]').click();
+  if(a.customNodes.includes(adjacent[0])||a.obtainedNodes.length)
+   failures.push('Custom single click must only preview');
+  document.querySelector('#selected-node-plan').click();
   if(!a.customNodes.includes(adjacent[0])||a.obtainedNodes.length)
-   failures.push('Custom mode must edit plan only, not silently mark ownership');
+   failures.push('Explicit custom plan button must edit the path only');
   return {failures,id};
  });
  assert.deepEqual(board.failures,[],board.failures.join('\n'));
