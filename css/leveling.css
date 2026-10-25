@@ -3,6 +3,7 @@
 #rotation.leveling-view > *{display:none!important}
 #rotation.leveling-view > .section-title:first-child{display:flex!important}
 #rotation.leveling-view > #leveling-rotation{display:block!important}
+#rotation.leveling-view > .rotation-control-mode{display:block!important}
 #rotation.leveling-view #leveling-rotation{
   margin:0;border:1px solid #355777;padding:18px;
   border-radius:10px;background:linear-gradient(130deg,#102b45,#091a2d);

@@ -6,6 +6,12 @@ An interactive, static build planner for all eight **AION 2 Global** classes. A 
 
 The **Rotation & macro** tab works while leveling. At each selected level it shows only unlocked class skills and Stigmas with assigned points, an available Q/E Macro sequence, and a compact 1–8 manual bar. The layout updates as levels, Stigma slots, and point totals change. Charged attacks, healing, movement, defenses, and Defiance remain manual. This is a safe starting layout to test with the current Global client and your input latency.
 
+## AION 2 Global control mode / keymap
+
+The Rotation & Macro workspace assumes **AION 2 action mode**, not AION 1 mode. **LMB** is the basic attack, **RMB** is explicitly bound to the **built-in in-game Macro**, and **1–8** are manual skill keys. **Q/E/R** are available skill-stack quickslots, but the Macro only activates the stacks selected by the rotation.
+
+In the unmodified Global keymap, R is the alternate key for Quick Use 1 (LMB), while T is the alternate key for Quick Use 2 (RMB). With RMB reassigned to Macro, **clear R from Quick Use 1, then remap Quick Use 2 from T to R**. The planner's R/T selector updates the visible stack keys and optional third Macro step. See [the control-mode guide](docs/easy-human-macro-layout-2026.md).
+
 ## v2 — unified character build workspace
 
 The v2 prototype arranges Equipment, Mastery/Specialties, equipped Stigmas,

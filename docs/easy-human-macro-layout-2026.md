@@ -1,52 +1,54 @@
-# Global: easy human-operated macro layout (October 24, 2026)
+# AION 2 Global: low-interaction combat controls and in-game macros
 
-**Scope:** all eight AION 2 Global classes, leveling and fresh 45. In-game macros only. This is an accessible, efficient baseline for a human player—not a frame-accurate or measured top-DPS simulation. Players can customize bindings in game.
+Updated 2026-10-24. Applies to DaevaArchitect's leveling and endgame rotation screens for all eight classes. The planner assumes the **AION 2 action control mode**, not the AION 1 legacy cursor mode.
 
-## Four concepts the UI must never conflate
+## Physical key layout
 
-1. **LMB:** hold a *repeat attack*, e.g. Sorcerer **Flame Arrow**. It is not a Macro step.
-2. **RMB:** by default hold the actual **in-game Macro** hotkey, assigned under Settings → Key Settings → General → Macro. AION 1 Control Mode disallows mouse operation macro binds, so choose keyboard **M** there.
-3. **Q/E:** hotbar skill *stacks*. A stack chooses an available skill, with **Row 0 at the bottom tried first**. Multiple visible stacks **do not** mean all of them must be included in Macro steps.
-4. **1–4:** accessible **manual** abilities. The game gives manual presses precedence; release Macro for charged attacks, repositioning, defensive reactions, healing and enemy mechanics.
-
-Use **10 ms** as a first in-game delay, not a magic performance setting. The client explicitly warns that macro-step order is not guaranteed. Do not suggest external software/hardware macros.
-
-## Sorcerer / Global, around level 31–34
-
-The default easy plan matches a common Global input style while avoiding a macro with excessive separate steps.
-
-| Input | Recommended job | What the player does |
+| Physical key | Function | Notes |
 | --- | --- | --- |
-| **LMB** | Flame Arrow | Hold during safe damage / MP recovery |
-| **RMB** | In-game Macro containing **one step: Q** | Hold alongside LMB. The game attempts Q; the player does not repeatedly press Q |
-| **Q stack** | Bottom/row 0 Bittercold Wind, then Blaze, Firestorm, Wish of Concentration at top/row 3 | Skills already available by this stage; only Q is automated |
-| **E stack** | Bottom/row 0 Frost Burst, then Frost, Ice Chain | Manual ice/control when a situation warrants it. **E is not in Macro** |
-| **1** | Hellfire | Hold to charge fully, release manually |
-| **2** | Winter's Shackles | Manual burst setup |
-| **3** | Flame Scattershot | Use at the relevant stagger window |
-| **4** | An actually learned/equipped Stigma or other available manual ability | Only when unlocked and purchased |
+| **LMB** | Basic attack / MP-generating class filler | Sorcerer: Flame Arrow; keep held during safe damage |
+| **RMB** | **In-game Macro hotkey** | Explicitly bind under Settings → Key Settings → General → Macro; no third-party scripting |
+| **1–8** | Manual abilities | Hellfire, buffs, defensive responses, positioning, movement, healing, as relevant to the class |
+| **Q, E** | Skill-stack quickslots | Macro presses Q/E only when they are among the planned steps |
+| **R (remapped from T)** | **Quick Use 2**, a skill-stack slot | Optional automatic third Macro step for a learned ground-damage Stigma, or another appropriate class skill |
 
-At a real effective rank of 16 **with Wish of Concentration's option 5 actually selected**, the model moves Wish to row 0 on Q to prioritize the cooldown-reset interaction. Merely previewing a Daevanion route does not activate the Specialty.
+### Why R is not another LMB attack in this layout
 
-The **endgame Sorcerer** uses the same two-mouse habit (Flame Arrow on LMB, Macro on RMB, automatic Q damage stack, optional/manual E ice stack). Existing manual defensive/ground-effect options remain inspectable under More options.
+The **unmodified Global client** assigns Quick Use 1 to **LMB** (keyboard alternate **R**) and Quick Use 2 to **RMB** (keyboard alternate **T**). To free **RMB** for the in-game Macro while keeping the full skill-key count:
 
-## All classes and accessibility
+1. Select **AION 2** control mode.
+2. Keep **Quick Use 1 = LMB** for the repeat/basic attack. **Clear R** from its alternate key.
+3. **Bind the built-in Macro to RMB** under General → Gameplay → Macro.
+4. **Assign Quick Use 2 to R instead of T** under Key Settings → Quickslot.
+5. Use **Q / E / R** as quickslot stacks in the planner, with **1–8** for manual decisions.
 
-Every class in the advanced rotation guide starts with the same **three steps**: construct class-specific stack columns as physically positioned in the game, bind the in-game Macro to RMB, and hold LMB+RMB during safe damage. It displays numbered manual 1–4 actions, class names and skill icons instead of demanding memorization of all eight hotbar slots. The complete 1–8 bar and more involved strategy remain behind a user-controlled details flyout.
+In the planner's Rotation & Macro controls, choose **Quick Use 2 = R** (recommended, your layout) or **T** (original keyboard alternate). That selector changes the physical key labels and macro-step diagrams; it does not change which skills are recommended or the logical Quick Use 2 slot. Per-character bindings save in the browser.
 
-For all leveling classes, the guide shows the mouse-button pairing, explicitly lists automatic versus manually triggered stack columns, allocates up to four manual abilities to numeric keys, and offers a working selector for RMB / side mouse / middle mouse / keyboard M. The selection is stored on the character profile and refreshed immediately. Levels 1–3 correctly show no Macro setup.
+The original R alternate for LMB is a *default keyboard assignment*, not proof that the player is in AION 1 mode. AION 1 mode is **not** the supported rotation target. Mouse-bound Macro hotkeys are incompatible with AION 1 mode; this planner targets AION 2 mode.
 
-## Evidence and limitations
+## Sorcerer: practical easy sustained PvE
 
-- [Aion2Data — Global client macro text (2026.10.21)](https://aion2data.com/macros): held game Macro, manual input priority, 10–9,900 ms delays, mouse-binding exception, step-order warning
-- [Daeva Guides — Sorcerer Global progression and skill bar](https://daevaguides.com/en/sorcerer/): LMB Flame Arrow, one Q damage macro step while leveling, a separate situational ice bar and manually charged Hellfire
-- [Couga54 — Sorcerer Global](https://couga54.github.io/aion2-guides/en/sorcerer/): alternative RMB, LMB and side-button macro layouts; some players include more skills in the macro
-- [Aion 2 Companion — macro mechanics](https://aion2.grimvane.app/companion/wiki/macros-guide/): Row 0 is the stack priority anchor and a hotbar column is not a sequence of guaranteed individual spell casts
+- **Hold LMB** for Flame Arrow basic attacks / MP recovery.
+- **Hold RMB** for the built-in Macro. Its routine damage stacks are **Q** and **E**; include **R** only if a damage ground Stigma is learned and equipped. When the T selection is active the same third step is displayed as **T**.
+- **Manual key 1:** Hellfire; fully charge yourself.
+- **Other manual 1–8 keys:** Wish of Concentration, Element Enhancement, and other learned offensive buffs; defensive responses and situational control stay manual.
+- No unconditional Ice Chain spam in automatic stacks. Flame Scattershot remains a Stagger-only conditional follow-up.
+- **Row 0, physically at the bottom of a stack, is attempted first.** The in-game Macro presses *hotbar keys*, not a guaranteed sequential list of spells.
+- Start Macro steps at 10 ms; that is a press interval, not a measured skill animation cancel delay. Global input latency, ability animation locks and boss movement may change the result.
 
-**No numerical optimality claim.** A one-step Q macro is a deliberate low-effort/high-uptime recommendation based on Global community patterns. More steps, boss-specific buffs, motion and latency can change real results. Validate using training encounters on Global before advertising "fastest".
+## Other classes
 
-## Acceptance checks
+All eight class layouts use the same baseline: LMB basic attack, RMB held Macro, 1–8 manual keys, Q/E/R physical stacks where appropriate. The number of automatic Macro steps differs by class, level, learned abilities, and selected Specialties. Never interpret a visible R skill-stack slot as a mandatory R macro step or a second basic attack.
 
-- `leveling_rotation_audit.mjs`: 8 classes × 2 PvE contexts × 45 levels; unlocked-only skills, manual/automatic stack distinction, one Macro step, selected Wish level-16 special-case
-- `leveling_macro_smoke.mjs`: physical stack priority, 1–4 manual keys, bound Macro selector (RMB to keyboard M), Sorcerer Lv31 E manual vs Q automatic, no Hellfire in automatic stacks, advanced 45 restore
-- `board_macro_usability_smoke.mjs`: all eight endgame classes show physical stacks, clear mouse controls and ergonomic direct keys; one Sorcerer Q macro step with optional manual E; existing obtained-board click behavior remains intact
+## References
+
+- [AION 2 Global default keybinds](https://aion2data.com/controls), Global client 2026.10.21: LMB/R Quick Use 1; RMB/T Quick Use 2; Macro unbound by default
+- [AION 2 Companion macro guide](https://aion2.grimvane.app/companion/wiki/macros-guide/): stack hotkeys, priority and AION 1 mouse-binding limitation
+- [Global Sorcerer low-input Macro research](./sorcerer-auto-damage-minimum-input.md)
+- [Sorcerer 22-skill mastery combat audit](./sorcerer-mastery-combat-audit-2026-10-24.md)
+
+## Regression coverage
+
+- `leveling_macro_smoke.mjs` checks the T/R selector in leveling mode, visible AION 2 controls, and physical third-step labeling.
+- `board_macro_usability_smoke.mjs` verifies the same remap for endgame automatic Sorcerer Q/E/R/T stacks.
+- `leveling_rotation_audit.mjs` continues to validate logical class stacks and ability unlocks separately from physical keybinding labels.

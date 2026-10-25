@@ -1,5 +1,9 @@
 # Sorcerer Global — minimum manual input, high sustained damage
 
+## AION 2 control mode and R remap
+
+**This is for AION 2 action mode, not AION 1 mode.** LMB is Quick Use 1 / Flame Arrow basic attack; bind **RMB to the built-in Macro**. Quick Use 2 defaults to RMB / alternate T. Since RMB is reserved for Macro, **clear R from Quick Use 1's alternate binding**, then **remap Quick Use 2's T to R**. Manual abilities use **1–8**; macro hotbar stacks use **Q, E, and R (only when learned ground-damage Stigmas require the third stack)**. The planner can display original T instead by changing Quick Use 2 binding. See [control layout](./easy-human-macro-layout-2026.md).
+
 Reviewed 2026-10-24. This is the **Easy sustained PvE** preset. It is NOT a demonstrated frame-optimal DPS ranking.
 
 ## Only two routine mouse buttons

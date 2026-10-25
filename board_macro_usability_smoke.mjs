@@ -97,6 +97,25 @@ try{
   const manualKeys=[...document.querySelectorAll('#rotation-quick-guide [data-easy-key]')].map(el=>el.textContent);
   if(!manualKeys[0]?.includes('Hellfire')||!manualKeys[1]?.includes('Wish of Concentration'))
     failures.push('Sorcerer manual Hellfire and Wish assignments missing');
+  const a=account();
+  a.context='party';a.quickUse2Bind='R';a.stigma=160;a.manualStigma=null;
+  render();
+  const quick2=document.querySelector('#quick-use-2-bind');
+  if(quick2.value!=='R'||!document.querySelector('#rotation-control-status')?.textContent.includes('T → R'))
+    failures.push('AION 2 mode must default to remapped Quick Use 2 = R');
+  if(!document.querySelector('#macro-stacks [data-macro-key="R"].macro-stack-auto')||
+     ![...document.querySelectorAll('#macro-stacks .macro-step-key')].some(el=>el.textContent==='R'))
+    failures.push('Remapped R ground-damage stack does not display in endgame Macro');
+  quick2.value='T';quick2.dispatchEvent(new Event('change',{bubbles:true}));
+  if(a.quickUse2Bind!=='T'||document.querySelector('#quick-use-2-bind').value!=='T'||
+     !document.querySelector('#macro-stacks [data-macro-key="T"].macro-stack-auto')||
+     ![...document.querySelectorAll('#macro-stacks .macro-step-key')].some(el=>el.textContent==='T')||
+     !document.querySelector('#rotation-quick-guide')?.textContent.includes('Q + E + T'))
+    failures.push('Original T Quick Use 2 bind not reflected in endgame Macro stack, steps and instructions');
+  document.querySelector('#quick-use-2-bind').value='R';
+  document.querySelector('#quick-use-2-bind').dispatchEvent(new Event('change',{bubbles:true}));
+  if(a.quickUse2Bind!=='R'||!document.querySelector('#macro-stacks [data-macro-key="R"]'))
+    failures.push('T to R rebind did not persist through endgame re-render');
   return failures;
  });
  assert.deepEqual(errors,[],'Browser runtime errors');
