@@ -489,3 +489,25 @@
  .v2-active .v2-skill-list{overflow-x:auto}
  .v2-active .v2-editor-title,.v2-active .v2-skill{min-width:475px}
 }
+
+/* AION 2 mode keymap, shared by leveling and endgame rotation editors. */
+.rotation-control-mode{margin:0 0 14px;padding:14px;min-width:0}
+.rotation-control-mode-header{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.rotation-control-mode-header strong{color:#f0cd87;font-size:14px;letter-spacing:.035em}
+.rotation-control-mode-header span{color:#acc9de;font-size:12px}
+.rotation-control-keys{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.rotation-control-keys>div{display:flex;align-items:center;gap:10px;min-width:0;background:#0b243a;border:1px solid #345877;border-radius:7px;padding:9px}
+.rotation-control-keys kbd{display:inline-flex;align-items:center;justify-content:center;min-width:60px;min-height:33px;padding:4px 8px;border:1px solid #7f9cba;background:#102e48;border-radius:5px;color:#fff0c7;font-weight:800;text-align:center;white-space:nowrap}
+.rotation-control-keys span{color:#d4e7f3;font-size:12px;line-height:1.45}
+.rotation-quickuse-label{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:12px;color:#e5ebf6;font-size:13px;font-weight:700}
+.rotation-quickuse-label select{min-width:150px;max-width:100%;min-height:37px;padding:5px 8px;background:#122f47;border:1px solid #6f96b5;border-radius:6px;color:#f3f7ff}
+#quick-use-2-help,#rotation-control-status{margin:8px 0 0;font-size:12px;line-height:1.55;color:#b9d7e8;overflow-wrap:anywhere}
+#rotation-control-status{color:#f4d490}
+@media(max-width:700px){
+ .rotation-control-mode{padding:10px}
+ .rotation-control-keys{grid-template-columns:1fr}
+ .rotation-control-mode-header strong{font-size:12px}
+ .rotation-control-keys>div{padding:7px}
+ .rotation-control-keys kbd{min-width:56px;font-size:11px}
+ .rotation-quickuse-label{align-items:flex-start;flex-direction:column;gap:6px}
+}
