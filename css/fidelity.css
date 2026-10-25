@@ -405,3 +405,29 @@
 .v2-active .v2-source-legend{font-size:11px;line-height:1.4;padding:7px 9px;margin-bottom:6px;border:1px solid #3a5770;border-radius:5px;background:#0d273d;color:#b4d7ec}
 .v2-active .v2-source-legend b,.v2-active .v2-source-legend strong{color:#f2d499}
 @media(max-width:620px){.v2-active .v2-source-legend{font-size:10px;padding:6px 7px}}
+
+/* Physical Global stack: TOP shows the fallback, BOTTOM Row 0 fires first.
+   Keep labels, rows and setup legible without requiring game-mechanic jargon. */
+.rotation-quick-guide{margin:12px 0 15px;padding:17px 19px;background:linear-gradient(145deg,#102c42,#0a1c2c);border:1px solid #4e7796;border-radius:10px}
+.rotation-quick-guide h3{font:normal 23px/1.2 Georgia,serif;color:#f4d39a;margin:0 0 8px}
+.rotation-quick-guide>p{color:#c7deec;font-size:13px;line-height:1.55;max-width:1050px}
+.rotation-quick-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px;margin:15px 0}
+.rotation-quick-steps>div{position:relative;min-width:0;padding:12px 12px 12px 44px;border:1px solid #3d6580;border-radius:8px;background:#0a1d30}
+.rotation-quick-number{position:absolute;left:11px;top:12px;display:grid;place-items:center;width:25px;height:25px;border-radius:50%;background:#b68a44;color:#0b1d2c;font-weight:900;font-size:12px}
+.rotation-quick-steps b{color:#f3dfbb;font-size:14px;line-height:1.35}
+.rotation-quick-steps p{font-size:12px;line-height:1.5;color:#c8deeb;margin:7px 0 0}
+.rotation-quick-steps strong{color:#f0d4a3}
+.rotation-quick-caveat{font-size:11px!important;color:#b9d0e0!important}
+.macro-physical-stack{display:flex;flex-direction:column;gap:4px}
+.macro-physical-stack .stack-row{display:flex;min-height:42px;margin:0;padding:7px 9px;border:1px solid #355c69;border-radius:5px;background:#122c39;gap:8px}
+.macro-physical-stack .stack-row.macro-first{border:2px solid #d1aa62;background:#234950}
+.macro-physical-stack .stack-row b{min-width:42px}
+.macro-physical-stack .stack-row span{overflow-wrap:anywhere;min-width:0;flex:1}
+.macro-physical-stack .stack-row img{width:31px;height:31px;object-fit:cover;border-radius:4px;flex-shrink:0}
+.macro-first-tag{color:#ffe3a9;font-size:10px;white-space:nowrap}
+.macro-priority-note{padding:4px 0;margin:4px 0 6px;color:#9fc5d9;font-size:11px;font-weight:650;letter-spacing:.025em}
+.macro-priority-note.bottom{margin:7px 0 0;color:#f2d69c}
+.macro-stack-auto .stack-heading .keycap{background:#245578}
+.macro-step-key{display:inline-grid;place-items:center;border:1px solid #c29e67;padding:2px 9px;border-radius:4px;color:#ffe4ae;background:#3f3523}
+.macro-execution-note{font-size:12px;line-height:1.55;color:#d7cfbd;margin:11px 0 0}
+@media(max-width:880px){.rotation-quick-steps{grid-template-columns:1fr}.rotation-quick-guide{padding:13px}.rotation-quick-guide h3{font-size:20px}}
