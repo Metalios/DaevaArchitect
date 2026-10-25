@@ -36,6 +36,7 @@ jobs:
           node leveling_macro_smoke.mjs
           node mastery_board_gear_smoke.mjs
           node board_macro_usability_smoke.mjs
+          node board_crystal_cycle_smoke.mjs
           node v2_smoke.mjs
       - name: Upload responsive screenshots
         if: always()

@@ -51,7 +51,7 @@ const owned=await page.evaluate(()=>{
   a.obtainedNodes=[picked];model();
   return plannedRoute().findIndex(step=>step.id===picked);
 });
-assert(owned>=0&&owned<20,'an already obtained tile should be reconnected before later recommendations');
+assert.equal(owned,100,'obtained tiles must not reorder the active recommended route before the crystal budget is exhausted');
 assert.deepEqual(errors,[],'page errors');
 console.log('All eight classes: fresh-45 budgets, earned-point budgets, 570-crystal progression, and target-aware routes passed.');
 await browser.close();

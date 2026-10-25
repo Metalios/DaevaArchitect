@@ -33,7 +33,7 @@ const master=make('div','v2-master-editor',`
  <details class="v2-advanced-skills"><summary>Advanced skill cards & bonus adjustments</summary></details>`);
 const stigmas=make('div','v2-stigmas',`<div id="v2-stigma-list" class="v2-stigma-cards"></div><div class="v2-stigma-summary"><span>13 class Stigmas in catalog · select a card to edit</span><strong id="v2-stigma-remaining"></strong></div><div class="v2-stigma-breakpoints">Perk levels <span>⑤ First</span><span>⑩ Second</span><span>⑮ Third</span><span>⑳ Fourth</span></div><button type="button" id="v2-stigma-reset">Restore recommended Stigmas</button><div id="v2-stigma-panel" class="v2-in-panel-flyout" role="region" aria-label="Stigma loadout editor" hidden></div>`);
 const boardControls=make('div','v2-board-controls',`
- <div class="v2-board-callout"><b>Original Global board coordinates</b><span>Highlighted routes are <b>planned</b>. Mark a tile <b>obtained</b> to count its bonus under obtained skill levels. Pan or zoom without stretching the nodes.</span></div>
+ <div class="v2-board-callout"><b>Original Global board coordinates</b><span><b>Blue</b> = recommended; <b>gold</b> = obtained. Single-click previews a tile; double-click marks it obtained. Use the Mark obtained button on touch. Your planned amounts remain in each board tab.</span></div>
  <button type="button" id="v2-board-toggle">Edit selected node</button><button type="button" id="v2-board-restore">Recommended path</button>
  <button type="button" id="v2-mark-obtained">Mark tile obtained</button>
  <button type="button" id="v2-zoom-minus" aria-label="Zoom out">−</button><span id="v2-zoom-label">40px</span><button type="button" id="v2-zoom-plus" aria-label="Zoom in">+</button><button type="button" id="v2-board-expand">Expand board</button>
@@ -324,7 +324,11 @@ function bind(){
  setCustomNode(entry.node[0]);message=boardEditNotice;render();
  });
  $('v2-board-restore').addEventListener('click',()=>{account().boardMode='recommended';message='Recommended Daevanion route restored.';render()});
- $('v2-mark-obtained').addEventListener('click',()=>{const n=nodeMap().get(state.node);if(!n||!n.node[5]||!boardOpen(n.board))return;const marks=obtainedNodes();if(marks.has(state.node))marks.delete(state.node);else marks.add(state.node);storeObtained(marks);render()});
+ $('v2-mark-obtained').addEventListener('click',()=>{
+  // Same crystal-budget protection and obtained state as the board's
+  // double-click and the legacy selected-node button.
+  if(toggleBoardObtained(state.node))render();else renderBoards(model());
+ });
  $('v2-board-expand').addEventListener('click',()=>{const expanded=document.body.classList.toggle('v2-board-expanded');$('v2-board-expand').textContent=expanded?'Exit expanded':'Expand board'});
  for(const [id,step] of [['v2-zoom-minus',-4],['v2-zoom-plus',4]])$(id).addEventListener('click',()=>{zoom=Math.min(52,Math.max(32,zoom+step));$('board-grid').style.setProperty('--v2-node',zoom+'px');$('v2-zoom-label').textContent=zoom+'px'});
  $('mastery-search').addEventListener('input',()=>sync(model()));
