@@ -503,7 +503,7 @@ function renderRotation(m){
   if(levelingMode && typeof buildLevelingCombat==='function'){
     const plan=buildLevelingCombat(state.class,level,a.context,SKILL_UNLOCKS[state.class],
       activeStigmas().slice(0,levelReward().slots),m.stigma.levels,
-      (name,option)=>specPicks(name,effective(name,m)).includes(option));
+      (name,option)=>specPicks(name,skillLevelBreakdown(name,m).withOwned).includes(option));
     $('rotation').classList.add('leveling-view');
     $('rotation-level').textContent='Lv '+level+' · starter combat';
     $('leveling-rotation').hidden=false;
