@@ -55,7 +55,8 @@ try{
  assert.deepEqual(errors,[],'JS exceptions');
  assert.deepEqual(result.failures,[],result.failures.join('\n'));
  const layout=await page.evaluate(()=>{
-  const root=document.querySelector('#gear-doll-grid.inspect')||document.querySelector('#gear-doll-grid');
+  state.gearView='inspect';render();
+  const root=document.querySelector('#gear-doll-grid.inspect');
   const boundary=root.getBoundingClientRect();
   const group=[...document.querySelectorAll('#gear-doll-grid.inspect .gear-tile')];
   return {panel:Math.round(boundary.width),tiles:group.length,overflow:group.filter(el=>{
