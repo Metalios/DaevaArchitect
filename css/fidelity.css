@@ -469,3 +469,60 @@
 .rotation-easy-manual small{font-size:12px;line-height:1.45;color:#bdd6e5;margin-top:3px}
 .rotation-easy-optional{font-size:12px!important;line-height:1.55;color:#c4ddee;margin:10px 0}
 @media(max-width:820px){.rotation-easy-manual-grid{grid-template-columns:1fr}.rotation-easy-plus{width:100%;text-align:center}.rotation-easy-buttons{gap:5px}.rotation-easy-button{flex-basis:100%}}
+
+/* Daevanion spending: blue = stable recommendation, gold = actually obtained.
+   Use rings so both unique and ordinary tile artwork remain visible. */
+.board-grid .node.board-suggested:not(.obtained){
+ outline:3px solid #319eff!important;
+ outline-offset:-1px;
+ box-shadow:0 0 0 2px #0b3158,0 0 11px #329ffd80!important
+}
+.board-grid .node.obtained,
+.board-grid .node.obtained.board-suggested{
+ outline:3px solid #ffcb58!important;
+ outline-offset:-1px;
+ box-shadow:0 0 0 2px #50381b,0 0 12px #e3a94688!important
+}
+.board-grid .node.selected{
+ filter:brightness(1.22);
+}
+.board-grid .node.selected:not(.obtained):not(.board-suggested){
+ outline:2px dashed #eff6ff!important;
+ outline-offset:-1px;
+}
+.board-legend i.recommended{
+ background:#173d61;border:3px solid #319eff;border-radius:50%;
+ width:14px;height:14px;box-sizing:border-box
+}
+.board-legend i.obtained{
+ background:#664822!important;border:3px solid #ffcb58!important;
+ border-radius:50%;width:14px;height:14px;box-sizing:border-box
+}
+.board-crystal-tracker{
+ display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 14px;
+ align-items:center;padding:11px 14px;margin:9px 0 12px;
+ border:1px solid #456a8f;border-radius:8px;
+ background:linear-gradient(115deg,#0d2946,#123653);
+ color:#d9ebff;min-width:0
+}
+.board-crystal-tracker-copy{display:flex;flex-direction:column;gap:3px;min-width:0;grid-row:span 2}
+.board-crystal-tracker-copy b{font-size:14px;color:#f8dfa6}
+.board-crystal-tracker-copy small{font-size:11px;line-height:1.35;color:#bbd2e5}
+.board-crystal-value{
+ font-size:25px;line-height:1.05;font-weight:850;
+ color:#fff4d9;white-space:nowrap;font-variant-numeric:tabular-nums
+}
+.board-crystal-remaining{text-align:right;font-size:12px;color:#c8dcef}
+.board-crystal-tracker.completed{border-color:#d9ab49}
+.board-crystal-tracker.completed .board-crystal-value{color:#ffdb90}
+.board-purchase-notice:not([hidden]){
+ padding:9px 11px;margin:5px 0 12px;font-size:12px;
+ color:#ffe3bb;background:#523019;border:1px solid #ac7045;border-radius:6px
+}
+.selected-node-plan:not([hidden]){display:block;margin:4px 0 11px;background:#193e62;border:1px solid #579acc;color:#e2f0ff;border-radius:5px;padding:8px 12px;font-weight:750}
+@media(max-width:560px){
+ .board-crystal-tracker{grid-template-columns:1fr;gap:7px}
+ .board-crystal-tracker-copy{grid-row:auto}
+ .board-crystal-value{font-size:24px}
+ .board-crystal-remaining{text-align:left}
+}
