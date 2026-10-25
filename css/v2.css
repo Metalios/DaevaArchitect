@@ -477,3 +477,15 @@
 /* A breakpoint explanation is a full row, not a competing fixed-width card. */
 .v2-next{flex-wrap:wrap}
 .v2-next-progress{flex:1 1 100%;min-width:0;overflow-wrap:anywhere;margin:0;padding:10px 12px;border:1px solid #405a71;border-left:3px solid #c3a36f;border-radius:5px;background:#122639;line-height:1.45;font-size:12px}
+
+/* Mastery investments and Daevanion sources remain readable at narrow widths. */
+.v2-active .v2-board-delta,.v2-active .v2-level-delta{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;line-height:1.2;text-align:center}
+.v2-active .v2-board-delta small,.v2-active .v2-level-delta small{font-size:10px;color:#a8c8dc;white-space:normal}
+.v2-active .v2-level-delta span{font-size:14px;color:#f3cf89;font-weight:800}
+.v2-active .v2-editor-title{grid-template-columns:minmax(110px,1fr) 112px minmax(62px,76px) 44px minmax(65px,78px);text-align:center}
+.v2-active .v2-editor-title b{text-align:left}
+.v2-active .v2-skill{grid-template-columns:minmax(110px,1fr) 112px minmax(62px,76px) 44px minmax(65px,78px)}
+@media (max-width:1699px){
+ .v2-active .v2-skill-list{overflow-x:auto}
+ .v2-active .v2-editor-title,.v2-active .v2-skill{min-width:475px}
+}
