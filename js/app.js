@@ -583,7 +583,7 @@ function renderRotation(m){
   $('macro-stacks').innerHTML=stackHtml+script;
   const easyManual=hotbar.slice(0,4).map(([skills,cue],index)=>({key:index+1,skills,cue})).filter(entry=>entry.skills.length);
   const easyManualHtml=easyManual.map(entry=>`<div class="rotation-easy-manual" data-easy-key="${entry.key}"><kbd>${entry.key}</kbd><span><b>${esc(entry.skills.join(' / '))}</b><small>${esc(entry.cue)}</small></span></div>`).join('');
-  const optionalStacks=manualColumns.filter(s=>!/^\\d+$/.test(s.key)).map(s=>s.key+' ('+s.title+')');
+  const optionalStacks=manualColumns.filter(s=>!/^\d+$/.test(s.key)).map(s=>s.key+' ('+s.title+')');
   $('rotation-quick-guide').innerHTML=`<h3>Easy setup · ${esc(p.name)}</h3>
    <p class="rotation-easy-headline">Most of your normal damage can use <b>two mouse buttons</b>. Your Macro is the in-game feature, not a third-party mouse script.</p>
    <div class="rotation-easy-buttons">
