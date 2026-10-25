@@ -99,6 +99,29 @@ function allBoards(){return [...data().boards,AZPHEL[state.class]]}
 function nodeMap(){return new Map(allBoards().flatMap(b=>b.nodes.map(n=>[n[0],{board:b.name,node:n}]))) }
 function obtainedNodes(){const valid=nodeMap();return new Set((account().obtainedNodes||[]).filter(id=>valid.has(id)))}
 function storeObtained(nodes){account().obtainedNodes=[...nodes];save()}
+function obtainedCrystalSpend(azphel=false){
+  const nodes=nodeMap(),selected=obtainedNodes();
+  return [...selected].reduce((spent,id)=>{
+    const entry=nodes.get(id);
+    return spent+(entry&&(entry.board==='Azphel')===azphel?entry.node[5]:0);
+  },0);
+}
+// An obtained mark is a record of crystals actually spent, not a preview.
+// Never let a new mark silently exceed the player's entered total.
+let boardPurchaseNotice='';
+function toggleBoardObtained(id){
+  const entry=nodeMap().get(id);
+  if(!entry||entry.node[5]===0||!boardOpen(entry.board))return false;
+  const marked=obtainedNodes();
+  if(marked.has(id)){marked.delete(id);boardPurchaseNotice='';storeObtained(marked);return true}
+  const isAz=entry.board==='Azphel',budgetTotal=isAz?(account().azphel||0):budget('crystals');
+  const cost=entry.node[5],spent=obtainedCrystalSpend(isAz);
+  if(spent+cost>budgetTotal){
+    boardPurchaseNotice=`Cannot mark this ${cost}-crystal tile: ${spent} / ${budgetTotal} ${isAz?'Azphel':'PvE'} crystals are already spent. Increase your earned total or unmark a tile first.`;
+    return false;
+  }
+  marked.add(id);boardPurchaseNotice='';storeObtained(marked);return true;
+}
 let liveRoute=null,liveRouteKey='',liveRouteBasis=null;
 function activeRoute(){const route=liveRoute||ROUTES[state.class][account().context];return isLeveling()?route.filter(x=>boardOpen(x.board)):route}
 function customMode(){return account().boardMode==='custom'}
@@ -316,23 +339,46 @@ function model(){
     stigmas=activeStigmas(),recommendedStigma=allocate(stigmaStages(),budget('stigma'),stigmaCost,stigmas,0),
     stigma=a.manualStigma?manualAllocation(a.manualStigma,stigmas,budget('stigma'),stigmaCost,0,20):recommendedStigma;
   {
-    // Recalculate the connected route with verified owned skill bonuses,
-    // selected context, researched skill weights and actual equipped items.
-    // Owned gear alters advice but never marks the build manually modified.
+    // Freeze the RECOMMENDED route during each crystal-spending cycle.
+    // Previously a.obtainedNodes was part of the optimizer cache key,
+    // so EVERY gold click reshuffled the blue recommendations.
+    // A new cycle begins only after the full entered PvE budget has been
+    // marked obtained, or the user deliberately changes class/context.
     const target=profile().kind==='healer'?0:Number(a.goalTarget)||0;
     const gearRanks={...gearSkillLevels()};
     for(const [name,n] of Object.entries(a.gear||{}))gearRanks[name]=(gearRanks[name]||0)+Number(n||0);
-    const key=JSON.stringify([state.class,a.context,currentLevel(),mastery.levels,stigma.levels,gearRanks,target,a.obtainedNodes,gearEquipment(),a.cpAnchor]);
-    if(key!==liveRouteKey){
-      // A CP goal is meaningful only with a recorded level-45 equipment
-      // baseline; otherwise it must not arbitrarily bias Daevanion choices.
+    const contextKey=JSON.stringify([state.class,a.context]);
+    const snapshot=a.recommendedRouteSnapshot;
+    const total=budget('crystals'),spent=obtainedCrystalSpend(false);
+    const exhausted=total>0&&spent>=total;
+    const valid=snapshot?.contextKey===contextKey&&
+      Array.isArray(snapshot.route)&&snapshot.route.length>0&&
+      snapshot.route.every(x=>nodeMap().has(x.id));
+    // Reaching 119/119 triggers precisely ONE route update. It stays
+    // stable during later renders, and the next cycle refreshes at 120/120.
+    const update=!valid||(exhausted&&snapshot.completedBudget!==total);
+    if(update){
       const actual=obtainedNodes();
       const reference={mastery,stigma,boards:{owned:actual},effects:effects(actual)};
       const estimated=estimateCombatPower(reference);
       const baseCp=estimated.ready?estimated.value:null;
-      liveRouteBasis=optimizeBoardRoute(data(),activeWeights(),mastery.levels,gearRanks,baseCp===null?0:target,baseCp,actual,currentLevel(),typeof progressionBoardTargets==='function'?progressionBoardTargets(state.class,a.context):{});
-      liveRoute=liveRouteBasis.route;liveRouteKey=key;
+      const computed=optimizeBoardRoute(data(),activeWeights(),mastery.levels,gearRanks,
+        baseCp===null?0:target,baseCp,actual,currentLevel(),
+        typeof progressionBoardTargets==='function'?progressionBoardTargets(state.class,a.context):{});
+      liveRoute=computed.route;liveRouteBasis={initialFocus:computed.initialFocus,baseCp:computed.baseCp};
+      a.recommendedRouteSnapshot={
+        contextKey,route:computed.route,
+        initialFocus:computed.initialFocus,baseCp:computed.baseCp,
+        completedBudget:exhausted?total:null
+      };
+      // Persist the route, not just the obtained marks, so refresh/reopen
+      // cannot reshuffle the user's remaining blue highlights.
+      save();
+    }else{
+      liveRoute=snapshot.route;
+      liveRouteBasis={initialFocus:snapshot.initialFocus,baseCp:snapshot.baseCp};
     }
+    liveRouteKey=contextKey;
   }
   const boards=boardPlan(budget('crystals')),azphel=boardPlan(isLeveling()?0:a.azphel||0,true);
   return {mastery,stigma,boards,azphel,
