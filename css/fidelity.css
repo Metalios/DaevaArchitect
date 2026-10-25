@@ -401,3 +401,7 @@
 .v2-active .v2-level-delta span{font-size:13px;color:#f4d18e}
 .v2-active .v2-editor-title{letter-spacing:0}
 .v2-active .v2-mastery-hint b{color:#f5d18d}
+
+.v2-active .v2-source-legend{font-size:11px;line-height:1.4;padding:7px 9px;margin-bottom:6px;border:1px solid #3a5770;border-radius:5px;background:#0d273d;color:#b4d7ec}
+.v2-active .v2-source-legend b,.v2-active .v2-source-legend strong{color:#f2d499}
+@media(max-width:620px){.v2-active .v2-source-legend{font-size:10px;padding:6px 7px}}
