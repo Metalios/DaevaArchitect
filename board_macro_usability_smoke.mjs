@@ -72,8 +72,12 @@ try{
   if(!sorc.includes('Flame Arrow')||!sorc.includes('Hellfire')||!sorc.includes('LMB')||!sorc.includes('RMB'))
     failures.push('Sorcerer mouse/macro/manual setup not clear');
   const macro=[...document.querySelectorAll('#macro-stacks .macro-step')].map(x=>x.textContent);
-  if(macro.length!==2||!macro[0].includes('Q')||!macro[1].includes('E'))
-    failures.push('Sorcerer must use one held RMB macro with two Q/E damage steps');
+  if(macro.length<2||macro.length>3||!macro[0].includes('Q')||!macro[1].includes('E')||
+     (macro.length===3&&!macro[2].includes('R')))
+    failures.push('Sorcerer RMB macro must use Q/E, plus optional R when damage Stigmas equipped');
+  const groundEquipped=activeStigmas().some(name=>['Fire Wall','Cold Storm'].includes(name)&&(model().stigma.levels[name]||0)>0);
+  if((macro.length===3)!==groundEquipped)
+    failures.push('Sorcerer R ground step does not match learned equipped damage Stigmas');
   if(!document.querySelector('#macro-stacks [data-macro-key="E"].macro-stack-auto'))
     failures.push('Sorcerer E conditional follow-ups not automatically handled');
   const autoSkills=[...document.querySelectorAll('#macro-stacks .macro-stack-auto .macro-physical-stack [data-skill]')].map(node=>node.dataset.skill);
