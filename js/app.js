@@ -80,15 +80,28 @@ function activeLevelingExtra(){
   return at===undefined?{mastery:0,stigma:0,crystals:0}:history[at];
 }
 function setLevelingBudget(key,total){
-  const level=currentLevel(),extra={...activeLevelingExtra()};
-  extra[key]=Math.max(0,total-levelReward()[key]);
-  leveling().extraByLevel[level]=extra;
+  // The Global level table is a reference, not a guaranteed inventory balance.
+  // Players may see fewer usable points due to unclaimed rewards or other
+  // progression differences. Preserve the signed correction at the level
+  // where it was entered, and never apply it to earlier character levels.
+  const level=currentLevel(),corrections={...activeLevelingExtra()};
+  corrections[key]=clamp(total,0,{mastery:462,stigma:300,crystals:570}[key])-levelReward()[key];
+  leveling().extraByLevel[level]=corrections;
 }
 function currentLevel(){return isLeveling()?clamp(leveling().level,1,45):45}
 function levelReward(){return LEVEL_REWARDS[currentLevel()]}
-function budget(key){return isLeveling()?levelReward()[key]+(activeLevelingExtra()[key]||0):account()[key]}
+function budget(key){
+  return isLeveling()?Math.max(0,levelReward()[key]+(activeLevelingExtra()[key]||0)):account()[key];
+}
 function boardOpen(name){return !isLeveling()||currentLevel()>=BOARD_UNLOCKS[name]}
-function pointLabels(){for(const key of ['mastery','stigma','crystals']){$(`${key==='crystals'?'crystal':key}-hint`).textContent=isLeveling()?`Level ${currentLevel()} baseline ${levelReward()[key]} + ${activeLevelingExtra()[key]||0} extra earned by this level`:{mastery:'Earned total, including spent points',stigma:'Four equipped stigmas',crystals:'Four PvE boards'}[key]}}
+function pointLabels(){
+  for(const key of ['mastery','stigma','crystals']){
+    const hint=$(`${key==='crystals'?'crystal':key}-hint`);
+    if(!isLeveling()){hint.textContent={mastery:'Earned total, including spent points',stigma:'Four equipped stigmas',crystals:'Four PvE boards'}[key];continue}
+    const expected=levelReward()[key],actual=budget(key),difference=actual-expected;
+    hint.textContent=`Lv ${currentLevel()} reference: ${expected} · ${difference===0?'Using reference total':`Recorded: ${actual} (${difference>0?'+':''}${difference} vs reference)`}. Enter total earned (spent + unspent).`;
+  }
+}
 function data(){return DATA[state.class]}
 function profile(){return PROFILES[state.class]}
 function esc(value){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
@@ -352,7 +365,7 @@ function render(){
   for(const key of ['mastery','stigma','crystals'])$(`${key==='crystals'?'crystal':key}-input`).value=budget(key);
   pointLabels();$('leveling-controls').hidden=!isLeveling();$('fresh-preset').hidden=isLeveling();$('azphel-control').hidden=isLeveling();$('pvp-button').hidden=isLeveling();$('goal-panel').hidden=isLeveling();$('leveling-guide').hidden=!isLeveling();
   for(const [id,active] of [['leveling-mode',isLeveling()],['endgame-mode',!isLeveling()]]){$(id).classList.toggle('active',active);$(id).setAttribute('aria-pressed',active)}
-  $('intro-copy').innerHTML=isLeveling()?`Enter <b>total points earned</b>, including spent and unspent. The level-only points are the baseline; extra rewards apply from the level where you enter them onward. Mastery skills, Stigma slots, and boards obey Global level gates. The Rotation & macro tab shows a setup for your current level.`:'Enter <b>total points earned, including spent and unspent</b>. Recommended ranks are a reset plan; displayed in-game skill levels can also include board, gear and Arcana bonuses. Each class saves its own inputs. Research reviewed October 19, 2026.';
+  $('intro-copy').innerHTML=isLeveling()?`Enter <b>the total points your character has actually earned</b> (spent + unspent). The Global level table is only a reference: you can enter a lower or higher total. The difference is kept from this level onward, not applied to earlier levels. Stigma slots and skill unlocks still obey character-level gates.`:'Enter <b>total points earned, including spent and unspent</b>. Recommended ranks are a reset plan; displayed in-game skill levels can also include board, gear and Arcana bonuses. Each class saves its own inputs. Research reviewed October 19, 2026.';
   $('reset-button').textContent=isLeveling()?'Reset class progress':'Reset class to fresh 45';
   if(isLeveling())renderLevelControls();
   $('fresh-45-button').classList.toggle('active',Object.entries(FRESH_45).every(([key,value])=>a[key]===value)&&!(a.azphel||0));
@@ -375,7 +388,8 @@ function renderLevelControls(){
   const level=currentLevel(),r=levelReward(),next=LEVEL_MILESTONES.find(([at])=>at>level);
   $('level-display').textContent=level;$('level-input').value=level;$('level-slider').value=level;
   $('handoff-button').hidden=level<45;
-  $('leveling-summary').textContent=`${r.mastery} Mastery · ${r.stigma} Stigma · ${r.crystals} crystals from levels alone · ${r.slots} Stigma slot${r.slots===1?'':'s'}${next?` · Next: ${next[1]} at ${next[0]}`:''}`;
+  const stigmaActual=budget('stigma'),stigmaReference=r.stigma;
+  $('leveling-summary').textContent=`${budget('mastery')} Mastery · ${stigmaActual} Stigma${stigmaActual!==stigmaReference?` (reference ${stigmaReference})`:''} · ${budget('crystals')} crystals planned · ${r.slots} Stigma slot${r.slots===1?'':'s'}${next?` · Next: ${next[1]} at ${next[0]}`:''}`;
   $('level-milestones').innerHTML=LEVEL_MILESTONES.map(([at,label])=>`<button type="button" data-milestone="${at}" class="${level>=at?'reached':''} ${level===at?'current':''}"><b>${at}</b><small>${label}</small></button>`).join('');
 }
 function renderOverview(m){
@@ -702,8 +716,8 @@ $('level-plus').addEventListener('click',()=>setLevel(currentLevel()+1));
 $('level-milestones').addEventListener('click',e=>{const b=e.target.closest('[data-milestone]');if(b)setLevel(b.dataset.milestone)});
 $('handoff-button').addEventListener('click',()=>{if(!isLeveling()||currentLevel()<45)return;const a=account(),totals=Object.fromEntries(['mastery','stigma','crystals'].map(key=>[key,budget(key)]));Object.assign(a,totals);a.journey='endgame';a.context=a.endgameContext||'party';state.preview=a.crystals;state.tab='overview';render()});
 for(const [id,key,max] of [['mastery-input','mastery',462],['stigma-input','stigma',300],['crystal-input','crystals',570]]){
-  const update=e=>{const value=clamp(e.target.value,isLeveling()?levelReward()[key]:0,max);if(isLeveling())setLevelingBudget(key,value);else account()[key]=value;if(key==='crystals'&&state.board!=='Azphel')state.preview=budget('crystals');render()};
-  $(id).addEventListener('input',e=>{if(e.target.value==='')return;const value=clamp(e.target.value,isLeveling()?levelReward()[key]:0,max);if(isLeveling())setLevelingBudget(key,value);else account()[key]=value;save()});
+  const update=e=>{const value=clamp(e.target.value,0,max);if(isLeveling())setLevelingBudget(key,value);else account()[key]=value;if(key==='crystals'&&state.board!=='Azphel')state.preview=budget('crystals');render()};
+  $(id).addEventListener('input',e=>{if(e.target.value==='')return;const value=clamp(e.target.value,0,max);if(isLeveling())setLevelingBudget(key,value);else account()[key]=value;save()});
   $(id).addEventListener('change',update);
 }
 $('azphel-input').addEventListener('input',e=>{account().azphel=clamp(e.target.value,0,232);if(state.board==='Azphel')state.preview=account().azphel;save()});
