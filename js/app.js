@@ -335,9 +335,26 @@ function model(){
     }
   }
   const boards=boardPlan(budget('crystals')),azphel=boardPlan(isLeveling()?0:a.azphel||0,true);
-  return {mastery,stigma,boards,azphel,effects:effects(boards.owned),azphelEffects:effects(azphel.owned)};
+  return {mastery,stigma,boards,azphel,
+    // `effects` is the route funded by the player's entered crystal
+    // budget. Obtained marks are a separate source of CURRENT bonuses. A
+    // projected route must not be described as an already acquired rank.
+    effects:effects(boards.owned),acquiredEffects:effects(obtainedNodes()),
+    azphelEffects:effects(azphel.owned)};
 }
-function effective(name,m){return Math.min(40,(m.mastery.levels[name]||1)+(m.effects.skills[name]||0)+(account().gear[name]||0)+(gearSkillLevels()[name]||0))}
+function skillLevelBreakdown(name,m){
+  const mastery=m.mastery.levels[name]||1,
+    purchased=m.acquiredEffects?.skills[name]||0,
+    projected=m.effects.skills[name]||0,
+    gear=(account().gear[name]||0)+(gearSkillLevels()[name]||0);
+  return {mastery,boardOwned:purchased,boardPlanned:projected,gear,
+    // Values combine the selected Mastery rank PLAN with either marked-owned
+    // or planned board nodes. Actual in-game rank may differ when the user's
+    // manually entered purchases do not match the recommendation.
+    withOwned:Math.min(40,mastery+purchased+gear),
+    withPlan:Math.min(40,mastery+projected+gear)};
+}
+function effective(name,m){return skillLevelBreakdown(name,m).withPlan}
 function render(){
   applyTheme();
   const selected=CLASS_ORDER.includes(state.class);
