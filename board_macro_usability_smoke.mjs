@@ -72,15 +72,21 @@ try{
   if(!sorc.includes('Flame Arrow')||!sorc.includes('Hellfire')||!sorc.includes('LMB')||!sorc.includes('RMB'))
     failures.push('Sorcerer mouse/macro/manual setup not clear');
   const macro=[...document.querySelectorAll('#macro-stacks .macro-step')].map(x=>x.textContent);
-  if(macro.length!==2||!macro[0].includes('Q')||!macro[1].includes('E'))
-    failures.push('Sorcerer must use one held RMB macro with two Q/E damage steps');
+  if(macro.length<2||macro.length>3||!macro[0].includes('Q')||!macro[1].includes('E')||
+     (macro.length===3&&!macro[2].includes('R')))
+    failures.push('Sorcerer RMB macro must use Q/E, plus optional R when damage Stigmas equipped');
+  const groundEquipped=activeStigmas().some(name=>['Fire Wall','Cold Storm'].includes(name)&&(model().stigma.levels[name]||0)>0);
+  if((macro.length===3)!==groundEquipped)
+    failures.push('Sorcerer R ground step does not match learned equipped damage Stigmas');
   if(!document.querySelector('#macro-stacks [data-macro-key="E"].macro-stack-auto'))
     failures.push('Sorcerer E conditional follow-ups not automatically handled');
   const autoSkills=[...document.querySelectorAll('#macro-stacks .macro-stack-auto .macro-physical-stack [data-skill]')].map(node=>node.dataset.skill);
-  for(const manualOnly of ['Hellfire','Wish of Concentration',"Winter's Shackles",'Element Enhancement','Delayed Explosion','Fire Wall','Cold Storm'])
-    if(autoSkills.includes(manualOnly))failures.push('Sorcerer manual skill included in RMB macro: '+manualOnly);
+  for(const manualOnly of ['Hellfire','Wish of Concentration','Element Enhancement','Delayed Explosion'])
+    if(autoSkills.includes(manualOnly))failures.push('Sorcerer manual buff/charge included in RMB macro: '+manualOnly);
+  for(const automated of ["Winter's Shackles",'Flame Scattershot'])
+    if(!autoSkills.includes(automated))failures.push('Sorcerer routine or Stagger attack not automated: '+automated);
   const manualKeys=[...document.querySelectorAll('#rotation-quick-guide [data-easy-key]')].map(el=>el.textContent);
-  if(!manualKeys[0]?.includes('Hellfire')||!manualKeys[2]?.includes('Wish of Concentration'))
+  if(!manualKeys[0]?.includes('Hellfire')||!manualKeys[1]?.includes('Wish of Concentration'))
     failures.push('Sorcerer manual Hellfire and Wish assignments missing');
   return failures;
  });

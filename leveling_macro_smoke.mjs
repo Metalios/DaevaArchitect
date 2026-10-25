@@ -28,11 +28,11 @@ try{
     if(shownRows.length||groups.length||document.querySelector('#leveling-macro-step')?.textContent.includes('ONE step'))
       failures.push(cls+' '+level+': macro before Skills unlock');
    }else{
-    const expected=cls==='sorcerer'&&level>=10?2:1;
+    const expected=plan.steps.length;
     if(groups.length!==expected)failures.push(cls+' '+level+': expected '+expected+' key stacks');
-    if(plan.steps.length!==(cls==='sorcerer'&&level>=10?2:1))failures.push(cls+' '+level+': wrong macro step count');
+    if(cls==='sorcerer'&&level>=10&&expected<2)failures.push(cls+' '+level+': Q/E automation missing');
     const stepCopy=document.querySelector('#leveling-macro-step')?.textContent||'';
-    if(!stepCopy.includes(cls==='sorcerer'&&level>=10?'TWO steps:':'ONE step:'))
+    if(!stepCopy.includes((['ZERO','ONE','TWO','THREE'][expected]||expected)+' step'+(expected===1?'':'s')+':'))
       failures.push(cls+' '+level+': macro description mismatch');
     for(const group of groups){
      const key=group.dataset.stackKey;
@@ -84,10 +84,13 @@ try{
     failures.push('Sorcerer Lv31 should automate BOTH Q and E in one held RMB macro');
   if(!document.querySelector('#leveling-manual [data-manual-key="1"]')?.textContent.includes('Hellfire'))
     failures.push('Sorcerer Lv31 manual key 1 should charge Hellfire');
-  if(['Hellfire','Wish of Concentration','Element Enhancement',"Winter's Shackles",'Delayed Explosion','Fire Wall','Cold Storm'].some(name=>[...document.querySelectorAll('#leveling-stacks [data-leveling-skill]')].some(node=>node.dataset.levelingSkill===name)))
-    failures.push('Sorcerer Lv31: charged, buff or planned ground power incorrectly placed in macro');
-  if(!document.querySelector('#leveling-manual [data-manual-key="3"]')?.textContent.includes('Wish of Concentration'))
-    failures.push('Sorcerer Lv31: Wish must be a manual buff on 3');
+  if(['Hellfire','Wish of Concentration','Element Enhancement','Delayed Explosion'].some(name=>[...document.querySelectorAll('#leveling-stacks [data-leveling-skill]')].some(node=>node.dataset.levelingSkill===name)))
+    failures.push('Sorcerer Lv31: charged Hellfire or buff included in macro');
+  if(!document.querySelector('#leveling-manual [data-manual-key="2"]')?.textContent.includes('Wish of Concentration'))
+    failures.push('Sorcerer Lv31: Wish buff should be manual on 2');
+  if(!document.querySelector('#leveling-stacks')?.textContent.includes("Winter's Shackles")||
+     !document.querySelector('#leveling-stacks')?.textContent.includes('Flame Scattershot'))
+    failures.push('Sorcerer Lv31: normal attack or Stagger finisher missing from automatic stacks');
   const bind=document.querySelector('#leveling-macro-bind');
   bind.value='M';bind.dispatchEvent(new Event('change',{bubbles:true}));
   if(account().macroBind!=='M'||document.querySelector('#leveling-macro-bind')?.value!=='M'||
