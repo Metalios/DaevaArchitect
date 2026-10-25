@@ -70,10 +70,19 @@ function buildLevelingCombat(cls,level,context,unlocks,stigmaNames,stigmaLevels,
  const available=name=>typeof unlocks[name]==='number'&&unlocks[name]<=level;
  const stage=level<4?'starter':level<22?'core':'stigmas';
  const macroUnlocked=level>=4;
- const candidates=macroUnlocked
+ const candidates=(macroUnlocked
    ?(plan.upgradedStacks&&level>=plan.upgradedAt?plan.upgradedStacks:
       [{key:plan.key,label:'Automatic damage',macro:true,stack:plan.stack}])
-   :[];
+   :[]).map(group=>({...group,stack:[...group.stack]}));
+ // When the actually selected Lv16 Wish Specialty resets cooldowns, prioritize
+ // it before filler skills. Never assume a planned, unpurchased board bonus.
+ if(cls==='sorcerer'&&specialtyEnabled('Wish of Concentration',5)){
+   const fire=candidates.find(group=>group.macro&&group.key==='Q');
+   if(fire&&fire.stack.includes('Wish of Concentration')){
+     fire.stack=fire.stack.filter(name=>name!=='Wish of Concentration');
+     fire.stack.unshift('Wish of Concentration');
+   }
+ }
  const stacks=candidates.map(group=>({
    key:group.key,label:group.label,macro:group.macro!==false,
    stack:group.stack.filter(name=>{
