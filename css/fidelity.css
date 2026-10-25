@@ -361,3 +361,43 @@
 .v2-active .v2-mastery-hint .v2-slim-heading{margin:0 0 0 auto;display:flex}
 .v2-active .v2-mastery-hint .v2-slim-heading span{display:block;color:#9bd5b0}
 .v2-active #stigma>.section-title h2{white-space:nowrap}
+
+/* Equipment inspection adapts to its own narrow workspace column, not only
+   the browser viewport. A desktop at 1280px can have a 400px gear column. */
+.v2-active .v2-left .gear-doll-grid{container-type:inline-size}
+@container (max-width:540px){
+ .v2-active .v2-left .gear-inspect-layout{
+  display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+  gap:9px!important;padding:12px 9px 17px!important;
+  min-height:0!important;width:100%;max-width:100%;box-sizing:border-box
+ }
+ .v2-active .v2-left .gear-inspect-center{
+  grid-column:1/-1;grid-row:1;min-height:124px!important;
+  max-height:124px;width:100%;gap:4px
+ }
+ .v2-active .v2-left .gear-aether-ring{width:66px;height:66px}
+ .v2-active .v2-left .gear-inspect-center b{font-size:17px}
+ .v2-active .v2-left .gear-inspect-center small{font-size:10px}
+ .v2-active .v2-left .gear-inspect-group{grid-row:2;min-width:0;width:100%;gap:6px;align-self:start}
+ .v2-active .v2-left .gear-inspect-group:first-child{grid-column:1}
+ .v2-active .v2-left .gear-inspect-group:last-child{grid-column:2}
+ .v2-active .v2-left .gear-inspect-group>span{font-size:9px;letter-spacing:.04em;text-align:center;overflow-wrap:anywhere}
+ .v2-active .v2-left .gear-inspect-tiles{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  width:100%;max-width:172px;gap:5px;justify-self:center
+ }
+ .v2-active .v2-left .gear-tile{
+  width:100%!important;max-width:100%;height:auto!important;
+  aspect-ratio:1;min-width:0;min-height:0
+ }
+ .v2-active .v2-left .gear-tile-slot-label{font-size:9px}
+ .v2-active .v2-left .gear-tile-art{inset:2px 2px 17px}
+}
+.v2-active .v2-board-delta,.v2-active .v2-level-delta{
+ display:flex;flex-direction:column;justify-content:center;align-items:center;
+ line-height:1.2;gap:2px;white-space:nowrap;min-width:0
+}
+.v2-active .v2-board-delta small,.v2-active .v2-level-delta small{font-size:10px;font-weight:650;color:#93b0c5}
+.v2-active .v2-level-delta span{font-size:13px;color:#f4d18e}
+.v2-active .v2-editor-title{letter-spacing:0}
+.v2-active .v2-mastery-hint b{color:#f5d18d}
