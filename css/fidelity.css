@@ -431,3 +431,11 @@
 .macro-step-key{display:inline-grid;place-items:center;border:1px solid #c29e67;padding:2px 9px;border-radius:4px;color:#ffe4ae;background:#3f3523}
 .macro-execution-note{font-size:12px;line-height:1.55;color:#d7cfbd;margin:11px 0 0}
 @media(max-width:880px){.rotation-quick-steps{grid-template-columns:1fr}.rotation-quick-guide{padding:13px}.rotation-quick-guide h3{font-size:20px}}
+
+/* Readable at normal browser zoom; never require tiny priority captions. */
+.rotation-quick-guide>p,.rotation-quick-steps p{font-size:14px;line-height:1.55}
+.rotation-quick-steps b{font-size:15px}
+.macro-physical-stack .stack-row{font-size:14px}
+.macro-physical-stack .stack-row b,.macro-priority-note,.macro-first-tag{font-size:12px}
+.macro-execution-note{font-size:14px}
+.macro-script .macro-step{font-size:14px}
