@@ -71,23 +71,23 @@
       <div id="stigma-grid" class="stigma-grid"></div>
     </section>
     <section id="rotation" class="tab-panel" aria-label="Rotation and macro">
-      <div class="section-title"><div><h2>Rotation & macro</h2><p>Class-specific starting priority and an in-game hotbar macro layout.</p></div><span id="rotation-level" class="tag blue"></span></div>
+      <div class="section-title"><div><h2>Rotation & macro</h2><p>AION 2 control mode · LMB basic attack · RMB in-game Macro · manual 1–8 · Q/E/R quickslots.</p></div><span id="rotation-level" class="tag blue"></span></div>
       <div id="leveling-rotation" class="leveling-rotation panel" hidden></div>
       <section class="rotation-control-mode panel" aria-label="AION 2 mode controls">
-        <div class="rotation-control-mode-header"><strong>AION 2 MODE · REQUIRED CONTROL LAYOUT</strong><span>Built-in game Macro, not third-party automation</span></div>
+        <div class="rotation-control-mode-header"><strong>AION 2 MODE · REQUIRED CONTROL LAYOUT</strong><span>Action-mode controls; RMB is the in-game Macro, not a skill quickslot</span></div>
         <div class="rotation-control-keys" role="list" aria-label="Physical hotkey assignments">
           <div role="listitem"><kbd>LMB</kbd><span>Basic attack / MP recovery</span></div>
           <div role="listitem"><kbd>RMB</kbd><span>Hold the in-game Macro</span></div>
           <div role="listitem"><kbd>1–8</kbd><span>Manual abilities, buffs and charged skills</span></div>
-          <div role="listitem"><kbd>Q · E</kbd><span>Skill-stack quickslots (Macro presses these as shown)</span></div>
+          <div role="listitem"><kbd id="rotation-stack-bindings">Q · E · R</kbd><span>Skill-stack quickslots. Macro uses only the stacks listed in its steps.</span></div>
         </div>
         <label class="rotation-quickuse-label" for="quick-use-2-bind">Quick Use 2 keyboard binding
           <select id="quick-use-2-bind" aria-describedby="quick-use-2-help">
-            <option value="R">R · my remapped binding</option>
+            <option value="R" selected>R · T remapped to R</option>
             <option value="T">T · game default</option>
           </select>
         </label>
-        <p id="quick-use-2-help">Quick Use 2 is the slot normally bound to RMB / T. Bind Macro to RMB and use the selected keyboard key for Quick Use 2 instead. For R, first clear R from Quick Use 1's alternate binding to avoid a conflict.</p>
+        <p id="quick-use-2-help">In AION 2 mode, Quick Use 1 defaults to LMB (alternate R), while Quick Use 2 defaults to RMB (alternate T). Rebind the in-game Macro to RMB; clear R from Quick Use 1, then bind Quick Use 2's T to R. This preserves LMB basic attack and makes R a skill-stack key, not an alternate basic attack.</p>
         <p id="rotation-control-status" role="status"></p>
       </section>
       <div class="rotation-hero panel"><div class="rotation-mark">01 / THE RULE</div><h3 id="rotation-rule-title"></h3><p id="rotation-rule-text"></p><div id="rotation-gate" class="notice"></div><div id="macro-rank-summary" class="macro-rank-summary"></div></div>
