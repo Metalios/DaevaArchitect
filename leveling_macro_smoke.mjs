@@ -17,6 +17,9 @@ try{
    state.class=cls;const a=account();a.journey='leveling';a.context=context;leveling().level=level;
    render();
    const m=model(),r=document.querySelector('#rotation');
+   const modeGuide=document.querySelector('#rotation .rotation-control-mode');
+   if(!modeGuide||getComputedStyle(modeGuide).display==='none')
+     failures.push(cls+' '+level+': AION 2 control mode card hidden in leveling view');
    const plan=buildLevelingCombat(cls,level,context,SKILL_UNLOCKS[cls],activeStigmas().slice(0,levelReward().slots),
      m.stigma.levels,(name,option)=>specPicks(name,effective(name,m)).includes(option));
    if(!r.classList.contains('leveling-view'))failures.push(cls+' '+level+': no leveling view');
@@ -128,10 +131,15 @@ try{
     failures.push('Fresh 45 macro editor remained hidden after leaving Leveling mode');
   if(!document.querySelector('#macro-stacks').textContent.includes('Judgment'))
     failures.push('Fresh 45 Templar endgame macro was not restored');
-  return {checked,failures,overflow:document.documentElement.scrollWidth-innerWidth};
+  const overflowing=[...document.querySelectorAll('body *')].filter(el=>{
+    const st=getComputedStyle(el),rect=el.getBoundingClientRect();
+    return st.display!=='none'&&st.visibility!=='hidden'&&rect.width>0&&
+      (rect.right>innerWidth+8||rect.left< -8);
+   }).slice(0,15).map(el=>({element:el.tagName,selector:el.id?('#'+el.id):('.'+String(el.className||'').trim().split(/\\s+/).slice(0,2).join('.')),right:Math.round(el.getBoundingClientRect().right),width:Math.round(el.getBoundingClientRect().width)}));
+  return {checked,failures,overflow:document.documentElement.scrollWidth-innerWidth,overflowing};
  });
  assert.deepEqual(errors,[],'browser runtime errors');
  assert.deepEqual(result.failures,[],result.failures.join('\n'));
- assert(result.overflow<=8,'mobile horizontal overflow '+result.overflow+'px');
+ assert(result.overflow<=8,'mobile horizontal overflow '+result.overflow+'px; offenders '+JSON.stringify(result.overflowing));
  console.log('Verified '+result.checked+' leveling class/context/level layouts with class-aware macro steps, bottom-first stacks and no locked skills.');
 }finally{await browser.close()}
