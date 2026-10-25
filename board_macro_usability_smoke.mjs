@@ -45,6 +45,10 @@ try{
    const summary=document.querySelector('#rotation-quick-guide')?.textContent||'';
    if(!summary.includes('Row 0 at the bottom')||!summary.includes('Bind one in-game Macro key'))
     failures.push(cls+': missing simple directions');
+   const advanced=document.querySelector('#rotation .rotation-advanced');
+   if(!advanced||advanced.open)failures.push(cls+': advanced controls should be available but initially collapsed');
+   if(!document.querySelector('#hotbar-grid')||!document.querySelector('#setup-list'))
+    failures.push(cls+': collapsible advanced hotbar and setup not available');
    const stacks=[...document.querySelectorAll('#macro-stacks .macro-stack-auto')];
    if(!stacks.length)failures.push(cls+': missing macro stacks');
    for(const stack of stacks){
