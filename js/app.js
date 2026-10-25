@@ -339,7 +339,7 @@ function model(){
     // `effects` is the route funded by the player's entered crystal
     // budget. Obtained marks are a separate source of CURRENT bonuses. A
     // projected route must not be described as an already acquired rank.
-    effects:effects(boards.owned),acquiredEffects:effects(obtainedNodes()),
+    effects:effects(boards.owned),acquiredEffects:effects(new Set([...obtainedNodes()].filter(id=>boardOpen(nodeMap().get(id).board)))),
     azphelEffects:effects(azphel.owned)};
 }
 function skillLevelBreakdown(name,m){
