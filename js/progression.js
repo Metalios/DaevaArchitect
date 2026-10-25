@@ -95,7 +95,7 @@ const SORCERER_EASY_COMBAT={
 function sorcererEasyMasteryStages(level,leveling,unlocks,skillNames,adjust){
  const known=new Set(skillNames),stages=[];
  const add=(names,target)=>names.forEach(name=>{if(known.has(name)&&(unlocks[name]||1)<=level)
-   stages.push([name,adjust(name,target)])});
+   stages.push([name,Math.max(1,Math.min(10,Number(adjust(name,target))||1))])});
  const invest=(names,target)=>names.forEach(name=>{if(known.has(name)&&(unlocks[name]||1)<=level)
    stages.push([name,target])});
  // A low-input rotation still needs intentional spend on manual Hellfire and
