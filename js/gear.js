@@ -144,11 +144,11 @@ function gearSocketTotals(){
 function renderGear(m=model()){
   const equipment=gearEquipment(),regular=GEAR_SLOTS.filter(s=>['left','right'].includes(s.area)),arcana=GEAR_SLOTS.filter(s=>s.area==='arcana');
   const active=GEAR_SLOTS.filter(s=>gearIsActive(s,equipment[s.id])),gearCount=regular.filter(s=>equipment[s.id]).length;
-  $('gear-count').textContent=`${gearCount} / 20 gear slots`;
+  $('gear-count').textContent=`${gearCount} / 20 gear slots recorded`;
   $('gear-class-heading').textContent=`${profile().name} · ${GEAR_WEAPONS[state.class]} and Guard`;
-  $('gear-level-note').textContent=`${profile().name} · level ${currentLevel()}`;
+  $('gear-level-note').textContent=`${profile().name} · level ${currentLevel()} · items recorded in this planner`;
   $('gear-snapshot').textContent=`${GEAR_CATALOG.clientVersion} · retrieved ${GEAR_CATALOG.retrieved}`;
-  $('gear-summary').innerHTML=`<div><strong>${gearCount}<small>/ 20</small></strong><span>Equipment</span></div><div><strong>${arcana.filter(s=>equipment[s.id]).length}<small>/ 5</small></strong><span>Arcana</span></div><div><strong>${equipment.wings?'1':'0'}<small>/ 1</small></strong><span>Wings</span></div><div><strong>${active.length}</strong><span>Active now</span></div>`;
+  $('gear-summary').innerHTML=`<div><strong>${gearCount}<small>/ 20</small></strong><span>Recorded gear</span></div><div><strong>${arcana.filter(s=>equipment[s.id]).length}<small>/ 5</small></strong><span>${currentLevel()<45?'Arcana · Lv45':'Arcana'}</span></div><div><strong>${equipment.wings?'1':'0'}<small>/ 1</small></strong><span>Wings</span></div><div><strong>${active.length}</strong><span>Active records</span></div>`;
   const view=state.gearView||((window.matchMedia&&window.matchMedia('(max-width: 700px)').matches)?'inventory':'inspect');
   document.querySelectorAll('[data-gear-view]').forEach(button=>{const selected=button.dataset.gearView===view;button.classList.toggle('active',selected);button.setAttribute('aria-pressed',String(selected))});
   $('gear-doll-grid').className=`gear-doll-grid ${view}`;
