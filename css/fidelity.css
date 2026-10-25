@@ -439,3 +439,11 @@
 .macro-physical-stack .stack-row b,.macro-priority-note,.macro-first-tag{font-size:12px}
 .macro-execution-note{font-size:14px}
 .macro-script .macro-step{font-size:14px}
+
+/* Keep the first screen focused on a playable setup. Advanced options remain
+   available without forcing beginners to scan eight keys and extra prose. */
+.rotation-advanced{margin:14px 0;border:1px solid #36566e;border-radius:9px;padding:0 14px 14px;background:#081b2b}
+.rotation-advanced>summary{cursor:pointer;padding:14px 6px;font-size:15px;font-weight:750;line-height:1.4;color:#f5d69e}
+.rotation-advanced>summary:hover,.rotation-advanced>summary:focus-visible{color:#fff1cb}
+.rotation-advanced[open]>summary{margin-bottom:8px;border-bottom:1px solid #36566e}
+.rotation-advanced .rhythm-heading{margin-top:8px}
