@@ -73,6 +73,23 @@
     <section id="rotation" class="tab-panel" aria-label="Rotation and macro">
       <div class="section-title"><div><h2>Rotation & macro</h2><p>Class-specific starting priority and an in-game hotbar macro layout.</p></div><span id="rotation-level" class="tag blue"></span></div>
       <div id="leveling-rotation" class="leveling-rotation panel" hidden></div>
+      <section class="rotation-control-mode panel" aria-label="AION 2 mode controls">
+        <div class="rotation-control-mode-header"><strong>AION 2 MODE · REQUIRED CONTROL LAYOUT</strong><span>Built-in game Macro, not third-party automation</span></div>
+        <div class="rotation-control-keys" role="list" aria-label="Physical hotkey assignments">
+          <div role="listitem"><kbd>LMB</kbd><span>Basic attack / MP recovery</span></div>
+          <div role="listitem"><kbd>RMB</kbd><span>Hold the in-game Macro</span></div>
+          <div role="listitem"><kbd>1–8</kbd><span>Manual abilities, buffs and charged skills</span></div>
+          <div role="listitem"><kbd>Q · E</kbd><span>Skill-stack quickslots (Macro presses these as shown)</span></div>
+        </div>
+        <label class="rotation-quickuse-label" for="quick-use-2-bind">Quick Use 2 keyboard binding
+          <select id="quick-use-2-bind" aria-describedby="quick-use-2-help">
+            <option value="R">R · my remapped binding</option>
+            <option value="T">T · game default</option>
+          </select>
+        </label>
+        <p id="quick-use-2-help">Quick Use 2 is the slot normally bound to RMB / T. Bind Macro to RMB and use the selected keyboard key for Quick Use 2 instead. For R, first clear R from Quick Use 1's alternate binding to avoid a conflict.</p>
+        <p id="rotation-control-status" role="status"></p>
+      </section>
       <div class="rotation-hero panel"><div class="rotation-mark">01 / THE RULE</div><h3 id="rotation-rule-title"></h3><p id="rotation-rule-text"></p><div id="rotation-gate" class="notice"></div><div id="macro-rank-summary" class="macro-rank-summary"></div></div>
       <div class="two-col rotation-columns"><div class="panel"><h3 id="rotation-opener-title">Group opener</h3><ol id="rotation-opener" class="rotation-list"></ol></div><div class="panel"><h3>During the fight</h3><ol id="rotation-loop" class="rotation-list"></ol></div></div>
       <div class="section-title macro-title"><div><h2>Set up the in-game macro</h2><p>Macro steps press hotbar keys, not typed skill commands. Keep the basic attack or filler held separately to weave it between skills.</p></div><span class="tag gold">10 ms start</span></div>
