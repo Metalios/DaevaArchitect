@@ -30,9 +30,9 @@ try{
    }else{
     const expected=cls==='sorcerer'&&level>=10?2:1;
     if(groups.length!==expected)failures.push(cls+' '+level+': expected '+expected+' key stacks');
-    if(plan.steps.length!==1)failures.push(cls+' '+level+': easy macro should be a single hotbar key');
+    if(plan.steps.length!==(cls==='sorcerer'&&level>=10?2:1))failures.push(cls+' '+level+': wrong macro step count');
     const stepCopy=document.querySelector('#leveling-macro-step')?.textContent||'';
-    if(!stepCopy.includes('ONE step:'))
+    if(!stepCopy.includes(cls==='sorcerer'&&level>=10?'TWO steps:':'ONE step:'))
       failures.push(cls+' '+level+': macro description mismatch');
     for(const group of groups){
      const key=group.dataset.stackKey;
@@ -79,13 +79,15 @@ try{
     failures.push('Sorcerer level 11: wrong locked damage sequence');
   state.class='sorcerer';a=account();a.journey='leveling';a.context='solo';leveling().level=31;render();
   if(document.querySelectorAll('#leveling-stacks [data-stack-key]').length!==2||
-     !document.querySelector('#leveling-macro-step')?.textContent.includes('ONE step:')||
-     document.querySelectorAll('#leveling-stacks [data-stack-role="macro"]').length!==1)
-    failures.push('Sorcerer Lv31 should have Q automatic and E manual, one Macro step');
+     !document.querySelector('#leveling-macro-step')?.textContent.includes('TWO steps:')||
+     document.querySelectorAll('#leveling-stacks [data-stack-role="macro"]').length!==2)
+    failures.push('Sorcerer Lv31 should automate BOTH Q and E in one held RMB macro');
   if(!document.querySelector('#leveling-manual [data-manual-key="1"]')?.textContent.includes('Hellfire'))
     failures.push('Sorcerer Lv31 manual key 1 should charge Hellfire');
-  if(document.querySelector('#leveling-stacks')?.textContent.includes('Hellfire'))
-    failures.push('Sorcerer Lv31: charged Hellfire incorrectly placed in macro');
+  if(['Hellfire','Wish of Concentration','Element Enhancement',"Winter's Shackles",'Delayed Explosion','Fire Wall','Cold Storm'].some(name=>[...document.querySelectorAll('#leveling-stacks [data-leveling-skill]')].some(node=>node.dataset.levelingSkill===name)))
+    failures.push('Sorcerer Lv31: charged, buff or planned ground power incorrectly placed in macro');
+  if(!document.querySelector('#leveling-manual [data-manual-key="3"]')?.textContent.includes('Wish of Concentration'))
+    failures.push('Sorcerer Lv31: Wish must be a manual buff on 3');
   const bind=document.querySelector('#leveling-macro-bind');
   bind.value='M';bind.dispatchEvent(new Event('change',{bubbles:true}));
   if(account().macroBind!=='M'||document.querySelector('#leveling-macro-bind')?.value!=='M'||
