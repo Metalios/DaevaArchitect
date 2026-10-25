@@ -22,7 +22,8 @@ for(const [cls,u] of Object.entries(unlocks)){
   const equipped=Object.keys(stigmas[cls]).slice(0,slots);
   const plan=buildLevelingCombat(cls,level,context,u,equipped,earned,()=>false);
   assert.equal(plan.macroUnlocked,level>=4);
-  const expectedSteps=level<4?0:cls==='sorcerer'&&level>=10?2:1;
+  const groundEquipped=cls==='sorcerer'&&equipped.some(name=>['Fire Wall','Cold Storm'].includes(name)&&earned[name]>0);
+  const expectedSteps=level<4?0:cls==='sorcerer'&&level>=10?(groundEquipped?3:2):1;
   assert.equal(plan.steps.length,expectedSteps,cls+' Lv'+level+': expected '+expectedSteps+' macro step(s)');
   for(const group of plan.stacks){
     assert(group.stack.length>=1&&group.stack.length<=4,cls+' '+level+': invalid stack size');
