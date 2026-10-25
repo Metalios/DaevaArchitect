@@ -513,7 +513,7 @@ function renderRotation(m){
   const classActive=new Set(Object.values(data().skills).slice(0,12).map(s=>s.name));
   const unlockedClass=new Set([...classActive].filter(name=>!levelingMode||(SKILL_UNLOCKS[state.class][name]||1)<=level));
   const slots=levelingMode?levelReward().slots:4;
-  const equippedStigmas=activeStigmas().slice(0,slots).filter(name=>!levelingMode||(m.stigma.levels[name]||0)>0);
+  const equippedStigmas=activeStigmas().slice(0,slots).filter(name=>(m.stigma.levels[name]||0)>0);
   const usableSkills=new Set([...unlockedClass,...equippedStigmas]);
   $('rotation-level').textContent=levelingMode?`Lv ${level} · ready to use`:`${main} Lv ${skillLevelBreakdown(main,m).withOwned} (with obtained boards)`;
   $('rotation-rule-title').textContent=levelingMode?`Your level ${level} combat loop`:p.rule;
@@ -538,6 +538,8 @@ function renderRotation(m){
     for(const slot of hotbar){const replaced=slot[0].some(name=>p.stigmas.includes(name)&&!chosen.includes(name));slot[0]=slot[0].map(name=>p.stigmas.includes(name)&&!chosen.includes(name)?missing.shift()||null:name).filter(Boolean);if(replaced){slot[1]=`${a.context==='pvp'?'PvP':a.context==='party'?'Group':'Solo'} Stigma · use manually`;slot[2]='defense'}if(!slot[0].length){slot[1]='Available for a matchup-specific skill';slot[2]='utility'}}
     for(const name of missing){const index=hotbar.findLastIndex(([skills])=>skills.length===0);const target=index>=0?index:hotbar.length-1;hotbar[target]=[[name],`${a.context==='pvp'?'PvP':a.context==='party'?'Group':'Solo'} Stigma · use manually`,'defense']}
   }
+  // Do not advertise unequipped Stigmas in a manual slot.
+  hotbar=hotbar.map(([skills,cue,tone])=>[skills.filter(name=>usableSkills.has(name)),cue,tone]);
   if(fusionCharged)hotbar[6]=[['Elemental Fusion'],'Fully charge when Four Elements is ready','attack'];
   if(levelingMode){
     // Keep the currently usable manual powers together on 1–8. Future skills
@@ -747,6 +749,7 @@ $('azphel-input').addEventListener('input',e=>{account().azphel=clamp(e.target.v
 $('azphel-input').addEventListener('change',e=>{account().azphel=clamp(e.target.value,0,232);if(state.board==='Azphel')state.preview=account().azphel;render()});
 for(const [id,ctx] of [['party-button','party'],['solo-button','solo'],['pvp-button','pvp']])$(id).addEventListener('click',()=>{if(isLeveling()&&ctx==='pvp')return;account().context=ctx;account()[isLeveling()?'levelingContext':'endgameContext']=ctx;if(ctx!=='pvp'&&state.board==='Azphel')state.board='Nezekan';state.preview=state.board==='Azphel'?(account().azphel||0):budget('crystals');render()});
 $('macro-bind').addEventListener('change',e=>{account().macroBind=e.target.value;render()});
+$('leveling-rotation').addEventListener('change',e=>{if(e.target.id!=='leveling-macro-bind')return;const value=e.target.value;if(!['RMB','Mouse 4','MMB','M'].includes(value))return;account().macroBind=value;render()});
 $('title-open').addEventListener('click',()=>{state.tab='titles';render();document.querySelector('.tabs').scrollIntoView({behavior:'smooth',block:'start'})});
 $('faction-select').addEventListener('change',e=>{account().faction=e.target.value==='asmodian'?'asmodian':'elyos';render()});
 $('title-grid').addEventListener('change',e=>{const id=e.target.dataset.title;if(!id||!TITLE_BY_ID.has(id))return;account().titlesOwned ||= {};delete account().titlesOwned[e.target.dataset.legacyTitle];account().titlesOwned[id]=e.target.checked;render()});
