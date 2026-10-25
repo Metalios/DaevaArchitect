@@ -668,7 +668,11 @@ function renderBoards(m){
   for(const [id,on] of [['board-mode-recommended',!customMode()],['board-mode-custom',customMode()]]){$(id).classList.toggle('active',on);$(id).setAttribute('aria-pressed',String(on))}
   $('custom-board-tools').hidden=!customMode();$('custom-board-status').textContent=customMode()?boardEditNotice:'';
   $('global-route-heading').textContent=customMode()?'Your custom plan · all four PvE boards':isLeveling()?`Level ${currentLevel()} · unlocked PvE boards`:'All four PvE boards · route overview';
-  $('board-section-description').textContent=customMode()?`Select connected tiles on each unlocked board. The planned effects flow into Mastery; Azphel uses its own PvP crystals.`:isLeveling()?`Only boards unlocked by level ${currentLevel()} are included. Nezekan opens at 12, Zikel at 20, Vaizel at 30 and Triniel at 40. Tap a planned node to mark it obtained.`:'One connected purchase order spans Nezekan, Zikel, Vaizel and Triniel. The board tabs below show each part of that route. Azphel appears in PvP and uses its own currency.';
+  $('board-section-description').textContent=customMode()
+    ? 'Single-click any node to preview its effects. Double-click a purchasable node to mark it obtained; use Edit selected node to change your custom planned path.'
+    : isLeveling()
+      ? `Only boards unlocked by level ${currentLevel()} are included. Single-click a tile to preview; double-click to mark obtained. Blue rings are recommended, gold rings are obtained.`
+      : 'Single-click to preview a node. Double-click to mark it obtained; blue rings show the stable recommended path, gold rings show actual purchases. Planned amounts stay in each board tab.';
   renderGlobalBoardRoute(m,nodes);
   // Keep board tabs and their planned allocation exactly as before.
   $('board-spent').textContent=a.context==='pvp'&&!isLeveling()?`${m.boards.spent}/${budget('crystals')} PvE · ${m.azphel.spent}/${a.azphel||0} Azphel`:`${m.boards.spent} / ${budget('crystals')} PvE crystals planned`;
@@ -690,10 +694,10 @@ function renderBoards(m){
   const boardSteps=steps.filter(x=>x.board===state.board),boardMarked=boardSteps.filter(x=>actual.has(x.id)).length,boardPlanned=boardSteps.filter(x=>preview.owned.has(x.id)).length;
   const recommendedTiles=new Set(routeSteps(route,nodes).filter(x=>x.total<=crystalBudget).map(x=>x.id));
   $('board-map-title').textContent=`${state.board} · choose tiles on the board`;
-  $('board-map-progress').textContent=`${boardPlanned} planned on this board · ${boardMarked} recommended tiles obtained. ${customMode()?'Click to edit your plan; record purchases using Mark obtained.':'Blue = recommended next · click to mark gold · suggestions stay fixed until all crystals are spent.'}`;
-  for(let r=1;r<=15;r++)for(let c=1;c<=15;c++){const n=grid.get(`${r}:${c}`);if(!n){html+='<span></span>';continue}const planned=preview.owned.has(n[0])||n[5]===0,obtained=actual.has(n[0]),order=queue.get(n[0]),kind=n[5]===0?'start':n[5]===4?'unique':typeof n[6]?.[0]?.[0]==='number'?'skill':'stat';html+=`<button type="button" class="node ${kind} ${planned?'planned':''} ${recommendedTiles.has(n[0])?'recommended board-suggested':''} ${obtained?'obtained':''} ${order?'queued':''} ${order&&!planned?'queued-later':''} ${boardNext?.id===n[0]?'next':''} ${state.node===n[0]?'selected':''}" data-node="${n[0]}" title="${esc(effectText(n))}${order?` · upcoming click ${order} across boards`:''}${n[5]&&boardOpen(state.board)?` · click to ${customMode()?'edit custom plan':'mark obtained'}`:''}" aria-label="${esc(effectText(n))}; row ${r}, column ${c}; ${obtained?'obtained':planned?'planned':'later'}${order?`; upcoming click ${order}`:''}" aria-pressed="${customMode()?!!planned:obtained}" ${boardOpen(state.board)?'': 'disabled'}>${nodeVisual(n)}${order?`<span class="queue-badge" aria-hidden="true">${order}</span>`:''}</button>`}
+  $('board-map-progress').textContent=`${boardPlanned} planned on this board · ${boardMarked} recommended tiles obtained. Single-click previews · double-click marks gold · your blue path stays fixed until your crystals are spent.`;
+  for(let r=1;r<=15;r++)for(let c=1;c<=15;c++){const n=grid.get(`${r}:${c}`);if(!n){html+='<span></span>';continue}const planned=preview.owned.has(n[0])||n[5]===0,obtained=actual.has(n[0]),order=queue.get(n[0]),kind=n[5]===0?'start':n[5]===4?'unique':typeof n[6]?.[0]?.[0]==='number'?'skill':'stat';html+=`<button type="button" class="node ${kind} ${planned?'planned':''} ${recommendedTiles.has(n[0])?'recommended board-suggested':''} ${obtained?'obtained':''} ${order?'queued':''} ${order&&!planned?'queued-later':''} ${boardNext?.id===n[0]?'next':''} ${state.node===n[0]?'selected':''}" data-node="${n[0]}" title="${esc(effectText(n))}${order?` · upcoming click ${order} across boards`:''}${n[5]&&boardOpen(state.board)?' · click to preview · double-click to mark obtained':''}" aria-label="${esc(effectText(n))}; row ${r}, column ${c}; ${obtained?'obtained':planned?'planned':'later'}${order?`; upcoming click ${order}`:''}" aria-pressed="${customMode()?!!planned:obtained}" ${boardOpen(state.board)?'': 'disabled'}>${nodeVisual(n)}${order?`<span class="queue-badge" aria-hidden="true">${order}</span>`:''}</button>`}
   $('board-grid').innerHTML=html;const selected=state.node&&nodes.get(state.node)?.board===state.board?nodes.get(state.node).node:null;
-  $('selected-node').innerHTML=selected?`<div class="selected-icon">${nodeVisual(selected)}</div><div><strong>${esc(effectText(selected))}</strong><small>Row ${selected[1]}, column ${selected[2]} · ${selected[5]} crystal${selected[5]===1?'':'s'} · ${selected[5]===0?'Start node':actual.has(selected[0])?'Obtained':preview.owned.has(selected[0])?'Planned within budget':'Unplanned'}. ${selected[5]?customMode()?'Click the tile to add or remove it from your custom plan.':'Click the tile to '+(actual.has(selected[0])?'unmark':'mark')+' obtained.':''}</small></div>`:`<strong>${state.board}</strong><small>${boardOpen(state.board)?customMode()?'Click a connected tile to plan it. Numbered badges show the order of your next selected tiles.':'Blue ring = recommended route · gold ring = tile obtained. Click a blue tile to mark it gold; click again to undo. The route stays fixed until the entire crystal total is spent.':`Locked until level ${BOARD_UNLOCKS[state.board]}. Nodes become selectable then.`}</small>`;
+  $('selected-node').innerHTML=selected?`<div class="selected-icon">${nodeVisual(selected)}</div><div><strong>${esc(effectText(selected))}</strong><small>Row ${selected[1]}, column ${selected[2]} · ${selected[5]} crystal${selected[5]===1?'':'s'} · ${selected[5]===0?'Start node':actual.has(selected[0])?'Obtained':preview.owned.has(selected[0])?'Planned within budget':'Unplanned'}. ${selected[5]?'Single-click previews; double-click the tile to '+(actual.has(selected[0])?'unmark':'mark')+' obtained.':''}</small></div>`:`<strong>${state.board}</strong><small>${boardOpen(state.board)?customMode()?'Click a connected tile to plan it. Numbered badges show the order of your next selected tiles.':'Blue ring = recommended route · gold ring = obtained tile. Single-click to preview its effect; double-click to toggle obtained. The recommendations stay fixed until your total crystals have been spent.':`Locked until level ${BOARD_UNLOCKS[state.board]}. Nodes become selectable then.`}</small>`;
   $('selected-node-obtained').hidden=!selected||selected[5]===0;
   $('selected-node-obtained').textContent=selected&&actual.has(selected[0])?'Unmark tile obtained':'Mark tile obtained';
   const boardSkills={},boardStats={};for(const n of board.nodes){if(!preview.owned.has(n[0]))continue;for(const [key,value] of n[6]){if(typeof key==='number'){const name=data().skills[key]?.name||String(key);boardSkills[name]=(boardSkills[name]||0)+value}else boardStats[key]=(boardStats[key]||0)+value}}
@@ -858,18 +862,45 @@ $('copy-recommended-board').addEventListener('click',()=>{const nodes=nodeMap();
 $('clear-custom-board').addEventListener('click',()=>{account().customNodes=[];account().customAzphelNodes=[];boardEditNotice='Custom plan cleared. Obtained marks are kept separately.';state.node=null;render()});
 $('global-board-allocation').addEventListener('click',e=>{const b=e.target.closest('[data-board-jump]');if(!b||!boardOpen(b.dataset.boardJump))return;state.board=b.dataset.boardJump;state.preview=budget('crystals');state.node=null;renderBoards(model())});
 $('global-route-next').addEventListener('click',e=>{const b=e.target.closest('[data-route-node]');if(!b)return;state.board=b.dataset.routeBoard;state.preview=budget('crystals');state.node=Number(b.dataset.routeNode);renderBoards(model());document.querySelector('.node.selected')?.scrollIntoView({behavior:'smooth',block:'center',inline:'center'})});
-$('board-grid').addEventListener('click',e=>{
-  const b=e.target.closest('[data-node]');if(!b||!boardOpen(state.board))return;
-  const id=Number(b.dataset.node),entry=nodeMap().get(id);
+// A single click MUST NOT rebuild the node grid. Replacing the clicked DOM
+// element would interrupt the browser's native dblclick sequence.
+function previewBoardNode(id){
+  const entry=nodeMap().get(id);
   if(!entry||entry.board!==state.board)return;
   state.node=id;
-  if(entry.node[5]===0){renderBoards(model());return}
-  if(customMode()){setCustomNode(id);render();return}
+  document.querySelectorAll('#board-grid .node.selected').forEach(el=>el.classList.remove('selected'));
+  const button=document.querySelector('#board-grid [data-node="'+id+'"]');
+  if(button)button.classList.add('selected');
+  const node=entry.node,owned=obtainedNodes().has(id),planned=boardPlan(state.preview,entry.board==='Azphel').owned.has(id);
+  $('selected-node').innerHTML=`<div class="selected-icon">${nodeVisual(node)}</div><div><strong>${esc(effectText(node))}</strong><small>Row ${node[1]}, column ${node[2]} · ${node[5]} crystal${node[5]===1?'':'s'} · ${node[5]===0?'Start node':owned?'Obtained':planned?'Planned within budget':'Not in plan'}. ${node[5]?'Double-click to '+(owned?'unmark':'mark')+' obtained, or use the button below.':'No crystals required.'}</small></div>`;
+  $('selected-node-obtained').hidden=!node[5];
+  $('selected-node-obtained').textContent=owned?'Unmark tile obtained':'Mark tile obtained';
+  const planButton=$('selected-node-plan');
+  planButton.hidden=!customMode()||!node[5];
+  if(!planButton.hidden)planButton.textContent=(customIds(entry.board==='Azphel').includes(id)?'Remove from':'Add to')+' custom planned path';
+  if(typeof syncV2==='function')syncV2(model());
+}
+$('board-grid').addEventListener('click',e=>{
+  const b=e.target.closest('[data-node]');
+  if(b&&boardOpen(state.board))previewBoardNode(Number(b.dataset.node));
+});
+$('board-grid').addEventListener('dblclick',e=>{
+  const b=e.target.closest('[data-node]');
+  if(!b||!boardOpen(state.board))return;
+  const id=Number(b.dataset.node),entry=nodeMap().get(id);
+  if(!entry||entry.board!==state.board||entry.node[5]===0)return;
+  state.node=id;
   toggleBoardObtained(id);
-  // All board-ring and owned Mastery level displays refresh after a purchase.
   render();
 });
-$('selected-node-obtained').addEventListener('click',()=>{if(toggleBoardObtained(state.node))render();else renderBoards(model())});
+$('selected-node-obtained').addEventListener('click',()=>{
+  if(toggleBoardObtained(state.node))render();else renderBoards(model());
+});
+$('selected-node-plan').addEventListener('click',()=>{
+  const entry=nodeMap().get(state.node);
+  if(!customMode()||!entry||!boardOpen(entry.board)||!entry.node[5])return;
+  setCustomNode(state.node);render();
+});
 $('mark-planned-button').addEventListener('click',()=>{
   // Bulk marking also respects the already-obtained actual crystal total.
   const nodes=nodeMap();
