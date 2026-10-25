@@ -22,7 +22,7 @@ for(const [cls,u] of Object.entries(unlocks)){
   const equipped=Object.keys(stigmas[cls]).slice(0,slots);
   const plan=buildLevelingCombat(cls,level,context,u,equipped,earned,()=>false);
   assert.equal(plan.macroUnlocked,level>=4);
-  const expectedSteps=level<4?0:1;
+  const expectedSteps=level<4?0:cls==='sorcerer'&&level>=10?2:1;
   assert.equal(plan.steps.length,expectedSteps,cls+' Lv'+level+': expected '+expectedSteps+' macro step(s)');
   for(const group of plan.stacks){
     assert(group.stack.length>=1&&group.stack.length<=4,cls+' '+level+': invalid stack size');
@@ -32,7 +32,14 @@ for(const [cls,u] of Object.entries(unlocks)){
   assert.equal(new Set(plan.steps).size,plan.steps.length,'duplicate macro hotbar key');
   for(const group of plan.stacks)
     assert.equal(plan.steps.includes(group.key),group.macro,cls+' '+level+' wrong manual/automatic stack classification');
-  assert(plan.manualKeys.length<=4&&plan.manualKeys.every(x=>(u[x.name]!==undefined&&u[x.name]<=level)||(stigmas[cls][x.name]&&earned[x.name]>0)),cls+' '+level+': unlearned manual ability');
+  assert(plan.manualKeys.length<=(cls==='sorcerer'?8:4)&&plan.manualKeys.every(x=>(u[x.name]!==undefined&&u[x.name]<=level)||(stigmas[cls][x.name]&&earned[x.name]>0)),cls+' '+level+': unlearned manual ability');
+  if(cls==='sorcerer'){
+   const automated=new Set(plan.stacks.filter(group=>group.macro).flatMap(group=>group.stack));
+   for(const buff of ['Wish of Concentration','Element Enhancement','Delayed Explosion','Fire Wall','Cold Storm','Hellfire',"Winter's Shackles"])
+    assert(!automated.has(buff),'Sorcerer Lv'+level+': buff or charged/set-piece ability automated: '+buff);
+   if(level>=14)assert.equal(plan.manualKeys[0]?.name,'Hellfire','Sorcerer manual Hellfire should be key 1');
+   if(level>=12)assert(plan.manualKeys.some(x=>x.name==='Wish of Concentration'),'Sorcerer Wish buff not manual');
+  }
   assert(plan.manual.every(name=>u[name]<=level));
   assert(plan.rows.every((r,index)=>r.row===index&&r.name===plan.stack[index]));
   assert(!plan.stacks.flatMap(group=>group.stack).includes(plan.weave));
@@ -47,20 +54,23 @@ const templar=buildLevelingCombat('templar',8,'solo',unlocks.templar,[],{});
 assert.deepEqual(Array.from(templar.stack),['Judgment','Shield Smite','Warding Strike','Pummel']);
 assert.deepEqual(Array.from(buildLevelingCombat('templar',8,'party',unlocks.templar,[],{}).stack),['Judgment','Shield Smite','Pummel']);
 const sorc31=buildLevelingCombat('sorcerer',31,'solo',unlocks.sorcerer,[],{});
-assert.deepEqual(Array.from(sorc31.steps),['Q'],'Sorcerer Lv31 uses one hotbar Macro step');
+assert.deepEqual(Array.from(sorc31.steps),['Q','E'],'Sorcerer PvE must automate BOTH damage and conditional followups');
 assert.equal(sorc31.weaveKey,'LMB');
-assert.deepEqual(Array.from(sorc31.stacks[0].stack),['Bittercold Wind','Blaze','Firestorm','Wish of Concentration']);
-assert.deepEqual(Array.from(sorc31.stacks[1].stack),['Frost Burst','Frost','Ice Chain']);
-assert.equal(sorc31.stacks[1].macro,false,'Ice should be a manual hotbar stack');
-assert.equal(sorc31.manualKeys[0].name,'Hellfire');
-assert(sorc31.manual.includes('Hellfire')&&sorc31.manual.includes("Winter's Shackles"));
-assert(!sorc31.stacks.flatMap(x=>x.stack).includes('Hellfire'));
+assert.deepEqual(Array.from(sorc31.stacks[0].stack),['Bittercold Wind','Frost','Firestorm']);
+assert.deepEqual(Array.from(sorc31.stacks[1].stack),['Blaze','Frost Burst']);
+assert(sorc31.stacks.every(group=>group.macro),'both damage stacks should be run by the RMB Macro');
+assert.deepEqual(Array.from(sorc31.manualKeys.slice(0,3).map(x=>x.name)),['Hellfire',"Winter's Shackles",'Wish of Concentration']);
 const sorcReset=buildLevelingCombat('sorcerer',45,'solo',unlocks.sorcerer,[],{},
-  (name,option)=>name==='Wish of Concentration'&&option===5);
-assert.equal(sorcReset.stacks[0].stack[0],'Wish of Concentration',
-  'Purchased Lv16 Wish cooldown reset must be first priority on Q');
-assert.deepEqual(Array.from(sorcReset.steps),['Q']);
-
+ (name,option)=>name==='Wish of Concentration'&&option===5);
+assert.deepEqual(Array.from(sorcReset.steps),['Q','E']);
+assert(!sorcReset.stacks.some(g=>g.stack.includes('Wish of Concentration')),
+ 'Cooldown reset Specialty does not turn manual Wish into an automated buff');
+const sorcWithStigmas=buildLevelingCombat('sorcerer',34,'solo',unlocks.sorcerer,
+ ['Element Enhancement','Delayed Explosion','Fire Wall'],
+ {['Element Enhancement']:1,['Delayed Explosion']:1,['Fire Wall']:1});
+assert(sorcWithStigmas.manualKeys.some(x=>x.name==='Element Enhancement'));
+assert(!sorcWithStigmas.manualKeys.some(x=>x.name==='Cold Storm'),'No fourth level-34 Stigma');
+assert(!sorcWithStigmas.stacks.some(g=>g.stack.includes('Element Enhancement')));
 const chanter=buildLevelingCombat('chanter',14,'solo',unlocks.chanter,[],{});
 assert(!chanter.stack.includes('Spinning Strike'),'pre-reset Chanter must not waste trigger');
 const chanterReset=buildLevelingCombat('chanter',44,'solo',unlocks.chanter,[],{},(name,opt)=>name==='Dark Crush'&&opt===5);
