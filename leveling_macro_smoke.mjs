@@ -48,9 +48,11 @@ try{
    }
    const shownSkills=shownRows.map(el=>el.dataset.levelingSkill);
    const manual=[...document.querySelectorAll('#leveling-manual .leveling-skill strong')].map(el=>el.textContent);
-   for(const name of [...shownSkills,...manual,plan.weave])
-    if((SKILL_UNLOCKS[cls][name]||Infinity)>level)
-      failures.push(cls+' '+context+' '+level+': locked '+name);
+   for(const name of [...shownSkills,...manual,plan.weave]){
+    const classReady=SKILL_UNLOCKS[cls][name]!==undefined&&SKILL_UNLOCKS[cls][name]<=level;
+    const stigmaReady=(m.stigma.levels[name]||0)>0&&activeStigmas().slice(0,levelReward().slots).includes(name);
+    if(!classReady&&!stigmaReady)failures.push(cls+' '+context+' '+level+': locked '+name);
+   }
    if(shownSkills.includes(plan.weave))failures.push(cls+' '+level+': repeat attack in macro');
    if(level>=4&&!document.querySelector('#leveling-control-pair')&&!document.querySelector('.leveling-control-pair'))
      failures.push(cls+' '+level+': missing visible LMB + Macro controls');
