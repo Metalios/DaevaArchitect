@@ -120,7 +120,7 @@ const PROFILES = {
       [['Flame Scattershot'],'3: Manual stagger-window attack','attack'],
       [['Element Enhancement','Delayed Explosion'],'4: Buffs only when needed','buff'],
       [['Cold Storm','Fire Wall'],'5: Ground effects only on stable targets','attack'],
-      [['Steel Barrier','Arctic Armor'],'6: Defensive swap (only if equipped)','defense'],
+      [[], '6: Optional defensive Stigma if separately equipped','defense'],
       [[], '7: Available for personal preference','utility'],
       [[], '8: Available for personal preference','utility']
     ],
