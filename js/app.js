@@ -574,6 +574,9 @@ function renderRotation(m){
   // AION 2 mode layout. Clear that alias, then rebind Quick Use 2's T to R.
   $('quick-use-2-bind').value=quickUse2Bind;
   $('rotation-stack-bindings').textContent=`Q · E · ${quickUse2Bind}`;
+  $('quick-use-2-help').textContent=quickUse2Bind==='R'
+    ?'AION 2 defaults: Quick Use 1 = LMB / alternate R; Quick Use 2 = RMB / alternate T. Rebind Macro to RMB, first clear R from Quick Use 1, then map Quick Use 2 from T to R.'
+    :'AION 2 defaults: Quick Use 1 = LMB / alternate R; Quick Use 2 = RMB / alternate T. Rebind Macro to RMB and keep Quick Use 2 on T. R stays the alternate for LMB unless you independently remove it.';
   $('rotation-control-status').textContent=quickUse2Bind==='R'
     ?'Configured for AION 2 mode: LMB = basic attack; RMB = in-game Macro; 1–8 = manual skills; Q/E/R = stack keys (Quick Use 2: T → R). Clear R as Quick Use 1 alternate before binding Quick Use 2.'
     :'AION 2 mode: LMB = basic attack; RMB = in-game Macro; 1–8 = manual skills; Q/E/T = stack keys (original Quick Use 2 binding).';
