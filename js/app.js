@@ -356,6 +356,10 @@ function model(){
     // increase inside the same unlock band must not shuffle suggestions.
     const contextKey=JSON.stringify([state.class,a.context,BOARD_NAMES.filter(boardOpen)]);
     const snapshot=a.recommendedRouteSnapshot;
+    // Prior to any real purchases, changes to the player's goal, mastery,
+    // equipment or Stigmas should still influence the recommended route.
+    // Once purchases begin, keep that route stable through the whole budget.
+    const basisKey=JSON.stringify([target,mastery.levels,stigma.levels,gearRanks]);
     const total=budget('crystals'),spent=obtainedCrystalSpend(false);
     const exhausted=total>0&&spent>=total;
     const valid=snapshot?.contextKey===contextKey&&
@@ -365,7 +369,8 @@ function model(){
     // stable during later renders, and the next cycle refreshes at 120/120.
     const newBudgetAfterCompletion=valid&&snapshot.completedBudget!==null&&
       snapshot.completedBudget!==undefined&&total>snapshot.completedBudget;
-    const update=!valid||newBudgetAfterCompletion||(exhausted&&snapshot.completedBudget!==total);
+    const update=!valid||newBudgetAfterCompletion||(exhausted&&snapshot.completedBudget!==total)||
+      (spent===0&&snapshot.basisKey!==basisKey);
     if(update){
       const actual=obtainedNodes();
       const reference={mastery,stigma,boards:{owned:actual},effects:effects(actual)};
@@ -376,7 +381,7 @@ function model(){
         typeof progressionBoardTargets==='function'?progressionBoardTargets(state.class,a.context):{});
       liveRoute=computed.route;liveRouteBasis={initialFocus:computed.initialFocus,baseCp:computed.baseCp};
       a.recommendedRouteSnapshot={
-        contextKey,route:computed.route,
+        contextKey,basisKey,route:computed.route,
         initialFocus:computed.initialFocus,baseCp:computed.baseCp,
         completedBudget:exhausted?total:null
       };
@@ -913,6 +918,7 @@ $('mark-planned-button').addEventListener('click',()=>{
 $('clear-obtained-button').addEventListener('click',()=>{
   const nodes=nodeMap();
   storeObtained(new Set([...obtainedNodes()].filter(id=>nodes.get(id).board==='Azphel')));
+  account().recommendedRouteSnapshot=null;
   boardPurchaseNotice='';
   render();
 });
