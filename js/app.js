@@ -196,13 +196,14 @@ function masteryRankCap(name){
   if(UNGATED_MASTERY_PASSIVES[state.class]?.includes(name))return 10;
   return Math.min(10,2+Math.floor((currentLevel()-unlocked)/3));
 }
-function masteryStages(){
+function masteryStages(boardSkills=null){
   const advised=typeof adviceFor==='function'?adviceFor(state.class,account().context):null;
   if(advised){
     const a=account(),skillSet=new Set(skillNames()),unlocks=SKILL_UNLOCKS[state.class];
     const pick=names=>(names||[]).filter((name,i)=>skillSet.has(name)&&(unlocks[name]||1)<=currentLevel()&&(names.indexOf(name)===i));
     const core=pick(advised.core),support=pick(advised.support),rest=pick(skillNames().filter(name=>!core.includes(name)&&!support.includes(name)));
-    const bonuses=effects(obtainedNodes()).skills,equipped=gearSkillLevels();
+    const obtained=new Set([...obtainedNodes()].filter(id=>nodeMap().has(id)&&boardOpen(nodeMap().get(id).board)));
+    const bonuses=boardSkills??effects(obtained).skills,equipped=gearSkillLevels();
     // A character's ACTUAL equipment is optional input, never invented gear.
     // Use those bonuses to avoid wasting scarce purchased ranks on thresholds
     // already attained by the player. This changes a recommendation, not its
@@ -246,7 +247,7 @@ function masteryStages(){
     const passives=(LEVELING_PASSIVE_PRIORITY[state.class]||[]).filter(name=>(SKILL_UNLOCKS[state.class][name]||Infinity)<=currentLevel());
     // Count only obtained nodes and equipped skill bonuses when planning the
     // next breakpoint: a projected (unbought) board tile is not a current rank.
-    const ownedSkillBonuses=effects(obtainedNodes()).skills;
+    const ownedSkillBonuses=boardSkills??effects(new Set([...obtainedNodes()].filter(id=>nodeMap().has(id)&&boardOpen(nodeMap().get(id).board)))).skills;
     // Gear is never assumed or used to choose recommended Mastery purchases.
     const target=(name,threshold)=>Math.max(1,Math.min(10,threshold-(ownedSkillBonuses[name]||0)));
     return available([...support,...core,...passives.map(name=>[name,5]),...next.map(name=>[name,target(name,8)]),...rest.map(name=>[name,target(name,8)]),...passives.map(name=>[name,10]),...next.map(name=>[name,target(name,12)]),...rest.map(name=>[name,target(name,12)])]);
@@ -395,11 +396,17 @@ function model(){
     liveRouteKey=contextKey;
   }
   const boards=boardPlan(budget('crystals')),azphel=boardPlan(isLeveling()?0:a.azphel||0,true);
-  return {mastery,stigma,boards,azphel,
-    // `effects` is the route funded by the player's entered crystal
-    // budget. Obtained marks are a separate source of CURRENT bonuses. A
-    // projected route must not be described as an already acquired rank.
-    effects:effects(boards.owned),acquiredEffects:effects(new Set([...obtainedNodes()].filter(id=>boardOpen(nodeMap().get(id).board)))),
+  const plannedEffects=effects(boards.owned);
+  const acquiredEffects=effects(new Set([...obtainedNodes()].filter(id=>nodeMap().has(id)&&boardOpen(nodeMap().get(id).board))));
+  // The route is picked with the provisional allocation and then Mastery is
+  // repriced against the actual funded board bonus. Avoid buying rank targets
+  // that the recommended Daevanion route already supplies. Manual allocations
+  // remain untouched. Neither kind of plan is an in-game acquisition claim.
+  const fundedMastery=a.manualMastery?mastery:allocate(
+    masteryStages(plannedEffects.skills),budget('mastery'),masteryCost,names,1,
+    isLeveling()?masteryRankCap:null);
+  return {mastery:fundedMastery,stigma,boards,azphel,
+    effects:plannedEffects,acquiredEffects,
     azphelEffects:effects(azphel.owned)};
 }
 function skillLevelBreakdown(name,m){
@@ -407,12 +414,14 @@ function skillLevelBreakdown(name,m){
     purchased=m.acquiredEffects?.skills[name]||0,
     projected=m.effects.skills[name]||0,
     gear=(account().gear[name]||0)+(gearSkillLevels()[name]||0);
-  return {mastery,boardOwned:purchased,boardPlanned:projected,gear,
-    // Values combine the selected Mastery rank PLAN with either marked-owned
-    // or planned board nodes. Actual in-game rank may differ when the user's
-    // manually entered purchases do not match the recommendation.
+  const entered=Number(account().currentRanks?.[name]);
+  const recordedRank=Number.isInteger(entered)&&entered>=1&&entered<=10?entered:null;
+  return {mastery,boardOwned:purchased,boardPlanned:projected,gear,recordedRank,
+    // Both targets assume the proposed / manually selected Mastery rank. Only
+    // withRecorded uses the player's explicitly entered current purchase rank.
     withOwned:Math.min(40,mastery+purchased+gear),
-    withPlan:Math.min(40,mastery+projected+gear)};
+    withPlan:Math.min(40,mastery+projected+gear),
+    withRecorded:recordedRank===null?null:Math.min(40,recordedRank+purchased+gear)};
 }
 function effective(name,m){return skillLevelBreakdown(name,m).withPlan}
 function render(){
