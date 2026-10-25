@@ -593,8 +593,8 @@ function renderRotation(m){
    </div>
    <div class="rotation-quick-steps">
     <div><span class="rotation-quick-number">1</span><b>Build your damage column${macroColumns.length===1?'':'s'}</b>
-     <p>In Skills (K), put the spells in the <b>${esc(macroColumns.map(s=>s.key).join(' + '))}</b> stacks below. <strong>Row 0 goes at the bottom</strong> and is tried first.</p></div>
-    <div><span class="rotation-quick-number">2</span><b>Give RMB the Macro action</b>
+     <p>In Skills (K), put the spells in the <b>${esc(macroColumns.map(s=>s.key).join(' + '))}</b> stacks below. <strong>Row 0 at the bottom</strong> is tried first.</p></div>
+    <div><span class="rotation-quick-number">2</span><b>Bind the in-game Macro hotkey</b>
      <p>In Skills (K) → Macro, add ${macroSteps.length} step${macroSteps.length===1?'':'s'}: <b>${esc(macroSteps.join(' → '))}</b>. Start at 10 ms. Then bind Macro to <b>${esc(macroKey)}</b> in Settings → Key Settings → General.</p></div>
     <div><span class="rotation-quick-number">3</span><b>Play with just a few buttons</b>
      <p><strong>Hold ${esc(weaveKey)} + ${esc(macroKey)}</strong> during safe damage. Press manual keys (shown below) when useful. Release Macro to charge a spell, heal or move.</p></div>
