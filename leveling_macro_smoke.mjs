@@ -97,6 +97,26 @@ try{
      !document.querySelector('#leveling-rotation')?.textContent.includes('LMB + M'))
     failures.push('Changing macro hotkey to keyboard M does not update/survive a render');
   account().macroBind='RMB';render();
+  // AION 2 mode has a separate Quick Use 2 key. The keyboard T -> R
+  // remap is not an alternate basic attack and must update macro diagrams.
+  const quickUse2=document.querySelector('#quick-use-2-bind');
+  if(!quickUse2||quickUse2.value!=='R'||!document.querySelector('#rotation-control-status')?.textContent.includes('T → R'))
+    failures.push('AION 2 mode default T-to-R Quick Use 2 guidance missing');
+  quickUse2.value='T';quickUse2.dispatchEvent(new Event('change',{bubbles:true}));
+  if(account().quickUse2Bind!=='T'||document.querySelector('#quick-use-2-bind').value!=='T'||
+     !document.querySelector('#rotation-stack-bindings')?.textContent.includes('Q · E · T'))
+    failures.push('Changing Quick Use 2 from remapped R to original T did not update/re-render');
+  const groundPlan=buildLevelingCombat('sorcerer',45,'party',SKILL_UNLOCKS.sorcerer,
+    ['Fire Wall'],{'Fire Wall':5});
+  const sample=document.createElement('div');
+  sample.innerHTML=renderLevelingCombatMarkup(groundPlan,'RMB',account().quickUse2Bind);
+  if(!sample.querySelector('[data-stack-key="T"]')||
+     ![...sample.querySelectorAll('#leveling-macro-step kbd')].some(k=>k.textContent==='T'))
+    failures.push('Leveling R-based ground macro should display physical T when not remapped');
+  const resetQuickUse2=document.querySelector('#quick-use-2-bind');
+  resetQuickUse2.value='R';resetQuickUse2.dispatchEvent(new Event('change',{bubbles:true}));
+  if(account().quickUse2Bind!=='R'||!document.querySelector('#rotation-control-status')?.textContent.includes('Q/E/R'))
+    failures.push('Quick Use 2 R remap did not restore after original T was selected');
   state.class='chanter';a=account();a.journey='leveling';a.context='solo';leveling().level=14;render();
   if(document.querySelector('#leveling-stack')?.textContent.includes('Spinning Strike'))
     failures.push('Chanter pre-cooldown-reset stack used a second trigger');
