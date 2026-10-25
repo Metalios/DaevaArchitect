@@ -72,9 +72,16 @@ try{
   if(!sorc.includes('Flame Arrow')||!sorc.includes('Hellfire')||!sorc.includes('LMB')||!sorc.includes('RMB'))
     failures.push('Sorcerer mouse/macro/manual setup not clear');
   const macro=[...document.querySelectorAll('#macro-stacks .macro-step')].map(x=>x.textContent);
-  if(macro.length!==1||!macro[0].includes('Q'))failures.push('Sorcerer should have one Q Macro step by default');
-  if(!document.querySelector('#macro-stacks [data-macro-key="E"].macro-stack-manual'))
-    failures.push('Sorcerer manual E ice stack not shown');
+  if(macro.length!==2||!macro[0].includes('Q')||!macro[1].includes('E'))
+    failures.push('Sorcerer must use one held RMB macro with two Q/E damage steps');
+  if(!document.querySelector('#macro-stacks [data-macro-key="E"].macro-stack-auto'))
+    failures.push('Sorcerer E conditional follow-ups not automatically handled');
+  const autoSkills=[...document.querySelectorAll('#macro-stacks .macro-stack-auto .macro-physical-stack [data-skill]')].map(node=>node.dataset.skill);
+  for(const manualOnly of ['Hellfire','Wish of Concentration',"Winter's Shackles",'Element Enhancement','Delayed Explosion','Fire Wall','Cold Storm'])
+    if(autoSkills.includes(manualOnly))failures.push('Sorcerer manual skill included in RMB macro: '+manualOnly);
+  const manualKeys=[...document.querySelectorAll('#rotation-quick-guide [data-easy-key]')].map(el=>el.textContent);
+  if(!manualKeys[0]?.includes('Hellfire')||!manualKeys[2]?.includes('Wish of Concentration'))
+    failures.push('Sorcerer manual Hellfire and Wish assignments missing');
   return failures;
  });
  assert.deepEqual(errors,[],'Browser runtime errors');

@@ -97,34 +97,36 @@ const PROFILES = {
   },
   sorcerer: {
     name:'Sorcerer', role:'Magic damage', kind:'dps',
-    summary:'Use fire burst, keep Hellfire fully charged, and place ground effects where the boss will stay.',
+    summary:'Hold LMB + RMB for both damage stacks; the macro handles fire, Frost and conditional follow-ups. Buffs, ground zones and charged Hellfire stay manual.',
     stigmas:['Element Enhancement','Delayed Explosion','Fire Wall','Cold Storm'],
     swap:'Steel Barrier or Arctic Armor for difficult survival checks.',
-    rule:'Charge Hellfire by hand. Do not spend Fire Wall or Cold Storm where the boss will immediately move.',
-    opener:['Set up Element Enhancement and Wish of Concentration.','Place Fire Wall / Cold Storm for a stable boss window.','Charge Hellfire fully and continue the fire line.'],
-    loop:['Use Blaze and Firestorm when ready.','Keep Flame Arrow going for MP and charge Hellfire on its own key.','Reposition ground damage for mechanics; use Defiance or barriers for danger.'],
+    rule:'RMB cycles Q (damage and Frost setup) plus E (Blaze/Frost Burst). Hold Flame Arrow on LMB. Fully charge Hellfire yourself; keep all buffs and ground Stigmas manual.',
+    opener:['Questing: hold LMB + RMB. They attempt your normal damage AND follow-up stacks.','For a dangerous target, press earned buffs manually. Apply Winter\'s Shackles before Hellfire if safe.','Charge Hellfire fully on 1, then resume LMB + RMB. If Wish cooldown reset is selected, use Wish after spending big cooldowns.'],
+    loop:['Keep LMB + RMB held during safe uptime. The Macro presses Q and E for you.','Use 1 for a fully charged Hellfire; press buffs on 3–5 only when they help a burst.','Keep ground spells and defenses manual. Release Macro for dodges and boss mechanics.'],
     weave:'Flame Arrow',weaveKey:'LMB',
     stacks:[
-      // Q is the ONLY automated key: minimizes step overhead on a frequent
-      // fire engine. Ice/control and boss ground effects remain intentional.
-      {key:'Q',title:'Automatic fire engine',skills:['Bittercold Wind','Blaze','Firestorm','Wish of Concentration']},
-      {key:'E',title:'Ice/control when needed',skills:['Frost Burst','Frost','Ice Chain'],manual:true},
-      {key:'4',title:'Buffs, press manually',skills:['Element Enhancement','Delayed Explosion'],manual:true},
-      {key:'5',title:'Boss ground effects, manual',skills:['Cold Storm','Fire Wall'],manual:true}
+      {key:'Q',title:'Auto damage + Frost setup',skills:['Bittercold Wind','Frost','Firestorm']},
+      {key:'E',title:'Auto mark follow-ups',skills:['Blaze','Frost Burst']}
     ],
-    macro:['Q'], hold:'Hold Flame Arrow on LMB with RMB (game Macro). The Macro presses Q; manually fully charge Hellfire on 1.',
-    manual:['Hellfire — full charge','4 and 5 — buffs and ground damage when the boss is stable','Flame Scattershot — separate key','Steel Barrier / Arctic Armor — survival','Defiance (Space) — break control'],
+    macro:['Q','E'],
+    hold:'Hold LMB (Flame Arrow) + RMB (in-game Macro). RMB runs Q and E automatically; manually fully charge Hellfire on 1.',
+    manual:['Hellfire — fully charge on 1',
+      "Winter's Shackles — damage setup on 2",
+      'Wish of Concentration — offensive buff on 3',
+      'Element Enhancement / Delayed Explosion — learned Stigmas, manual',
+      'Fire Wall / Cold Storm — manual ground damage when boss is stable',
+      'Defiance (Space) — break control'],
     hotbar:[
-      [['Hellfire'],'1: Hold until fully charged, then release','attack'],
-      [["Winter's Shackles"],'2: Manual setup before burst','attack'],
-      [['Flame Scattershot'],'3: Manual stagger-window attack','attack'],
-      [['Element Enhancement','Delayed Explosion'],'4: Buffs only when needed','buff'],
-      [['Cold Storm','Fire Wall'],'5: Ground effects only on stable targets','attack'],
-      [[], '6: Optional defensive Stigma if separately equipped','defense'],
-      [[], '7: Available for personal preference','utility'],
-      [[], '8: Available for personal preference','utility']
+      [['Hellfire'],'1: Hold to fully charge, then release','attack'],
+      [["Winter's Shackles"],'2: Manual damage setup before Hellfire','attack'],
+      [['Wish of Concentration'],'3: Manual buff; use after big cooldowns with option 5','buff'],
+      [['Element Enhancement'],'4: Damage buff only when learned and equipped','buff'],
+      [['Delayed Explosion'],'5: Burst debuff only when learned and equipped','buff'],
+      [['Fire Wall'],'6: Ground damage; only on stable targets','attack'],
+      [['Cold Storm'],'7: Ground damage; only on stable targets','attack'],
+      [['Flame Scattershot'],'8: Situational stagger attack','attack']
     ],
-    hotbarNote:'Easy preset: hold LMB + RMB; RMB only presses Q. Q contains the fire engine with Row 0 at the bottom. E is an optional MANUAL ice stack. Hellfire stays on 1 so it can fully charge; important manual actions stay on 1–4.',
+    hotbarNote:'Easy PvE: only hold LMB + RMB for ordinary fights. RMB runs both Q and E (two internal Macro steps). Use 1 to fully charge Hellfire; 2–5 are manual setup/buffs, and 6–8 are situational. Never add buffs, charge spells or ground zones to the automatic stacks.',
   },
   spiritmaster: {
     name:'Spiritmaster', role:'Summon damage', kind:'dps',
