@@ -30,9 +30,9 @@ const PROGRESSION_PLANS={
   stigma:[["Vaizel's Authority",20],['Bow of Blessing',10],['Supporting Fire',10],['Griffon Arrow',5]]
  },
  sorcerer:{
-  leveling:['Flame Arrow','Ice Chain','Firestorm','Hellfire','Wish of Concentration','Blaze'],
-  endgame:['Hellfire','Wish of Concentration','Flame Arrow','Blaze','Firestorm',"Winter's Shackles"],
-  breakpoints:[['Hellfire',16],['Wish of Concentration',16],['Hellfire',20]],
+  leveling:['Flame Arrow','Firestorm','Blaze','Bittercold Wind','Hellfire','Wish of Concentration'],
+  endgame:['Firestorm','Bittercold Wind','Hellfire','Blaze','Wish of Concentration','Flame Arrow',"Winter's Shackles"],
+  breakpoints:[['Firestorm',12],['Hellfire',16],['Wish of Concentration',16],['Firestorm',16],['Hellfire',20]],
   stigma:[['Element Enhancement',10],['Delayed Explosion',10],['Fire Wall',5],['Cold Storm',5]]
  },
  spiritmaster:{
@@ -64,7 +64,75 @@ const PROGRESSION_ITEM_LEVEL=[
  {level:2200,description:'Transcendence stage 3'},
  {level:2600,description:'Hard expedition Krao Cave / Draupnir, patch Oct 21'}
 ];
+// Global 2026-10-21 PvE Sorcerer timing/eligibility ledger. Instant activation
+// is NOT a verified animation duration. Per-skill animation cancel windows and
+// frame counts have not been measured in the Global client, so they are null.
+// See docs/sorcerer-mastery-combat-audit-2026-10-24.md for sources and limits.
+const SORCERER_EASY_COMBAT={
+ 'Flame Arrow':{cd:0,cast:'instant',animationMs:null,role:'LMB MP-restoring filler and Fire Mark enabler',control:'hold',tier:2},
+ 'Ice Chain':{cd:0,cast:'instant',animationMs:null,role:'MP-consuming control with Cold Wave follow-up; exclude from routine damage macro',control:'situational',tier:0},
+ 'Firestorm':{cd:5,cast:'instant',animationMs:null,role:'Five-hit main cooldown DPS; level 12 Specialty reduces Hellfire cooldown',control:'macro',tier:5},
+ 'Bittercold Wind':{cd:15,cast:'instant',animationMs:null,role:'Seven-hit area damage over 2s; can miss moving targets',control:'macro',tier:4},
+ 'Blaze':{cd:5,cast:'instant',animationMs:null,role:'Fire Mark dependent, restores MP, repeatable 5s damage',control:'macro',tier:4},
+ 'Flame Scattershot':{cd:0,cast:'instant',animationMs:null,role:'Only usable on Stagger; not an unconditional filler',control:'conditional-macro',tier:1},
+ 'Frost':{cd:30,cast:'instant',animationMs:null,role:'Frost application enables Frost Burst and control',control:'macro',tier:2},
+ "Winter's Shackles":{cd:45,cast:'instant',animationMs:null,role:'Slows and can grant short PvE damage boost; easy preset sacrifices burst precision',control:'macro',tier:3},
+ 'Frost Burst':{cd:10,cast:'instant',animationMs:null,role:'Only fires into Frost window (rare immunities exception)',control:'conditional-macro',tier:2},
+ 'Wish of Concentration':{cd:60,cast:'instant',animationMs:null,role:'Manual Attack buff; effective-level 16 Specialty reduces remaining cooldowns',control:'manual-buff',tier:5},
+ 'Hellfire':{cd:45,cast:'charged',animationMs:null,role:'Fully charged manual burst; rank 16 cooldown Specialty',control:'manual-charge',tier:5},
+ 'Defiance':{cd:51,cast:'instant',animationMs:null,role:'Emergency crowd-control cleanse and immunity; never macro',control:'manual-defense',tier:0},
+ 'Fire Mark':{cd:null,cast:'passive',animationMs:null,role:'Fire hit debuff that powers Blaze and extra damage',control:'passive',tier:4},
+ 'Robe of Earth':{cd:null,cast:'passive',animationMs:null,role:'MP/regen plus critical hit above 50% MP',control:'passive',tier:3},
+ 'Cold Snap':{cd:null,cast:'passive',animationMs:null,role:'Extra hit against Slowed targets; conditional uptime',control:'passive',tier:2},
+ 'Robe of Flame':{cd:null,cast:'passive',animationMs:null,role:'Persistent accuracy and PvE damage boost',control:'passive',tier:5},
+ 'Absorb Essence':{cd:null,cast:'passive',animationMs:null,role:'MP sustain and ailment chance',control:'passive',tier:2},
+ 'Grace of Resistance':{cd:null,cast:'passive',animationMs:null,role:'Mental/impact resistance, defensive',control:'passive',tier:0},
+ 'Robe of Cold':{cd:null,cast:'passive',animationMs:null,role:'Defense and reactive slow, survival utility',control:'passive',tier:0},
+ 'Grace of Enhancement':{cd:null,cast:'passive',animationMs:null,role:'PvE damage boost above 25% MP and proc damage',control:'passive',tier:5},
+ 'Revitalization Contract':{cd:null,cast:'passive',animationMs:null,role:'Status resistance and emergency healing',control:'passive',tier:1},
+ 'Vitality Evaporation':{cd:null,cast:'passive',animationMs:null,role:'Extra damage while target is above 61% HP',control:'passive',tier:2}
+};
+function sorcererEasyMasteryStages(level,leveling,unlocks,skillNames,adjust){
+ const known=new Set(skillNames),stages=[];
+ const add=(names,target)=>names.forEach(name=>{if(known.has(name)&&(unlocks[name]||1)<=level)
+   stages.push([name,adjust(name,target)])});
+ const invest=(names,target)=>names.forEach(name=>{if(known.has(name)&&(unlocks[name]||1)<=level)
+   stages.push([name,target])});
+ // A low-input rotation still needs intentional spend on manual Hellfire and
+ // Wish: they are large contributors to sustained DPS over boss-length fights.
+ const repeat=['Firestorm','Bittercold Wind','Blaze'];
+ const burst=['Hellfire','Wish of Concentration'];
+ const baseline=['Flame Arrow','Fire Mark','Robe of Flame','Grace of Enhancement','Robe of Earth'];
+ if(leveling){
+   add(['Flame Arrow','Firestorm','Blaze','Bittercold Wind'],5);
+   add(['Robe of Flame','Fire Mark','Robe of Earth'],5);
+   add([...repeat,...burst,'Flame Arrow'],8);
+   add(['Frost','Frost Burst',"Winter's Shackles"],5);
+   add(['Robe of Flame','Grace of Enhancement','Fire Mark'],8);
+   add(['Firestorm','Hellfire','Wish of Concentration'],12);
+   invest([...repeat,...burst,...baseline],10);
+ }else{
+   // First make the automated core, manual boss cooldowns and permanent
+   // passives worthwhile. Then target effective specialty breakpoints using
+   // the actual purchased/previewed board bonus and recorded gear.
+   add(['Firestorm','Bittercold Wind','Blaze','Hellfire','Wish of Concentration',
+     'Robe of Flame','Grace of Enhancement','Fire Mark','Flame Arrow'],8);
+   add(['Firestorm','Hellfire','Wish of Concentration',
+     "Winter's Shackles",'Bittercold Wind'],12);
+   add(['Hellfire','Wish of Concentration','Firestorm','Blaze'],16);
+   add(['Hellfire','Wish of Concentration'],20);
+   invest(['Firestorm','Bittercold Wind','Hellfire','Wish of Concentration',
+     'Blaze','Robe of Flame','Grace of Enhancement','Fire Mark','Flame Arrow'],10);
+   add(['Frost','Frost Burst',"Winter's Shackles",'Robe of Earth',
+     'Absorb Essence','Cold Snap'],8);
+ }
+ invest(['Flame Scattershot','Vitality Evaporation','Frost','Frost Burst',
+   "Winter's Shackles",'Absorb Essence','Robe of Earth','Cold Snap'],10);
+ return stages;
+}
 function progressionMasteryStages(cls,mode,level,leveling,advice,unlocks,skillNames,adjust){
+ if(cls==='sorcerer'&&mode!=='pvp')
+  return sorcererEasyMasteryStages(level,leveling,unlocks,skillNames,adjust);
  const policy=PROGRESSION_PLANS[cls];if(!policy)return null;
  const names=new Set(skillNames),known=name=>names.has(name)&&(unlocks[name]||1)<=level;
  const unique=sequence=>[...new Set(sequence)].filter(known);
