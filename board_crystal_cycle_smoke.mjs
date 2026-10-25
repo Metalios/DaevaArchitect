@@ -32,12 +32,13 @@ try{
   obtained:account().obtainedNodes.includes(id),
   selected:state.node===id,
   effect:document.querySelector('#selected-node')?.textContent,
+  expectedEffect:effectText(nodeMap().get(id).node),
   counter:document.querySelector('#board-crystal-value')?.textContent,
   route:plannedRoute().map(x=>x.id),
   outline:getComputedStyle(document.querySelector('#board-grid [data-node="'+id+'"]')).outlineColor
  }),initial.id);
  assert.equal(onlyPreview.obtained,false,'single-click must not obtain');
- assert(onlyPreview.selected&&onlyPreview.effect.includes(effectTextDummy(initial.id)||''),'single-click must show node preview');
+ assert(onlyPreview.selected&&onlyPreview.effect.includes(onlyPreview.expectedEffect),'single-click must show node preview');
  assert.equal(onlyPreview.counter,'0 / 119');
  assert.deepEqual(onlyPreview.route,initial.route,'route changed on preview');
  assert.equal(onlyPreview.outline,'rgb(49, 158, 255)','unobtained recommended tile should have blue ring');
@@ -129,4 +130,3 @@ try{
  console.log('Daevanion stable blue/gold path, 74/119-style actual crystal counter, single/double click, completion cycle, persistence, and mobile accessibility passed.');
 }finally{await browser.close()}
 
-function effectTextDummy(){return '';}
