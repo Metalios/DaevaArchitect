@@ -140,7 +140,7 @@ function renderLevelingCombatMarkup(plan,macroKey,quickUse2Bind='R'){
    '<div class="leveling-stack-row'+(row===0?' is-priority':'')+'" data-leveling-skill="'+esc(name)+'" data-row="'+row+'">'+
    '<span class="leveling-row-number">Row '+row+'</span>'+skill(name)+
    (row===0?'<span class="leveling-first">1st priority</span>':'')+'</div>').join('');
-  return '<section class="leveling-stack-panel" data-stack-key="'+esc(group.key)+'" data-stack-role="'+(group.macro?'macro':'manual')+'">'+
+  return '<section class="leveling-stack-panel" data-stack-key="'+esc(physicalHotkey(group.key))+'" data-stack-role="'+(group.macro?'macro':'manual')+'">'+
    '<span class="leveling-stack-label"><kbd>'+esc(physicalHotkey(group.key))+'</kbd> '+esc(group.label)+'</span>'+
    '<p class="leveling-stack-role">'+(group.macro?macroKey+' automatically tries this stack':'You press this stack yourself when needed')+'</p>'+
    '<div '+(group.key===plan.key?'id="leveling-stack" ':'')+'class="leveling-stack-rows">'+rows+'</div></section>';
