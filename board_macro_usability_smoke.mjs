@@ -43,7 +43,7 @@ try{
    state.class=cls;const a=account();a.journey='endgame';a.context='solo';a.boardMode='recommended';
    state.tab='rotation';render();
    const summary=document.querySelector('#rotation-quick-guide')?.textContent||'';
-   if(!summary.includes('Row 0 at the bottom')||!summary.includes('Macro action')||!summary.includes('two mouse buttons'))
+   if(!summary.includes('Row 0 at the bottom')||!summary.includes('in-game Macro hotkey')||!summary.includes('two mouse buttons'))
     failures.push(cls+': missing simple directions');
    const advanced=document.querySelector('#rotation .rotation-advanced');
    if(!advanced||advanced.open)failures.push(cls+': advanced controls should be available but initially collapsed');
