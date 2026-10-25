@@ -30,9 +30,9 @@ try{
    }else{
     const expected=cls==='sorcerer'&&level>=10?2:1;
     if(groups.length!==expected)failures.push(cls+' '+level+': expected '+expected+' key stacks');
-    if(plan.steps.length!==expected)failures.push(cls+' '+level+': wrong step count');
+    if(plan.steps.length!==1)failures.push(cls+' '+level+': easy macro should be a single hotbar key');
     const stepCopy=document.querySelector('#leveling-macro-step')?.textContent||'';
-    if(!stepCopy.includes(expected===1?'ONE step:':'TWO steps:'))
+    if(!stepCopy.includes('ONE step:'))
       failures.push(cls+' '+level+': macro description mismatch');
     for(const group of groups){
      const key=group.dataset.stackKey;
@@ -48,10 +48,20 @@ try{
    }
    const shownSkills=shownRows.map(el=>el.dataset.levelingSkill);
    const manual=[...document.querySelectorAll('#leveling-manual .leveling-skill strong')].map(el=>el.textContent);
-   for(const name of [...shownSkills,...manual,plan.weave])
-    if((SKILL_UNLOCKS[cls][name]||Infinity)>level)
-      failures.push(cls+' '+context+' '+level+': locked '+name);
+   for(const name of [...shownSkills,...manual,plan.weave]){
+    const classReady=SKILL_UNLOCKS[cls][name]!==undefined&&SKILL_UNLOCKS[cls][name]<=level;
+    const stigmaReady=(m.stigma.levels[name]||0)>0&&activeStigmas().slice(0,levelReward().slots).includes(name);
+    if(!classReady&&!stigmaReady)failures.push(cls+' '+context+' '+level+': locked '+name);
+   }
    if(shownSkills.includes(plan.weave))failures.push(cls+' '+level+': repeat attack in macro');
+   if(level>=4&&!document.querySelector('#leveling-control-pair')&&!document.querySelector('.leveling-control-pair'))
+     failures.push(cls+' '+level+': missing visible LMB + Macro controls');
+   if(level>=4&&document.querySelector('#leveling-macro-bind')?.value!=='RMB')
+     failures.push(cls+' '+level+': macro must default to RMB');
+   const numbered=[...document.querySelectorAll('#leveling-manual [data-manual-key]')];
+   if(numbered.length>4)failures.push(cls+' '+level+': more than four primary manual powers');
+   if(numbered.some((n,i)=>n.dataset.manualKey!==String(i+1)))
+     failures.push(cls+' '+level+': manual keys not clearly numbered');
    const noCd=LEVELING_COMBAT[cls].noCooldown||[];
    if(plan.stacks.some(group=>group.stack.some((name,i)=>noCd.includes(name)&&group.stack.slice(i+1).some(above=>!noCd.includes(above)))))
     failures.push(cls+' '+level+': no-cooldown skill starves higher row');
@@ -69,10 +79,19 @@ try{
     failures.push('Sorcerer level 11: wrong locked damage sequence');
   state.class='sorcerer';a=account();a.journey='leveling';a.context='solo';leveling().level=31;render();
   if(document.querySelectorAll('#leveling-stacks [data-stack-key]').length!==2||
-     !document.querySelector('#leveling-macro-step')?.textContent.includes('TWO steps:'))
-    failures.push('Sorcerer Lv31 should have Q/E elemental setup and proc stacks');
+     !document.querySelector('#leveling-macro-step')?.textContent.includes('ONE step:')||
+     document.querySelectorAll('#leveling-stacks [data-stack-role="macro"]').length!==1)
+    failures.push('Sorcerer Lv31 should have Q automatic and E manual, one Macro step');
+  if(!document.querySelector('#leveling-manual [data-manual-key="1"]')?.textContent.includes('Hellfire'))
+    failures.push('Sorcerer Lv31 manual key 1 should charge Hellfire');
   if(document.querySelector('#leveling-stacks')?.textContent.includes('Hellfire'))
     failures.push('Sorcerer Lv31: charged Hellfire incorrectly placed in macro');
+  const bind=document.querySelector('#leveling-macro-bind');
+  bind.value='M';bind.dispatchEvent(new Event('change',{bubbles:true}));
+  if(account().macroBind!=='M'||document.querySelector('#leveling-macro-bind')?.value!=='M'||
+     !document.querySelector('#leveling-rotation')?.textContent.includes('LMB + M'))
+    failures.push('Changing macro hotkey to keyboard M does not update/survive a render');
+  account().macroBind='RMB';render();
   state.class='chanter';a=account();a.journey='leveling';a.context='solo';leveling().level=14;render();
   if(document.querySelector('#leveling-stack')?.textContent.includes('Spinning Strike'))
     failures.push('Chanter pre-cooldown-reset stack used a second trigger');

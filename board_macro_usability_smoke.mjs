@@ -43,13 +43,16 @@ try{
    state.class=cls;const a=account();a.journey='endgame';a.context='solo';a.boardMode='recommended';
    state.tab='rotation';render();
    const summary=document.querySelector('#rotation-quick-guide')?.textContent||'';
-   if(!summary.includes('Row 0 at the bottom')||!summary.includes('Bind one in-game Macro key'))
+   if(!summary.includes('Row 0 at the bottom')||!summary.includes('in-game Macro hotkey')||!summary.includes('two mouse buttons'))
     failures.push(cls+': missing simple directions');
    const advanced=document.querySelector('#rotation .rotation-advanced');
    if(!advanced||advanced.open)failures.push(cls+': advanced controls should be available but initially collapsed');
    if(!document.querySelector('#hotbar-grid')||!document.querySelector('#setup-list'))
     failures.push(cls+': collapsible advanced hotbar and setup not available');
    const stacks=[...document.querySelectorAll('#macro-stacks .macro-stack-auto')];
+   if(!document.querySelector('#rotation-quick-guide .rotation-easy-buttons')||
+      !document.querySelector('#rotation-quick-guide .rotation-easy-manual-grid'))
+     failures.push(cls+': missing visible mouse/manual control diagram');
    if(!stacks.length)failures.push(cls+': missing macro stacks');
    for(const stack of stacks){
     const rows=[...stack.querySelectorAll('.macro-physical-stack .stack-row')],counts=rows.map(el=>Number(el.dataset.row));
@@ -64,6 +67,14 @@ try{
    if(!document.querySelector('#macro-stacks .macro-script')?.textContent.includes('NOT individual skills'))
     failures.push(cls+': macro step / stack difference obscured');
   }
+  state.class='sorcerer';account().journey='endgame';render();
+  const sorc=document.querySelector('#rotation-quick-guide')?.textContent||'';
+  if(!sorc.includes('Flame Arrow')||!sorc.includes('Hellfire')||!sorc.includes('LMB')||!sorc.includes('RMB'))
+    failures.push('Sorcerer mouse/macro/manual setup not clear');
+  const macro=[...document.querySelectorAll('#macro-stacks .macro-step')].map(x=>x.textContent);
+  if(macro.length!==1||!macro[0].includes('Q'))failures.push('Sorcerer should have one Q Macro step by default');
+  if(!document.querySelector('#macro-stacks [data-macro-key="E"].macro-stack-manual'))
+    failures.push('Sorcerer manual E ice stack not shown');
   return failures;
  });
  assert.deepEqual(errors,[],'Browser runtime errors');

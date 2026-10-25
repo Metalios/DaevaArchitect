@@ -51,3 +51,19 @@
 .leveling-macro-entry{display:inline-block;margin:4px 10px 2px 0;font-size:12px!important}
 @media(max-width:1430px){.leveling-multi-stack{grid-template-columns:minmax(160px,.38fr) minmax(400px,1fr)}.leveling-multi-stack .leveling-macro-callout{grid-column:1/-1}}
 @media(max-width:740px){.leveling-multi-stack{grid-template-columns:1fr}.leveling-multi-stack .leveling-macro-callout{grid-column:auto}.leveling-stack-panels{grid-template-columns:1fr}}
+
+/* Human-first leveling: LMB+RMB and 1–4 in large, legible controls. */
+.leveling-control-pair{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:5px 0 15px}
+.leveling-control-pair>span{display:flex;gap:8px;align-items:center;flex:1 1 130px;font-size:13px;font-weight:750;color:#f6e2b6}
+.leveling-control-pair kbd{font-size:13px;min-width:42px;text-align:center}
+.leveling-control-pair>b{color:#d6e9fb;font-size:18px}
+.leveling-bind-control{display:flex;flex-direction:column;gap:6px;color:#e3d5b3;font-size:12px;font-weight:750;margin:12px 0}
+.leveling-bind-control select{width:100%;max-width:100%;color:#f1f4f6;background:#142e43;border:1px solid #7292aa;border-radius:7px;font-size:14px;min-height:40px;padding:8px}
+.leveling-stack-role{font-size:11px;color:#d3e3eb;line-height:1.5;margin:-4px 0 9px}
+.leveling-numbered-manual{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px!important}
+.leveling-numbered-manual>li{display:flex!important;align-items:center;gap:8px;min-width:0}
+.leveling-numbered-manual>li>kbd{display:inline-grid;place-items:center;min-width:30px;min-height:32px;border-radius:5px;border:1px solid #a9a0a0;color:#fff6d9;background:#204969;font-size:15px;font-weight:800}
+.leveling-numbered-manual>li .leveling-skill{flex:1 1 100px}
+.leveling-numbered-manual>li small{display:block;color:#bbd6e6;font-size:11px}
+@media(max-width:1100px){.leveling-numbered-manual{grid-template-columns:1fr}}
+@media(max-width:740px){.leveling-control-pair>span{flex-basis:100%}.leveling-control-pair>b{display:none}}

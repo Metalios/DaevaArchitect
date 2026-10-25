@@ -103,21 +103,28 @@ const PROFILES = {
     rule:'Charge Hellfire by hand. Do not spend Fire Wall or Cold Storm where the boss will immediately move.',
     opener:['Set up Element Enhancement and Wish of Concentration.','Place Fire Wall / Cold Storm for a stable boss window.','Charge Hellfire fully and continue the fire line.'],
     loop:['Use Blaze and Firestorm when ready.','Keep Flame Arrow going for MP and charge Hellfire on its own key.','Reposition ground damage for mechanics; use Defiance or barriers for danger.'],
-    weave:'Flame Arrow',weaveKey:'R',
-    stacks:[{key:'E',title:'Short damage line',skills:["Winter's Shackles",'Bittercold Wind','Blaze','Firestorm']},{key:'4',title:'Buff line, manual',skills:['Element Enhancement','Delayed Explosion'],manual:true},{key:'5',title:'Ground damage, manual',skills:['Wish of Concentration','Cold Storm','Fire Wall'],manual:true}],
-    macro:['E'], hold:'Hold Flame Arrow on R with the Macro key; charge Hellfire separately.',
+    weave:'Flame Arrow',weaveKey:'LMB',
+    stacks:[
+      // Q is the ONLY automated key: minimizes step overhead on a frequent
+      // fire engine. Ice/control and boss ground effects remain intentional.
+      {key:'Q',title:'Automatic fire engine',skills:['Bittercold Wind','Blaze','Firestorm','Wish of Concentration']},
+      {key:'E',title:'Ice/control when needed',skills:['Frost Burst','Frost','Ice Chain'],manual:true},
+      {key:'4',title:'Buffs, press manually',skills:['Element Enhancement','Delayed Explosion'],manual:true},
+      {key:'5',title:'Boss ground effects, manual',skills:['Cold Storm','Fire Wall'],manual:true}
+    ],
+    macro:['Q'], hold:'Hold Flame Arrow on LMB with RMB (game Macro). The Macro presses Q; manually fully charge Hellfire on 1.',
     manual:['Hellfire — full charge','4 and 5 — buffs and ground damage when the boss is stable','Flame Scattershot — separate key','Steel Barrier / Arctic Armor — survival','Defiance (Space) — break control'],
     hotbar:[
-      [['Hellfire'],'Fully charge during a safe burst window','attack'],
-      [['Flame Scattershot'],'Manual damage between casts','attack'],
-      [['Frost Burst'],'Control nearby targets','utility'],
-      [['Element Enhancement','Delayed Explosion'],'Manual buff stack before burst','buff'],
-      [['Wish of Concentration','Cold Storm','Fire Wall'],'Place on a stable boss position','attack'],
-      [['Ice Chain'],'Manual control','utility'],
-      [['Frost'],'Manual filler or control','utility'],
-      [[], 'Free slot for a situational skill or stigma swap','utility']
+      [['Hellfire'],'1: Hold until fully charged, then release','attack'],
+      [["Winter's Shackles"],'2: Manual setup before burst','attack'],
+      [['Flame Scattershot'],'3: Manual stagger-window attack','attack'],
+      [['Element Enhancement','Delayed Explosion'],'4: Buffs only when needed','buff'],
+      [['Cold Storm','Fire Wall'],'5: Ground effects only on stable targets','attack'],
+      [[], '6: Optional defensive Stigma if separately equipped','defense'],
+      [[], '7: Available for personal preference','utility'],
+      [[], '8: Available for personal preference','utility']
     ],
-    hotbarNote:'Keys 4 and 5 are manual stacks. Keep Hellfire on 1 so the macro never cuts its charge. Key 8 is available for Steel Barrier or Arctic Armor if you swap one into your stigma loadout.',
+    hotbarNote:'Easy preset: hold LMB + RMB; RMB only presses Q. Q contains the fire engine with Row 0 at the bottom. E is an optional MANUAL ice stack. Hellfire stays on 1 so it can fully charge; important manual actions stay on 1–4.',
   },
   spiritmaster: {
     name:'Spiritmaster', role:'Summon damage', kind:'dps',
