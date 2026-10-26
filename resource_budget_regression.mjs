@@ -16,19 +16,6 @@ for(const [cls,data] of Object.entries(classes))
     const original=routes[cls][mode];
     const before=original.map(x=>x.id);
     const first=context.fund(data,original,budget);
-    const used=first.route.slice(0,first.route.findIndex((entry,i)=>{
-      let cost=0;for(let n=0;n<=i;n++){
-        const node=data.boards.flatMap(b=>b.nodes).find(x=>x[0]===first.route[n].id);
-        cost+=node[5];
-      }
-      return cost>budget;
-    })<0?undefined:first.route.findIndex((entry,i)=>{
-      let cost=0;for(let n=0;n<=i;n++){
-        const node=data.boards.flatMap(b=>b.nodes).find(x=>x[0]===first.route[n].id);
-        cost+=node[5];
-      }
-      return cost>budget;
-    }));
     const costById=new Map(data.boards.flatMap(b=>b.nodes.map(n=>[n[0],n[5]])));
     const coords=new Map(data.boards.flatMap(b=>b.nodes.map(n=>[n[0],[b.name,n[1],n[2]]])));
     const connected=new Set(data.boards.flatMap(b=>b.nodes.filter(n=>n[5]===0).map(n=>n[0])));
