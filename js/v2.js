@@ -205,6 +205,8 @@ function actionsView(m){
      '<div class="v2-combat-numbers"><span><b>'+combat.score.toFixed(3)+'</b><small>relative robust damage score</small></span>'+
      '<span><b>'+combat.manualPerMinute.toFixed(1)+'</b><small>estimated manual actions/min</small></span>'+
      '<span><b>'+variance.toFixed(1)+'%</b><small>vs fixed Specialty preset</small></span></div>'+
+     '<p><b>Macro:</b> '+esc(combat.macro?.label||'Q / E / R')+' · '+esc((combat.macro?.steps||[]).join(' → '))+
+     '. Use RMB for automatic steps; keep LMB filler and manual Hellfire/buffs.</p>'+
      '<p>Uses your funded Mastery, board levels, Stigma ranks and selected Specialties. '+
      'Includes the LMB filler, RMB automatic core, manual Hellfire and buffs, Combat Speed, '+
      'charge occupancy, cooldown reductions and MP conditions.</p>'+
