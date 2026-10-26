@@ -5,13 +5,14 @@
 // then append all other tiles in connected order for future point increases.
 // Player-selected custom routes are deliberately not rearranged.
 function fitConnectedBoardBudget(classData, rankedRoute, crystalBudget) {
-  const all=new Map(),visited=new Set(),unselected=new Set(),position=new Map();
+  const all=new Map(),visited=new Set(),unselected=new Set();
+  const allowed=new Set(rankedRoute.map(entry=>entry.id));
   for(const board of classData.boards) {
     const nodes=new Map(board.nodes.map(node=>[node[0],node]));
     const coords=new Map(board.nodes.map(node=>[`${node[1]}:${node[2]}`,node[0]]));
     for(const node of board.nodes) {
       if(node[5]===0)visited.add(node[0]);
-      else {
+      else if(allowed.has(node[0])) {
         unselected.add(node[0]);
         all.set(node[0],{node,board:board.name,
           neighbors:[[node[1]-1,node[2]],[node[1]+1,node[2]],[node[1],node[2]-1],[node[1],node[2]+1]]
