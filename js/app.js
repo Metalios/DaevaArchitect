@@ -418,8 +418,14 @@ function enhanceSorcererCombat(master,boardEffects,stigmas){
       }
     }
     const finalBuild={...prepared,mastery:final.levels};
-    const optimized=GlobalCombatEngine.tuneSpecialties(finalBuild,SPECS.sorcerer,
+    let optimized=GlobalCombatEngine.tuneSpecialties(finalBuild,SPECS.sorcerer,
       a.customSpecialties||{});
+    let macro=GlobalCombatEngine.chooseMacro(finalBuild,optimized.specialties);
+    if(macro.mode!=='ground'){
+      optimized=GlobalCombatEngine.tuneSpecialties({...finalBuild,macroLayout:macro.mode},
+        SPECS.sorcerer,a.customSpecialties||{},optimized.specialties);
+      macro=GlobalCombatEngine.chooseMacro(finalBuild,optimized.specialties);
+    }
     const staticSpecs={};
     for(const [name,entry] of Object.entries(SPECS.sorcerer||{})){
       const eff=GlobalCombatEngine.effective(finalBuild,name);
@@ -430,9 +436,11 @@ function enhanceSorcererCombat(master,boardEffects,stigmas){
     }
     const original=GlobalCombatEngine.evaluate(finalBuild,staticSpecs);
     result={mastery:final,specialties:optimized.specialties,
-      score:optimized.robustScore,baselineScore:original.robustScore,
-      manualPerMinute:optimized.manualPerMinute,
-      scenarios:optimized.samples,source:GlobalCombatEngine.SOURCE,
+      score:macro.robustScore,baselineScore:original.robustScore,
+      macro:{mode:macro.mode,label:macro.label,steps:[...macro.steps],
+        stacks:macro.stacks.map(stack=>({...stack,skills:[...stack.skills]}))},
+      manualPerMinute:macro.manualPerMinute,
+      scenarios:macro.samples,source:GlobalCombatEngine.SOURCE,
       calibrated:false,improvement};
     combatResultCache={key,result};
   }
@@ -672,6 +680,13 @@ function numbered(items){return items.map((v,i)=>`<li><span class="rotation-num"
 function renderRotation(m){
   const a=account(),p=typeof progressionRotationProfile==='function' ? progressionRotationProfile(profile(),state.class,a.context,name=>skillLevelBreakdown(name,m).withOwned,activeStigmas().filter(name=>(m.stigma.levels[name]||0)>0),(name,option)=>specPicks(name,skillLevelBreakdown(name,m).withOwned).includes(option)) : profile(),level=currentLevel(),levelingMode=isLeveling(),main=masteryStages()[0]?.[0]||skillNames()[0],macroKey=['RMB','Mouse 4','MMB','M'].includes(a.macroBind)?a.macroBind:'RMB',weaveKey=p.weaveKey||'LMB';
   const quickUse2Bind=a.quickUse2Bind==='T'?'T':'R';
+  if(m.combat?.macro?.stacks&&sorcererCombatEligible()){
+    const chosen=m.combat.macro;
+    p.stacks=chosen.stacks.map(stack=>({...stack}));
+    p.macro=[...chosen.steps];
+    p.rule='Easy Global Sorcerer: '+chosen.label+' (modeled selection). Keep LMB basic attacks and RMB Macro held, charge Hellfire and use offensive buffs manually.';
+    p.hotbarNote='Recommended '+chosen.label+'. Automatic steps: '+chosen.steps.join(' + ')+'. Hellfire, Wish of Concentration and learned offensive buffs remain manual; animation and macro timing are estimated.';
+  }
   const physicalHotkey=key=>key==='R'?quickUse2Bind:key;
   const displayKeyCopy=value=>quickUse2Bind==='T'?String(value).replace(/\bR\b/g,'T'):String(value);
   // R is the secondary default for LMB, NOT an extra basic attack in this
@@ -690,6 +705,17 @@ function renderRotation(m){
     const plan=buildLevelingCombat(state.class,level,a.context,SKILL_UNLOCKS[state.class],
       activeStigmas().slice(0,levelReward().slots),m.stigma.levels,
       (name,option)=>specPicks(name,skillLevelBreakdown(name,m).withOwned).includes(option));
+    if(m.combat?.macro?.stacks&&sorcererCombatEligible()){
+      const available=new Set(plan.stacks.flatMap(stack=>stack.stack));
+      plan.stacks=m.combat.macro.stacks.map(stack=>{
+        const rows=stack.skills.filter(name=>available.has(name))
+          .map((name,row)=>({name,row}));
+        return {key:stack.key,label:stack.title,macro:true,
+          stack:rows.map(row=>row.name),rows};
+      }).filter(stack=>stack.stack.length);
+      plan.steps=plan.stacks.map(stack=>stack.key);
+      plan.key=plan.steps[0]||plan.key;
+    }
     $('rotation').classList.add('leveling-view');
     $('rotation-level').textContent='Lv '+level+' · starter combat';
     $('leveling-rotation').hidden=false;
