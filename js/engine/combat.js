@@ -66,8 +66,11 @@ const GlobalCombatEngine=(()=>{
     // Exact server animation modifier is not known; divide-by-(1+speed)
     // is a sensitivity hypothesis, not a confirmed game formula.
     const combatSpeed=clamp(((boardStats.CombatSpeed||0)+(gearStats.CombatSpeed||0))/10000,0,.8);
-    const skillSpeed=name=>name==='Firestorm'&&has(spec,name,2)?.20:
-      name==='Hellfire'&&has(spec,name,1)?.30:0;
+    const skillSpeed=name=>{
+      if(name==='Firestorm'&&has(spec,name,2))return .20;
+      if(name==='Hellfire'&&has(spec,name,1))return .30;
+      return 0;
+    };
     const speedTime=name=>{
       const action=ACTIONS[name],speed=skillSpeed(name),baseline=action.occupied*scenario.animation;
       return Math.max(.18,baseline*(1-speed)/(1+combatSpeed));
@@ -81,6 +84,7 @@ const GlobalCombatEngine=(()=>{
     const eligible=name=>{
       const action=ACTIONS[name];
       if(!action)return false;
+      if(!hasStigma(build,name)&&!(build.availableSkills||[]).includes(name))return false;
       if((cd[name]||0)>now+1e-6)return false;
       if(action.requires==='fireMark'&&fireMarkUntil<now)return false;
       if(action.requires==='frost'&&frostUntil<now)return false;
