@@ -350,12 +350,14 @@ function engineBuild(masteryLevels,boardEffects,stigmaLevels,equipped){
   for(const [name,n] of Object.entries(account().gear||{}))
     equippedRanks[name]=(equippedRanks[name]||0)+(Number(n)||0);
   const visibleStats=[...gearFixedTotals().stats,...gearSocketTotals().stats];
-  const combatSpeedPercent=visibleStats.filter(row=>row.name==='Combat Speed'&&row.unit==='%')
+  const percent=name=>visibleStats.filter(row=>row.name===name&&row.unit==='%')
     .reduce((total,row)=>total+(Number(row.value)||0),0);
   return {
     mastery:masteryLevels,boardSkills:boardEffects.skills,
     boardStats:boardEffects.stats,gearSkills:equippedRanks,
-    gearStats:{CombatSpeed:combatSpeedPercent*100},
+    gearStats:{CombatSpeed:percent('Combat Speed')*100,
+      CoolTimeDecrease:percent('Cooldown Reduction')*100,
+      AmplifyAllDamage:percent('Damage Boost')*100},
     stigma:stigmaLevels,equippedStigmas:equipped,
     availableSkills:Object.entries(SKILL_UNLOCKS[state.class]||{})
       .filter(([,at])=>at<=currentLevel()).map(([name])=>name)
