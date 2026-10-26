@@ -352,7 +352,9 @@ function engineBuild(masteryLevels,boardEffects,stigmaLevels,equipped){
   return {
     mastery:masteryLevels,boardSkills:boardEffects.skills,
     boardStats:boardEffects.stats,gearSkills:equippedRanks,
-    gearStats:{},stigma:stigmaLevels,equippedStigmas:equipped
+    gearStats:{},stigma:stigmaLevels,equippedStigmas:equipped,
+    availableSkills:Object.entries(SKILL_UNLOCKS[state.class]||{})
+      .filter(([,at])=>at<=currentLevel()).map(([name])=>name)
   };
 }
 function sorcererCombatEligible(){
