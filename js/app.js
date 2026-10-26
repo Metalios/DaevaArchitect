@@ -381,7 +381,9 @@ function chooseCombatBoardRoute(provisional,stigma,gearRanks,target,baseCp,actua
   const options=[original,speedRoute];
   const maxCrystals=budget('crystals'),names=skillNames();
   let best=null;
-  for(const candidate of options){
+  for(const ranked of options){
+    const fitted=fitConnectedBoardBudget(data(),ranked.route,maxCrystals);
+    const candidate={...ranked,route:fitted.route};
     const selected=new Set();let spent=0;
     for(const entry of candidate.route){
       const node=nodeMap().get(entry.id)?.node;
@@ -398,7 +400,8 @@ function chooseCombatBoardRoute(provisional,stigma,gearRanks,target,baseCp,actua
     if(!best||performance.robustScore>best.score+1e-8)
       best={candidate,score:performance.robustScore};
   }
-  return best?.candidate||original;
+  return best?.candidate||{...original,
+    route:fitConnectedBoardBudget(data(),original.route,maxCrystals).route};
 }
 function enhanceSorcererCombat(master,boardEffects,stigmas){
   if(!sorcererCombatEligible()){lastOptimizedCombat=null;return master}
@@ -419,6 +422,9 @@ function enhanceSorcererCombat(master,boardEffects,stigmas){
         improvement=revised.score;
       }
     }
+    if(!a.manualMastery)final=spendAvailableMastery(final,budget('mastery'),
+      masteryCost,masteryRankCap,skillNames(),masteryStages(boardEffects.skills),
+      activeWeights().skills,boardEffects.skills,prepared.gearSkills);
     const finalBuild={...prepared,mastery:final.levels};
     let optimized=GlobalCombatEngine.tuneSpecialties(finalBuild,SPECS.sorcerer,
       a.customSpecialties||{});
@@ -466,7 +472,8 @@ function model(){
     for(const [name,n] of Object.entries(a.gear||{}))gearRanks[name]=(gearRanks[name]||0)+Number(n||0);
     // Board level unlocks are a real change of eligible path; a level
     // increase inside the same unlock band must not shuffle suggestions.
-    const contextKey=JSON.stringify([state.class,a.context,BOARD_NAMES.filter(boardOpen),sorcererCombatEligible()?'global-sorcerer-combat-v1':'legacy']);
+    const contextKey=JSON.stringify([state.class,a.context,BOARD_NAMES.filter(boardOpen),
+      sorcererCombatEligible()?'global-sorcerer-combat-v2-budget-fit':'budget-fit-v2']);
     const snapshot=a.recommendedRouteSnapshot;
     // Prior to any real purchases, changes to the player's goal, mastery,
     // equipment or Stigmas should still influence the recommended route.
@@ -479,9 +486,11 @@ function model(){
       snapshot.route.every(x=>nodeMap().has(x.id));
     // Reaching 119/119 triggers precisely ONE route update. It stays
     // stable during later renders, and the next cycle refreshes at 120/120.
+    const changedEarnedBudget=valid&&snapshot.budget!==total;
     const newBudgetAfterCompletion=valid&&snapshot.completedBudget!==null&&
       snapshot.completedBudget!==undefined&&total>snapshot.completedBudget;
-    const update=!valid||newBudgetAfterCompletion||(exhausted&&snapshot.completedBudget!==total)||
+    const update=!valid||changedEarnedBudget||newBudgetAfterCompletion||
+      (exhausted&&snapshot.completedBudget!==total)||
       (spent===0&&snapshot.basisKey!==basisKey);
     if(update){
       const actual=obtainedNodes();
@@ -489,9 +498,13 @@ function model(){
       const estimated=estimateCombatPower(reference);
       const baseCp=estimated.ready?estimated.value:null;
       const computed=chooseCombatBoardRoute(mastery,stigma,gearRanks,target,baseCp,actual);
-      liveRoute=computed.route;liveRouteBasis={initialFocus:computed.initialFocus,baseCp:computed.baseCp};
+      // The optimizer returns a complete future path. Budget fitting only
+      // changes recommendation order, never board connectivity or costs.
+      const fitted=customMode()?computed.route:
+        fitConnectedBoardBudget(data(),computed.route,total).route;
+      liveRoute=fitted;liveRouteBasis={initialFocus:computed.initialFocus,baseCp:computed.baseCp};
       a.recommendedRouteSnapshot={
-        contextKey,basisKey,route:computed.route,
+        contextKey,basisKey,route:fitted,budget:total,
         initialFocus:computed.initialFocus,baseCp:computed.baseCp,
         completedBudget:exhausted?total:null
       };
@@ -514,7 +527,11 @@ function model(){
   const fundedMastery=a.manualMastery?mastery:allocate(
     masteryStages(plannedEffects.skills),budget('mastery'),masteryCost,names,1,
     isLeveling()?masteryRankCap:null);
-  const finalMastery=enhanceSorcererCombat(fundedMastery,plannedEffects,stigma);
+  const optimizedMastery=enhanceSorcererCombat(fundedMastery,plannedEffects,stigma);
+  const finalMastery=a.manualMastery?optimizedMastery:spendAvailableMastery(
+    optimizedMastery,budget('mastery'),masteryCost,masteryRankCap,names,
+    masteryStages(plannedEffects.skills),activeWeights().skills,
+    plannedEffects.skills,{...gearSkillLevels(),...a.gear});
   return {mastery:finalMastery,stigma,boards,azphel,
     effects:plannedEffects,acquiredEffects,combat:lastOptimizedCombat,
     azphelEffects:effects(azphel.owned)};
