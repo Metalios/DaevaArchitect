@@ -61,12 +61,9 @@ for(const [name,cls] of Object.entries(classes)){
    for(const entry of fitted.route){
      const item=graph.get(entry.id);
      assert(item.near.some(id=>owned.has(id)),name+': disconnected planned tile');
+     if(spent+item.node[5]>budget)break;
+     spent+=item.node[5];
      owned.add(entry.id);
-     if(spent+item.node[5]<=budget && spent===fitted.spent){
-       // The full route includes future tiles; avoid resuming at a future node.
-     }
-     if(spent+item.node[5]<=budget)spent+=item.node[5];
-     else break;
    }
    assert.equal(spent,fitted.spent,name+': funded prefix differs from fitter accounting');
    assert.equal(fitted.unused,budget-spent,name+': wrong unused crystals');
