@@ -35,6 +35,8 @@ out_dir = root / 'dist'
 (out_dir / 'assets').mkdir(parents=True, exist_ok=True)
 for name in ('profiles.js', 'titles.js', 'gear.js', 'cp.js', 'board_optimizer.js', 'icon_catalog.js', 'recommendations.js', 'progression.js', 'leveling_rotation.js', 'app.js', 'share.js', 'v2.js'):
     shutil.copy2(root / 'js' / name, out_dir / 'js' / name)
+(out_dir / 'js' / 'engine').mkdir(parents=True, exist_ok=True)
+shutil.copy2(root / 'js' / 'engine' / 'combat.js', out_dir / 'js' / 'engine' / 'combat.js')
 shutil.copy2(root / 'css' / 'styles.css', out_dir / 'css' / 'styles.css')
 shutil.copy2(root / 'css' / 'v2.css', out_dir / 'css' / 'v2.css')
 shutil.copy2(root / 'css' / 'leveling.css', out_dir / 'css' / 'leveling.css')
