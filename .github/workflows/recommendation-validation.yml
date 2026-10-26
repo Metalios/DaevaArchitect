@@ -24,6 +24,7 @@ jobs:
           for file in js/*.js js/engine/*.js; do node --check "$file"; done
       - name: Audit progression model
         run: |
+          node resource_budget_regression.mjs
           node combat_engine_regression.mjs
           node recommendation_regression.mjs
           node leveling_rotation_audit.mjs
@@ -36,6 +37,7 @@ jobs:
         run: |
           npm install --no-save playwright@1.56.0
           npx playwright install --with-deps chromium
+          node resource_allocation_smoke.mjs
           node combat_optimizer_smoke.mjs
           node leveling_macro_smoke.mjs
           node recommendation_coherence_smoke.mjs
