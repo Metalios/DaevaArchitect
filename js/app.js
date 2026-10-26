@@ -319,7 +319,12 @@ function renderGlobalBoardRoute(m,nodes){
   // Separate user-recorded purchases from the allocation planned in tabs.
   const marked=steps.filter(x=>actual.has(x.id)),markedCost=obtainedCrystalSpend(false),unmarkedWithinBudget=upcoming.filter(x=>x.total<=crystals).length;
   const banked=crystals-m.boards.spent;
-  $('global-route-budget').textContent=`${m.boards.spent} / ${crystals} crystals planned${banked&&m.boards.next?` · save ${banked} for the next ${m.boards.next.cost}-crystal tile`:''}`;
+  const crystalNote=customMode()
+    ?banked?` · ${banked} unallocated in your custom route`:' · custom route funded'
+    :banked&&m.boards.next
+      ?` · ${banked} remain (next connected tile needs ${m.boards.next.cost})`
+      :banked?` · ${banked} remain; all eligible tiles planned`:' · all earned crystals allocated';
+  $('global-route-budget').textContent=`${m.boards.spent} / ${crystals} crystals planned${crystalNote}`;
   $('obtained-status').textContent=`${markedCost} / ${crystals} crystals actually spent · ${Math.max(0,crystals-markedCost)} remaining · ${unmarkedWithinBudget} recommended tiles within the budget still blue`;
   $('global-route-caption').textContent=customMode()
     ? `Your connected custom route is separate from the ${markedCost} / ${crystals} crystals you've marked obtained.`
