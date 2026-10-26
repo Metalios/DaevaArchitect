@@ -110,7 +110,7 @@ try{
   quick2.value='T';quick2.dispatchEvent(new Event('change',{bubbles:true}));
   if(a.quickUse2Bind!=='T'||document.querySelector('#quick-use-2-bind').value!=='T'||
      (usesGround&&(!document.querySelector('#macro-stacks [data-macro-key="T"].macro-stack-auto')||
-     ![...document.querySelectorAll('#macro-stacks .macro-step-key')].some(el=>el.textContent==='T')))
+     ![...document.querySelectorAll('#macro-stacks .macro-step-key')].some(el=>el.textContent==='T'))))
     failures.push('Original T Quick Use 2 bind not reflected in endgame Macro stack, steps and instructions');
   document.querySelector('#quick-use-2-bind').value='R';
   document.querySelector('#quick-use-2-bind').dispatchEvent(new Event('change',{bubbles:true}));
