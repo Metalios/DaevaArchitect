@@ -77,6 +77,9 @@ const GlobalCombatEngine=(()=>{
     // Exact server animation modifier is not known; divide-by-(1+speed)
     // is a sensitivity hypothesis, not a confirmed game formula.
     const combatSpeed=clamp(((boardStats.CombatSpeed||0)+(gearStats.CombatSpeed||0))/10000,0,.8);
+    const cooldownReduction=clamp(((boardStats.CoolTimeDecrease||0)+(gearStats.CoolTimeDecrease||0))/10000,0,.6);
+    const damageBoost=clamp(((boardStats.AmplifyAllDamage||0)+(gearStats.AmplifyAllDamage||0))/10000,0,2);
+    const attackBonus=(boardStats.FixingDamage||0)/2000; // unknown base Attack: comparative scenario only
     const skillSpeed=name=>{
       if(name==='Firestorm'&&has(spec,name,2))return .20;
       if(name==='Hellfire'&&has(spec,name,1))return .30;
@@ -117,7 +120,7 @@ const GlobalCombatEngine=(()=>{
       now+=time;castTime+=time;
       if(act.mp>=0)mp-=act.mp;else mp=Math.min(3000,mp-act.mp);
       // Unmeasured damage is normalized for comparative build ranking.
-      let multiplier=rankBonus;
+      let multiplier=rankBonus*(1+damageBoost+attackBonus);
       if(name==='Hellfire'&&has(spec,'Hellfire',4))multiplier*=1.12;
       if(name==='Firestorm'&&has(spec,'Firestorm',5))multiplier*=1.45;
       if(name==='Blaze'&&has(spec,'Blaze',3))multiplier*=1.11;
@@ -138,7 +141,8 @@ const GlobalCombatEngine=(()=>{
       const done=act.power*multiplier;
       damage+=done;damageBySkill[name]=(damageBySkill[name]||0)+done;
       counts[name]=(counts[name]||0)+1;
-      cd[name]=now+Math.max(0,act.cd-(name==='Hellfire'&&has(spec,'Hellfire',5)?15:0));
+      cd[name]=now+Math.max(0,act.cd*(1-cooldownReduction)-
+        (name==='Hellfire'&&has(spec,'Hellfire',5)?15:0));
       if(name==='Flame Arrow'||name==='Firestorm'){fireMarkUntil=now+12;mp=Math.min(3000,mp+35)}
       if(name==='Frost')frostUntil=now+4;
       if(name==="Winter's Shackles"&&has(spec,name,3))pveBuffUntil=now+5;
@@ -176,7 +180,7 @@ const GlobalCombatEngine=(()=>{
     }
     return {score:damage/scenario.duration,damage,damageBySkill,counts,manualActions,
       manualPerMinute:manualActions*60/scenario.duration,mpFinal:mp,castTime,
-      missedGround,skippedForMp,unavailable,combatSpeed,
+      missedGround,skippedForMp,unavailable,combatSpeed,cooldownReduction,damageBoost,
       units:'relative damage units per second (not measured DPS)'};
   }
   function evaluate(build,spec,scenarios=ENCOUNTERS){
