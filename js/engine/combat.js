@@ -23,7 +23,7 @@ const GlobalCombatEngine=(()=>{
     'Frost Burst':{cd:10,occupied:.68,power:.30,mp:160,mode:'macro',requires:'frost',speed:'combat'},
     "Winter's Shackles":{cd:45,occupied:.76,power:.23,mp:180,mode:'macro',speed:'combat'},
     'Flame Scattershot':{cd:0,occupied:.60,power:.28,mp:70,mode:'conditional',requires:'stagger',speed:'combat'},
-    'Hellfire':{cd:45,occupied:1.50,power:4.00,mp:300,mode:'manual-charge',speed:'skill'},
+    'Hellfire':{cd:45,occupied:1.85,charge:1.50,recovery:.35,power:4.00,mp:300,mode:'manual-charge',speed:'skill'},
     'Wish of Concentration':{cd:60,occupied:.60,power:0,mp:0,mode:'manual-buff',speed:'combat'},
     'Element Enhancement':{cd:60,occupied:.60,power:0,mp:0,mode:'manual-buff',speed:'combat'},
     'Delayed Explosion':{cd:25,occupied:.65,power:.60,mp:150,mode:'manual-debuff',speed:'combat'},
@@ -72,12 +72,18 @@ const GlobalCombatEngine=(()=>{
       return 0;
     };
     const speedTime=name=>{
-      const action=ACTIONS[name],speed=skillSpeed(name),baseline=action.occupied*scenario.animation;
-      return Math.max(.18,baseline*(1-speed)/(1+combatSpeed));
+      const action=ACTIONS[name],speed=skillSpeed(name),bonus=combatBuffUntil>now?.10:0,
+        overall=1+combatSpeed+bonus;
+      if(name==='Hellfire'){
+        // 1.50s full charge is transferred from a regional client; the
+        // .35s release/recovery is an unverified scenario assumption.
+        return Math.max(.18,((action.charge*(1-speed))+action.recovery)*scenario.animation/overall);
+      }
+      return Math.max(.18,action.occupied*scenario.animation*(1-speed)/overall);
     };
     const cd={},counts={},damageBySkill={},stigma=build.stigma;
     let now=0,damage=0,mp=2000,fireMarkUntil=0,frostUntil=0,staggerUntil=0,attackBuffUntil=0,
-      pveBuffUntil=0,manualActions=0,missedGround=0,skippedForMp=0,unavailable=0,castTime=0;
+      pveBuffUntil=0,combatBuffUntil=0,manualActions=0,missedGround=0,skippedForMp=0,unavailable=0,castTime=0;
     const priority=['Firestorm','Blaze','Bittercold Wind','Frost Burst',"Winter's Shackles",'Frost','Flame Scattershot'];
     const equippedGround=['Fire Wall','Cold Storm'].filter(name=>hasStigma(build,name));
     const maxSteps=2500;
@@ -127,6 +133,7 @@ const GlobalCombatEngine=(()=>{
       if(name==='Blaze'&&has(spec,name,5))reduceCooldown('Wish of Concentration',3);
       if(name==='Wish of Concentration'){
         attackBuffUntil=now+15;
+        if(has(spec,name,4))combatBuffUntil=now+15;
         if(has(spec,name,5))for(const target of Object.keys(cd))reduceCooldown(target,10);
       }
       if(name==='Element Enhancement')attackBuffUntil=Math.max(attackBuffUntil,now+10);
