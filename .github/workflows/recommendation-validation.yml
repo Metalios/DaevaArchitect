@@ -21,9 +21,10 @@ jobs:
           node-version: '22'
       - name: Verify generated script syntax
         run: |
-          for file in js/*.js; do node --check "$file"; done
+          for file in js/*.js js/engine/*.js; do node --check "$file"; done
       - name: Audit progression model
         run: |
+          node combat_engine_regression.mjs
           node recommendation_regression.mjs
           node leveling_rotation_audit.mjs
           node recommendations_audit.mjs
@@ -35,6 +36,7 @@ jobs:
         run: |
           npm install --no-save playwright@1.56.0
           npx playwright install --with-deps chromium
+          node combat_optimizer_smoke.mjs
           node leveling_macro_smoke.mjs
           node recommendation_coherence_smoke.mjs
           node goal_route_smoke.mjs

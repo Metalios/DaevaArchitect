@@ -339,6 +339,117 @@ function nodeVisual(n){
   const backup='https://aion2.app/db-item-icons/'+gameSkillIconFile(state.class,name).replace(/\.png$/i,'.webp');
   return `<span class="node-icon-fallback" aria-hidden="true">${nodeShort(n)}</span><img class="node-game-icon" src="${icon}" alt="" loading="lazy" decoding="async" data-backup="${backup}" onerror="if(!this.dataset.triedBackup){this.dataset.triedBackup='1';this.src=this.dataset.backup}else{this.hidden=true}">`;
 }
+
+// Engine adapter: preserve the saved account schema and budget accounting.
+// Current combat calibration covers Global PvE Sorcerer only; other classes
+// keep their existing legal progression until their mechanics are validated.
+let lastOptimizedCombat=null;
+let combatResultCache={key:null,result:null};
+function engineBuild(masteryLevels,boardEffects,stigmaLevels,equipped){
+  const equippedRanks={...gearSkillLevels()};
+  for(const [name,n] of Object.entries(account().gear||{}))
+    equippedRanks[name]=(equippedRanks[name]||0)+(Number(n)||0);
+  const visibleStats=[...gearFixedTotals().stats,...gearSocketTotals().stats];
+  const percent=name=>visibleStats.filter(row=>row.name===name&&row.unit==='%')
+    .reduce((total,row)=>total+(Number(row.value)||0),0);
+  return {
+    mastery:masteryLevels,boardSkills:boardEffects.skills,
+    boardStats:boardEffects.stats,gearSkills:equippedRanks,
+    gearStats:{CombatSpeed:percent('Combat Speed')*100,
+      CoolTimeDecrease:percent('Cooldown Reduction')*100,
+      AmplifyAllDamage:percent('Damage Boost')*100},
+    stigma:stigmaLevels,equippedStigmas:equipped,
+    availableSkills:Object.entries(SKILL_UNLOCKS[state.class]||{})
+      .filter(([,at])=>at<=currentLevel()).map(([name])=>name)
+  };
+}
+function sorcererCombatEligible(){
+  return state.class==='sorcerer'&&account().context!=='pvp'&&typeof GlobalCombatEngine!=='undefined';
+}
+function chooseCombatBoardRoute(provisional,stigma,gearRanks,target,baseCp,actual){
+  const baseWeights=activeWeights(),targets=typeof progressionBoardTargets==='function'
+    ?progressionBoardTargets(state.class,account().context):{};
+  const baseArgs=[data(),baseWeights,provisional.levels,gearRanks,
+    baseCp===null?0:target,baseCp,actual,currentLevel(),targets];
+  const original=optimizeBoardRoute(...baseArgs);
+  if(!sorcererCombatEligible()||customMode())return original;
+  const speedWeights={...baseWeights,stats:{...baseWeights.stats,
+    CombatSpeed:Math.max(70,(baseWeights.stats.CombatSpeed||0)*2.5),
+    CoolTimeDecrease:Math.max(40,(baseWeights.stats.CoolTimeDecrease||0)*2)}};
+  const speedRoute=optimizeBoardRoute(data(),speedWeights,provisional.levels,gearRanks,
+    baseCp===null?0:target,baseCp,actual,currentLevel(),targets);
+  const options=[original,speedRoute];
+  const maxCrystals=budget('crystals'),names=skillNames();
+  let best=null;
+  for(const candidate of options){
+    const selected=new Set();let spent=0;
+    for(const entry of candidate.route){
+      const node=nodeMap().get(entry.id)?.node;
+      if(!node||spent+node[5]>maxCrystals)break;
+      spent+=node[5];selected.add(entry.id);
+    }
+    const boardEffects=effects(selected);
+    const funded=account().manualMastery?provisional:allocate(
+      masteryStages(boardEffects.skills),budget('mastery'),masteryCost,names,1,
+      isLeveling()?masteryRankCap:null);
+    const build=engineBuild(funded.levels,boardEffects,stigma.levels,activeStigmas());
+    const performance=GlobalCombatEngine.tuneSpecialties(build,SPECS.sorcerer,
+      account().customSpecialties||{});
+    if(!best||performance.robustScore>best.score+1e-8)
+      best={candidate,score:performance.robustScore};
+  }
+  return best?.candidate||original;
+}
+function enhanceSorcererCombat(master,boardEffects,stigmas){
+  if(!sorcererCombatEligible()){lastOptimizedCombat=null;return master}
+  const a=account(),prepared=engineBuild(master.levels,boardEffects,stigmas.levels,activeStigmas());
+  const key=JSON.stringify([state.class,a.context,currentLevel(),prepared,
+    a.manualMastery,a.customSpecialties,budget('mastery')]);
+  let result=combatResultCache.key===key?combatResultCache.result:null;
+  if(!result){
+    let final=master,improvement=null;
+    if(!a.manualMastery){
+      const revised=GlobalCombatEngine.refineMastery({
+        initial:master.levels,budget:budget('mastery'),cost:masteryCost,
+        cap:masteryRankCap,build:prepared,specData:SPECS.sorcerer,
+        manualSpecs:a.customSpecialties||{}
+      });
+      if(revised.score>0&&revised.spent<=budget('mastery')){
+        final={...master,levels:revised.levels,spent:revised.spent};
+        improvement=revised.score;
+      }
+    }
+    const finalBuild={...prepared,mastery:final.levels};
+    let optimized=GlobalCombatEngine.tuneSpecialties(finalBuild,SPECS.sorcerer,
+      a.customSpecialties||{});
+    let macro=GlobalCombatEngine.chooseMacro(finalBuild,optimized.specialties);
+    if(macro.mode!=='ground'){
+      optimized=GlobalCombatEngine.tuneSpecialties({...finalBuild,macroLayout:macro.mode},
+        SPECS.sorcerer,a.customSpecialties||{},optimized.specialties);
+      macro=GlobalCombatEngine.chooseMacro(finalBuild,optimized.specialties);
+    }
+    const staticSpecs={};
+    for(const [name,entry] of Object.entries(SPECS.sorcerer||{})){
+      const eff=GlobalCombatEngine.effective(finalBuild,name);
+      staticSpecs[name]=Array.isArray(a.customSpecialties?.[name])
+        ?a.customSpecialties[name]:GlobalCombatEngine.legalOptions(name,eff,SPECS.sorcerer)
+          .filter(id=>(entry.picks?.[eff>=20?'20':eff>=16?'16':eff>=12?'12':eff>=8?'8':'']||[]).includes(id))
+          .slice(0,GlobalCombatEngine.slots(eff));
+    }
+    const original=GlobalCombatEngine.evaluate(finalBuild,staticSpecs);
+    result={mastery:final,specialties:optimized.specialties,
+      score:macro.robustScore,baselineScore:original.robustScore,
+      macro:{mode:macro.mode,label:macro.label,steps:[...macro.steps],
+        stacks:macro.stacks.map(stack=>({...stack,skills:[...stack.skills]}))},
+      manualPerMinute:macro.manualPerMinute,
+      scenarios:macro.samples,source:GlobalCombatEngine.SOURCE,
+      calibrated:false,improvement};
+    combatResultCache={key,result};
+  }
+  lastOptimizedCombat=result;
+  return result.mastery;
+}
+
 function model(){
   const a=account(),names=skillNames(),recommendedMastery=allocate(masteryStages(),budget('mastery'),masteryCost,names,1,isLeveling()?masteryRankCap:null),
     mastery=a.manualMastery?manualAllocation(a.manualMastery,names,budget('mastery'),masteryCost,1,masteryRankCap):recommendedMastery,
@@ -355,7 +466,7 @@ function model(){
     for(const [name,n] of Object.entries(a.gear||{}))gearRanks[name]=(gearRanks[name]||0)+Number(n||0);
     // Board level unlocks are a real change of eligible path; a level
     // increase inside the same unlock band must not shuffle suggestions.
-    const contextKey=JSON.stringify([state.class,a.context,BOARD_NAMES.filter(boardOpen)]);
+    const contextKey=JSON.stringify([state.class,a.context,BOARD_NAMES.filter(boardOpen),sorcererCombatEligible()?'global-sorcerer-combat-v1':'legacy']);
     const snapshot=a.recommendedRouteSnapshot;
     // Prior to any real purchases, changes to the player's goal, mastery,
     // equipment or Stigmas should still influence the recommended route.
@@ -377,9 +488,7 @@ function model(){
       const reference={mastery,stigma,boards:{owned:actual},effects:effects(actual)};
       const estimated=estimateCombatPower(reference);
       const baseCp=estimated.ready?estimated.value:null;
-      const computed=optimizeBoardRoute(data(),activeWeights(),mastery.levels,gearRanks,
-        baseCp===null?0:target,baseCp,actual,currentLevel(),
-        typeof progressionBoardTargets==='function'?progressionBoardTargets(state.class,a.context):{});
+      const computed=chooseCombatBoardRoute(mastery,stigma,gearRanks,target,baseCp,actual);
       liveRoute=computed.route;liveRouteBasis={initialFocus:computed.initialFocus,baseCp:computed.baseCp};
       a.recommendedRouteSnapshot={
         contextKey,basisKey,route:computed.route,
@@ -405,8 +514,9 @@ function model(){
   const fundedMastery=a.manualMastery?mastery:allocate(
     masteryStages(plannedEffects.skills),budget('mastery'),masteryCost,names,1,
     isLeveling()?masteryRankCap:null);
-  return {mastery:fundedMastery,stigma,boards,azphel,
-    effects:plannedEffects,acquiredEffects,
+  const finalMastery=enhanceSorcererCombat(fundedMastery,plannedEffects,stigma);
+  return {mastery:finalMastery,stigma,boards,azphel,
+    effects:plannedEffects,acquiredEffects,combat:lastOptimizedCombat,
     azphelEffects:effects(azphel.owned)};
 }
 function skillLevelBreakdown(name,m){
@@ -524,7 +634,11 @@ function renderGoal(m){
   const percent=Math.min(100,Math.round(observed/target*100)),gap=Math.max(0,target-observed);
   $('goal-status').innerHTML=`<b>${percent}% of target</b> · ${gap?`${gap.toLocaleString()} to go`:'target reached'}<div class="progress"><span style="width:${percent}%"></span></div>`;
 }
-function recommendedSpecPicks(name,eff){const spec=SPECS[state.class]?.[name];if(!spec)return [];let key=eff>=20?'20':eff>=16?'16':eff>=12?'12':eff>=8?'8':null;if(!key)return [];
+function recommendedSpecPicks(name,eff){const spec=SPECS[state.class]?.[name];if(!spec)return [];
+  if(sorcererCombatEligible()&&lastOptimizedCombat?.mastery&&
+     Array.isArray(lastOptimizedCombat.specialties?.[name]))
+    return lastOptimizedCombat.specialties[name].filter(id=>spec.options?.[id]&&
+      eff>=(id<=3?8:id===4?12:16)).slice(0,specialtySlots(eff));let key=eff>=20?'20':eff>=16?'16':eff>=12?'12':eff>=8?'8':null;if(!key)return [];
   const contextual=typeof adviceSpecialtyChoices==='function'?adviceSpecialtyChoices(state.class,account().context,name,eff,spec.options):null;
   if(contextual)return contextual;
   let picks=spec.picks[key]||[];if(state.class==='templar'&&account().context==='pvp'&&name==='Poach'&&eff>=12)picks=eff>=20?[2,4,3]:[2,4];if(state.class==='templar'&&account().context==='pvp'&&name==='Defiance'&&eff>=12)picks=eff>=20?[1,3,5]:eff>=16?[1,3]:[1,3];return picks}
@@ -568,6 +682,13 @@ function numbered(items){return items.map((v,i)=>`<li><span class="rotation-num"
 function renderRotation(m){
   const a=account(),p=typeof progressionRotationProfile==='function' ? progressionRotationProfile(profile(),state.class,a.context,name=>skillLevelBreakdown(name,m).withOwned,activeStigmas().filter(name=>(m.stigma.levels[name]||0)>0),(name,option)=>specPicks(name,skillLevelBreakdown(name,m).withOwned).includes(option)) : profile(),level=currentLevel(),levelingMode=isLeveling(),main=masteryStages()[0]?.[0]||skillNames()[0],macroKey=['RMB','Mouse 4','MMB','M'].includes(a.macroBind)?a.macroBind:'RMB',weaveKey=p.weaveKey||'LMB';
   const quickUse2Bind=a.quickUse2Bind==='T'?'T':'R';
+  if(m.combat?.macro?.stacks&&sorcererCombatEligible()){
+    const chosen=m.combat.macro;
+    p.stacks=chosen.stacks.map(stack=>({...stack}));
+    p.macro=[...chosen.steps];
+    p.rule='Easy Global Sorcerer: '+chosen.label+' (modeled selection). Keep LMB basic attacks and RMB Macro held, charge Hellfire and use offensive buffs manually.';
+    p.hotbarNote='Recommended '+chosen.label+'. Automatic steps: '+chosen.steps.join(' + ')+'. Hellfire, Wish of Concentration and learned offensive buffs remain manual; animation and macro timing are estimated.';
+  }
   const physicalHotkey=key=>key==='R'?quickUse2Bind:key;
   const displayKeyCopy=value=>quickUse2Bind==='T'?String(value).replace(/\bR\b/g,'T'):String(value);
   // R is the secondary default for LMB, NOT an extra basic attack in this
@@ -586,6 +707,19 @@ function renderRotation(m){
     const plan=buildLevelingCombat(state.class,level,a.context,SKILL_UNLOCKS[state.class],
       activeStigmas().slice(0,levelReward().slots),m.stigma.levels,
       (name,option)=>specPicks(name,skillLevelBreakdown(name,m).withOwned).includes(option));
+    if(m.combat?.macro?.stacks&&sorcererCombatEligible()){
+      const available=new Set(plan.stacks.flatMap(stack=>stack.stack));
+      plan.stacks=m.combat.macro.stacks.map(stack=>{
+        const rows=stack.skills.filter(name=>available.has(name))
+          .map((name,row)=>({name,row}));
+        return {key:stack.key,label:stack.title,macro:true,
+          stack:rows.map(row=>row.name),rows};
+      }).filter(stack=>stack.stack.length);
+      plan.steps=plan.stacks.map(stack=>stack.key);
+      plan.key=plan.steps[0]||plan.key;
+      plan.stack=plan.stacks[0]?.stack||[];
+      plan.rows=plan.stacks[0]?.rows||[];
+    }
     $('rotation').classList.add('leveling-view');
     $('rotation-level').textContent='Lv '+level+' · starter combat';
     $('leveling-rotation').hidden=false;

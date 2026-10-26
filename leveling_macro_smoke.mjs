@@ -22,6 +22,14 @@ try{
      failures.push(cls+' '+level+': AION 2 control mode card hidden in leveling view');
    const plan=buildLevelingCombat(cls,level,context,SKILL_UNLOCKS[cls],activeStigmas().slice(0,levelReward().slots),
      m.stigma.levels,(name,option)=>specPicks(name,effective(name,m)).includes(option));
+   if(cls==='sorcerer'&&m.combat?.macro){
+     const available=new Set(plan.stacks.flatMap(group=>group.stack));
+     plan.stacks=m.combat.macro.stacks.map(group=>{
+       const stack=group.skills.filter(name=>available.has(name));
+       return {key:group.key,stack};
+     }).filter(group=>group.stack.length);
+     plan.steps=plan.stacks.map(group=>group.key);
+   }
    if(!r.classList.contains('leveling-view'))failures.push(cls+' '+level+': no leveling view');
    const oldMacro=document.querySelector('#macro-stacks');
    if(getComputedStyle(oldMacro).display!=='none')failures.push(cls+' '+level+': endgame macro still displayed');
@@ -33,7 +41,7 @@ try{
    }else{
     const expected=plan.steps.length;
     if(groups.length!==expected)failures.push(cls+' '+level+': expected '+expected+' key stacks');
-    if(cls==='sorcerer'&&level>=10&&expected<2)failures.push(cls+' '+level+': Q/E automation missing');
+    if(cls==='sorcerer'&&level>=10&&expected<1)failures.push(cls+' '+level+': no automatic damage stack');
     const stepCopy=document.querySelector('#leveling-macro-step')?.textContent||'';
     if(!stepCopy.includes((['ZERO','ONE','TWO','THREE'][expected]||expected)+' step'+(expected===1?'':'s')+':'))
       failures.push(cls+' '+level+': macro description mismatch');
@@ -81,19 +89,19 @@ try{
      document.querySelector('#leveling-stack')?.textContent.includes('Hellfire'))
     failures.push('Sorcerer level 11: wrong locked damage sequence');
   state.class='sorcerer';a=account();a.journey='leveling';a.context='solo';leveling().level=31;render();
-  if(document.querySelectorAll('#leveling-stacks [data-stack-key]').length!==2||
-     !document.querySelector('#leveling-macro-step')?.textContent.includes('TWO steps:')||
-     document.querySelectorAll('#leveling-stacks [data-stack-role="macro"]').length!==2)
-    failures.push('Sorcerer Lv31 should automate BOTH Q and E in one held RMB macro');
+  const expectedSorc=model().combat.macro.steps;
+  const actualSorc=[...document.querySelectorAll('#leveling-stacks [data-stack-role="macro"]')].map(el=>el.dataset.stackKey);
+  if(!actualSorc.length||actualSorc.length>3||
+     actualSorc.some(key=>!expectedSorc.includes(key)))
+    failures.push('Sorcerer Lv31 visible macro must use feasible optimized Q/E/R subset');
   if(!document.querySelector('#leveling-manual [data-manual-key="1"]')?.textContent.includes('Hellfire'))
     failures.push('Sorcerer Lv31 manual key 1 should charge Hellfire');
   if(['Hellfire','Wish of Concentration','Element Enhancement','Delayed Explosion'].some(name=>[...document.querySelectorAll('#leveling-stacks [data-leveling-skill]')].some(node=>node.dataset.levelingSkill===name)))
     failures.push('Sorcerer Lv31: charged Hellfire or buff included in macro');
   if(!document.querySelector('#leveling-manual [data-manual-key="2"]')?.textContent.includes('Wish of Concentration'))
     failures.push('Sorcerer Lv31: Wish buff should be manual on 2');
-  if(!document.querySelector('#leveling-stacks')?.textContent.includes("Winter's Shackles")||
-     !document.querySelector('#leveling-stacks')?.textContent.includes('Flame Scattershot'))
-    failures.push('Sorcerer Lv31: normal attack or Stagger finisher missing from automatic stacks');
+  if(!document.querySelector('#leveling-stacks')?.textContent.includes('Firestorm'))
+    failures.push('Sorcerer Lv31: Firestorm missing from optimized automatic stacks');
   const bind=document.querySelector('#leveling-macro-bind');
   bind.value='M';bind.dispatchEvent(new Event('change',{bubbles:true}));
   if(account().macroBind!=='M'||document.querySelector('#leveling-macro-bind')?.value!=='M'||

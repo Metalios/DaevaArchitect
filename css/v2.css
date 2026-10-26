@@ -512,3 +512,19 @@
  .rotation-quickuse-label{align-items:flex-start;flex-direction:column;gap:6px}
 }
 
+
+/* Comparative Global combat model: never imply these values are game DPS. */
+.v2-combat-evidence{border:1px solid #3d6585;border-radius:9px;background:linear-gradient(120deg,#102a41,#0b1d31);padding:13px;min-width:0;max-width:100%;box-sizing:border-box;color:#d6e9f6}
+.v2-combat-evidence[hidden]{display:none!important}
+.v2-combat-title{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;justify-content:space-between}
+.v2-combat-title b{font-size:14px;color:#f1d49c}
+.v2-combat-title small,.v2-combat-disclaimer{font-size:11px;color:#a5c1d7}
+.v2-combat-numbers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:10px 0}
+.v2-combat-numbers>span{display:flex;flex-direction:column;align-items:center;gap:3px;border:1px solid #365573;border-radius:6px;background:#0a2135;padding:8px 5px;text-align:center;min-width:0}
+.v2-combat-numbers b{font-size:20px;font-variant-numeric:tabular-nums;color:#ffe0aa}
+.v2-combat-numbers small{font-size:10px;color:#b5cde0}
+.v2-combat-evidence p{font-size:12px;line-height:1.6;margin:8px 0}
+.v2-combat-scenarios{display:flex;flex-wrap:wrap;gap:6px;margin:7px 0}
+.v2-combat-scenarios span{font-size:11px;border-radius:4px;background:#1b3f56;padding:4px 8px}
+.v2-combat-disclaimer{display:block;line-height:1.55}
+@media(max-width:480px){.v2-combat-numbers{grid-template-columns:1fr}.v2-combat-numbers>span{align-items:flex-start;text-align:left}}
