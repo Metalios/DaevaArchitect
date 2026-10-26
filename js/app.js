@@ -715,6 +715,8 @@ function renderRotation(m){
       }).filter(stack=>stack.stack.length);
       plan.steps=plan.stacks.map(stack=>stack.key);
       plan.key=plan.steps[0]||plan.key;
+      plan.stack=plan.stacks[0]?.stack||[];
+      plan.rows=plan.stacks[0]?.rows||[];
     }
     $('rotation').classList.add('leveling-view');
     $('rotation-level').textContent='Lv '+level+' · starter combat';
