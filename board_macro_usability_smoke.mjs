@@ -81,19 +81,19 @@ try{
   if(!sorc.includes('Flame Arrow')||!sorc.includes('Hellfire')||!sorc.includes('LMB')||!sorc.includes('RMB'))
     failures.push('Sorcerer mouse/macro/manual setup not clear');
   const macro=[...document.querySelectorAll('#macro-stacks .macro-step')].map(x=>x.textContent);
-  if(macro.length<2||macro.length>3||!macro[0].includes('Q')||!macro[1].includes('E')||
-     (macro.length===3&&!macro[2].includes('R')))
-    failures.push('Sorcerer RMB macro must use Q/E, plus optional R when damage Stigmas equipped');
-  const groundEquipped=activeStigmas().some(name=>['Fire Wall','Cold Storm'].includes(name)&&(model().stigma.levels[name]||0)>0);
-  if((macro.length===3)!==groundEquipped)
-    failures.push('Sorcerer R ground step does not match learned equipped damage Stigmas');
-  if(!document.querySelector('#macro-stacks [data-macro-key="E"].macro-stack-auto'))
-    failures.push('Sorcerer E conditional follow-ups not automatically handled');
+  const chosen=model().combat.macro.steps;
+  if(macro.length!==chosen.length||!macro[0]?.includes('Q')||
+     chosen.some((key,i)=>!macro[i]?.includes(key)))
+    failures.push('Sorcerer RMB macro steps disagree with selected combat-ranked stacks');
+  if(chosen.includes('R')&&!activeStigmas().some(name=>['Fire Wall','Cold Storm'].includes(name)&&(model().stigma.levels[name]||0)>0))
+    failures.push('Sorcerer must not use R ground macro without equipped ground Stigmas');
+  if(chosen.includes('E')&&!document.querySelector('#macro-stacks [data-macro-key="E"].macro-stack-auto'))
+    failures.push('Sorcerer selected E step missing from visible automatic stack');
   const autoSkills=[...document.querySelectorAll('#macro-stacks .macro-stack-auto .macro-physical-stack [data-skill]')].map(node=>node.dataset.skill);
   for(const manualOnly of ['Hellfire','Wish of Concentration','Element Enhancement','Delayed Explosion'])
     if(autoSkills.includes(manualOnly))failures.push('Sorcerer manual buff/charge included in RMB macro: '+manualOnly);
-  for(const automated of ["Winter's Shackles",'Flame Scattershot'])
-    if(!autoSkills.includes(automated))failures.push('Sorcerer routine or Stagger attack not automated: '+automated);
+  for(const automated of ['Firestorm','Blaze'])
+    if(!autoSkills.includes(automated))failures.push('Sorcerer core cooldown not automated: '+automated);
   const manualKeys=[...document.querySelectorAll('#rotation-quick-guide [data-easy-key]')].map(el=>el.textContent);
   if(!manualKeys[0]?.includes('Hellfire')||!manualKeys[1]?.includes('Wish of Concentration'))
     failures.push('Sorcerer manual Hellfire and Wish assignments missing');
@@ -103,18 +103,18 @@ try{
   const quick2=document.querySelector('#quick-use-2-bind');
   if(quick2.value!=='R'||!document.querySelector('#rotation-control-status')?.textContent.includes('T → R'))
     failures.push('AION 2 mode must default to remapped Quick Use 2 = R');
-  if(!document.querySelector('#macro-stacks [data-macro-key="R"].macro-stack-auto')||
-     ![...document.querySelectorAll('#macro-stacks .macro-step-key')].some(el=>el.textContent==='R'))
-    failures.push('Remapped R ground-damage stack does not display in endgame Macro');
+  const usesGround=model().combat.macro.steps.includes('R');
+  if(usesGround&&(!document.querySelector('#macro-stacks [data-macro-key="R"].macro-stack-auto')||
+     ![...document.querySelectorAll('#macro-stacks .macro-step-key')].some(el=>el.textContent==='R')))
+    failures.push('Remapped R ground stack should display whenever optimized macro uses R');
   quick2.value='T';quick2.dispatchEvent(new Event('change',{bubbles:true}));
   if(a.quickUse2Bind!=='T'||document.querySelector('#quick-use-2-bind').value!=='T'||
-     !document.querySelector('#macro-stacks [data-macro-key="T"].macro-stack-auto')||
-     ![...document.querySelectorAll('#macro-stacks .macro-step-key')].some(el=>el.textContent==='T')||
-     !document.querySelector('#rotation-quick-guide')?.textContent.includes('Q + E + T'))
+     (usesGround&&(!document.querySelector('#macro-stacks [data-macro-key="T"].macro-stack-auto')||
+     ![...document.querySelectorAll('#macro-stacks .macro-step-key')].some(el=>el.textContent==='T')))
     failures.push('Original T Quick Use 2 bind not reflected in endgame Macro stack, steps and instructions');
   document.querySelector('#quick-use-2-bind').value='R';
   document.querySelector('#quick-use-2-bind').dispatchEvent(new Event('change',{bubbles:true}));
-  if(a.quickUse2Bind!=='R'||!document.querySelector('#macro-stacks [data-macro-key="R"]'))
+  if(a.quickUse2Bind!=='R'||(usesGround&&!document.querySelector('#macro-stacks [data-macro-key="R"]')))
     failures.push('T to R rebind did not persist through endgame re-render');
   return failures;
  });
