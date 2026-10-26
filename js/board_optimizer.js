@@ -101,3 +101,64 @@ function optimizeBoardRoute(classData, weights, masteryRanks, gearRanks, targetC
   }
   return {route,initialFocus,baseCp};
 }
+
+
+// Preserve the calculated high-value path, but do not strand earned crystals
+// merely because its next tile costs more than the budget remainder.
+// Work ONLY with currently connected tiles; appended recommendations cannot
+// jump over prerequisites. Returns the full route so future budgets can extend
+// it without generating a new optimization or losing purchased markers.
+// Each unlocked board has a free start tile; Azphel has a separate currency.
+function fundConnectedBoardRoute(classData, route, budget) {
+  const max=Math.max(0,Math.floor(Number(budget)||0));
+  const costById=new Map(),adjacent=new Map(),connected=new Set();
+  const available=new Set(route.map(step=>step.id));
+  for(const board of classData.boards){
+    const coords=new Map(board.nodes.map(node=>[node[1]+':'+node[2],node[0]]));
+    for(const node of board.nodes){
+      costById.set(node[0],node[5]);
+      if(node[5]===0)connected.add(node[0]);
+      adjacent.set(node[0],[
+        coords.get((node[1]-1)+':'+node[2]),
+        coords.get((node[1]+1)+':'+node[2]),
+        coords.get(node[1]+':'+(node[2]-1)),
+        coords.get(node[1]+':'+(node[2]+1))
+      ].filter(id=>id!==undefined));
+    }
+  }
+  const selected=[],picked=new Set();let spent=0;
+  // Keep the original route prefix unchanged; it represents the best
+  // affordable progress from the established priority recommendation.
+  for(const entry of route){
+    const cost=costById.get(entry.id);
+    if(cost===undefined||spent+cost>max)break;
+    picked.add(entry.id);connected.add(entry.id);selected.push(entry);spent+=cost;
+  }
+  while(spent<max){
+    const remaining=max-spent;
+    // Beyond the budget prefix choose a connected affordable tile. Close to
+    // the budget boundary, prefer an exact-fit tile when possible.
+    let next=null,position=-1;
+    for(let i=0;i<route.length;i++){
+      const entry=route[i],cost=costById.get(entry.id);
+      if(picked.has(entry.id)||cost===undefined||cost>remaining||!available.has(entry.id))continue;
+      if(!adjacent.get(entry.id)?.some(id=>connected.has(id)))continue;
+      if(!next||cost===remaining){next=entry;position=i}
+      if(cost===remaining)break;
+    }
+    if(!next)break;
+    picked.add(next.id);connected.add(next.id);selected.push(next);
+    spent+=costById.get(next.id);
+  }
+  // The remaining entries retain their relative topological order: all
+  // entries pulled forward were connected when purchased.
+  const reordered=selected.concat(route.filter(entry=>!picked.has(entry.id)));
+  let nextReachableCost=null;
+  for(const entry of reordered){
+    if(picked.has(entry.id))continue;
+    if(!adjacent.get(entry.id)?.some(id=>connected.has(id)))continue;
+    const cost=costById.get(entry.id);
+    nextReachableCost=nextReachableCost===null?cost:Math.min(nextReachableCost,cost);
+  }
+  return {route:reordered,spent,remaining:max-spent,nextReachableCost};
+}
