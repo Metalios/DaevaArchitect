@@ -264,8 +264,28 @@ const GlobalCombatEngine=(()=>{
       }
       if(!improved)break;
     }
-    // Preserve original spent budget if no exchange won.
-    return {levels:mastery,spent,score:best,passes:passes-1};
+    // Spend any remaining affordable points only when the simulated
+    // marginal benefit is positive. This preserves zero-overspend while
+    // permitting the solver to improve a legacy incomplete recommendation.
+    let upgrades=0;
+    while(upgrades<20){
+      let winner=null;
+      for(const name of unique){
+        const rank=mastery[name]+1,need=cost(rank);
+        if(rank>cap(name)||spent+need>budget)continue;
+        mastery[name]=rank;
+        const trial=score();
+        mastery[name]--;
+        if(trial<=best+1e-7)continue;
+        const gain=(trial-best)/need;
+        if(!winner||gain>winner.gain+1e-10)
+          winner={name,need,trial,gain};
+      }
+      if(!winner)break;
+      mastery[winner.name]++;spent+=winner.need;
+      best=winner.trial;upgrades++;
+    }
+    return {levels:mastery,spent,score:best,passes:passes-1,upgrades};
   }
   return Object.freeze({SOURCE,ACTIONS,ENCOUNTERS,legalOptions,slots,effective,
     MACRO_LAYOUTS,chooseMacro,simulate,evaluate,tuneSpecialties,refineMastery,scoreMastery});
