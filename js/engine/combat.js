@@ -35,6 +35,17 @@ const GlobalCombatEngine=(()=>{
     {id:'mobile',duration:180,movement:.35,weight:.3,animation:1.15},
     {id:'short',duration:30,movement:.08,weight:.2,animation:.9}
   ];
+  const MACRO_LAYOUTS=Object.freeze({
+    compact:{label:'One-stack Q',steps:['Q'],
+      stacks:[{key:'Q',title:'Compact cooldown damage',skills:['Firestorm','Blaze','Bittercold Wind',"Winter's Shackles"]}]},
+    balanced:{label:'Two-stack Q / E',steps:['Q','E'],
+      stacks:[{key:'Q',title:'Cooldown and frost setup',skills:['Firestorm','Bittercold Wind',"Winter's Shackles",'Frost']},
+        {key:'E',title:'Conditional follow-ups',skills:['Blaze','Frost Burst','Flame Scattershot']}]},
+    ground:{label:'Ground-damage Q / E / R',steps:['Q','E','R'],
+      stacks:[{key:'Q',title:'Cooldown and frost setup',skills:['Firestorm','Bittercold Wind',"Winter's Shackles",'Frost']},
+        {key:'E',title:'Conditional follow-ups',skills:['Blaze','Frost Burst','Flame Scattershot']},
+        {key:'R',title:'Equipped damage Stigmas',skills:['Fire Wall','Cold Storm']}]}
+  });
   const CORE=['Firestorm','Blaze','Hellfire','Wish of Concentration','Bittercold Wind',"Winter's Shackles",'Flame Arrow'];
   const SPEC_KEYS=['Firestorm','Hellfire','Blaze','Wish of Concentration',"Winter's Shackles",'Flame Arrow','Bittercold Wind'];
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,Number(v)||0));
@@ -84,8 +95,10 @@ const GlobalCombatEngine=(()=>{
     const cd={},counts={},damageBySkill={},stigma=build.stigma;
     let now=0,damage=0,mp=2000,fireMarkUntil=0,frostUntil=0,staggerUntil=0,attackBuffUntil=0,
       pveBuffUntil=0,combatBuffUntil=0,manualActions=0,missedGround=0,skippedForMp=0,unavailable=0,castTime=0;
-    const priority=['Firestorm','Blaze','Bittercold Wind','Frost Burst',"Winter's Shackles",'Frost','Flame Scattershot'];
-    const equippedGround=['Fire Wall','Cold Storm'].filter(name=>hasStigma(build,name));
+    const macro=MACRO_LAYOUTS[build.macroLayout]||MACRO_LAYOUTS.ground;
+    const priority=macro.stacks.flatMap(stack=>stack.skills);
+    const macroStepOverhead=(macro.steps.length-1)*.012; // input sensitivity, not measured animation
+    const equippedGround=macro.steps.includes('R')?['Fire Wall','Cold Storm'].filter(name=>hasStigma(build,name)):[];
     const maxSteps=2500;
     const eligible=name=>{
       const action=ACTIONS[name];
@@ -152,9 +165,10 @@ const GlobalCombatEngine=(()=>{
       if(!name){
         // Q/E is deliberately treated as opportunistic rather than a
         // perfectly deterministic game macro execution sequence.
-        const available=priority.concat(equippedGround).filter(eligible);
+        const available=priority.filter(eligible);
         name=available[0]||'Flame Arrow';
         if(!available.length)unavailable++;
+        else now+=macroStepOverhead;
       }
       if(!eligible(name)){name='Flame Arrow';skippedForMp++}
       cast(name);
@@ -202,6 +216,20 @@ const GlobalCombatEngine=(()=>{
     }
     return {specialties:current,...best};
   }
+  function chooseMacro(build,specialties,scenarios=ENCOUNTERS){
+    let winner=null;
+    for(const mode of ['compact','balanced','ground']){
+      const layout=MACRO_LAYOUTS[mode];
+      if(mode==='ground'&&!['Fire Wall','Cold Storm'].some(name=>hasStigma(build,name)))continue;
+      const data=evaluate({...build,macroLayout:mode},specialties,scenarios);
+      // Complexity cost is only a tie-breaker for setup burden. Actual
+      // human inputs remain LMB+RMB with charged Hellfire/buffs manual.
+      const adjusted=data.robustScore*(1-.002*(layout.steps.length-1));
+      if(!winner||adjusted>winner.adjusted+1e-8)
+        winner={...layout,mode,adjusted,...data};
+    }
+    return winner;
+  }
   function scoreMastery(build,specData,manualSpecs={},seed=null){
     return tuneSpecialties(build,specData,manualSpecs,seed,[ENCOUNTERS[0],ENCOUNTERS[1]]).robustScore;
   }
@@ -240,5 +268,5 @@ const GlobalCombatEngine=(()=>{
     return {levels:mastery,spent,score:best,passes:passes-1};
   }
   return Object.freeze({SOURCE,ACTIONS,ENCOUNTERS,legalOptions,slots,effective,
-    simulate,evaluate,tuneSpecialties,refineMastery,scoreMastery});
+    MACRO_LAYOUTS,chooseMacro,simulate,evaluate,tuneSpecialties,refineMastery,scoreMastery});
 })();
