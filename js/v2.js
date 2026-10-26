@@ -20,6 +20,7 @@ const nav=make('nav','v2-nav',`<button type="button" data-v2-tab="workspace">Bui
 const work=make('div','v2-workspace');work.id='v2-workspace';
 const left=make('div','v2-left v2-column'),center=make('div','v2-center v2-column'),right=make('div','v2-right v2-column');
 const footer=make('div','v2-footer'),next=make('div','v2-next'),note=make('div','v2-gear-note');
+const combatEvidence=make('section','v2-combat-evidence');combatEvidence.id='v2-combat-evidence';
 const full=make('details','v2-full-overview','<summary>Full build recommendations, targets, and collection guidance</summary>');
 const gearDetails=make('details','v2-gear-advanced','<summary>Arcana, wings & detailed equipment calculations</summary>');
 const extra=make('div','v2-extra');extra.id='v2-extra';
@@ -64,7 +65,7 @@ function mount(){
    const part=$('gear').querySelector(extra);
    if(part)gearDetails.append(part);
  }
- work.after(footer);footer.append(next,note,full);full.append($('overview'));
+ work.after(footer);footer.append(next,combatEvidence,note,full);full.append($('overview'));
  footer.after(extra);extra.append($('rotation'),$('titles'),$('sources'));
  $('mastery').insertBefore(master,$('mastery-visible'));
  master.querySelector('.v2-advanced-skills').append($('skill-grid'));
@@ -193,6 +194,25 @@ function stigmasView(m){
    </div>`;
 }
 function actionsView(m){
+ const combat=m.combat;
+ combatEvidence.hidden=!combat||state.class!=='sorcerer'||account().context==='pvp';
+ if(!combatEvidence.hidden){
+   const variance=Number.isFinite(combat.baselineScore)&&combat.baselineScore>0
+     ?Math.max(0,(combat.score/combat.baselineScore-1)*100):0;
+   const scenarios=(combat.scenarios||[]).map(row=>
+     '<span>'+esc(row.scenario)+': '+row.score.toFixed(3)+'</span>').join('');
+   combatEvidence.innerHTML='<div class="v2-combat-title"><b>Global PvE · easy sustained combat estimate</b><small>Research-based model, not measured DPS</small></div>'+
+     '<div class="v2-combat-numbers"><span><b>'+combat.score.toFixed(3)+'</b><small>relative robust damage score</small></span>'+
+     '<span><b>'+combat.manualPerMinute.toFixed(1)+'</b><small>estimated manual actions/min</small></span>'+
+     '<span><b>'+variance.toFixed(1)+'%</b><small>vs fixed Specialty preset</small></span></div>'+
+     '<p>Uses your funded Mastery, board levels, Stigma ranks and selected Specialties. '+
+     'Includes the LMB filler, RMB automatic core, manual Hellfire and buffs, Combat Speed, '+
+     'charge occupancy, cooldown reductions and MP conditions.</p>'+
+     '<div class="v2-combat-scenarios">'+scenarios+'</div>'+
+     '<small class="v2-combat-disclaimer">Relative scores depend on historical Global damage proportions and '+
+     'partially estimated animations. KR/TW charge timing is a transferable hypothesis; '+
+     'actual Global DPS, cancellation frames and speed breakpoints are unverified.</small>';
+ }
  const first=masteryStages().find(([name,wanted])=>(m.mastery.levels[name]||1)<Math.min(wanted,masteryRankCap(name)));
  const route=routeSteps(activeRoute(),nodeMap()),nextBoard=route.find(n=>!obtainedNodes().has(n.id)),gear=Object.values(gearEquipment()).filter(Boolean).length;
  const parts=[
