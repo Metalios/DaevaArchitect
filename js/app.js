@@ -1045,7 +1045,29 @@ $('skill-grid').addEventListener('change',e=>{
   }
 });
 $('board-tabs').addEventListener('click',e=>{const b=e.target.closest('[data-board]');if(b&&boardOpen(b.dataset.board)){state.board=b.dataset.board;state.preview=state.board==='Azphel'?(account().azphel||0):budget('crystals');state.node=null;renderBoards(model())}});
-$('board-mode-recommended').addEventListener('click',()=>{account().boardMode='recommended';boardEditNotice='';render()});
+// Explicit "Recommended" is a recalculation request even when the mode is
+// already recommended. Keep actual gold purchased marks; clear only the
+// discarded custom plan and stale, cached blue recommendation snapshot.
+function recalculateRecommendedBoards(){
+  const a=account();
+  a.boardMode='recommended';
+  a.customNodes=[];
+  a.customAzphelNodes=[];
+  a.recommendedRouteSnapshot=null;
+  liveRoute=null;
+  liveRouteKey='';
+  liveRouteBasis=null;
+  boardEditNotice='';
+  boardPurchaseNotice='';
+  state.node=null;
+  state.preview=state.board==='Azphel'?(a.azphel||0):budget('crystals');
+  // model() reconstructs the recommendation with the current equipment,
+  // level, point budgets, Stigmas, class and current obtained purchases.
+}
+$('board-mode-recommended').addEventListener('click',()=>{
+  recalculateRecommendedBoards();
+  render();
+});
 $('board-mode-custom').addEventListener('click',()=>{account().boardMode='custom';boardEditNotice='Select a connected tile on any unlocked board, or copy the current recommendation.';render()});
 $('copy-recommended-board').addEventListener('click',()=>{const nodes=nodeMap();account().customNodes=routeSteps(activeRoute(),nodes).filter(x=>x.total<=budget('crystals')).map(x=>x.id);account().customAzphelNodes=routeSteps(ROUTES[state.class].azphel,nodes).filter(x=>x.total<=(account().azphel||0)).map(x=>x.id);boardEditNotice='Copied the funded recommended route. Click tiles to customize it.';render()});
 $('clear-custom-board').addEventListener('click',()=>{account().customNodes=[];account().customAzphelNodes=[];boardEditNotice='Custom plan cleared. Obtained marks are kept separately.';state.node=null;render()});
