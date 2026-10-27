@@ -1,0 +1,51 @@
+// Validate the mechanically distinct Global PvE class models and their input
+// catalogs. No simulated result is a claim of measured server DPS/HPS.
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+const load=name=>fs.readFileSync(new URL(name,import.meta.url),'utf8');
+const classes=JSON.parse(load('classes_data.json'));
+const stigmas=JSON.parse(load('stigmas.json'));
+const ctx={};vm.createContext(ctx);
+vm.runInContext(load('js/engine/class_models.js')+'\nthis.models=ClassCombatModels;',ctx);
+const model=ctx.models;
+const goals=['performance','survivability','sustained','burst'];
+const contexts=['solo','party'];
+assert.equal(Object.keys(model.profiles).length,7);
+let total=0;
+for(const [cls,p] of Object.entries(model.profiles)){
+ assert(classes[cls],cls+': class missing');
+ const skills=new Set(Object.values(classes[cls].skills).map(x=>x.name));
+ for(const name of [...p.offense,...p.defense,...p.support,...Object.keys(p.milestones)])
+  if(!stigmas[cls][name])assert(skills.has(name),cls+': unknown skill '+name);
+ for(const name of [...p.burstBuffs,...p.survivalStigmas,...p.damageStigmas])
+  assert(stigmas[cls][name],cls+': unknown Stigma '+name);
+ assert.equal(p.damageStigmas.length,4);
+ assert.equal(p.survivalStigmas.length,4);
+ assert.equal(new Set(p.survivalStigmas).size,4);
+ assert.equal(new Set(p.damageStigmas).size,4);
+ assert(/^https:\/\//.test(p.evidence));
+ const ranks=Object.fromEntries([...skills].map(name=>[name,8]));
+ const baseBuild={mastery:ranks,boardSkills:{},gearSkills:{},boardStats:{},
+   gearStats:{},equippedStigmas:p.damageStigmas,
+   stigma:Object.fromEntries(p.damageStigmas.map(name=>[name,10]))};
+ for(const mode of contexts){
+  for(const goal of goals){
+   const advice=model.advice(cls,mode,goal,{core:p.offense,support:p.support,
+     stigmas:p.damageStigmas,stigmaPriority:p.damageStigmas,why:'Source baseline for test'});
+   assert.equal(advice.stigmas.length,4);
+   for(const stigma of advice.stigmas)assert(stigmas[cls][stigma]);
+   const a=model.evaluate({classId:cls,context:mode,objective:goal,build:baseBuild});
+   assert(Number.isFinite(a.score)&&a.score>0,cls+' '+goal+': invalid score');
+   assert(Number.isFinite(a.sustained)&&Number.isFinite(a.burst));
+   assert(Number.isFinite(a.survival)&&a.survival>0);
+   assert(a.provenance.source===p.evidence);
+   total++;
+  }
+ }
+ const stronger={...baseBuild,boardStats:{AmplifyAllDamage:1000,HPMax:1000}};
+ const before=model.evaluate({classId:cls,context:'party',objective:'performance',build:baseBuild});
+ const after=model.evaluate({classId:cls,context:'party',objective:'performance',build:stronger});
+ assert(after.score>before.score,cls+': adding damage and HP did not improve performance');
+}
+console.log('Validated '+total+' class/context/objective mechanic projections across seven Global classes.');
