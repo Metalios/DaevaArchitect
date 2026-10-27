@@ -360,14 +360,17 @@ function engineBuild(masteryLevels,boardEffects,stigmaLevels,equipped){
   for(const [name,n] of Object.entries(account().gear||{}))
     equippedRanks[name]=(equippedRanks[name]||0)+(Number(n)||0);
   const visibleStats=[...gearFixedTotals().stats,...gearSocketTotals().stats];
-  const percent=name=>visibleStats.filter(row=>row.name===name&&row.unit==='%')
-    .reduce((total,row)=>total+(Number(row.value)||0),0);
+  // Include all recorded stats supported by the imported Global dataset.
+  // Unknown equipment bonuses remain unknown; no gear is invented.
+  const gearStats={};
+  for(const [key,meta] of Object.entries(data().stats)){
+    gearStats[key]=visibleStats.filter(row=>row.name===meta.name).reduce(
+      (sum,row)=>sum+(Number(row.value)||0)*(row.unit==='%'?100:1),0);
+  }
   return {
     mastery:masteryLevels,boardSkills:boardEffects.skills,
     boardStats:boardEffects.stats,gearSkills:equippedRanks,
-    gearStats:{CombatSpeed:percent('Combat Speed')*100,
-      CoolTimeDecrease:percent('Cooldown Reduction')*100,
-      AmplifyAllDamage:percent('Damage Boost')*100},
+    gearStats,
     stigma:stigmaLevels,equippedStigmas:equipped,
     availableSkills:Object.entries(SKILL_UNLOCKS[state.class]||{})
       .filter(([,at])=>at<=currentLevel()).map(([name])=>name)
@@ -517,7 +520,7 @@ function model(){
       const reference={mastery,stigma,boards:{owned:actual},effects:effects(actual)};
       const estimated=estimateCombatPower(reference);
       const baseCp=estimated.ready?estimated.value:null;
-      let computed=chooseCombatBoardRoute(mastery,stigma,gearRanks,target,baseCp,actual);
+      let computed=null;
        if(a.context!=='pvp' && typeof PveBuildOptimizer!=='undefined'){
          try {
            const boardData=data(), baseWeights=activeWeights(), crystalBudget=budget('crystals');
@@ -555,6 +558,7 @@ function model(){
            console.warn('Objective search failed; preserving baseline recommendation',error);
          }
        }
+      if(!computed)computed=chooseCombatBoardRoute(mastery,stigma,gearRanks,target,baseCp,actual);
       // The optimizer returns a complete future path. Budget fitting only
       // changes recommendation order, never board connectivity or costs.
       const fitted=customMode()?computed.route:
