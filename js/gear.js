@@ -61,7 +61,26 @@ const THEOSTONE_FAMILIES=[
 ];
 const THEOSTONES=THEOSTONE_FAMILIES.flatMap(([effect,...names])=>names.map((name,i)=>({name,effect,grade:['Rare','Epic','Unique'][i]})));
 const GEAR_CATALOG_BY_HREF=new Map(GEAR_CATALOG.items.map(item=>[item.href,item]));
-let gearDraft=null,gearSlotId=null,gearQuery='',gearGradeFilter='all',gearLevelFilter='usable',gearFactionFilter='own',gearEditorDirty=false;
+let gearDraft=null,gearSlotId=null,gearQuery='',gearGradeFilter='all',gearLevelFilter='usable',gearFactionFilter='own',gearEditorDirty=false,gearSelectionToken=0;
+// Editor rolls belong to the physical item, not the equipment slot.
+// Re-selecting the SAME catalog item preserves its recorded rolls; selecting
+// a different item starts from its catalog defaults only.
+function gearDraftFromCatalog(item,previous={}){
+  if(previous.href===item.href)return {
+    ...previous,name:item.name,icon:item.icon,href:item.href,type:item.type,
+    grade:item.grade||'',faction:item.faction||'',fixedStats:item.fixedStats||[],
+    requiredLevel:previous.requiredLevel??item.requiredLevel??null,
+    itemLevel:previous.itemLevel??item.itemLevel??null
+  };
+  return {
+    name:item.name,icon:item.icon,href:item.href,type:item.type,
+    grade:item.grade||'',faction:item.faction||'',
+    fixedStats:item.fixedStats||[],baseStats:[],
+    requiredLevel:item.requiredLevel||null,itemLevel:item.itemLevel||null,
+    enhancement:0,statNotes:'',notes:'',skillBonuses:[],
+    manastoneSlots:null,theostoneSlots:null,stoneType:'',stones:[],theostone:''
+  };
+}
 const gearSlot=id=>GEAR_SLOTS.find(slot=>slot.id===id);
 const gearEquipment=()=>{
   const equipment=account().equipment ||= {};
@@ -221,18 +240,22 @@ function gearEditor(){
   gearStonesEditor(gearSlot(gearSlotId),item);
 }
 function openGearSlot(id){
-  const slot=gearSlot(id);if(!slot)return;gearSlotId=id;gearQuery='';gearGradeFilter='all';gearLevelFilter='usable';gearFactionFilter='own';gearEditorDirty=false;gearDraft=JSON.parse(JSON.stringify(gearEquipment()[id]||{}));
+  const slot=gearSlot(id);if(!slot)return;
+  // Invalidate any tooltip lookup started in a previous editor session.
+  gearSelectionToken++;
+  gearSlotId=id;gearQuery='';gearGradeFilter='all';gearLevelFilter='usable';gearFactionFilter='own';gearEditorDirty=false;gearDraft=JSON.parse(JSON.stringify(gearEquipment()[id]||{}));
   $('gear-dialog-title').textContent=`Choose ${slot.name}`;$('gear-query').value='';$('gear-grade-filter').value=gearGradeFilter;$('gear-level-filter').value=gearLevelFilter;$('gear-faction-filter').value=gearFactionFilter;gearResults();gearEditor();$('gear-dialog').showModal();$('gear-query').focus();
 }
 async function selectGearResult(href){
   const item=GEAR_CATALOG.items.find(x=>x.href===href&&x.type===gearAllowedType(gearSlot(gearSlotId)));if(!item)return;
-  const prior=gearDraft||{},sameItem=prior.href===item.href;
-  gearEditorDirty=false;gearDraft={...prior,name:item.name,icon:item.icon,href:item.href,type:item.type,grade:item.grade||'',faction:item.faction||'',fixedStats:item.fixedStats||[],baseStats:[],requiredLevel:item.requiredLevel||null,itemLevel:item.itemLevel||null,manastoneSlots:sameItem?prior.manastoneSlots:null,theostoneSlots:sameItem?prior.theostoneSlots:null,stoneType:sameItem?prior.stoneType||'':'',stones:sameItem?prior.stones:[],theostone:sameItem?prior.theostone:''};gearResults();gearEditor();
+  const token=++gearSelectionToken,slotId=gearSlotId;
+  gearDraft=gearDraftFromCatalog(item,gearDraft||{});
+  gearEditorDirty=false;gearResults();gearEditor();
   try{
     const res=await fetch(`https://aion2data.com/tooltip${item.href}`);
     if(!res.ok)throw Error(`HTTP ${res.status}`);
     const tooltip=await res.json();
-    if(gearDraft?.href!==item.href)return;
+    if(token!==gearSelectionToken||gearSlotId!==slotId||gearDraft?.href!==item.href||!$('gear-dialog').open)return;
     const fields=(tooltip.groups||[]).flat().filter(x=>x.k==='p');
     const find=name=>fields.find(x=>x.t===name)?.v;
     const grade=(tooltip.kind||tooltip.sub||'').match(/\b(Common|Rare|Epic|Unique|Special)\b/i)?.[1];
@@ -243,7 +266,10 @@ async function selectGearResult(href){
     gearDraft.theostoneSlots=find('Theostone slots')!==undefined?clamp(find('Theostone slots'),0,1):null;
     gearDraft.baseStats=fields.filter(x=>!['Item level','Required level','Class'].includes(x.t)).slice(0,12).map(x=>`${x.t} ${x.v}`);
     if(!gearEditorDirty)gearEditor();
-  }catch(_){$('gear-editor').insertAdjacentHTML('afterbegin','<p class="gear-fetch-note">Live tooltip unavailable. The item and icon are saved from the Global catalog; enter its level and your rolls manually.</p>')}
+  }catch(_){
+    if(token!==gearSelectionToken||gearSlotId!==slotId||gearDraft?.href!==item.href||!$('gear-dialog').open)return;
+    $('gear-editor').insertAdjacentHTML('afterbegin','<p class="gear-fetch-note">Live tooltip unavailable. The item and icon are saved from the Global catalog; enter its level and your rolls manually.</p>')
+  }
 }
 function initGear(){
   $('gear').addEventListener('click',e=>{const slot=e.target.closest('[data-gear-slot]');if(slot)openGearSlot(slot.dataset.gearSlot)});
