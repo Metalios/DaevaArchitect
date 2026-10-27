@@ -141,7 +141,7 @@ try {
   assert(resetAll.snapshot,'Reset should recalculate the default blue path');
   assert.deepEqual(resetAll.after,resetAll.original);
   assert.match(resetAll.message,/Reset selections: cleared 2 obtained gold tiles and 2 custom tiles/);
-  assert.match(await page.locator('.v2-board-method').innerText(),/not an exhaustive combat search/);
+  assert.match(await page.locator('.v2-board-method').textContent(),/not an exhaustive combat search/);
   assert.deepEqual(errors,[]);
 
   // Shared builds arrive without the cached recommendation. Loading
