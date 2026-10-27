@@ -37,6 +37,7 @@ jobs:
           node mastery_board_gear_smoke.mjs
           node board_macro_usability_smoke.mjs
           node board_crystal_cycle_smoke.mjs
+          node board_recalculation_feedback_smoke.mjs
           node gear_swap_board_recalculate_smoke.mjs
           node v2_smoke.mjs
       - name: Upload responsive screenshots

@@ -1,0 +1,184 @@
+// Regression for recalculation behavior after a shared-build import.
+// The optimizer may return identical tiles; the UI must report that fact,
+// not make the button appear inert. Actual gold purchases remain separate.
+import {chromium} from 'playwright';
+import path from 'node:path';
+import {pathToFileURL} from 'node:url';
+import assert from 'node:assert/strict';
+
+const browser=await chromium.launch({headless:true});
+try {
+  const page=await browser.newPage({viewport:{width:1280,height:900}});
+  const errors=[];
+  page.on('pageerror',err=>errors.push(err.message));
+  await page.goto(pathToFileURL(path.resolve('dist/index.html')).href);
+  const first=await page.evaluate(()=>{
+    state.class='templar';
+    const a=account();
+    a.journey='endgame';a.context='party';a.crystals=119;
+    a.recommendedRouteSnapshot=null;a.boardMode='recommended';a.obtainedNodes=[];
+    a.customNodes=[];a.customAzphelNodes=[];
+    state.tab='boards';state.board='Nezekan';state.preview=119;
+    render();
+    const step=plannedRoute()[0];
+    if(!toggleBoardObtained(step.id))throw Error('Cannot record initial gold tile');
+    render();
+    return {id:step.id,cost:nodeMap().get(step.id).node[5],route:plannedRoute().map(x=>x.id)};
+  });
+  // Recalculate with identical inputs. The expected behavior is NOT to
+  // generate a random new path, but to provide a meaningful report.
+  await page.locator('#v2-board-restore').click();
+  const stableRoute=await page.evaluate(()=>plannedRoute().map(x=>x.id));
+  // Even if a previous purchase changed the first replan, a second
+  // calculation with exactly the same inputs must be deterministic.
+  await page.locator('#v2-board-restore').click();
+  const unchanged=await page.evaluate(()=>({
+    report:lastBoardRecalculation,
+    status:document.querySelector('#v2-board-notice').textContent,
+    route:plannedRoute().map(x=>x.id),
+    gold:account().obtainedNodes.slice()
+  }));
+  assert.equal(unchanged.report.changed,false);
+  assert.match(unchanged.report.message,/unchanged/);
+  assert(unchanged.report.message.includes('/119 crystals planned'));
+  assert(unchanged.report.message.includes('marked obtained'));
+  assert(unchanged.gold.includes(first.id));
+  assert.deepEqual(unchanged.route,stableRoute);
+  assert.match(unchanged.status,/unchanged/);
+
+  // New actual input causes a new calculation, even if the ranked order
+  // remains the same. It must describe updated budget and preserved gold.
+  const revised=await page.evaluate(()=>{
+    account().crystals=150;
+    recalculateRecommendedBoards();render();
+    return {
+      report:lastBoardRecalculation,
+      budget:budget('crystals'),
+      gold:account().obtainedNodes.slice(),
+      shown:document.querySelector('#v2-board-notice').textContent
+    };
+  });
+  assert.equal(revised.report.crystals,150);
+  assert.equal(revised.report.obtained,first.cost);
+  assert(revised.gold.includes(first.id));
+  assert.match(revised.shown,/150/);
+
+  // A user-created custom selection is truly reset to the computed route.
+  const restored=await page.evaluate((obtainedId)=>{
+    const a=account();a.boardMode='custom';a.customNodes=[];
+    render();
+    document.querySelector('#v2-board-restore').click();
+    return {
+      report:lastBoardRecalculation,
+      mode:a.boardMode,
+      route:plannedRoute().length,
+      gold:a.obtainedNodes.includes(obtainedId)
+    };
+  },first.id);
+  assert.equal(restored.mode,'recommended');
+  assert.equal(restored.report.changed,true);
+  assert(restored.report.added.length>0);
+  assert(restored.gold);
+  assert(restored.route>0);
+
+  // The second, destructive action requires deliberate confirmation.
+  const reset=await page.evaluate((obtainedId)=>{
+    window.confirm=()=>false;
+    document.querySelector('#v2-board-clear-obtained').click();
+    const canceled=obtainedNodes().has(obtainedId);
+    window.confirm=()=>true;
+    document.querySelector('#v2-board-clear-obtained').click();
+    return {
+      canceled,
+      removed:!obtainedNodes().has(obtainedId),
+      crystals:budget('crystals'),
+      status:document.querySelector('#v2-board-notice').textContent
+    };
+  },first.id);
+  assert(reset.canceled&&reset.removed);
+  assert.equal(reset.crystals,150);
+  assert.match(reset.status,/Cleared 1 obtained PvE tile/);
+
+  // Reset selections is the distinct "start over" action. It affects
+  // *all supported boards*, including Azphel, and clears custom routes.
+  // Canceling must be safe; accepting must preserve earned budgets,
+  // equipment and Mastery while recomputing blue suggestions.
+  const resetAll=await page.evaluate(obtainedId=>{
+    const a=account(),az=AZPHEL[state.class].nodes.find(n=>n[5]>0);
+    if(!az)throw Error('No Azphel tile found for reset test');
+    a.azphel=232;
+    a.obtainedNodes=[obtainedId,az[0]];
+    a.customNodes=[obtainedId];a.customAzphelNodes=[az[0]];
+    a.boardMode='custom';a.manualMastery=null;
+    const original={
+      crystals:a.crystals,azphel:a.azphel,mastery:a.mastery,
+      equip:JSON.stringify(a.equipment)
+    };
+    render();
+    window.confirm=()=>false;
+    document.querySelector('#v2-board-reset-selections').click();
+    const canceled=a.obtainedNodes.length===2&&a.customNodes.length===1;
+    window.confirm=()=>true;
+    document.querySelector('#v2-board-reset-selections').click();
+    return {
+      canceled,
+      marked:a.obtainedNodes.slice(),
+      custom:a.customNodes.slice(),
+      customAz:a.customAzphelNodes.slice(),
+      boardMode:a.boardMode,
+      snapshot:!!a.recommendedRouteSnapshot,
+      message:document.querySelector('#v2-board-notice').textContent,
+      original,
+      after:{crystals:a.crystals,azphel:a.azphel,mastery:a.mastery,
+        equip:JSON.stringify(a.equipment)}
+    };
+  },first.id);
+  assert(resetAll.canceled,'Reset selections must require confirmation');
+  assert.deepEqual(resetAll.marked,[]);
+  assert.deepEqual(resetAll.custom,[]);
+  assert.deepEqual(resetAll.customAz,[]);
+  assert.equal(resetAll.boardMode,'recommended');
+  assert(resetAll.snapshot,'Reset should recalculate the default blue path');
+  assert.deepEqual(resetAll.after,resetAll.original);
+  assert.match(resetAll.message,/Reset selections: cleared 2 obtained gold tiles and 2 custom tiles/);
+  assert.match(await page.locator('.v2-board-method').textContent(),/not an exhaustive combat search/);
+  assert.deepEqual(errors,[]);
+
+  // Before any gold purchases, gear swaps and Manastone changes are part
+  // of the recommendation fingerprint, not merely the gear summary.
+  const gearReplan=await page.evaluate(()=>{
+    const a=account(),slot=gearSlot('top');
+    if(!slot)throw Error('No top gear slot found');
+    const item=GEAR_CATALOG.items.find(x=>x.type===gearAllowedType(slot));
+    if(!item)throw Error('No top catalog item found');
+    model();
+    const original=a.recommendedRouteSnapshot?.basisKey;
+    a.equipment.top={...item,enhancement:0,stones:[],skillBonuses:[]};
+    model();
+    const equipped=a.recommendedRouteSnapshot?.basisKey;
+    a.equipment.top.stones=[{stat:'Combat Speed',value:2,unit:'%',grade:'Epic'}];
+    model();
+    const socketChanged=a.recommendedRouteSnapshot?.basisKey;
+    return {original,equipped,socketChanged,obtained:a.obtainedNodes.length};
+  });
+  assert.equal(gearReplan.obtained,0);
+  assert.notEqual(gearReplan.original,gearReplan.equipped,
+    'Newly recorded gear must invalidate an unpurchased recommendation');
+  assert.notEqual(gearReplan.equipped,gearReplan.socketChanged,
+    'Manastone changes must invalidate an unpurchased recommendation');
+
+  // Shared builds arrive without the cached recommendation. Loading
+  // their account and pressing Recalculate should remain responsive.
+  await page.locator('#v2-share').click();
+  await page.waitForFunction(()=>document.querySelector('#share-url')?.value.includes('#build='));
+  const shared=await page.locator('#share-url').inputValue();
+  assert(shared.includes('#build='));
+  const second=await browser.newPage({viewport:{width:1280,height:900}});
+  try{
+    await second.goto(shared);
+    await second.locator('#shared-build-load').click();
+    await second.locator('#v2-board-restore').click();
+    assert.match(await second.locator('#v2-board-notice').innerText(),/Recalculated:/);
+  }finally{await second.close()}
+  console.log('PASS: unchanged route explained; increased budget re-evaluated; custom plan reset; obtained marks preserved until confirmed clear; shared build recalculation works.');
+}finally{await browser.close()}

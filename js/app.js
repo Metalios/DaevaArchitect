@@ -136,6 +136,7 @@ function setCustomNode(id){
   save();
 }
 let boardEditNotice='',boardRecalculationNotice='';
+let lastBoardRecalculation=null;
 function activeWeights(){
   const base=ROUTES[state.class].weights[account().context];
   const advised=typeof adviceFor==='function'?adviceFor(state.class,account().context):null;
@@ -487,7 +488,17 @@ function model(){
     // Prior to any real purchases, changes to the player's goal, mastery,
     // equipment or Stigmas should still influence the recommended route.
     // Once purchases begin, keep that route stable through the whole budget.
-    const basisKey=JSON.stringify([target,mastery.levels,stigma.levels,gearRanks]);
+    // Equipment may change the CP baseline and, for Sorcerer, speed/skill
+    // interactions even when it does not roll a new skill level. Snapshot
+    // changes before any obtained tiles, or explicit Recalculate after that.
+    const recordedEquipment=gearEquipment();
+    const gearBasis=GEAR_SLOTS.map(slot=>{
+      const item=recordedEquipment[slot.id];
+      return item?[slot.id,item.href,item.itemLevel,item.enhancement,
+        item.fixedStats,item.skillBonuses,item.stones,item.theostone,item.statNotes]:null;
+    });
+    const basisKey=JSON.stringify([target,mastery.levels,stigma.levels,gearRanks,
+      gearBasis,activeStigmas(),a.titlesOwned,a.cpAnchor]);
     const total=budget('crystals'),spent=obtainedCrystalSpend(false);
     const exhausted=total>0&&spent>=total;
     const valid=snapshot?.contextKey===contextKey&&
@@ -1053,7 +1064,13 @@ $('board-tabs').addEventListener('click',e=>{const b=e.target.closest('[data-boa
 // already recommended. Keep actual gold purchased marks; clear only the
 // discarded custom plan and stale, cached blue recommendation snapshot.
 function recalculateRecommendedBoards(){
-  const a=account();
+  const a=account(),wasCustom=customMode(),crystals=budget('crystals');
+  // Read the current rendered plan before invalidating its memoized route.
+  model();
+  const nodes=nodeMap();
+  const before=routeSteps(plannedRoute(),nodes)
+    .filter(step=>step.total<=crystals).map(step=>step.id);
+  const actual=obtainedNodes(),spentActual=obtainedCrystalSpend(false);
   a.boardMode='recommended';
   a.customNodes=[];
   a.customAzphelNodes=[];
@@ -1063,11 +1080,40 @@ function recalculateRecommendedBoards(){
   liveRouteBasis=null;
   boardEditNotice='';
   boardPurchaseNotice='';
-  boardRecalculationNotice='Recommended path recalculated using your current points and equipment. Obtained tiles were kept.';
   state.node=null;
-  state.preview=state.board==='Azphel'?(a.azphel||0):budget('crystals');
-  // model() reconstructs the recommendation with the current equipment,
-  // level, point budgets, Stigmas, class and current obtained purchases.
+  state.preview=state.board==='Azphel'?(a.azphel||0):crystals;
+
+  // Force the optimizer to run now, not only on the next implicit render.
+  const recalculated=model();
+  const steps=routeSteps(plannedRoute(),nodes).filter(step=>step.total<=crystals);
+  const after=steps.map(step=>step.id);
+  const oldSet=new Set(before),newSet=new Set(after);
+  const added=after.filter(id=>!oldSet.has(id));
+  const removed=before.filter(id=>!newSet.has(id));
+  const reordered=!added.length&&!removed.length&&
+    before.some((id,index)=>id!==after[index]);
+  const changed=added.length>0||removed.length>0||reordered;
+  const next=steps.find(step=>!actual.has(step.id));
+  const remaining=Math.max(0,crystals-spentActual);
+  const unplanned=Math.max(0,crystals-recalculated.boards.spent);
+  const reason=changed
+    ?`Updated funded route: ${added.length} new tile${added.length===1?'':'s'}, ${removed.length} removed${removed.length===1?'':'s'}${reordered?' and changed purchase order':''}.`
+    :wasCustom
+      ?'Your custom plan was replaced, but the funded recommended tiles are identical.'
+      :'The recommended path is unchanged because the current inputs produce the same ranked result.';
+  const nextLabel=next?` Next unobtained: ${next.board}, ${effectText(next.node)}.`:
+    remaining?' No new blue tile is currently affordable or the available board is complete.':' All funded tiles are marked obtained.';
+  const notice=`Recalculated: ${recalculated.boards.spent}/${crystals} crystals planned; ${spentActual}/${crystals} marked obtained. ${reason}`+
+    (unplanned?` ${unplanned} crystals cannot fund another recommended connected tile.`:'')+
+    nextLabel+
+    (spentActual?' Gold obtained tiles stay purchased; use Clear obtained gold tiles to reset that progress.':'');
+  boardRecalculationNotice=notice;
+  lastBoardRecalculation={
+    message:notice,changed,added,removed,reordered,
+    crystals,planned:recalculated.boards.spent,obtained:spentActual,
+    remaining,nextId:next?.id??null
+  };
+  return lastBoardRecalculation;
 }
 $('board-mode-recommended').addEventListener('click',()=>{
   recalculateRecommendedBoards();
