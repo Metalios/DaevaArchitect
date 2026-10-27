@@ -144,6 +144,29 @@ try {
   assert.match(await page.locator('.v2-board-method').textContent(),/not an exhaustive combat search/);
   assert.deepEqual(errors,[]);
 
+  // Before any gold purchases, gear swaps and Manastone changes are part
+  // of the recommendation fingerprint, not merely the gear summary.
+  const gearReplan=await page.evaluate(()=>{
+    const a=account(),slot=gearSlot('top');
+    if(!slot)throw Error('No top gear slot found');
+    const item=GEAR_CATALOG.items.find(x=>x.type===gearAllowedType(slot));
+    if(!item)throw Error('No top catalog item found');
+    model();
+    const original=a.recommendedRouteSnapshot?.basisKey;
+    a.equipment.top={...item,enhancement:0,stones:[],skillBonuses:[]};
+    model();
+    const equipped=a.recommendedRouteSnapshot?.basisKey;
+    a.equipment.top.stones=[{stat:'Combat Speed',value:2,unit:'%',grade:'Epic'}];
+    model();
+    const socketChanged=a.recommendedRouteSnapshot?.basisKey;
+    return {original,equipped,socketChanged,obtained:a.obtainedNodes.length};
+  });
+  assert.equal(gearReplan.obtained,0);
+  assert.notEqual(gearReplan.original,gearReplan.equipped,
+    'Newly recorded gear must invalidate an unpurchased recommendation');
+  assert.notEqual(gearReplan.equipped,gearReplan.socketChanged,
+    'Manastone changes must invalidate an unpurchased recommendation');
+
   // Shared builds arrive without the cached recommendation. Loading
   // their account and pressing Recalculate should remain responsive.
   await page.locator('#v2-share').click();
