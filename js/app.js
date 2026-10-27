@@ -488,7 +488,16 @@ function model(){
     // Prior to any real purchases, changes to the player's goal, mastery,
     // equipment or Stigmas should still influence the recommended route.
     // Once purchases begin, keep that route stable through the whole budget.
-    const basisKey=JSON.stringify([target,mastery.levels,stigma.levels,gearRanks]);
+    // Equipment may change the CP baseline and, for Sorcerer, speed/skill
+    // interactions even when it does not roll a new skill level. Snapshot
+    // changes before any obtained tiles, or explicit Recalculate after that.
+    const gearBasis=GEAR_SLOTS.map(slot=>{
+      const item=gearEquipment()[slot.id];
+      return item?[slot.id,item.href,item.itemLevel,item.enhancement,
+        item.fixedStats,item.skillBonuses,item.stones,item.theostone,item.statNotes]:null;
+    });
+    const basisKey=JSON.stringify([target,mastery.levels,stigma.levels,gearRanks,
+      gearBasis,activeStigmas(),a.titlesOwned,a.cpAnchor]);
     const total=budget('crystals'),spent=obtainedCrystalSpend(false);
     const exhausted=total>0&&spent>=total;
     const valid=snapshot?.contextKey===contextKey&&
