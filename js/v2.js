@@ -35,7 +35,8 @@ const master=make('div','v2-master-editor',`
 const stigmas=make('div','v2-stigmas',`<div id="v2-stigma-list" class="v2-stigma-cards"></div><div class="v2-stigma-summary"><span>13 class Stigmas in catalog · select a card to edit</span><strong id="v2-stigma-remaining"></strong></div><div class="v2-stigma-breakpoints">Perk levels <span>⑤ First</span><span>⑩ Second</span><span>⑮ Third</span><span>⑳ Fourth</span></div><button type="button" id="v2-stigma-reset">Restore recommended Stigmas</button><div id="v2-stigma-panel" class="v2-in-panel-flyout" role="region" aria-label="Stigma loadout editor" hidden></div>`);
 const boardControls=make('div','v2-board-controls',`
  <div class="v2-board-callout"><b>Original Global board coordinates</b><span><b>Blue</b> = recommended; <b>gold</b> = obtained. Single-click previews a tile; double-click marks it obtained. Use the Mark obtained button on touch. Your planned amounts remain in each board tab.</span></div>
- <button type="button" id="v2-board-toggle">Edit selected node</button><button type="button" id="v2-board-restore" title="Recalculate the recommended path. Purchased gold tiles stay obtained.">Recalculate recommended path</button>
+ <button type="button" id="v2-board-toggle">Edit selected node</button><button type="button" id="v2-board-restore" title="Evaluate the recommendation again using the current build and explain whether it changed.">Recalculate recommended path</button>
+ <button type="button" id="v2-board-clear-obtained" title="Reset PvE gold obtained marks, not your earned crystal budget">Clear obtained gold tiles…</button>
  <button type="button" id="v2-mark-obtained">Mark tile obtained</button>
  <button type="button" id="v2-zoom-minus" aria-label="Zoom out">−</button><span id="v2-zoom-label">40px</span><button type="button" id="v2-zoom-plus" aria-label="Zoom in">+</button><button type="button" id="v2-board-expand">Expand board</button>
  <p id="v2-board-notice" role="status"></p>`);
@@ -231,7 +232,8 @@ function actionsView(m){
  next.innerHTML=`<div class="v2-next-heading"><b>Next recommended upgrades</b><small>Guidance only, not assumed equipment</small></div>`+(breakpoint?`<p class="v2-next-progress">${esc(breakpoint)}</p>`:'')+parts.map(([name,detail,target],i)=>`<button data-v2-focus="${target}"><em>${i+1}</em><span><b>${name}</b><small>${esc(detail)}</small></span><span>→</span></button>`).join('');
  $('v2-status').innerHTML=modifiedBuild()?'<b class="modified">● Modified progression</b><small>Custom allocation</small>':'<b>● Following recommended</b><small>Your own gear stays separate</small>';
  $('v2-reset-allocations').hidden=!modifiedBuild();
- $('v2-board-notice').textContent=message;
+ $('v2-board-notice').textContent=message||lastBoardRecalculation?.message||'';
+ $('v2-board-notice').hidden=!$('v2-board-notice').textContent;
  const n=nodeMap().get(state.node);
  $('v2-mark-obtained').disabled=!n||!n.node[5]||!boardOpen(n.board);
  $('v2-mark-obtained').textContent=n&&obtainedNodes().has(n.node[0])?'Unmark obtained':'Mark tile obtained';
@@ -352,8 +354,20 @@ function bind(){
  setCustomNode(entry.node[0]);message=boardEditNotice;render();
  });
  $('v2-board-restore').addEventListener('click',()=>{
-   recalculateRecommendedBoards();
-   message='Recommended Daevanion path recalculated with current points and gear. Obtained gold tiles preserved.';
+   const report=recalculateRecommendedBoards();
+   message=report.message;
+   render();
+ });
+ $('v2-board-clear-obtained').addEventListener('click',()=>{
+   const count=[...obtainedNodes()].filter(id=>nodeMap().get(id)?.board!=='Azphel').length;
+   if(!count){message='No obtained PvE tiles are marked; nothing to clear.';render();return}
+   if(!window.confirm(`Clear ${count} obtained PvE Daevanion tile${count===1?'':'s'}? This removes your gold purchase marks, but keeps earned crystals, equipment and Mastery. Azphel is unaffected.`))return;
+   const valid=nodeMap();
+   storeObtained(new Set([...obtainedNodes()].filter(id=>valid.get(id)?.board==='Azphel')));
+   account().recommendedRouteSnapshot=null;
+   lastBoardRecalculation=null;
+   boardRecalculationNotice='';
+   message=`Cleared ${count} obtained PvE tile${count===1?'':'s'}. Your crystals are unchanged. Use Recalculate recommended path to review a new plan.`;
    render();
  });
  $('v2-mark-obtained').addEventListener('click',()=>{
