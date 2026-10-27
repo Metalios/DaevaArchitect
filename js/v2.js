@@ -56,6 +56,7 @@ const boardControls=make('div','v2-board-controls',`
    <p>The planner uses your class, level, PvE/PvP context, earned crystals, connected tiles, marked purchases, Mastery, Stigmas, recorded equipment skill-level bonuses and an approximate Combat Power baseline where gear is sufficiently recorded. PvE uses a bounded multi-candidate connected-route search. Sorcerer evaluates damage finalists with a comparative simulator; other classes use structural synergy estimates, not measured DPS.</p>
    <p><strong>Not a guaranteed strongest build:</strong> this is not an exhaustive combat search; the seven other classes use source-linked, mechanics-informed comparative projections, not measured DPS/HPS or proven global optima. Full equipment stat rolls, resistance/crit thresholds, every effect interaction, Ariel, and the game's undisclosed Combat Power calculation are not jointly optimized. Estimated Combat Power differs from actual in-game CP and from item level.</p>
  </details>
+ <p id="v2-optimizer-evidence" class="v2-optimizer-evidence" aria-live="polite"></p>
  <p id="v2-board-notice" role="status" aria-live="polite"></p>`);
 const ariel=make('button','v2-ariel-pending','Ariel · pending');
 ariel.type='button';ariel.disabled=true;ariel.title='Ariel arrived in the October 21 Global update. Client-verified node positions, effects and separate currency data must be imported before this board is editable.';
@@ -265,6 +266,18 @@ function sync(m){
  $('v2-stage').value=a.journey;$('v2-context').value=a.context;
  $('v2-objective').value=PVE_OBJECTIVES[a.pveObjective]?a.pveObjective:'performance';
  $('v2-objective-label').hidden=a.context==='pvp';
+ const evidence=$('v2-optimizer-evidence'),result=a.lastObjectiveAnalysis;
+ evidence.hidden=a.context==='pvp';
+ if(a.context!=='pvp'){
+   if(result?.error) evidence.textContent='Research-based route search was unavailable; the previous legal recommendation was retained.';
+   else if(result){
+     const source=typeof ClassCombatModels!=='undefined'?ClassCombatModels.profile(state.class)?.evidence||null:null;
+     evidence.textContent=`Goal: ${PVE_OBJECTIVES[a.pveObjective||'performance']?.label||'PvE performance'}.
+       ${result.candidates||0} funded candidate routes evaluated using
+       ${state.class==='sorcerer'?'a comparative Sorcerer rotation model':'class-specific mechanics projections'}.
+       ${source?'Research: '+source+'.':''} Scores are not validated DPS/HPS or proofs of optimality.`;
+   }else evidence.textContent='Choose a PvE goal to evaluate connected Daevanion paths.';
+ }
  archetype.textContent=PROFILES[state.class].role+' · '+ARCHETYPE_WEAPONS[state.class];
  archetype.setAttribute('aria-label',PROFILES[state.class].name+' class and weapon');
  $('v2-context').querySelector('option[value=pvp]').disabled=isLeveling();
