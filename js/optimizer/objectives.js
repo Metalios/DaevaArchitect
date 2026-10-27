@@ -37,10 +37,11 @@ const PveBuildOptimizer=(()=>{
   function weightsFor(base,classId,context,goal,variant=0){
     const p=parameters(goal),skills={},stats={};
     const research=PVE_RESEARCH_PRIORS[classId];
+    const classProfile=typeof ClassCombatModels==='undefined'?null:ClassCombatModels.profile(classId);
     for(const [name,w] of Object.entries(base.skills||{})){
-      const defensive=research?.defensive.includes(name)||/Shield|Protection|Health|Healing|Armor|Resist|Guard/i.test(name);
-      const passive=research?.offensive.includes(name)&&['Robe of Flame','Fire Mark'].includes(name);
-      const boost=research?.offensive.includes(name)?1.20:1;
+      const defensive=research?.defensive.includes(name)||classProfile?.defense.includes(name)||/Shield|Protection|Health|Healing|Armor|Resist|Guard/i.test(name);
+      const passive=(research?.offensive.includes(name)&&['Robe of Flame','Fire Mark'].includes(name))||classProfile?.support.includes(name);
+      const boost=(research?.offensive.includes(name)||classProfile?.offense.includes(name))?1.20:1;
       skills[name]=max(w)*(defensive?p.defense:passive?p.passive:p.attack)*boost;
     }
     if(classId==='sorcerer'){
@@ -123,6 +124,25 @@ const PveBuildOptimizer=(()=>{
       value+=(eff('Hellfire')-1)*Math.sqrt(max(eff('Firestorm')-1))*2.8;
       value+=(eff('Robe of Flame')-1)*(eff('Hellfire')+eff('Blaze')+eff('Firestorm'))*.65;
       value+=(eff('Fire Mark')-1)*(eff('Blaze')+eff('Firestorm'))*.9;
+    }
+    const evidence=typeof ClassCombatModels==='undefined'?null:ClassCombatModels.profile(classId);
+    if(evidence){
+      const eff=name=>(ranks[name]||1)+(gear[name]||0)+(levels[name]||0);
+      for(const [name,gates] of Object.entries(evidence.milestones)){
+        // Hard milestones receive a completion bonus, not a universal
+        // incentive to add ranks to skills that have already crossed them.
+        for(const threshold of gates){
+          const base=(ranks[name]||1)+(gear[name]||0);
+          if(base<threshold&&eff(name)>=threshold)
+            value+=(goal==='survivability'?10:35);
+        }
+      }
+      if(goal!=='survivability'){
+        const drivers=evidence.offense.slice(0,4).map(name=>Math.max(1,eff(name)));
+        value+=Math.sqrt(drivers.reduce((v,x)=>v*x,1))*.65;
+      }else {
+        value+=evidence.defense.reduce((v,name)=>v+(levels[name]||0)*12,0);
+      }
     }
     return value;
   }
@@ -219,8 +239,10 @@ const PveBuildOptimizer=(()=>{
     return {route:[...seeded,...tail],initialFocus:0,baseCp:null,
       diagnostics:{objective,context,crystals:budget,planned:winner.spent,
         candidates:all.length,evaluations:evaluated,score:finalEvidence,
-        evidence:classId==='sorcerer'?'modeled-combat-and-synergy':'structural-synergy-proxy',
-        sources:PVE_RESEARCH_PRIORS[classId]?.sources||[]}};
+        evidence:classId==='sorcerer'?'comparative-sorcerer-combat':'class-specific-mechanics-projection',
+        sources:PVE_RESEARCH_PRIORS[classId]?.sources||
+          (typeof ClassCombatModels!=='undefined'&&ClassCombatModels.profile(classId)
+          ?[{url:ClassCombatModels.profile(classId).evidence,region:'Global',reviewed:'2026-10-27',kind:'guide'}]:[])}};
   }
   return Object.freeze({optimize,weightsFor,buildGraph,PVE_RESEARCH_PRIORS});
 })();
