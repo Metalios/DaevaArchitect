@@ -41,6 +41,7 @@ shutil.copy2(root / 'js' / 'optimizer' / 'objectives.js', out_dir / 'js' / 'opti
 shutil.copy2(root / 'js' / 'mastery_budget.js', out_dir / 'js' / 'mastery_budget.js')
 (out_dir / 'js' / 'engine').mkdir(parents=True, exist_ok=True)
 shutil.copy2(root / 'js' / 'engine' / 'combat.js', out_dir / 'js' / 'engine' / 'combat.js')
+shutil.copy2(root / 'js' / 'engine' / 'class_models.js', out_dir / 'js' / 'engine' / 'class_models.js')
 shutil.copy2(root / 'css' / 'styles.css', out_dir / 'css' / 'styles.css')
 shutil.copy2(root / 'css' / 'v2.css', out_dir / 'css' / 'v2.css')
 shutil.copy2(root / 'css' / 'leveling.css', out_dir / 'css' / 'leveling.css')
