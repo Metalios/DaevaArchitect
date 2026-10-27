@@ -528,3 +528,9 @@
 .v2-combat-scenarios span{font-size:11px;border-radius:4px;background:#1b3f56;padding:4px 8px}
 .v2-combat-disclaimer{display:block;line-height:1.55}
 @media(max-width:480px){.v2-combat-numbers{grid-template-columns:1fr}.v2-combat-numbers>span{align-items:flex-start;text-align:left}}
+
+/* Make recomputation outcomes legible: a deterministic unchanged route is a
+   meaningful result, not a silent click. Keep the destructive reset distinct. */
+.v2-board-controls #v2-board-notice:not([hidden]){box-sizing:border-box;padding:9px 11px;border-left:3px solid #d9b878;background:#15334d;color:#f5dfbb;border-radius:4px;font-size:12px;line-height:1.55;overflow-wrap:anywhere}
+#v2-board-clear-obtained{border-color:#916d66;background:#392a32;color:#ffe0d5}
+@media(max-width:700px){.v2-board-controls #v2-board-restore,.v2-board-controls #v2-board-clear-obtained{flex:1 1 135px}}
