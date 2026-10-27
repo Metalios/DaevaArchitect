@@ -54,7 +54,7 @@ const boardControls=make('div','v2-board-controls',`
  <details class="v2-board-method">
    <summary>What does the recommendation consider?</summary>
    <p>The planner uses your class, level, PvE/PvP context, earned crystals, connected tiles, marked purchases, Mastery, Stigmas, recorded equipment skill-level bonuses and an approximate Combat Power baseline where gear is sufficiently recorded. PvE uses a bounded multi-candidate connected-route search. Sorcerer evaluates damage finalists with a comparative simulator; other classes use structural synergy estimates, not measured DPS.</p>
-   <p><strong>Not a guaranteed strongest build:</strong> the seven other classes use source-linked, mechanics-informed comparative projections, not measured DPS/HPS or proven global optima. Full equipment stat rolls, resistance/crit thresholds, every effect interaction, Ariel, and the game's undisclosed Combat Power calculation are not jointly optimized. Estimated Combat Power differs from actual in-game CP and from item level.</p>
+   <p><strong>Not a guaranteed strongest build:</strong> this is not an exhaustive combat search; the seven other classes use source-linked, mechanics-informed comparative projections, not measured DPS/HPS or proven global optima. Full equipment stat rolls, resistance/crit thresholds, every effect interaction, Ariel, and the game's undisclosed Combat Power calculation are not jointly optimized. Estimated Combat Power differs from actual in-game CP and from item level.</p>
  </details>
  <p id="v2-board-notice" role="status" aria-live="polite"></p>`);
 const ariel=make('button','v2-ariel-pending','Ariel · pending');
