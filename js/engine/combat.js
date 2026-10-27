@@ -97,7 +97,7 @@ const GlobalCombatEngine=(()=>{
     };
     const cd={},counts={},damageBySkill={},stigma=build.stigma;
     let now=0,damage=0,mp=2000,fireMarkUntil=0,frostUntil=0,staggerUntil=0,attackBuffUntil=0,
-      pveBuffUntil=0,combatBuffUntil=0,manualActions=0,missedGround=0,skippedForMp=0,unavailable=0,castTime=0;
+      pveBuffUntil=0,combatBuffUntil=0,manualActions=0,missedGround=0,skippedForMp=0,unavailable=0,castTime=0,fireMarkProcReady=0;
     const macro=MACRO_LAYOUTS[build.macroLayout]||MACRO_LAYOUTS.ground;
     const priority=macro.stacks.flatMap(stack=>stack.skills);
     const macroStepOverhead=(macro.steps.length-1)*.012; // input sensitivity, not measured animation
@@ -133,7 +133,12 @@ const GlobalCombatEngine=(()=>{
       const elementLevel=hasStigma(build,'Element Enhancement')?(stigma['Element Enhancement']||0):0;
       const robeBoost=elementLevel>=10?1.5:1;
       const graceBoost=elementLevel>=15?1.5:1;
-      multiplier*=1+.004*robe*robeBoost+(mp>750?.004*grace*graceBoost:0);
+      // Robe of Flame's PvE boost and Double Chance require separate
+      // probability treatment; these remain model estimates until calibrated.
+      const robePve=robe*.01*robeBoost;
+      const robeDouble=robe*.002;
+      multiplier*=(1+robePve)*(1+Math.min(.50,robeDouble))*
+        (1+(mp>750?.004*grace*graceBoost:0));
       if(attackBuffUntil>now)multiplier*=1.1;
       if(pveBuffUntil>now)multiplier*=1.2;
       if(name==='Hellfire'&&movement>0&&!has(spec,'Hellfire',3))multiplier*=1-movement*.22;
@@ -143,7 +148,17 @@ const GlobalCombatEngine=(()=>{
       counts[name]=(counts[name]||0)+1;
       cd[name]=now+Math.max(0,act.cd*(1-cooldownReduction)-
         (name==='Hellfire'&&has(spec,'Hellfire',5)?15:0));
-      if(name==='Flame Arrow'||name==='Firestorm'){fireMarkUntil=now+12;mp=Math.min(3000,mp+35)}
+      if(name==='Flame Arrow'||name==='Firestorm'){fireMarkUntil=now+5;mp=Math.min(3000,mp+35)}
+       // Expected Fire Mark proc approximation, limited by its internal cooldown.
+       // Rank slope is provisional: replace with Global-client damage table when
+       // validated before advertising measured damage or a proven best build.
+       if(name!=='Wish of Concentration'&&name!=='Element Enhancement'){
+         const markRank=effective(build,'Fire Mark')-1;
+         if(markRank>0&&now>=fireMarkProcReady){
+           damage+=act.power*.20*(.13+.018*markRank)*multiplier;
+           fireMarkProcReady=now+1;
+         }
+       }
       if(name==='Frost')frostUntil=now+4;
       if(name==="Winter's Shackles"&&has(spec,name,3))pveBuffUntil=now+5;
       if(name==='Firestorm'&&has(spec,name,4))reduceCooldown('Hellfire',10);
