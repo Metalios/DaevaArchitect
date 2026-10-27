@@ -44,3 +44,23 @@ The search is bounded; it can miss globally optimal solutions and never reports 
 ## Verification
 
 `node recommendations_audit.mjs` also executes `objective_optimizer_audit.mjs`, including four objective variants, connected legal paths and preservation of purchased node IDs. Continue to run existing browser smoke tests. Do not merge the feature until CI and human in-game validation both pass.
+
+## Evidence ingestion and conservative learning
+
+`research/pve-observations.json` is an explicitly versioned source table.
+The initial seven entries represent **seven guide summaries**, not seven measured
+character fights or an imported sample of thousands of independent characters.
+Each record contains a unique ID, region, patch, source URL, type, skill priority
+ranks, selected Stigmas and an explicit `measured: false` flag.
+
+`build.py` validates skill/Stigma identifiers against the bundled Global game
+catalog, rejects duplicate evidence IDs per patch, and compiles `RESEARCH_PRIORS`
+into the static build. Guide adoption is capped at an **8% modifier** of
+candidate-search weights; it cannot overcome crystal costs, graph connectivity,
+class mechanics or recorded gear. These are intentionally modest starting priors,
+not a combat model trained on actual logs.
+
+To expand this corpus, import lawfully accessible, deduplicated and appropriately
+licensed public build observations with their source, patch and region. Do not
+mislabel an aggregated guide as an independent player sample; obtain compatible
+fight/rotation measurements before treating a high-CP build as best DPS.
