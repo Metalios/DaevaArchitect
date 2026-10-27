@@ -178,7 +178,8 @@ const ClassCombatModels=(()=>{
      add(stigma('Evasion Contract')>=5||stigma('Evasion Stance')>=5,1.20,'survival','Assassin defensive Evasion Stigma');
      break;
     case 'ranger':
-     add(gate('Deadshot',16)&&hasOption('Deadshot',2),1.22,'burst','Deadshot skill-speed and manual full-charge window');
+     add(gate('Deadshot',8)&&hasOption('Deadshot',2),1.13,'burst','Deadshot skill-speed and manual full charge');
+     add(gate('Deadshot',12)&&hasOption('Deadshot',4),1.08,'burst','Deadshot multi-hit Specialty');
      add(gate('Snipe',12)&&hasOption('Snipe',4),1.19,'sustained','Snipe Deadshot cooldown interaction');
      add(gate('Gale Arrow',16)&&hasOption('Gale Arrow',5),1.16,'sustained','Gale Arrow buff uptime');
      add(stigma("Vaizel's Authority")>=20,1.31,'sustained','Vaizel critical-hit cooldown return');
@@ -187,7 +188,7 @@ const ClassCombatModels=(()=>{
      break;
     case 'spiritmaster':{
      const spirits=['Summon: Fire Spirit','Summon: Water Spirit','Summon: Earth Spirit','Summon: Wind Spirit']
-       .filter(name=>(ranks[name]||0)>0).length;
+       .filter(name=>rank(name)>=8).length;
      add(gate('Elemental Fusion',20),1.08,'sustained','Fusion third Specialty slot');
      add(hasOption('Elemental Fusion',5),1.17,'sustained','Fusion refund on Four Elements');
      add(gate('Combustion',20)&&hasOption('Combustion',5),1.15,'sustained','Combustion rank 20');
