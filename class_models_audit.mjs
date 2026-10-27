@@ -6,7 +6,7 @@ import vm from 'node:vm';
 const load=name=>fs.readFileSync(new URL(name,import.meta.url),'utf8');
 const classes=JSON.parse(load('classes_data.json'));
 const stigmas=JSON.parse(load('stigmas.json'));
-const ctx={};vm.createContext(ctx);
+const ctx={SPECS:JSON.parse(load('specialties.json'))};vm.createContext(ctx);
 vm.runInContext(load('js/engine/class_models.js')+'\nthis.models=ClassCombatModels;',ctx);
 const model=ctx.models;
 const goals=['performance','survivability','sustained','burst'];
@@ -48,4 +48,18 @@ for(const [cls,p] of Object.entries(model.profiles)){
  const after=model.evaluate({classId:cls,context:'party',objective:'performance',build:stronger});
  assert(after.score>before.score,cls+': adding damage and HP did not improve performance');
 }
+// This is a chosen-Specialty test, not simply a rank gate. Judgment's
+// cooldown-removal option must not be credited if the user deselects it.
+const tSkills=new Set(Object.values(classes.templar.skills).map(x=>x.name));
+const mastery=Object.fromEntries([...tSkills].map(name=>[name,8]));
+mastery.Judgment=16;mastery['Warding Strike']=16;
+const tBuild={mastery,boardSkills:{},gearSkills:{},boardStats:{},gearStats:{},
+  equippedStigmas:['Doom Shield','Shield of Protection','Noble Armor','Taunt'],
+  stigma:{'Doom Shield':5,'Shield of Protection':5,'Noble Armor':5,Taunt:5}};
+const withReset=model.evaluate({classId:'templar',context:'party',objective:'sustained',
+  build:tBuild,selectedSpecs:{Judgment:[5,3]}});
+const withoutReset=model.evaluate({classId:'templar',context:'party',objective:'sustained',
+  build:tBuild,selectedSpecs:{Judgment:[3,4]}});
+assert(withReset.sustained>withoutReset.sustained,
+ 'Deselected Judgment cooldown Specialty must not receive reset credit');
 console.log('Validated '+total+' class/context/objective mechanic projections across seven Global classes.');
