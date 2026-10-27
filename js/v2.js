@@ -232,7 +232,7 @@ function actionsView(m){
  next.innerHTML=`<div class="v2-next-heading"><b>Next recommended upgrades</b><small>Guidance only, not assumed equipment</small></div>`+(breakpoint?`<p class="v2-next-progress">${esc(breakpoint)}</p>`:'')+parts.map(([name,detail,target],i)=>`<button data-v2-focus="${target}"><em>${i+1}</em><span><b>${name}</b><small>${esc(detail)}</small></span><span>→</span></button>`).join('');
  $('v2-status').innerHTML=modifiedBuild()?'<b class="modified">● Modified progression</b><small>Custom allocation</small>':'<b>● Following recommended</b><small>Your own gear stays separate</small>';
  $('v2-reset-allocations').hidden=!modifiedBuild();
- $('v2-board-notice').textContent=message||lastBoardRecalculation?.message||'';
+ $('v2-board-notice').textContent=lastBoardRecalculation?.message||message||'';
  $('v2-board-notice').hidden=!$('v2-board-notice').textContent;
  const n=nodeMap().get(state.node);
  $('v2-mark-obtained').disabled=!n||!n.node[5]||!boardOpen(n.board);
