@@ -48,7 +48,11 @@ const BUILD_ADVICE={
   pvp:{core:['Recuperation','Dark Crush','Onslaught','Rushing Smash','Impactful Crush','Spinning Strike'],support:['Blessing of Life','Protection Circle',"Wind's Promise",'Survival Willpower'],stigmas:['Undefeated Mantra','Barrier Spell','Healing Touch','Focused Defense'],stigmaPriority:['Barrier Spell','Healing Touch','Focused Defense','Undefeated Mantra'],why:'Move some resources from group damage into timely heals, shields and anti-burst defenses.'}
  }
 };
-function adviceFor(cls,context){return BUILD_ADVICE[cls]?.[context]||BUILD_ADVICE[cls]?.party||null}
+function adviceFor(cls,context,objective='performance'){
+ const base=BUILD_ADVICE[cls]?.[context]||BUILD_ADVICE[cls]?.party||null;
+ return typeof ClassCombatModels!=='undefined'
+   ?ClassCombatModels.advice(cls,context,objective,base):base;
+}
 
 /* Context-specific Specialty choices where the *verified option effect*
    clearly serves different play goals. Other skills retain the baseline

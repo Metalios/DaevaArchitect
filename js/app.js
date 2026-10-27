@@ -49,7 +49,7 @@ const LEVELING_MASTERY_NEXT = {
   cleric:['Radiant Recovery','Condemnation',"Earth's Retribution",'Healing Light','Chain of Torment'],
   chanter:['Dark Crush','Onslaught','Recuperation','Spinning Strike','Incandescent Blow']
 };
-const DEFAULT_ACCOUNT = (cls='templar') => ({...FRESH_45,azphel:0,context:'party',journey:'endgame',endgameContext:'party',levelingContext:'solo',leveling:{level:1,extraByLevel:{}},gear:{},equipment:{},currentRanks:{},manualMastery:null,manualStigma:null,customStigmas:null,customSpecialties:{},obtainedNodes:[],boardMode:'recommended',customNodes:[],customAzphelNodes:[],titlesOwned:{},faction:'elyos',macroBind:'RMB',quickUse2Bind:'R',goalTarget:['cleric','chanter'].includes(cls)?0:cls==='templar'?60000:100000,goalObserved:0,gearCpTarget:0});
+const DEFAULT_ACCOUNT = (cls='templar') => ({...FRESH_45,azphel:0,pveObjective:'performance',context:'party',journey:'endgame',endgameContext:'party',levelingContext:'solo',leveling:{level:1,extraByLevel:{}},gear:{},equipment:{},currentRanks:{},manualMastery:null,manualStigma:null,customStigmas:null,customSpecialties:{},obtainedNodes:[],boardMode:'recommended',customNodes:[],customAzphelNodes:[],titlesOwned:{},faction:'elyos',macroBind:'RMB',quickUse2Bind:'R',goalTarget:['cleric','chanter'].includes(cls)?0:cls==='templar'?60000:100000,goalObserved:0,gearCpTarget:0});
 let saved = {};
 try { saved = JSON.parse(localStorage.getItem('daeva-architect-all-v1') || localStorage.getItem('aion2-pathfinder-all-v3') || '{}') || {}; } catch (_) {}
 let state = {class:CLASS_ORDER.includes(saved.class)?saved.class:null,accounts:saved.accounts||{},gearView:['inventory','inspect'].includes(saved.gearView)?saved.gearView:null,tab:'overview',board:'Nezekan',preview:FRESH_45.crystals,node:null,titleSearch:'',titleSlot:'all',titleOwnership:'all',titleFaction:'all'};
@@ -139,7 +139,7 @@ let boardEditNotice='',boardRecalculationNotice='';
 let lastBoardRecalculation=null;
 function activeWeights(){
   const base=ROUTES[state.class].weights[account().context];
-  const advised=typeof adviceFor==='function'?adviceFor(state.class,account().context):null;
+  const advised=typeof adviceFor==='function'?adviceFor(state.class,account().context,account().pveObjective):null;
   if(!advised)return base;
   const skills={...base.skills};
   // Strongest supported class/core skill recommendations lead board optimization,
@@ -151,7 +151,7 @@ function activeWeights(){
 function recommendedStigmas(){
   const standard=profile().stigmas;
   const variants={templar:{solo:['Doom Shield','Noble Armor',"Empyrean Lord's Punishment",'Executing Blade'],pvp:['Noble Armor','Doom Shield','Taunt','Second Skin']},cleric:{solo:['Earth Punishment','Noble Aura','Prayer of Amplification','Light of Protection'],pvp:['Prayer of Amplification','Light of Protection',"Yustiel's Power",'Absolution']},sorcerer:{pvp:['Element Enhancement','Steel Barrier','Soul Freeze','Hibernation']},gladiator:{pvp:["Zikel's Blessing",'Focused Block','Lifestealing Blade','Armor of Balance']},assassin:{pvp:['Evasion Contract','Smoke Bomb','Swift Contract','Illusive Clone']},ranger:{pvp:["Vaizel's Authority",'Mother Nature\'s Breath','Ensnaring Trap','Stealth']},spiritmaster:{pvp:['Summon: Ancient Spirit',"Enhance: Spirit's Benediction",'Seize Magic','Cry of Terror']},chanter:{solo:['Undefeated Mantra','Sprint Mantra','Power of the Storm',"Marchutan's Wrath"],pvp:['Undefeated Mantra','Barrier Spell','Healing Touch','Focused Defense']}};
-  const advised=typeof adviceFor==='function'?adviceFor(state.class,account().context):null;
+  const advised=typeof adviceFor==='function'?adviceFor(state.class,account().context,account().pveObjective):null;
   const result=advised?.stigmas||variants[state.class]?.[account().context]||standard;
   return result.length===4&&new Set(result).size===4&&result.every(name=>STIGMAS[state.class]?.[name])?result:standard;
 }
@@ -198,7 +198,7 @@ function masteryRankCap(name){
   return Math.min(10,2+Math.floor((currentLevel()-unlocked)/3));
 }
 function masteryStages(boardSkills=null){
-  const advised=typeof adviceFor==='function'?adviceFor(state.class,account().context):null;
+  const advised=typeof adviceFor==='function'?adviceFor(state.class,account().context,account().pveObjective):null;
   if(advised){
     const a=account(),skillSet=new Set(skillNames()),unlocks=SKILL_UNLOCKS[state.class];
     const pick=names=>(names||[]).filter((name,i)=>skillSet.has(name)&&(unlocks[name]||1)<=currentLevel()&&(names.indexOf(name)===i));
@@ -263,7 +263,7 @@ function masteryStages(boardSkills=null){
 }
 function stigmaStages(){
   const s=activeStigmas().slice(0,isLeveling()?levelReward().slots:4);
-  const advised=typeof adviceFor==='function'?adviceFor(state.class,account().context):null;
+  const advised=typeof adviceFor==='function'?adviceFor(state.class,account().context,account().pveObjective):null;
   if(advised){
     const researched=typeof progressionStigmaStages==='function' ? progressionStigmaStages(state.class,account().context,s,advised) : null;
     if(researched)return researched;
@@ -360,14 +360,17 @@ function engineBuild(masteryLevels,boardEffects,stigmaLevels,equipped){
   for(const [name,n] of Object.entries(account().gear||{}))
     equippedRanks[name]=(equippedRanks[name]||0)+(Number(n)||0);
   const visibleStats=[...gearFixedTotals().stats,...gearSocketTotals().stats];
-  const percent=name=>visibleStats.filter(row=>row.name===name&&row.unit==='%')
-    .reduce((total,row)=>total+(Number(row.value)||0),0);
+  // Include all recorded stats supported by the imported Global dataset.
+  // Unknown equipment bonuses remain unknown; no gear is invented.
+  const gearStats={};
+  for(const [key,meta] of Object.entries(data().stats)){
+    gearStats[key]=visibleStats.filter(row=>row.name===meta.name).reduce(
+      (sum,row)=>sum+(Number(row.value)||0)*(row.unit==='%'?100:1),0);
+  }
   return {
     mastery:masteryLevels,boardSkills:boardEffects.skills,
     boardStats:boardEffects.stats,gearSkills:equippedRanks,
-    gearStats:{CombatSpeed:percent('Combat Speed')*100,
-      CoolTimeDecrease:percent('Cooldown Reduction')*100,
-      AmplifyAllDamage:percent('Damage Boost')*100},
+    gearStats,
     stigma:stigmaLevels,equippedStigmas:equipped,
     availableSkills:Object.entries(SKILL_UNLOCKS[state.class]||{})
       .filter(([,at])=>at<=currentLevel()).map(([name])=>name)
@@ -483,7 +486,7 @@ function model(){
     // Board level unlocks are a real change of eligible path; a level
     // increase inside the same unlock band must not shuffle suggestions.
     const contextKey=JSON.stringify([state.class,a.context,BOARD_NAMES.filter(boardOpen),
-      sorcererCombatEligible()?'global-sorcerer-combat-v2-budget-fit':'budget-fit-v2']);
+      sorcererCombatEligible()?'global-sorcerer-objectives-v3':'objective-board-search-v3',a.pveObjective||'performance']);
     const snapshot=a.recommendedRouteSnapshot;
     // Prior to any real purchases, changes to the player's goal, mastery,
     // equipment or Stigmas should still influence the recommended route.
@@ -517,7 +520,45 @@ function model(){
       const reference={mastery,stigma,boards:{owned:actual},effects:effects(actual)};
       const estimated=estimateCombatPower(reference);
       const baseCp=estimated.ready?estimated.value:null;
-      const computed=chooseCombatBoardRoute(mastery,stigma,gearRanks,target,baseCp,actual);
+      let computed=null;
+       if(a.context!=='pvp' && typeof PveBuildOptimizer!=='undefined'){
+         try {
+           const boardData=data(), baseWeights=activeWeights(), crystalBudget=budget('crystals');
+           const objective=PVE_OBJECTIVES[a.pveObjective]?a.pveObjective:'performance';
+           const scoreFinal=candidate=>{
+             const boardEffects=effects(candidate.selected);
+             const proposed=a.manualMastery?mastery:allocate(masteryStages(boardEffects.skills),
+               budget('mastery'),masteryCost,names,1,isLeveling()?masteryRankCap:null);
+             const build=engineBuild(proposed.levels,boardEffects,stigma.levels,activeStigmas());
+             const structuralTie=candidate.score*.0000005;
+             if(state.class==='sorcerer'&&sorcererCombatEligible()&&objective!=='survivability'){
+               const evaluated=GlobalCombatEngine.tuneSpecialties(
+                 build,SPECS.sorcerer,a.customSpecialties||{});
+               if(objective==='burst')
+                 return (evaluated.samples.find(x=>x.scenario==='short')?.score||0)+structuralTie;
+               if(objective==='sustained')
+                 return evaluated.samples.filter(x=>x.scenario!=='short')
+                   .reduce((sum,x)=>sum+x.score*x.weight,0)+structuralTie;
+               return evaluated.robustScore+structuralTie;
+             }
+             if(typeof ClassCombatModels!=='undefined'&&ClassCombatModels.profile(state.class))
+               return ClassCombatModels.evaluate({classId:state.class,context:a.context,
+                 objective,build,selectedSpecs:a.customSpecialties||{}}).score+structuralTie;
+             return candidate.score;
+           };
+           computed=PveBuildOptimizer.optimize({classData:boardData,classId:state.class,context:a.context,
+             objective,baseWeights,mastery:mastery.levels,gear:gearRanks,
+             locked:[...actual].filter(id=>nodeMap().get(id)?.board!=='Azphel'),
+             crystalBudget,characterLevel:currentLevel(),
+             skillTargets:typeof progressionBoardTargets==='function'?progressionBoardTargets(state.class,a.context):{},
+             scoreFinal});
+           a.lastObjectiveAnalysis=computed.diagnostics;
+         }catch(error){
+           a.lastObjectiveAnalysis={error:String(error),objective:a.pveObjective};
+           console.warn('Objective search failed; preserving baseline recommendation',error);
+         }
+       }
+      if(!computed)computed=chooseCombatBoardRoute(mastery,stigma,gearRanks,target,baseCp,actual);
       // The optimizer returns a complete future path. Budget fitting only
       // changes recommendation order, never board connectivity or costs.
       const fitted=customMode()?computed.route:
