@@ -64,7 +64,7 @@ try {
   assert.match(revised.shown,/150/);
 
   // A user-created custom selection is truly reset to the computed route.
-  const restored=await page.evaluate(()=>{
+  const restored=await page.evaluate((obtainedId)=>{
     const a=account();a.boardMode='custom';a.customNodes=[];
     render();
     document.querySelector('#v2-board-restore').click();
@@ -72,9 +72,9 @@ try {
       report:lastBoardRecalculation,
       mode:a.boardMode,
       route:plannedRoute().length,
-      gold:a.obtainedNodes.includes(first.id)
+      gold:a.obtainedNodes.includes(obtainedId)
     };
-  });
+  },first.id);
   assert.equal(restored.mode,'recommended');
   assert.equal(restored.report.changed,true);
   assert(restored.report.added.length>0);
@@ -82,19 +82,19 @@ try {
   assert(restored.route>0);
 
   // The second, destructive action requires deliberate confirmation.
-  const reset=await page.evaluate(()=>{
+  const reset=await page.evaluate((obtainedId)=>{
     window.confirm=()=>false;
     document.querySelector('#v2-board-clear-obtained').click();
-    const canceled=obtainedNodes().has(first.id);
+    const canceled=obtainedNodes().has(obtainedId);
     window.confirm=()=>true;
     document.querySelector('#v2-board-clear-obtained').click();
     return {
       canceled,
-      removed:!obtainedNodes().has(first.id),
+      removed:!obtainedNodes().has(obtainedId),
       crystals:budget('crystals'),
       status:document.querySelector('#v2-board-notice').textContent
     };
-  });
+  },first.id);
   assert(reset.canceled&&reset.removed);
   assert.equal(reset.crystals,150);
   assert.match(reset.status,/Cleared 1 obtained PvE tile/);
