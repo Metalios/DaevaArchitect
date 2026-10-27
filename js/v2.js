@@ -146,7 +146,12 @@ function skillsView(m){
      <div class="v2-flyout-foot"><button type="button" id="v2-spec-restore" ${a.customSpecialties?.[skill]?'':'disabled'}>Use recommended Specialties</button><button type="button" id="v2-spec-done">Done</button></div>
      </div>`;
  }
- $('v2-master-status').textContent=`Mastery: ${m.mastery.spent} / ${budget('mastery')} points allocated · ${Math.max(0,budget('mastery')-m.mastery.spent)} unspent${a.manualMastery?' · custom ranks':' · suggested ranks'}`;
+ const masteryLeft=Math.max(0,budget('mastery')-m.mastery.spent);
+ const masteryReason=a.manualMastery?' · custom ranks (remaining points left by your choices)':
+   !masteryLeft?' · all earned points allocated':
+   m.mastery.next?` · next rank costs ${m.mastery.next.cost} (need ${m.mastery.next.need} more)`:
+     ' · all legal skill ranks capped';
+ $('v2-master-status').textContent=`Mastery: ${m.mastery.spent} / ${budget('mastery')} points allocated · ${masteryLeft} unspent${masteryReason}`;
  $('v2-master-restore').disabled=!a.manualMastery;
 }
 function stigmasView(m){

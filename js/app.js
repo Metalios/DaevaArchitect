@@ -319,7 +319,12 @@ function renderGlobalBoardRoute(m,nodes){
   // Separate user-recorded purchases from the allocation planned in tabs.
   const marked=steps.filter(x=>actual.has(x.id)),markedCost=obtainedCrystalSpend(false),unmarkedWithinBudget=upcoming.filter(x=>x.total<=crystals).length;
   const banked=crystals-m.boards.spent;
-  $('global-route-budget').textContent=`${m.boards.spent} / ${crystals} crystals planned${banked&&m.boards.next?` · save ${banked} for the next ${m.boards.next.cost}-crystal tile`:''}`;
+  const crystalNote=customMode()
+    ?banked?` · ${banked} unallocated in your custom route`:' · custom route funded'
+    :banked&&m.boards.next
+      ?` · ${banked} remain (next connected tile needs ${m.boards.next.cost})`
+      :banked?` · ${banked} remain; all eligible tiles planned`:' · all earned crystals allocated';
+  $('global-route-budget').textContent=`${m.boards.spent} / ${crystals} crystals planned${crystalNote}`;
   $('obtained-status').textContent=`${markedCost} / ${crystals} crystals actually spent · ${Math.max(0,crystals-markedCost)} remaining · ${unmarkedWithinBudget} recommended tiles within the budget still blue`;
   $('global-route-caption').textContent=customMode()
     ? `Your connected custom route is separate from the ${markedCost} / ${crystals} crystals you've marked obtained.`
@@ -381,7 +386,9 @@ function chooseCombatBoardRoute(provisional,stigma,gearRanks,target,baseCp,actua
   const options=[original,speedRoute];
   const maxCrystals=budget('crystals'),names=skillNames();
   let best=null;
-  for(const candidate of options){
+  for(const ranked of options){
+    const fitted=fitConnectedBoardBudget(data(),ranked.route,maxCrystals);
+    const candidate={...ranked,route:fitted.route};
     const selected=new Set();let spent=0;
     for(const entry of candidate.route){
       const node=nodeMap().get(entry.id)?.node;
@@ -398,7 +405,8 @@ function chooseCombatBoardRoute(provisional,stigma,gearRanks,target,baseCp,actua
     if(!best||performance.robustScore>best.score+1e-8)
       best={candidate,score:performance.robustScore};
   }
-  return best?.candidate||original;
+  return best?.candidate||{...original,
+    route:fitConnectedBoardBudget(data(),original.route,maxCrystals).route};
 }
 function enhanceSorcererCombat(master,boardEffects,stigmas){
   if(!sorcererCombatEligible()){lastOptimizedCombat=null;return master}
@@ -419,6 +427,9 @@ function enhanceSorcererCombat(master,boardEffects,stigmas){
         improvement=revised.score;
       }
     }
+    if(!a.manualMastery)final=spendAvailableMastery(final,budget('mastery'),
+      masteryCost,masteryRankCap,skillNames(),masteryStages(boardEffects.skills),
+      activeWeights().skills,boardEffects.skills,prepared.gearSkills);
     const finalBuild={...prepared,mastery:final.levels};
     let optimized=GlobalCombatEngine.tuneSpecialties(finalBuild,SPECS.sorcerer,
       a.customSpecialties||{});
@@ -466,7 +477,8 @@ function model(){
     for(const [name,n] of Object.entries(a.gear||{}))gearRanks[name]=(gearRanks[name]||0)+Number(n||0);
     // Board level unlocks are a real change of eligible path; a level
     // increase inside the same unlock band must not shuffle suggestions.
-    const contextKey=JSON.stringify([state.class,a.context,BOARD_NAMES.filter(boardOpen),sorcererCombatEligible()?'global-sorcerer-combat-v1':'legacy']);
+    const contextKey=JSON.stringify([state.class,a.context,BOARD_NAMES.filter(boardOpen),
+      sorcererCombatEligible()?'global-sorcerer-combat-v2-budget-fit':'budget-fit-v2']);
     const snapshot=a.recommendedRouteSnapshot;
     // Prior to any real purchases, changes to the player's goal, mastery,
     // equipment or Stigmas should still influence the recommended route.
@@ -479,9 +491,11 @@ function model(){
       snapshot.route.every(x=>nodeMap().has(x.id));
     // Reaching 119/119 triggers precisely ONE route update. It stays
     // stable during later renders, and the next cycle refreshes at 120/120.
+    const changedEarnedBudget=valid&&snapshot.budget!==total;
     const newBudgetAfterCompletion=valid&&snapshot.completedBudget!==null&&
       snapshot.completedBudget!==undefined&&total>snapshot.completedBudget;
-    const update=!valid||newBudgetAfterCompletion||(exhausted&&snapshot.completedBudget!==total)||
+    const update=!valid||changedEarnedBudget||newBudgetAfterCompletion||
+      (exhausted&&snapshot.completedBudget!==total)||
       (spent===0&&snapshot.basisKey!==basisKey);
     if(update){
       const actual=obtainedNodes();
@@ -489,9 +503,13 @@ function model(){
       const estimated=estimateCombatPower(reference);
       const baseCp=estimated.ready?estimated.value:null;
       const computed=chooseCombatBoardRoute(mastery,stigma,gearRanks,target,baseCp,actual);
-      liveRoute=computed.route;liveRouteBasis={initialFocus:computed.initialFocus,baseCp:computed.baseCp};
+      // The optimizer returns a complete future path. Budget fitting only
+      // changes recommendation order, never board connectivity or costs.
+      const fitted=customMode()?computed.route:
+        fitConnectedBoardBudget(data(),computed.route,total).route;
+      liveRoute=fitted;liveRouteBasis={initialFocus:computed.initialFocus,baseCp:computed.baseCp};
       a.recommendedRouteSnapshot={
-        contextKey,basisKey,route:computed.route,
+        contextKey,basisKey,route:fitted,budget:total,
         initialFocus:computed.initialFocus,baseCp:computed.baseCp,
         completedBudget:exhausted?total:null
       };
@@ -514,7 +532,11 @@ function model(){
   const fundedMastery=a.manualMastery?mastery:allocate(
     masteryStages(plannedEffects.skills),budget('mastery'),masteryCost,names,1,
     isLeveling()?masteryRankCap:null);
-  const finalMastery=enhanceSorcererCombat(fundedMastery,plannedEffects,stigma);
+  const optimizedMastery=enhanceSorcererCombat(fundedMastery,plannedEffects,stigma);
+  const finalMastery=a.manualMastery?optimizedMastery:spendAvailableMastery(
+    optimizedMastery,budget('mastery'),masteryCost,masteryRankCap,names,
+    masteryStages(plannedEffects.skills),activeWeights().skills,
+    plannedEffects.skills,{...gearSkillLevels(),...a.gear});
   return {mastery:finalMastery,stigma,boards,azphel,
     effects:plannedEffects,acquiredEffects,combat:lastOptimizedCombat,
     azphelEffects:effects(azphel.owned)};
