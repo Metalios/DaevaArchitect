@@ -103,7 +103,7 @@ const ClassCombatModels=(()=>{
    const support=survival?uniq([...p.defense,...p.support]).slice(0,6):
      uniq([...p.support,...p.defense.slice(0,2)]).slice(0,6);
    const stigmas=survival?p.survivalStigmas:p.damageStigmas;
-   return {...base,core,support,stigmas:[...stigmas],
+   return {...base,buildObjective:objective,core,support,stigmas:[...stigmas],
      stigmaPriority:survival?[...stigmas]:[...stigmas],
      stigmaMilestones:undefined,
      why:`${base.why} Research-informed ${objective} objective: ${p.mechanics}. The solver uses comparative mechanics and does not establish measured optimum.`};
