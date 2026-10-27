@@ -486,7 +486,7 @@ function model(){
     // Board level unlocks are a real change of eligible path; a level
     // increase inside the same unlock band must not shuffle suggestions.
     const contextKey=JSON.stringify([state.class,a.context,BOARD_NAMES.filter(boardOpen),
-      sorcererCombatEligible()?'global-sorcerer-objectives-v1':'objective-board-search-v1',a.pveObjective||'performance']);
+      sorcererCombatEligible()?'global-sorcerer-objectives-v3':'objective-board-search-v3',a.pveObjective||'performance']);
     const snapshot=a.recommendedRouteSnapshot;
     // Prior to any real purchases, changes to the player's goal, mastery,
     // equipment or Stigmas should still influence the recommended route.
