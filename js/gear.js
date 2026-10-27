@@ -61,7 +61,7 @@ const THEOSTONE_FAMILIES=[
 ];
 const THEOSTONES=THEOSTONE_FAMILIES.flatMap(([effect,...names])=>names.map((name,i)=>({name,effect,grade:['Rare','Epic','Unique'][i]})));
 const GEAR_CATALOG_BY_HREF=new Map(GEAR_CATALOG.items.map(item=>[item.href,item]));
-let gearDraft=null,gearSlotId=null,gearQuery='',gearGradeFilter='all',gearLevelFilter='usable',gearFactionFilter='own',gearEditorDirty=false;
+let gearDraft=null,gearSlotId=null,gearQuery='',gearGradeFilter='all',gearLevelFilter='usable',gearFactionFilter='own',gearEditorDirty=false,gearSelectionVersion=0;
 const gearSlot=id=>GEAR_SLOTS.find(slot=>slot.id===id);
 const gearEquipment=()=>{
   const equipment=account().equipment ||= {};
@@ -221,18 +221,44 @@ function gearEditor(){
   gearStonesEditor(gearSlot(gearSlotId),item);
 }
 function openGearSlot(id){
-  const slot=gearSlot(id);if(!slot)return;gearSlotId=id;gearQuery='';gearGradeFilter='all';gearLevelFilter='usable';gearFactionFilter='own';gearEditorDirty=false;gearDraft=JSON.parse(JSON.stringify(gearEquipment()[id]||{}));
+  const slot=gearSlot(id);if(!slot)return;
+  gearSelectionVersion++; // Invalidate any tooltip request from another slot.
+  gearSlotId=id;gearQuery='';gearGradeFilter='all';gearLevelFilter='usable';gearFactionFilter='own';gearEditorDirty=false;gearDraft=JSON.parse(JSON.stringify(gearEquipment()[id]||{}));
   $('gear-dialog-title').textContent=`Choose ${slot.name}`;$('gear-query').value='';$('gear-grade-filter').value=gearGradeFilter;$('gear-level-filter').value=gearLevelFilter;$('gear-faction-filter').value=gearFactionFilter;gearResults();gearEditor();$('gear-dialog').showModal();$('gear-query').focus();
+}
+// Rolled enhancements, skill levels, stones and binding notes belong to an
+// item instance, not its equipment slot. Keep them only when reselecting the
+// exact same catalog item; replacing the item must start with clean rolls.
+function gearDraftForCatalogSelection(item,prior={}){
+  const sameItem=!!prior.href&&prior.href===item.href&&prior.type===item.type;
+  const preserved=sameItem?{...prior}:{
+    enhancement:0,
+    skillBonuses:[],
+    statNotes:'',
+    notes:'',
+    stoneType:'',
+    stones:[],
+    theostone:'',
+    manastoneSlots:null,
+    theostoneSlots:null
+  };
+  return {...preserved,name:item.name,icon:item.icon,href:item.href,type:item.type,
+    grade:item.grade||'',faction:item.faction||'',fixedStats:item.fixedStats||[],
+    baseStats:sameItem?(prior.baseStats||[]):[],
+    requiredLevel:item.requiredLevel||null,itemLevel:item.itemLevel||null};
 }
 async function selectGearResult(href){
   const item=GEAR_CATALOG.items.find(x=>x.href===href&&x.type===gearAllowedType(gearSlot(gearSlotId)));if(!item)return;
-  const prior=gearDraft||{},sameItem=prior.href===item.href;
-  gearEditorDirty=false;gearDraft={...prior,name:item.name,icon:item.icon,href:item.href,type:item.type,grade:item.grade||'',faction:item.faction||'',fixedStats:item.fixedStats||[],baseStats:[],requiredLevel:item.requiredLevel||null,itemLevel:item.itemLevel||null,manastoneSlots:sameItem?prior.manastoneSlots:null,theostoneSlots:sameItem?prior.theostoneSlots:null,stoneType:sameItem?prior.stoneType||'':'',stones:sameItem?prior.stones:[],theostone:sameItem?prior.theostone:''};gearResults();gearEditor();
+  const requestVersion=++gearSelectionVersion,selectedSlot=gearSlotId;
+  gearEditorDirty=false;
+  gearDraft=gearDraftForCatalogSelection(item,gearDraft||{});
+  gearResults();gearEditor();
+  const current=()=>requestVersion===gearSelectionVersion&&gearSlotId===selectedSlot&&gearDraft?.href===item.href;
   try{
     const res=await fetch(`https://aion2data.com/tooltip${item.href}`);
     if(!res.ok)throw Error(`HTTP ${res.status}`);
     const tooltip=await res.json();
-    if(gearDraft?.href!==item.href)return;
+    if(!current())return;
     const fields=(tooltip.groups||[]).flat().filter(x=>x.k==='p');
     const find=name=>fields.find(x=>x.t===name)?.v;
     const grade=(tooltip.kind||tooltip.sub||'').match(/\b(Common|Rare|Epic|Unique|Special)\b/i)?.[1];
@@ -243,12 +269,12 @@ async function selectGearResult(href){
     gearDraft.theostoneSlots=find('Theostone slots')!==undefined?clamp(find('Theostone slots'),0,1):null;
     gearDraft.baseStats=fields.filter(x=>!['Item level','Required level','Class'].includes(x.t)).slice(0,12).map(x=>`${x.t} ${x.v}`);
     if(!gearEditorDirty)gearEditor();
-  }catch(_){$('gear-editor').insertAdjacentHTML('afterbegin','<p class="gear-fetch-note">Live tooltip unavailable. The item and icon are saved from the Global catalog; enter its level and your rolls manually.</p>')}
+  }catch(_){if(current())$('gear-editor').insertAdjacentHTML('afterbegin','<p class="gear-fetch-note">Live tooltip unavailable. The item and icon are saved from the Global catalog; enter its level and your rolls manually.</p>')}
 }
 function initGear(){
   $('gear').addEventListener('click',e=>{const slot=e.target.closest('[data-gear-slot]');if(slot)openGearSlot(slot.dataset.gearSlot)});
   document.querySelector('.gear-view-switch').addEventListener('click',e=>{const button=e.target.closest('[data-gear-view]');if(!button)return;state.gearView=button.dataset.gearView;save();renderGear()});
-  $('gear-dialog-close').addEventListener('click',()=>$('gear-dialog').close());
+  $('gear-dialog-close').addEventListener('click',()=>{gearSelectionVersion++;$('gear-dialog').close()});
   $('gear-query').addEventListener('input',e=>{gearQuery=e.target.value;gearResults()});
   $('gear-grade-filter').addEventListener('change',e=>{gearGradeFilter=e.target.value;gearResults()});
   $('gear-level-filter').addEventListener('change',e=>{gearLevelFilter=e.target.value;gearResults()});
@@ -263,7 +289,7 @@ function initGear(){
   $('gear-results').addEventListener('click',e=>{const result=e.target.closest('[data-gear-result]');if(result)selectGearResult(result.dataset.gearResult)});
   $('gear-editor').addEventListener('input',e=>{gearEditorDirty=true;if(e.target.name==='stoneSlots')updateGearStoneRows();if(e.target.name==='theostone'){const stone=THEOSTONES.find(entry=>entry.name.toLowerCase()===e.target.value.trim().toLowerCase()),hint=$('gear-editor').querySelector('.gear-theostone-editor small');if(hint)hint.textContent=stone?`${stone.grade} · ${stone.effect} effect`:'Choose a Global Theostone or enter its exact in-game name.'}});
   $('gear-editor').addEventListener('change',e=>{gearEditorDirty=true;if(e.target.name?.startsWith('stoneGrade'))e.target.closest('.gear-stone-row').dataset.grade=e.target.value});
-  $('gear-remove').addEventListener('click',()=>{delete gearEquipment()[gearSlotId];$('gear-dialog').close();render()});
+  $('gear-remove').addEventListener('click',()=>{gearSelectionVersion++;delete gearEquipment()[gearSlotId];$('gear-dialog').close();render()});
   $('gear-form').addEventListener('submit',e=>{
     e.preventDefault();const values=new FormData(e.currentTarget),name=String(values.get('name')||'').trim();if(!name)return;
     const slot=gearSlot(gearSlotId),socketCount=gearStoneFamily(slot)?clamp(values.get('stoneSlots'),0,4):0;
@@ -271,6 +297,6 @@ function initGear(){
     const stones=Array.from({length:socketCount},(_,i)=>({stat:String(values.get(`stoneStat${i}`)||'').trim().slice(0,80),value:values.get(`stoneValue${i}`)===''?null:clamp(values.get(`stoneValue${i}`),-1000000,1000000),unit:values.get(`stoneUnit${i}`)==='%'?'%':'',grade:STONE_LINE_GRADES.some(([name])=>name===values.get(`stoneGrade${i}`))?String(values.get(`stoneGrade${i}`)):''}));
     const theostone=gearTheostoneEligible(slot,gearDraft)?String(values.get('theostone')||'').trim().slice(0,100):'';
     gearDraft={...(gearDraft||{}),name,type:gearAllowedType(slot),enhancement:clamp(values.get('enhancement'),0,30),requiredLevel:values.get('requiredLevel')?clamp(values.get('requiredLevel'),1,45):null,itemLevel:values.get('itemLevel')?clamp(values.get('itemLevel'),0,999):null,manastoneSlots:gearStoneFamily(slot)?socketCount:null,stoneType,stones,theostone,statNotes:String(values.get('statNotes')||''),notes:String(values.get('notes')||''),skillBonuses:[0,1,2].map(i=>({skill:String(values.get(`skill${i}`)||''),levels:clamp(values.get(`levels${i}`),0,30)})).filter(x=>x.skill&&x.levels)};
-    gearEquipment()[gearSlotId]=gearDraft;$('gear-dialog').close();render();
+    gearSelectionVersion++;gearEquipment()[gearSlotId]=gearDraft;$('gear-dialog').close();render();
   });
 }
