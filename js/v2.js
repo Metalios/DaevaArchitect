@@ -34,15 +34,26 @@ const master=make('div','v2-master-editor',`
  <details class="v2-advanced-skills"><summary>Advanced skill cards & bonus adjustments</summary></details>`);
 const stigmas=make('div','v2-stigmas',`<div id="v2-stigma-list" class="v2-stigma-cards"></div><div class="v2-stigma-summary"><span>13 class Stigmas in catalog · select a card to edit</span><strong id="v2-stigma-remaining"></strong></div><div class="v2-stigma-breakpoints">Perk levels <span>⑤ First</span><span>⑩ Second</span><span>⑮ Third</span><span>⑳ Fourth</span></div><button type="button" id="v2-stigma-reset">Restore recommended Stigmas</button><div id="v2-stigma-panel" class="v2-in-panel-flyout" role="region" aria-label="Stigma loadout editor" hidden></div>`);
 const boardControls=make('div','v2-board-controls',`
- <div class="v2-board-callout"><b>Original Global board coordinates</b><span><b>Blue</b> = recommended; <b>gold</b> = obtained. Single-click previews a tile; double-click marks it obtained. Use the Mark obtained button on touch. Your planned amounts remain in each board tab.</span></div>
- <button type="button" id="v2-board-toggle">Edit selected node</button><button type="button" id="v2-board-restore" title="Evaluate the recommendation again using the current build and explain whether it changed.">Recalculate recommended path</button>
- <button type="button" id="v2-board-clear-obtained" title="Reset PvE gold obtained marks, not your earned crystal budget">Clear obtained gold tiles…</button>
- <button type="button" id="v2-mark-obtained">Mark tile obtained</button>
- <button type="button" id="v2-zoom-minus" aria-label="Zoom out">−</button><span id="v2-zoom-label">40px</span><button type="button" id="v2-zoom-plus" aria-label="Zoom in">+</button><button type="button" id="v2-board-expand">Expand board</button>
- <p id="v2-board-notice" role="status"></p>`);
+ <div class="v2-board-callout"><b>Daevanion path planner</b><span><b>Blue</b> = recommendation, <b>gold</b> = marked obtained. Recalculate does not erase purchases. Reset selections removes marks and custom choices after confirmation.</span></div>
+ <div class="v2-board-primary-actions" role="group" aria-label="Daevanion planning actions">
+   <button type="button" id="v2-board-restore" title="Re-evaluate with the current character, points and recorded equipment">Recalculate path</button>
+   <button type="button" id="v2-board-reset-selections" title="Reset obtained and custom selections on all supported boards; keep earned points and equipment">Reset selections…</button>
+   <button type="button" id="v2-board-clear-obtained" title="Remove only obtained PvE gold marks, preserving Azphel and your planned path">Clear PvE gold only…</button>
+ </div>
+ <div class="v2-board-secondary-actions" role="group" aria-label="Daevanion tile and view actions">
+   <button type="button" id="v2-board-toggle">Edit selected node</button>
+   <button type="button" id="v2-mark-obtained">Mark tile obtained</button>
+   <button type="button" id="v2-zoom-minus" aria-label="Zoom out">−</button><span id="v2-zoom-label">40px</span><button type="button" id="v2-zoom-plus" aria-label="Zoom in">+</button><button type="button" id="v2-board-expand">Expand board</button>
+ </div>
+ <details class="v2-board-method">
+   <summary>What does the recommendation consider?</summary>
+   <p>The planner uses your class, level, PvE/PvP context, earned crystals, connected tiles, marked purchases, Mastery, Stigmas, recorded equipment skill-level bonuses and an approximate Combat Power baseline where gear is sufficiently recorded. Sorcerer PvE also compares two route candidates with an uncalibrated speed-aware combat model.</p>
+   <p><strong>Not a guaranteed strongest build:</strong> the other classes use weighted route heuristics, not an exhaustive combat search. Full equipment stat rolls, resistance/crit thresholds, every effect interaction, Ariel, and the game's undisclosed Combat Power calculation are not jointly optimized. Estimated Combat Power differs from actual in-game CP and from item level.</p>
+ </details>
+ <p id="v2-board-notice" role="status" aria-live="polite"></p>`);
 const ariel=make('button','v2-ariel-pending','Ariel · pending');
 ariel.type='button';ariel.disabled=true;ariel.title='Ariel arrived in the October 21 Global update. Client-verified node positions, effects and separate currency data must be imported before this board is editable.';
-const modal=make('dialog','v2-comparison',`<div class="v2-compare-head"><h2>Your build vs. recommended</h2><button type="button" id="v2-comparison-close">✕</button></div><p>Compared at the same class, level, play context, and point totals. Equipment does not affect the recommended route.</p><div id="v2-comparison-body"></div><button type="button" id="v2-comparison-reset">Restore recommended allocations (keep gear)</button>`);modal.id='v2-comparison';
+const modal=make('dialog','v2-comparison',`<div class="v2-compare-head"><h2>Your build vs. recommended</h2><button type="button" id="v2-comparison-close">✕</button></div><p>Compared at the same class, level, play context, and point totals. Recorded equipment skill-level bonuses and the estimated CP baseline can influence the Daevanion route; full gear stat optimization is not implemented.</p><div id="v2-comparison-body"></div><button type="button" id="v2-comparison-reset">Restore recommended allocations (keep gear)</button>`);modal.id='v2-comparison';
 const archetype=make('p','v2-archetype');
 const slim=make('div','v2-slim-heading',`<span id="v2-master-status"></span><button type="button" id="v2-master-restore">Restore ranks</button>`);
 const stigmaStatus=make('span','v2-stigma-status');stigmaStatus.id='v2-stigma-status';
@@ -355,6 +366,22 @@ function bind(){
  });
  $('v2-board-restore').addEventListener('click',()=>{
    const report=recalculateRecommendedBoards();
+   message=report.message;
+   render();
+ });
+ $('v2-board-reset-selections').addEventListener('click',()=>{
+   const a=account(),gold=obtainedNodes().size,
+     custom=(a.customNodes||[]).length+(a.customAzphelNodes||[]).length;
+   if(!window.confirm(`Reset every Daevanion selection on Nezekan, Zikel, Vaizel, Triniel and Azphel? This clears ${gold} gold obtained mark${gold===1?'':'s'} and ${custom} custom planned tile${custom===1?'':'s'}. Your earned crystals, level, gear, Mastery and Stigmas stay unchanged.`))return;
+   storeObtained(new Set());
+   a.customNodes=[];a.customAzphelNodes=[];
+   a.boardMode='recommended';
+   a.recommendedRouteSnapshot=null;
+   lastBoardRecalculation=null;
+   const report=recalculateRecommendedBoards();
+   report.message=`Reset selections: cleared ${gold} obtained gold tile${gold===1?'':'s'} and ${custom} custom tile${custom===1?'':'s'} across supported boards. Recalculated the recommended path from your current build. Earned points, equipment, Mastery and Stigmas were preserved.`;
+   lastBoardRecalculation=report;
+   boardRecalculationNotice=report.message;
    message=report.message;
    render();
  });
