@@ -249,16 +249,18 @@ const GlobalCombatEngine=(()=>{
     }
     return winner;
   }
-  function scoreMastery(build,specData,manualSpecs={},seed=null){
-    return tuneSpecialties(build,specData,manualSpecs,seed,[ENCOUNTERS[0],ENCOUNTERS[1]]).robustScore;
+  function scoreMastery(build,specData,manualSpecs={},seed=null,
+    scenarios=[ENCOUNTERS[0],ENCOUNTERS[1]]){
+    return tuneSpecialties(build,specData,manualSpecs,seed,scenarios).robustScore;
   }
-  function refineMastery({initial,budget,cost,cap,build,specData,manualSpecs={}}){
+  function refineMastery({initial,budget,cost,cap,build,specData,manualSpecs={},
+    scenarios=[ENCOUNTERS[0],ENCOUNTERS[1]]}){
     const mastery={...initial},names=CORE.concat(['Robe of Flame','Grace of Enhancement','Fire Mark','Robe of Earth','Absorb Essence','Frost','Frost Burst']);
     const unique=[...new Set(names)].filter(n=>Object.prototype.hasOwnProperty.call(mastery,n));
     let spent=Object.entries(mastery).reduce((v,[name,rank])=>{
       for(let r=2;r<=rank;r++)v+=cost(r);return v;
     },0);
-    const score=()=>scoreMastery({...build,mastery},specData,manualSpecs);
+    const score=()=>scoreMastery({...build,mastery},specData,manualSpecs,null,scenarios);
     // Bounded coordinate exchange. Every accepted operation is legal and
     // improves the same comparative combat objective. Does not invent points.
     let best=score(),passes=0;
