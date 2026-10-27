@@ -188,7 +188,8 @@ function progressionStigmaStages(cls,mode,equipped,advice){
  const policy=PROGRESSION_PLANS[cls];if(!policy)return null;
  const selected=new Set(equipped),priority=[...(advice.stigmaPriority||[]).filter(name=>selected.has(name)),
   ...equipped.filter(name=>!(advice.stigmaPriority||[]).includes(name))];
- const startup=(STIGMA_STARTER[cls]?.[mode]||priority).filter(name=>selected.has(name));
+ const startup=(advice.buildObjective&&advice.buildObjective!=='performance'?priority:
+  (STIGMA_STARTER[cls]?.[mode]||priority)).filter(name=>selected.has(name));
  const first=startup[0]||priority[0];
  const second=startup[1]||priority.find(name=>name!==first);
  const stages=equipped.map(name=>[name,1]);
