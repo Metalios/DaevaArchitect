@@ -257,8 +257,9 @@ function sync(m){
  nav.querySelectorAll('[data-v2-tab]').forEach(b=>b.classList.toggle('active',b.dataset.v2Tab===(secondary?state.tab:'workspace')));
 }
 function restore(){
- const a=account();a.manualMastery=null;a.manualStigma=null;a.customStigmas=null;a.customSpecialties={};a.boardMode='recommended';
- message='Recommended allocations restored; point totals and equipment remain intact.';render();
+ const a=account();a.manualMastery=null;a.manualStigma=null;a.customStigmas=null;a.customSpecialties={};
+ recalculateRecommendedBoards();
+ message='Recommended allocations recalculated. Your earned points, equipment and obtained Daevanion tiles were preserved.';render();
 }
 function compare(){
  const m=model(),baseline=allocate(masteryStages(),budget('mastery'),masteryCost,skillNames(),1,masteryRankCap),
@@ -350,7 +351,11 @@ function bind(){
  a.boardMode='custom';}
  setCustomNode(entry.node[0]);message=boardEditNotice;render();
  });
- $('v2-board-restore').addEventListener('click',()=>{account().boardMode='recommended';message='Recommended Daevanion route restored.';render()});
+ $('v2-board-restore').addEventListener('click',()=>{
+   recalculateRecommendedBoards();
+   message='Recommended Daevanion path recalculated with current points and gear. Obtained gold tiles preserved.';
+   render();
+ });
  $('v2-mark-obtained').addEventListener('click',()=>{
   // Same crystal-budget protection and obtained state as the board's
   // double-click and the legacy selected-node button.
