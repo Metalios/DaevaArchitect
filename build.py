@@ -28,6 +28,52 @@ js_data += 'const AZPHEL=' + json.dumps(azphel_data, separators=(',',':'), ensur
 js_data += 'const SKILL_UNLOCKS=' + json.dumps(skill_unlocks, separators=(',',':'), ensure_ascii=False).replace('</','<\\/') + ';'
 js_data += 'const LEVEL_REWARDS=' + json.dumps(level_rewards, separators=(',',':'), ensure_ascii=False).replace('</','<\\/') + ';'
 js_data += 'const GEAR_CATALOG=' + json.dumps(gear_catalog, separators=(',',':'), ensure_ascii=False).replace('</','<\\/') + ';'
+# Research summaries are small, versioned observations, not assumed combat
+# measurements. Aggregate low-confidence adoption priors during the static
+# build so the browser never scrapes third-party pages or needs an API.
+research = json.loads((root / 'research' / 'pve-observations.json').read_text(encoding='utf8'))
+assert research['schemaVersion'] == 1
+research_groups = {}
+seen_evidence = set()
+for observation in research['observations']:
+    cls = observation['classId']
+    if cls not in data:
+        raise ValueError(f'Unknown research class: {cls}')
+    identity = (observation['id'], observation['patch'])
+    if identity in seen_evidence:
+        raise ValueError(f'Duplicate evidence id / patch: {identity}')
+    seen_evidence.add(identity)
+    if not observation['source'].startswith('https://'):
+        raise ValueError(f'Missing research provenance: {identity}')
+    if observation.get('measured') is not False:
+        raise ValueError(f'Cannot silently treat unverified research as measured: {identity}')
+    valid_skills = {skill['name'] for skill in data[cls]['skills'].values()}
+    if not set(observation['skills']).issubset(valid_skills):
+        raise ValueError(f'Unknown research skill in {identity}')
+    if not set(observation['stigmas']).issubset(stigmas[cls]):
+        raise ValueError(f'Unknown research Stigma in {identity}')
+    group = research_groups.setdefault(cls, {'observations': 0, 'totals': {}, 'totalWeight': 0})
+    # A guide summary has very low empirical weight. A later, consented,
+    # de-duplicated character observation may add signal but is not DPS proof.
+    weight = 0.25 if observation['sourceType'] == 'guide_summary' else 0.5
+    group['observations'] += 1
+    group['totalWeight'] += weight
+    for skill in observation['skills']:
+        group['totals'][skill] = group['totals'].get(skill, 0) + weight
+compiled_research = {
+    cls: {
+        'observations': group['observations'],
+        'evidenceType': 'adoption_prior_not_performance',
+        'skills': {
+            skill: round(value / group['totalWeight'], 4)
+            for skill, value in group['totals'].items()
+        }
+    }
+    for cls, group in research_groups.items()
+}
+js_data += 'const RESEARCH_PRIORS=' + json.dumps(compiled_research, separators=(',',':'), ensure_ascii=False) + ';'
+
+
 
 out_dir = root / 'dist'
 (out_dir / 'js').mkdir(parents=True, exist_ok=True)
