@@ -139,7 +139,7 @@ let boardEditNotice='',boardRecalculationNotice='';
 let lastBoardRecalculation=null;
 function activeWeights(){
   const base=ROUTES[state.class].weights[account().context];
-  const advised=typeof adviceFor==='function'?adviceFor(state.class,account().context):null;
+  const advised=typeof adviceFor==='function'?adviceFor(state.class,account().context,account().pveObjective):null;
   if(!advised)return base;
   const skills={...base.skills};
   // Strongest supported class/core skill recommendations lead board optimization,
@@ -151,7 +151,7 @@ function activeWeights(){
 function recommendedStigmas(){
   const standard=profile().stigmas;
   const variants={templar:{solo:['Doom Shield','Noble Armor',"Empyrean Lord's Punishment",'Executing Blade'],pvp:['Noble Armor','Doom Shield','Taunt','Second Skin']},cleric:{solo:['Earth Punishment','Noble Aura','Prayer of Amplification','Light of Protection'],pvp:['Prayer of Amplification','Light of Protection',"Yustiel's Power",'Absolution']},sorcerer:{pvp:['Element Enhancement','Steel Barrier','Soul Freeze','Hibernation']},gladiator:{pvp:["Zikel's Blessing",'Focused Block','Lifestealing Blade','Armor of Balance']},assassin:{pvp:['Evasion Contract','Smoke Bomb','Swift Contract','Illusive Clone']},ranger:{pvp:["Vaizel's Authority",'Mother Nature\'s Breath','Ensnaring Trap','Stealth']},spiritmaster:{pvp:['Summon: Ancient Spirit',"Enhance: Spirit's Benediction",'Seize Magic','Cry of Terror']},chanter:{solo:['Undefeated Mantra','Sprint Mantra','Power of the Storm',"Marchutan's Wrath"],pvp:['Undefeated Mantra','Barrier Spell','Healing Touch','Focused Defense']}};
-  const advised=typeof adviceFor==='function'?adviceFor(state.class,account().context):null;
+  const advised=typeof adviceFor==='function'?adviceFor(state.class,account().context,account().pveObjective):null;
   const result=advised?.stigmas||variants[state.class]?.[account().context]||standard;
   return result.length===4&&new Set(result).size===4&&result.every(name=>STIGMAS[state.class]?.[name])?result:standard;
 }
@@ -198,7 +198,7 @@ function masteryRankCap(name){
   return Math.min(10,2+Math.floor((currentLevel()-unlocked)/3));
 }
 function masteryStages(boardSkills=null){
-  const advised=typeof adviceFor==='function'?adviceFor(state.class,account().context):null;
+  const advised=typeof adviceFor==='function'?adviceFor(state.class,account().context,account().pveObjective):null;
   if(advised){
     const a=account(),skillSet=new Set(skillNames()),unlocks=SKILL_UNLOCKS[state.class];
     const pick=names=>(names||[]).filter((name,i)=>skillSet.has(name)&&(unlocks[name]||1)<=currentLevel()&&(names.indexOf(name)===i));
@@ -263,7 +263,7 @@ function masteryStages(boardSkills=null){
 }
 function stigmaStages(){
   const s=activeStigmas().slice(0,isLeveling()?levelReward().slots:4);
-  const advised=typeof adviceFor==='function'?adviceFor(state.class,account().context):null;
+  const advised=typeof adviceFor==='function'?adviceFor(state.class,account().context,account().pveObjective):null;
   if(advised){
     const researched=typeof progressionStigmaStages==='function' ? progressionStigmaStages(state.class,account().context,s,advised) : null;
     if(researched)return researched;
@@ -522,21 +522,27 @@ function model(){
          try {
            const boardData=data(), baseWeights=activeWeights(), crystalBudget=budget('crystals');
            const objective=PVE_OBJECTIVES[a.pveObjective]?a.pveObjective:'performance';
-           const scoreFinal=state.class==='sorcerer'&&sorcererCombatEligible()
-             ? candidate=>{
-               const boardEffects=effects(candidate.selected);
-               const newMastery=a.manualMastery?mastery:allocate(masteryStages(boardEffects.skills),
-                 budget('mastery'),masteryCost,names,1,isLeveling()?masteryRankCap:null);
+           const scoreFinal=candidate=>{
+             const boardEffects=effects(candidate.selected);
+             const proposed=a.manualMastery?mastery:allocate(masteryStages(boardEffects.skills),
+               budget('mastery'),masteryCost,names,1,isLeveling()?masteryRankCap:null);
+             const build=engineBuild(proposed.levels,boardEffects,stigma.levels,activeStigmas());
+             const structuralTie=candidate.score*.0000005;
+             if(state.class==='sorcerer'&&sorcererCombatEligible()&&objective!=='survivability'){
                const evaluated=GlobalCombatEngine.tuneSpecialties(
-                 engineBuild(newMastery.levels,boardEffects,stigma.levels,activeStigmas()),
-                 SPECS.sorcerer,a.customSpecialties||{});
-               const scenarios=evaluated.samples;
-               if(objective==='survivability')return candidate.score;
-               if(objective==='burst')return (scenarios.find(x=>x.scenario==='short')?.score||0)*1000+candidate.score*.0001;
-               if(objective==='sustained')return scenarios.filter(x=>x.scenario!=='short')
-                 .reduce((sum,x)=>sum+x.score*x.weight,0)*1000+candidate.score*.0001;
-               return evaluated.robustScore*1000+candidate.score*.0001;
-             }:null;
+                 build,SPECS.sorcerer,a.customSpecialties||{});
+               if(objective==='burst')
+                 return (evaluated.samples.find(x=>x.scenario==='short')?.score||0)+structuralTie;
+               if(objective==='sustained')
+                 return evaluated.samples.filter(x=>x.scenario!=='short')
+                   .reduce((sum,x)=>sum+x.score*x.weight,0)+structuralTie;
+               return evaluated.robustScore+structuralTie;
+             }
+             if(typeof ClassCombatModels!=='undefined'&&ClassCombatModels.profile(state.class))
+               return ClassCombatModels.evaluate({classId:state.class,context:a.context,
+                 objective,build,selectedSpecs:a.customSpecialties||{}}).score+structuralTie;
+             return candidate.score;
+           };
            computed=PveBuildOptimizer.optimize({classData:boardData,classId:state.class,context:a.context,
              objective,baseWeights,mastery:mastery.levels,gear:gearRanks,
              locked:[...actual].filter(id=>nodeMap().get(id)?.board!=='Azphel'),
