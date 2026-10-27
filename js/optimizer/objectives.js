@@ -148,7 +148,7 @@ const PveBuildOptimizer=(()=>{
     }
     if(spent>budget)throw Error('Recorded purchased nodes cannot be connected within entered crystal budget');
     let beam=[{selected,route,spent,score:grade(selected)}],best=beam[0],evaluated=0;
-    const width=8,branches=5,maxRounds=Math.min(150,graphs.reduce((sum,g)=>sum+g.nodes.size,0));
+    const width=4,branches=4,maxRounds=Math.min(20,Math.ceil(budget/2)+1);
     for(let round=0;round<maxRounds;round++){
       const expanded=[],seen=new Set();
       for(const state of beam){
@@ -184,7 +184,6 @@ const PveBuildOptimizer=(()=>{
       const w=weightsFor(baseWeights,classId,context,objective,variant);
       const legacy=optimizeBoardRoute(classData,w,mastery,gear,0,null,mandatory,characterLevel,skillTargets);
       const fitted=fitConnectedBoardBudget(classData,legacy.route,budget);
-      const ids=new Set([...roots,...fitted.route.filter((entry,i)=>i>=0).map(x=>x.id)]);
       const eligible=fitted.route.filter(entry=>entry.id!==undefined);
       let cost=0,legal=[];
       for(const entry of eligible){
@@ -203,11 +202,20 @@ const PveBuildOptimizer=(()=>{
       const score=Number.isFinite(metric)?metric:-Infinity;
       if(finalEvidence===null||score>finalEvidence+1e-9){winner=option;finalEvidence=score}
     }
-    const seeded=winner.route,used=new Set(seeded.map(x=>x.id));
+    const seeded=winner.route,used=new Set([...roots,...seeded.map(x=>x.id)]);
     const complete=optimizeBoardRoute(classData,base,mastery,gear,0,null,mandatory,characterLevel,skillTargets);
-    const tail=complete.route.filter(x=>!used.has(x.id));
-    // Downstream budget fit safely reconnects every extension after the
-    // optimized funded prefix without silently changing obtained marks.
+    const rank=new Map(complete.route.map((entry,i)=>[entry.id,i]));
+    const tail=[],pending=new Map(complete.route.filter(x=>!used.has(x.id)).map(x=>[x.id,x]));
+    while(pending.size){
+      let next=null;
+      for(const item of pending.values()){
+        const graph=graphs.find(g=>g.name===item.board);
+        if(!(graph?.adjacent.get(item.id)||[]).some(id=>used.has(id)))continue;
+        if(!next||(rank.get(item.id)??Infinity)<(rank.get(next.id)??Infinity))next=item;
+      }
+      if(!next)throw Error('Optimized board has an unreachable continuation');
+      tail.push(next);pending.delete(next.id);used.add(next.id);
+    }
     return {route:[...seeded,...tail],initialFocus:0,baseCp:null,
       diagnostics:{objective,context,crystals:budget,planned:winner.spent,
         candidates:all.length,evaluations:evaluated,score:finalEvidence,
