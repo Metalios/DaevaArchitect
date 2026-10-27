@@ -85,7 +85,7 @@ try{
  const cycle=await page.evaluate(id=>{
   const a=account();a.crystals=nodeMap().get(id).node[5];
   a.recommendedRouteSnapshot=null;a.obtainedNodes=[];state.preview=a.crystals;
-  state.board=nodeMap().get(id).board;render();
+  model();state.board=plannedRoute()[0].board;render();
   return {budget:a.crystals,first:plannedRoute()[0].id};
  },initial.id);
  await page.locator('#board-grid [data-node="'+cycle.first+'"]').dblclick();
