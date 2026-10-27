@@ -35,7 +35,7 @@ const master=make('div','v2-master-editor',`
 const stigmas=make('div','v2-stigmas',`<div id="v2-stigma-list" class="v2-stigma-cards"></div><div class="v2-stigma-summary"><span>13 class Stigmas in catalog · select a card to edit</span><strong id="v2-stigma-remaining"></strong></div><div class="v2-stigma-breakpoints">Perk levels <span>⑤ First</span><span>⑩ Second</span><span>⑮ Third</span><span>⑳ Fourth</span></div><button type="button" id="v2-stigma-reset">Restore recommended Stigmas</button><div id="v2-stigma-panel" class="v2-in-panel-flyout" role="region" aria-label="Stigma loadout editor" hidden></div>`);
 const boardControls=make('div','v2-board-controls',`
  <div class="v2-board-callout"><b>Original Global board coordinates</b><span><b>Blue</b> = recommended; <b>gold</b> = obtained. Single-click previews a tile; double-click marks it obtained. Use the Mark obtained button on touch. Your planned amounts remain in each board tab.</span></div>
- <button type="button" id="v2-board-toggle">Edit selected node</button><button type="button" id="v2-board-restore">Recommended path</button>
+ <button type="button" id="v2-board-toggle">Edit selected node</button><button type="button" id="v2-board-restore" title="Recalculate the recommended path. Purchased gold tiles stay obtained.">Recalculate recommended path</button>
  <button type="button" id="v2-mark-obtained">Mark tile obtained</button>
  <button type="button" id="v2-zoom-minus" aria-label="Zoom out">−</button><span id="v2-zoom-label">40px</span><button type="button" id="v2-zoom-plus" aria-label="Zoom in">+</button><button type="button" id="v2-board-expand">Expand board</button>
  <p id="v2-board-notice" role="status"></p>`);
@@ -257,8 +257,9 @@ function sync(m){
  nav.querySelectorAll('[data-v2-tab]').forEach(b=>b.classList.toggle('active',b.dataset.v2Tab===(secondary?state.tab:'workspace')));
 }
 function restore(){
- const a=account();a.manualMastery=null;a.manualStigma=null;a.customStigmas=null;a.customSpecialties={};a.boardMode='recommended';
- message='Recommended allocations restored; point totals and equipment remain intact.';render();
+ const a=account();a.manualMastery=null;a.manualStigma=null;a.customStigmas=null;a.customSpecialties={};
+ recalculateRecommendedBoards();
+ message='Recommended allocations recalculated. Your earned points, equipment and obtained Daevanion tiles were preserved.';render();
 }
 function compare(){
  const m=model(),baseline=allocate(masteryStages(),budget('mastery'),masteryCost,skillNames(),1,masteryRankCap),
@@ -350,7 +351,11 @@ function bind(){
  a.boardMode='custom';}
  setCustomNode(entry.node[0]);message=boardEditNotice;render();
  });
- $('v2-board-restore').addEventListener('click',()=>{account().boardMode='recommended';message='Recommended Daevanion route restored.';render()});
+ $('v2-board-restore').addEventListener('click',()=>{
+   recalculateRecommendedBoards();
+   message='Recommended Daevanion path recalculated with current points and gear. Obtained gold tiles preserved.';
+   render();
+ });
  $('v2-mark-obtained').addEventListener('click',()=>{
   // Same crystal-budget protection and obtained state as the board's
   // double-click and the legacy selected-node button.

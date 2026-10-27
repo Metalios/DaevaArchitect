@@ -135,7 +135,7 @@ function setCustomNode(id){
   else {const next=[...ids,id],spent=ids.reduce((sum,x)=>sum+nodeMap().get(x).node[5],0)+entry.node[5],limit=azphel?account().azphel||0:budget('crystals');if(!connectedToEarlier(next)){boardEditNotice='Choose a tile touching the start or an already planned tile on this board.';return}if(spent>limit){boardEditNotice=`This plan needs ${spent} ${azphel?'Azphel':'PvE'} crystals; you have ${limit}. Increase your total first.`;return}account()[key]=next;boardEditNotice='Tile added to your custom plan.'}
   save();
 }
-let boardEditNotice='';
+let boardEditNotice='',boardRecalculationNotice='';
 function activeWeights(){
   const base=ROUTES[state.class].weights[account().context];
   const advised=typeof adviceFor==='function'?adviceFor(state.class,account().context):null;
@@ -331,6 +331,10 @@ function renderGlobalBoardRoute(m,nodes){
     : crystals>0&&markedCost>=crystals
       ? `All ${crystals} crystals are marked obtained. Your next suggested path is ready for when you earn more.`
       : `Blue rings show a stable recommended path; clicking a tile turns its ring gold. Your ${markedCost} / ${crystals} actual spending is recorded separately from the allocation planned in each board tab. The path refreshes when your available crystals have been spent.`;
+  if(boardRecalculationNotice){
+    $('global-route-caption').textContent+=' '+boardRecalculationNotice;
+    boardRecalculationNotice='';
+  }
   $('global-board-allocation').innerHTML=BOARD_NAMES.map(name=>{const spent=m.boards.perBoard[name],share=m.boards.spent?Math.round(spent/m.boards.spent*100):0,next=upcoming.find(x=>x.board===name),obtained=marked.filter(x=>x.board===name).reduce((sum,x)=>sum+x.cost,0),locked=!boardOpen(name);return `<button type="button" data-board-jump="${name}" class="global-board-card ${state.board===name?'active':''} ${locked?'locked':''}" ${locked?'disabled':''}><span>${name}</span><b>${locked?`Opens at Lv ${BOARD_UNLOCKS[name]}`:`${spent} planned · ${obtained} obtained`}</b><small>${locked?'Future board':`${share}% of planned PvE crystals`}</small><em>${locked?'Locked':next?`Next unmarked at ${next.total} ✧`:customMode()?spent?'All selected tiles obtained':'Choose tiles':'Board complete'}</em><i style="width:${share}%"></i></button>`}).join('');
   $('global-route-next').innerHTML=first?`<button type="button" data-route-node="${first.id}" data-route-board="${first.board}" class="route-jump"><span class="route-step-icon">${nodeVisual(first.node)}</span><span><b>Show next highlighted tile on ${first.board}</b><small>${esc(effectText(first.node))}${first.goal&&first.goal!==first.id?` · connects toward ${esc(effectText(nodes.get(first.goal).node))}`:''} · row ${first.node[1]}, column ${first.node[2]} · ${first.total} total crystals</small></span><strong aria-hidden="true">→</strong></button>`:customMode()?'<p>Select connected tiles on a board to begin your custom route.</p>':'<p>All planned tiles at this level are marked obtained.</p>';
 }
@@ -1045,7 +1049,30 @@ $('skill-grid').addEventListener('change',e=>{
   }
 });
 $('board-tabs').addEventListener('click',e=>{const b=e.target.closest('[data-board]');if(b&&boardOpen(b.dataset.board)){state.board=b.dataset.board;state.preview=state.board==='Azphel'?(account().azphel||0):budget('crystals');state.node=null;renderBoards(model())}});
-$('board-mode-recommended').addEventListener('click',()=>{account().boardMode='recommended';boardEditNotice='';render()});
+// Explicit "Recommended" is a recalculation request even when the mode is
+// already recommended. Keep actual gold purchased marks; clear only the
+// discarded custom plan and stale, cached blue recommendation snapshot.
+function recalculateRecommendedBoards(){
+  const a=account();
+  a.boardMode='recommended';
+  a.customNodes=[];
+  a.customAzphelNodes=[];
+  a.recommendedRouteSnapshot=null;
+  liveRoute=null;
+  liveRouteKey='';
+  liveRouteBasis=null;
+  boardEditNotice='';
+  boardPurchaseNotice='';
+  boardRecalculationNotice='Recommended path recalculated using your current points and equipment. Obtained tiles were kept.';
+  state.node=null;
+  state.preview=state.board==='Azphel'?(a.azphel||0):budget('crystals');
+  // model() reconstructs the recommendation with the current equipment,
+  // level, point budgets, Stigmas, class and current obtained purchases.
+}
+$('board-mode-recommended').addEventListener('click',()=>{
+  recalculateRecommendedBoards();
+  render();
+});
 $('board-mode-custom').addEventListener('click',()=>{account().boardMode='custom';boardEditNotice='Select a connected tile on any unlocked board, or copy the current recommendation.';render()});
 $('copy-recommended-board').addEventListener('click',()=>{const nodes=nodeMap();account().customNodes=routeSteps(activeRoute(),nodes).filter(x=>x.total<=budget('crystals')).map(x=>x.id);account().customAzphelNodes=routeSteps(ROUTES[state.class].azphel,nodes).filter(x=>x.total<=(account().azphel||0)).map(x=>x.id);boardEditNotice='Copied the funded recommended route. Click tiles to customize it.';render()});
 $('clear-custom-board').addEventListener('click',()=>{account().customNodes=[];account().customAzphelNodes=[];boardEditNotice='Custom plan cleared. Obtained marks are kept separately.';state.node=null;render()});
