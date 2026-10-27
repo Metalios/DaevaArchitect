@@ -11,7 +11,8 @@ try {
   const errors=[];
   page.on('pageerror',error=>errors.push(error.message));
   await page.goto(pathToFileURL(path.resolve('dist/index.html')).href);
-  await page.locator('[data-tab="gear"]').click();
+  await page.locator('#class-buttons [data-class="templar"]').click();
+  await page.locator('#gear-doll-grid').waitFor();
 
   await page.locator('[data-gear-slot="top"]').first().click();
   const first=page.locator('#gear-results [data-gear-result]').first();
@@ -86,7 +87,7 @@ try {
   assert(!current.stones.some(stone=>stone?.stat));
   assert(!await page.locator('#gear-skill-summary').getByText('Insulting Roar').count());
 
-  await page.locator('[data-tab="boards"]').click();
+  await page.evaluate(()=>{state.tab='boards';render()});
   const board=await page.evaluate(()=>{
     const a=account();
     a.journey='endgame';a.context='party';a.crystals=119;
