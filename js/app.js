@@ -49,7 +49,7 @@ const LEVELING_MASTERY_NEXT = {
   cleric:['Radiant Recovery','Condemnation',"Earth's Retribution",'Healing Light','Chain of Torment'],
   chanter:['Dark Crush','Onslaught','Recuperation','Spinning Strike','Incandescent Blow']
 };
-const DEFAULT_ACCOUNT = (cls='templar') => ({...FRESH_45,azphel:0,context:'party',journey:'endgame',endgameContext:'party',levelingContext:'solo',leveling:{level:1,extraByLevel:{}},gear:{},equipment:{},currentRanks:{},manualMastery:null,manualStigma:null,customStigmas:null,customSpecialties:{},obtainedNodes:[],boardMode:'recommended',customNodes:[],customAzphelNodes:[],titlesOwned:{},faction:'elyos',macroBind:'RMB',quickUse2Bind:'R',goalTarget:['cleric','chanter'].includes(cls)?0:cls==='templar'?60000:100000,goalObserved:0,gearCpTarget:0});
+const DEFAULT_ACCOUNT = (cls='templar') => ({...FRESH_45,azphel:0,pveObjective:'performance',context:'party',journey:'endgame',endgameContext:'party',levelingContext:'solo',leveling:{level:1,extraByLevel:{}},gear:{},equipment:{},currentRanks:{},manualMastery:null,manualStigma:null,customStigmas:null,customSpecialties:{},obtainedNodes:[],boardMode:'recommended',customNodes:[],customAzphelNodes:[],titlesOwned:{},faction:'elyos',macroBind:'RMB',quickUse2Bind:'R',goalTarget:['cleric','chanter'].includes(cls)?0:cls==='templar'?60000:100000,goalObserved:0,gearCpTarget:0});
 let saved = {};
 try { saved = JSON.parse(localStorage.getItem('daeva-architect-all-v1') || localStorage.getItem('aion2-pathfinder-all-v3') || '{}') || {}; } catch (_) {}
 let state = {class:CLASS_ORDER.includes(saved.class)?saved.class:null,accounts:saved.accounts||{},gearView:['inventory','inspect'].includes(saved.gearView)?saved.gearView:null,tab:'overview',board:'Nezekan',preview:FRESH_45.crystals,node:null,titleSearch:'',titleSlot:'all',titleOwnership:'all',titleFaction:'all'};
@@ -483,7 +483,7 @@ function model(){
     // Board level unlocks are a real change of eligible path; a level
     // increase inside the same unlock band must not shuffle suggestions.
     const contextKey=JSON.stringify([state.class,a.context,BOARD_NAMES.filter(boardOpen),
-      sorcererCombatEligible()?'global-sorcerer-combat-v2-budget-fit':'budget-fit-v2']);
+      sorcererCombatEligible()?'global-sorcerer-objectives-v1':'objective-board-search-v1',a.pveObjective||'performance']);
     const snapshot=a.recommendedRouteSnapshot;
     // Prior to any real purchases, changes to the player's goal, mastery,
     // equipment or Stigmas should still influence the recommended route.
@@ -517,7 +517,38 @@ function model(){
       const reference={mastery,stigma,boards:{owned:actual},effects:effects(actual)};
       const estimated=estimateCombatPower(reference);
       const baseCp=estimated.ready?estimated.value:null;
-      const computed=chooseCombatBoardRoute(mastery,stigma,gearRanks,target,baseCp,actual);
+      let computed=chooseCombatBoardRoute(mastery,stigma,gearRanks,target,baseCp,actual);
+       if(a.context!=='pvp' && typeof PveBuildOptimizer!=='undefined'){
+         try {
+           const boardData=data(), baseWeights=activeWeights(), crystalBudget=budget('crystals');
+           const objective=PVE_OBJECTIVES[a.pveObjective]?a.pveObjective:'performance';
+           const scoreFinal=state.class==='sorcerer'&&sorcererCombatEligible()
+             ? candidate=>{
+               const boardEffects=effects(candidate.selected);
+               const newMastery=a.manualMastery?mastery:allocate(masteryStages(boardEffects.skills),
+                 budget('mastery'),masteryCost,names,1,isLeveling()?masteryRankCap:null);
+               const evaluated=GlobalCombatEngine.tuneSpecialties(
+                 engineBuild(newMastery.levels,boardEffects,stigma.levels,activeStigmas()),
+                 SPECS.sorcerer,a.customSpecialties||{});
+               const scenarios=evaluated.samples;
+               if(objective==='survivability')return candidate.score;
+               if(objective==='burst')return (scenarios.find(x=>x.scenario==='short')?.score||0)*1000+candidate.score*.0001;
+               if(objective==='sustained')return scenarios.filter(x=>x.scenario!=='short')
+                 .reduce((sum,x)=>sum+x.score*x.weight,0)*1000+candidate.score*.0001;
+               return evaluated.robustScore*1000+candidate.score*.0001;
+             }:null;
+           computed=PveBuildOptimizer.optimize({classData:boardData,classId:state.class,context:a.context,
+             objective,baseWeights,mastery:mastery.levels,gear:gearRanks,
+             locked:[...actual].filter(id=>nodeMap().get(id)?.board!=='Azphel'),
+             crystalBudget,characterLevel:currentLevel(),
+             skillTargets:typeof progressionBoardTargets==='function'?progressionBoardTargets(state.class,a.context):{},
+             scoreFinal});
+           a.lastObjectiveAnalysis=computed.diagnostics;
+         }catch(error){
+           a.lastObjectiveAnalysis={error:String(error),objective:a.pveObjective};
+           console.warn('Objective search failed; preserving baseline recommendation',error);
+         }
+       }
       // The optimizer returns a complete future path. Budget fitting only
       // changes recommendation order, never board connectivity or costs.
       const fitted=customMode()?computed.route:
