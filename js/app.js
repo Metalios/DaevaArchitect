@@ -491,8 +491,9 @@ function model(){
     // Equipment may change the CP baseline and, for Sorcerer, speed/skill
     // interactions even when it does not roll a new skill level. Snapshot
     // changes before any obtained tiles, or explicit Recalculate after that.
+    const recordedEquipment=gearEquipment();
     const gearBasis=GEAR_SLOTS.map(slot=>{
-      const item=gearEquipment()[slot.id];
+      const item=recordedEquipment[slot.id];
       return item?[slot.id,item.href,item.itemLevel,item.enhancement,
         item.fixedStats,item.skillBonuses,item.stones,item.theostone,item.statNotes]:null;
     });
