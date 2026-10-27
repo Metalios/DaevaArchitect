@@ -42,7 +42,11 @@ const PveBuildOptimizer=(()=>{
       const defensive=research?.defensive.includes(name)||classProfile?.defense.includes(name)||/Shield|Protection|Health|Healing|Armor|Resist|Guard/i.test(name);
       const passive=(research?.offensive.includes(name)&&['Robe of Flame','Fire Mark'].includes(name))||classProfile?.support.includes(name);
       const boost=(research?.offensive.includes(name)||classProfile?.offense.includes(name))?1.20:1;
-      skills[name]=max(w)*(defensive?p.defense:passive?p.passive:p.attack)*boost;
+      const adoption=typeof RESEARCH_PRIORS!=='undefined'?
+        Math.max(0,Math.min(1,RESEARCH_PRIORS[classId]?.skills[name]||0)):0;
+      // Dated guide summaries only suggest promising paths. Their influence
+      // is capped to 8% and cannot override verified mechanics or constraints.
+      skills[name]=max(w)*(defensive?p.defense:passive?p.passive:p.attack)*boost*(1+.08*adoption);
     }
     if(classId==='sorcerer'){
       const focus=[null,'Robe of Flame','Fire Mark','Hellfire','Firestorm'][variant]||null;
