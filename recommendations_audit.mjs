@@ -63,3 +63,6 @@ for(const [cls,modes] of Object.entries(ctx.api.SPECIALTY_CONTEXT||{})){
 }
 console.log('Verified '+specialtyChecks+' role/context-specific Specialty breakpoint selections.');
 console.log('Verified '+count+' researched class/context/level allocations (8 classes × 3 contexts × 10 levels) with legal spending and valid data identifiers.');
+
+// Keep connected-board objective invariants in the existing CI audit suite.
+await import('./objective_optimizer_audit.mjs');
