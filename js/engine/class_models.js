@@ -114,6 +114,16 @@ const ClassCombatModels=(()=>{
      stamina=build.boardStats||{},equipStats=build.gearStats||{};
    const rank=name=>clamp((ranks[name]||1)+(board[name]||0)+(gear[name]||0),1,40);
    const stigma=name=>(build.equippedStigmas||[]).includes(name)?clamp(build.stigma?.[name],0,20):0;
+   const hasOption=(name,id)=>{
+     const entry=typeof SPECS==='undefined'?null:SPECS[classId]?.[name];
+     const level=rank(name);
+     if(!entry||level<(id<=3?8:id===4?12:16))return false;
+     const breakpoint=level>=20?'20':level>=16?'16':level>=12?'12':'8';
+     const chosen=Array.isArray(selectedSpecs[name])
+       ?selectedSpecs[name]:(entry.picks?.[breakpoint]||[]);
+     const slots=level>=20?3:level>=12?2:1;
+     return chosen.slice(0,slots).includes(id);
+   };
    const effect=name=>rank(name)-1;
    const gate=(name,level)=>rank(name)>=level?1:0;
    const stat=(name)=>Math.max(0,(Number(stamina[name])||0)+(Number(equipStats[name])||0));
@@ -142,35 +152,35 @@ const ClassCombatModels=(()=>{
    };
    switch(classId){
     case 'gladiator':
-     add(gate('Overhead Slam',16),1.72,'sustained','Overhead Slam cooldown removal');
-     add(gate('Rending Blow',16),1.13,'uptime','Rending Blow critical MP return');
+     add(gate('Overhead Slam',16)&&hasOption('Overhead Slam',5),1.72,'sustained','Overhead Slam cooldown removal');
+     add(gate('Rending Blow',16)&&hasOption('Rending Blow',5),1.13,'uptime','Rending Blow critical MP return');
      add(stigma('Lunge Stance')>=20,1.28,'sustained','Lunge Stance cooldown proc hypothesis');
      add(stigma("Zikel's Blessing")>=10,1.13,'burst','Zikel PvE buff');
      add(stigma('Focused Block')>=5,1.22,'survival','Focused Block consecutive use');
-     add(gate('Overhead Slam',12),1.08,'sustained','Overhead Slam guaranteed critical Specialty');
+     add(gate('Overhead Slam',12)&&hasOption('Overhead Slam',4),1.08,'sustained','Overhead Slam guaranteed critical Specialty');
      break;
     case 'templar':
-     add(gate('Judgment',16),1.78,'sustained','Judgment triggered cooldown removal');
-     add(gate('Warding Strike',16),1.18,'survival','Warding Strike tolerance window');
-     add(gate('Warding Strike',16)&&context==='party',1.2,'party','Warding Strike group mitigation');
+     add(gate('Judgment',16)&&hasOption('Judgment',5),1.78,'sustained','Judgment triggered cooldown removal');
+     add(gate('Warding Strike',16)&&hasOption('Warding Strike',5),1.18,'survival','Warding Strike tolerance window');
+     add(gate('Warding Strike',16)&&hasOption('Warding Strike',5)&&context==='party',1.2,'party','Warding Strike group mitigation');
      add(stigma('Taunt')>=5&&context==='party',1.13,'party','Taunt Shrink resistance reduction');
      add(stigma('Shield of Protection')>=5,1.25,'survival','Shield of Protection block window');
      add(stigma('Doom Shield')>=5,1.10,'sustained','Doom Shield Judgment trigger');
-     add(gate('Pummel',12),1.06,'sustained','Pummel Punishment cooldown synergy');
+     add(gate('Pummel',12)&&hasOption('Pummel',4),1.06,'sustained','Pummel Punishment cooldown synergy');
      break;
     case 'assassin':
-     add(gate('Quick Slice',12),1.16,'sustained','Quick Slice Insignia cooldown loop');
-     add(gate('Insignia Explosion',16),1.22,'sustained','Insignia Explosion cooldown Specialty');
-     add(gate('Heart Gore',16),1.24,'sustained','Heart Gore critical reset');
+     add(gate('Quick Slice',12)&&hasOption('Quick Slice',4),1.16,'sustained','Quick Slice Insignia cooldown loop');
+     add(gate('Insignia Explosion',16)&&hasOption('Insignia Explosion',5),1.22,'sustained','Insignia Explosion cooldown Specialty');
+     add(gate('Heart Gore',16)&&hasOption('Heart Gore',5),1.24,'sustained','Heart Gore critical reset');
      add(stigma('Illusive Clone')>=5,1.25,'burst','Illusive Clone damage window');
      add(stigma('Illusive Clone')>=20,1.18,'burst','Illusive Clone capstone');
      add(stigma('Swift Contract')>=5,1.12,'burst','Swift Contract burst synchronization');
      add(stigma('Evasion Contract')>=5||stigma('Evasion Stance')>=5,1.20,'survival','Assassin defensive Evasion Stigma');
      break;
     case 'ranger':
-     add(gate('Deadshot',16),1.22,'burst','Deadshot manual full-charge Specialty');
-     add(gate('Snipe',12),1.19,'sustained','Snipe Deadshot cooldown interaction');
-     add(gate('Gale Arrow',16),1.16,'sustained','Gale Arrow buff uptime');
+     add(gate('Deadshot',16)&&hasOption('Deadshot',2),1.22,'burst','Deadshot skill-speed and manual full-charge window');
+     add(gate('Snipe',12)&&hasOption('Snipe',4),1.19,'sustained','Snipe Deadshot cooldown interaction');
+     add(gate('Gale Arrow',16)&&hasOption('Gale Arrow',5),1.16,'sustained','Gale Arrow buff uptime');
      add(stigma("Vaizel's Authority")>=20,1.31,'sustained','Vaizel critical-hit cooldown return');
      add(stigma('Bow of Blessing')>=15,1.12,'burst','Bow of Blessing critical damage');
      add(stigma("Mother Nature's Breath")>=5,1.16,'survival','Ranger self recovery');
@@ -178,8 +188,9 @@ const ClassCombatModels=(()=>{
     case 'spiritmaster':{
      const spirits=['Summon: Fire Spirit','Summon: Water Spirit','Summon: Earth Spirit','Summon: Wind Spirit']
        .filter(name=>(ranks[name]||0)>0).length;
-     add(gate('Elemental Fusion',20),1.24,'sustained','Fusion third Specialty slot');
-     add(gate('Combustion',20),1.15,'sustained','Combustion rank 20');
+     add(gate('Elemental Fusion',20),1.08,'sustained','Fusion third Specialty slot');
+     add(hasOption('Elemental Fusion',5),1.17,'sustained','Fusion refund on Four Elements');
+     add(gate('Combustion',20)&&hasOption('Combustion',5),1.15,'sustained','Combustion rank 20');
      add(spirits>=3,1.18,'sustained','Spirit cycling elemental generation');
      add(spirits>=4,1.06,'uptime','Four-spirit variant; evidence contested');
      add(stigma('Summon: Ancient Spirit')>=15,1.20,'burst','Ancient Spirit burst');
@@ -189,10 +200,10 @@ const ClassCombatModels=(()=>{
      break;
     }
     case 'cleric':
-     add(gate('Condemnation',12),1.65,'sustained','Condemnation critical reset');
-     add(gate('Judgment Thunder',16),1.20,'burst','Judgment Thunder second hit');
-     add(gate('Chain of Torment',12)&&context==='party',1.13,'party','Chain of Torment party debuff');
-     add(gate("Earth's Retribution",12),1.12,'sustained','Discharge reduces Bolt cooldown');
+     add(gate('Condemnation',12)&&hasOption('Condemnation',4),1.65,'sustained','Condemnation critical reset');
+     add(gate('Judgment Thunder',16)&&hasOption('Judgment Thunder',5),1.20,'burst','Judgment Thunder guaranteed critical hit');
+     add(gate('Chain of Torment',12)&&hasOption('Chain of Torment',4)&&context==='party',1.13,'party','Chain of Torment party debuff');
+     add(gate("Earth's Retribution",12)&&hasOption("Earth's Retribution",4),1.12,'sustained','Discharge reduces Bolt cooldown');
      add(stigma('Earth Punishment')>=5,1.18,'sustained','Earth Punishment synergy');
      add(stigma('Light of Protection')>=5,1.22,'survival','Light of Protection shield');
      add(stigma('Summon Resurrection')>=5,1.10,'survival','Resurrection safety utility');
@@ -200,8 +211,8 @@ const ClassCombatModels=(()=>{
      break;
     case 'chanter':{
      const trigger=(gate('Spinning Strike',8)?1:0)+(gate('Impactful Crush',8)?1:0)+(stigma("Marchutan's Wrath")>0?1:0);
-     add(gate('Dark Crush',16)&&trigger>0,1.75,'sustained','Triggered Dark Crush cooldown removal');
-     add(gate('Onslaught',16),1.13,'uptime','Onslaught spinning cooldown support');
+     add(gate('Dark Crush',16)&&hasOption('Dark Crush',5)&&trigger>0,1.75,'sustained','Triggered Dark Crush cooldown removal');
+     add(gate('Onslaught',12)&&hasOption('Onslaught',4),1.13,'uptime','Onslaught spinning cooldown support');
      add(stigma('Undefeated Mantra')>=5,1.23,'party','Undefeated Mantra group buff');
      add(stigma('Power of the Storm')>=5,1.12,'sustained','Power of the Storm attack window');
      add(stigma('Sprint Mantra')>=5,1.09,'uptime','Sprint Mantra movement uptime');
