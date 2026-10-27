@@ -25,7 +25,7 @@ Current verified node topology, resource costs, effective levels, level gates an
 3. Expand affordable shortest connected routes, retaining a bounded collection of distinct candidate configurations.
 4. Evaluate candidates against whole-route skill/rank breakpoints, proxy stat utility and class-specific synergy hypotheses.
 5. Compare against several conventional candidate seeds as guardrails.
-6. For Sorcerer, re-rank finalists by the existing comparative combat simulator: short encounters for Burst, longer encounters for Sustained, blended scenarios for Performance. Survivability still uses a structural proxy.
+6. For Sorcerer, re-rank finalists by the existing comparative combat simulator: short encounters for Burst, longer encounters for Sustained, blended scenarios for Performance. The other seven classes use research-backed skill-interaction and role projections in `js/engine/class_models.js`, incorporating objective, solo/group context, effective rank and equipped Stigma breakpoints. Survivability remains a structural scenario proxy, not an incoming-damage simulator.
 7. Complete the selected funded path with the remaining connected nodes, ensuring future crystal increases have legal purchase options.
 
 The search is bounded; it can miss globally optimal solutions and never reports numerical optimality guarantees. The funded path is ranked at the *current budget*, not simply the first N nodes of a universal route.
@@ -35,7 +35,7 @@ The search is bounded; it can miss globally optimal solutions and never reports 
 - Normalize public Global builds into deduplicated patch- and region-tagged evidence records. Observe source licensing/robots and do not mistake build popularity for empirical DPS.
 - Obtain measured Global encounter data for exact skill proc probabilities, damage scaling, mitigation, interrupt/movement effects, buff windows, animation canceling and armor/resistance.
 - Replace tentative Sorcerer coefficients with measurements and provide error bars.
-- Add individual event-based combat models for Templar, Gladiator, Ranger, Assassin, Spiritmaster, Cleric and Chanter; optimize effective party contribution for support classes.
+- Calibrate the seven new class-specific interaction models with measured, event-based Global attack/heal logs; their current outputs remain comparative projections, not verified DPS/HPS.
 - Replace survival proxies with enemy damage timelines, cooldown timing, expected healing and risk of death.
 - Add measured CP and performance correlation without optimizing CP blindly over damage.
 - Add Ariel from confirmed Global source data as a separately budgeted board.
