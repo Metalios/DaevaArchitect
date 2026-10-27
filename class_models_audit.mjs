@@ -62,4 +62,37 @@ const withoutReset=model.evaluate({classId:'templar',context:'party',objective:'
   build:tBuild,selectedSpecs:{Judgment:[3,4]}});
 assert(withReset.sustained>withoutReset.sustained,
  'Deselected Judgment cooldown Specialty must not receive reset credit');
+// Skill Speed is a chosen Specialty modifier, not a generic rank bonus.
+// Each class's active toolkit exposes at least one imported Global option.
+const speedPicks={
+  gladiator:['Ruinous Blow',1],
+  templar:['Punishment',3],
+  assassin:['Savage Roar',2],
+  ranger:['Deadshot',2],
+  spiritmaster:['Combustion',4],
+  cleric:['Judgment Thunder',3],
+  chanter:['Impactful Crush',4]
+};
+for(const [cls,[skill,id]] of Object.entries(speedPicks)){
+  const p=model.profile(cls),names=Object.values(classes[cls].skills).map(x=>x.name);
+  const ranks=Object.fromEntries(names.map(name=>[name,8]));
+  ranks[skill]=12;
+  const equipped=p.damageStigmas;
+  const build={mastery:ranks,boardSkills:{},gearSkills:{},boardStats:{},
+    gearStats:{},equippedStigmas:equipped,
+    stigma:Object.fromEntries(equipped.map(name=>[name,10]))};
+  const slower=model.evaluate({classId:cls,context:'party',objective:'burst',
+    build,selectedSpecs:{[skill]:[]}});
+  const faster=model.evaluate({classId:cls,context:'party',objective:'burst',
+    build,selectedSpecs:{[skill]:[id]}});
+  assert(faster.castThroughput>slower.castThroughput,cls+': skill speed not applied');
+  assert(faster.burst>slower.burst,cls+': faster casts missing from burst');
+  assert(faster.sustained>slower.sustained,cls+': faster casts missing from sustained');
+  const haste=model.evaluate({classId:cls,context:'party',objective:'burst',
+    build:{...build,boardStats:{CoolTimeDecrease:1000}}});
+  assert(haste.burst>slower.burst,cls+': burst ignored cooldown reduction');
+  const combatSpeed=model.evaluate({classId:cls,context:'party',objective:'burst',
+    build:{...build,boardStats:{CombatSpeed:1000}}});
+  assert(combatSpeed.castThroughput>slower.castThroughput,cls+': combat speed missed');
+}
 console.log('Validated '+total+' class/context/objective mechanic projections across seven Global classes.');
