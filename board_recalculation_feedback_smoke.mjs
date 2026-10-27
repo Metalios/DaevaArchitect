@@ -98,7 +98,7 @@ try {
 
   // Shared builds arrive without the cached recommendation. Loading
   // their account and pressing Recalculate should remain responsive.
-  await page.locator('#share-build-button').click();
+  await page.locator('#v2-share').click();
   await page.locator('#share-url').waitFor();
   const shared=await page.locator('#share-url').inputValue();
   assert(shared.includes('#build='));
