@@ -534,3 +534,21 @@
 .v2-board-controls #v2-board-notice:not([hidden]){box-sizing:border-box;padding:9px 11px;border-left:3px solid #d9b878;background:#15334d;color:#f5dfbb;border-radius:4px;font-size:12px;line-height:1.55;overflow-wrap:anywhere}
 #v2-board-clear-obtained{border-color:#916d66;background:#392a32;color:#ffe0d5}
 @media(max-width:700px){.v2-board-controls #v2-board-restore,.v2-board-controls #v2-board-clear-obtained{flex:1 1 135px}}
+
+/* Daevanion planning controls: clear separation between non-destructive
+   recalculation, destructive reset, tile interaction and display tools. */
+.v2-board-callout{flex:1 1 100%;min-width:0}
+.v2-board-primary-actions,.v2-board-secondary-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap;min-width:0;width:100%}
+.v2-board-primary-actions{border-bottom:1px solid #274862;padding-bottom:9px}
+.v2-board-primary-actions #v2-board-restore{background:#1c507a;border-color:#5c94c2;color:#f3f8ff;font-weight:700}
+.v2-board-primary-actions #v2-board-reset-selections{background:#4b3037;border-color:#ba8580;color:#fff0e7;font-weight:700}
+.v2-board-primary-actions #v2-board-clear-obtained{background:#182c3d;color:#cbdbea}
+.v2-board-secondary-actions{gap:5px}
+.v2-board-secondary-actions #v2-zoom-label{min-width:36px;text-align:center}
+.v2-board-method{width:100%;border:1px solid #34516b;border-radius:5px;background:#0b2236;padding:8px 10px;color:#c8dbea;font-size:11px;line-height:1.5}
+.v2-board-method summary{font-size:11px;font-weight:700;color:#dfecf7;cursor:pointer}
+.v2-board-method p{margin:8px 0 0}
+@media(max-width:600px){
+ .v2-board-primary-actions button{flex:1 1 100px;min-height:38px}
+ .v2-board-secondary-actions #v2-board-toggle,.v2-board-secondary-actions #v2-mark-obtained{flex:1 1 120px;min-height:35px}
+}
