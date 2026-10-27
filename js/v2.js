@@ -14,6 +14,12 @@ const quick=make('div','v2-quickbar',`
  <label>Level<input id="v2-level" type="number" min="1" max="45"></label>
  <label>Stage<select id="v2-stage"><option value="leveling">Leveling</option><option value="endgame">Fresh 45 / Endgame</option></select></label>
  <label>Content<select id="v2-context"><option value="solo">Solo PvE</option><option value="party">Group PvE</option><option value="pvp">PvP</option></select></label>
+ <label id="v2-objective-label">Build goal<select id="v2-objective">
+  <option value="performance">Maximum PvE performance</option>
+  <option value="survivability">Maximum survivability</option>
+  <option value="sustained">Maximum sustained DPS</option>
+  <option value="burst">Maximum burst DPS</option>
+ </select></label>
  <div id="v2-status" role="status"></div>
  <button id="v2-save" type="button">Save</button><button id="v2-share" type="button" class="v2-gold">Share build</button>`);
 const nav=make('nav','v2-nav',`<button type="button" data-v2-tab="workspace">Build workspace</button><button type="button" data-v2-tab="rotation">Rotation & macro</button><button type="button" data-v2-tab="titles">Titles</button><button type="button" data-v2-tab="sources">Research notes</button><button type="button" id="v2-reset-allocations">Restore recommended allocations</button>`);
