@@ -50,6 +50,7 @@ const PveBuildOptimizer=(()=>{
       for(const name of ['Robe of Flame','Fire Mark'])skills[name]=max(skills[name],goal==='survivability'?12:36);
     }
     for(const [name,w] of Object.entries(base.stats||{})){
+      if(/^PvP/i.test(name)){stats[name]=0;continue}
       stats[name]=max(w)*(SURVIVAL.test(name)?p.defense:SPEED.test(name)?p.speed:p.attack);
     }
     if(context==='solo')for(const name of Object.keys(stats))if(SURVIVAL.test(name))stats[name]*=1.25;
@@ -116,7 +117,7 @@ const PveBuildOptimizer=(()=>{
       }
     }
     for(const [name,amount] of Object.entries(stats))
-      value+=amount*(weights.stats[name]||1.5);
+      value+=amount*(weights.stats[name]??1.5);
     // These are transparent structural synergy hypotheses for candidate search.
     // Final Sorcerer damage candidates are also evaluated by the combat model.
     if(classId==='sorcerer'&&goal!=='survivability'){
@@ -145,6 +146,69 @@ const PveBuildOptimizer=(()=>{
       }
     }
     return value;
+  }
+  /**
+   * Take a promising connected seed to the actual earned-crystal budget.
+   * The earlier search only produces a bounded set of high-quality seed paths;
+   * comparing incomplete eight-purchase seeds against a fully spent legacy
+   * route would otherwise always favor the old optimizer.
+   *
+   * Rank affordable, immediately connected nodes by dynamic marginal reward.
+   * Connectivity is enforced on EVERY insertion, not fixed up afterward.
+   */
+  function finishAtBudget(state,graphs,budget,weights,ranks,gear,targets,classData,classId,goal,grade){
+    const chosen=new Set(state.selected),route=state.route.slice();
+    let spent=state.spent;
+    const ranksAdded={};
+    for(const graph of graphs)for(const id of chosen){
+      const node=graph.nodes.get(id);
+      if(!node||!node[5])continue;
+      for(const [key,amount] of node[6])
+        if(typeof key==='number'){
+          const name=classData.skills[key]?.name;
+          if(name)ranksAdded[name]=(ranksAdded[name]||0)+amount;
+        }
+    }
+    const evidence=typeof ClassCombatModels==='undefined'?null:ClassCombatModels.profile(classId);
+    const marginal=node=>{
+      let score=0;
+      for(const [key,amount] of node[6]){
+        if(typeof key!=='number'){score+=amount*(weights.stats[key]??1.5);continue}
+        const name=classData.skills[key]?.name;
+        if(!name)continue;
+        const before=(ranks[name]||1)+(gear[name]||0)+(ranksAdded[name]||0),
+          after=before+amount;
+        score+=amount*(weights.skills[name]??1.5);
+        for(const threshold of [8,12,16,20])
+          if(before<threshold&&after>=threshold)score+=22;
+        for(const mark of targets[name]?.milestones||[])
+          if(before<mark.rank&&after>=mark.rank)score+=22*(mark.weight||1);
+        for(const mark of evidence?.milestones[name]||[])
+          if(before<mark&&after>=mark)score+=goal==='survivability'?10:37;
+        if(goal==='survivability'&&evidence?.defense.includes(name))score+=amount*12;
+      }
+      return score;
+    };
+    for(let iterations=0;iterations<400;iterations++){
+      let winner=null;
+      for(const graph of graphs)for(const [id,node] of graph.nodes){
+        if(chosen.has(id)||!node[5]||spent+node[5]>budget)continue;
+        if(!graph.adjacent.get(id).some(near=>chosen.has(near)))continue;
+        const score=marginal(node),efficiency=score/node[5];
+        if(!winner||efficiency>winner.efficiency+1e-10||
+           Math.abs(efficiency-winner.efficiency)<1e-10&&
+           (score>winner.score||score===winner.score&&id<winner.id))
+          winner={graph,id,node,score,efficiency};
+      }
+      if(!winner)break;
+      chosen.add(winner.id);spent+=winner.node[5];
+      route.push({board:winner.graph.name,id:winner.id,goal:winner.id});
+      for(const [key,amount] of winner.node[6])if(typeof key==='number'){
+        const name=classData.skills[key]?.name;
+        if(name)ranksAdded[name]=(ranksAdded[name]||0)+amount;
+      }
+    }
+    return {selected:chosen,route,spent,score:grade(chosen)};
   }
   function stateKey(set){return [...set].sort((a,b)=>a-b).join(',')}
   function optimize({classData,classId,context,objective='performance',baseWeights,mastery,gear={},locked=[],
@@ -196,7 +260,10 @@ const PveBuildOptimizer=(()=>{
       expanded.sort((a,b)=>b.score-a.score||b.spent-a.spent);
       beam=expanded.slice(0,width);
     }
-    const candidates=[best,...beam].filter((s,i,a)=>a.findIndex(x=>stateKey(x.selected)===stateKey(s.selected))===i);
+    const seeds=[best,...beam].filter((s,i,a)=>
+      a.findIndex(x=>stateKey(x.selected)===stateKey(s.selected))===i);
+    const candidates=seeds.map(s=>finishAtBudget(s,graphs,budget,base,mastery,gear,
+      skillTargets,classData,classId,objective,grade));
     // The legacy route remains a legal full-board fallback and provides a
     // comparison candidate, but can no longer dictate the funded prefix.
     const variantRoutes=[];
