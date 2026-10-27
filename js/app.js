@@ -419,7 +419,11 @@ function chooseCombatBoardRoute(provisional,stigma,gearRanks,target,baseCp,actua
 function enhanceSorcererCombat(master,boardEffects,stigmas){
   if(!sorcererCombatEligible()){lastOptimizedCombat=null;return master}
   const a=account(),prepared=engineBuild(master.levels,boardEffects,stigmas.levels,activeStigmas());
-  const key=JSON.stringify([state.class,a.context,currentLevel(),prepared,
+  const objective=PVE_OBJECTIVES[a.pveObjective]?a.pveObjective:'performance';
+  const scenarios=objective==='burst'?[GlobalCombatEngine.ENCOUNTERS[2]]:
+    objective==='sustained'?GlobalCombatEngine.ENCOUNTERS.slice(0,2):
+      GlobalCombatEngine.ENCOUNTERS;
+  const key=JSON.stringify([state.class,a.context,objective,currentLevel(),prepared,
     a.manualMastery,a.customSpecialties,budget('mastery')]);
   let result=combatResultCache.key===key?combatResultCache.result:null;
   if(!result){
@@ -428,7 +432,7 @@ function enhanceSorcererCombat(master,boardEffects,stigmas){
       const revised=GlobalCombatEngine.refineMastery({
         initial:master.levels,budget:budget('mastery'),cost:masteryCost,
         cap:masteryRankCap,build:prepared,specData:SPECS.sorcerer,
-        manualSpecs:a.customSpecialties||{}
+        manualSpecs:a.customSpecialties||{},scenarios
       });
       if(revised.score>0&&revised.spent<=budget('mastery')){
         final={...master,levels:revised.levels,spent:revised.spent};
@@ -440,12 +444,12 @@ function enhanceSorcererCombat(master,boardEffects,stigmas){
       activeWeights().skills,boardEffects.skills,prepared.gearSkills);
     const finalBuild={...prepared,mastery:final.levels};
     let optimized=GlobalCombatEngine.tuneSpecialties(finalBuild,SPECS.sorcerer,
-      a.customSpecialties||{});
-    let macro=GlobalCombatEngine.chooseMacro(finalBuild,optimized.specialties);
+      a.customSpecialties||{},null,scenarios);
+    let macro=GlobalCombatEngine.chooseMacro(finalBuild,optimized.specialties,scenarios);
     if(macro.mode!=='ground'){
       optimized=GlobalCombatEngine.tuneSpecialties({...finalBuild,macroLayout:macro.mode},
-        SPECS.sorcerer,a.customSpecialties||{},optimized.specialties);
-      macro=GlobalCombatEngine.chooseMacro(finalBuild,optimized.specialties);
+        SPECS.sorcerer,a.customSpecialties||{},optimized.specialties,scenarios);
+      macro=GlobalCombatEngine.chooseMacro(finalBuild,optimized.specialties,scenarios);
     }
     const staticSpecs={};
     for(const [name,entry] of Object.entries(SPECS.sorcerer||{})){
@@ -455,7 +459,7 @@ function enhanceSorcererCombat(master,boardEffects,stigmas){
           .filter(id=>(entry.picks?.[eff>=20?'20':eff>=16?'16':eff>=12?'12':eff>=8?'8':'']||[]).includes(id))
           .slice(0,GlobalCombatEngine.slots(eff));
     }
-    const original=GlobalCombatEngine.evaluate(finalBuild,staticSpecs);
+    const original=GlobalCombatEngine.evaluate(finalBuild,staticSpecs,scenarios);
     result={mastery:final,specialties:optimized.specialties,
       score:macro.robustScore,baselineScore:original.robustScore,
       macro:{mode:macro.mode,label:macro.label,steps:[...macro.steps],
@@ -532,13 +536,12 @@ function model(){
              const build=engineBuild(proposed.levels,boardEffects,stigma.levels,activeStigmas());
              const structuralTie=candidate.score*.0000005;
              if(state.class==='sorcerer'&&sorcererCombatEligible()&&objective!=='survivability'){
+               // Tune specialties for the selected goal's encounter window.
+               const scenarios=objective==='burst'?[GlobalCombatEngine.ENCOUNTERS[2]]:
+                 objective==='sustained'?GlobalCombatEngine.ENCOUNTERS.slice(0,2):
+                   GlobalCombatEngine.ENCOUNTERS;
                const evaluated=GlobalCombatEngine.tuneSpecialties(
-                 build,SPECS.sorcerer,a.customSpecialties||{});
-               if(objective==='burst')
-                 return (evaluated.samples.find(x=>x.scenario==='short')?.score||0)+structuralTie;
-               if(objective==='sustained')
-                 return evaluated.samples.filter(x=>x.scenario!=='short')
-                   .reduce((sum,x)=>sum+x.score*x.weight,0)+structuralTie;
+                 build,SPECS.sorcerer,a.customSpecialties||{},null,scenarios);
                return evaluated.robustScore+structuralTie;
              }
              if(typeof ClassCombatModels!=='undefined'&&ClassCombatModels.profile(state.class))

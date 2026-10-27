@@ -132,11 +132,45 @@ const ClassCombatModels=(()=>{
    const haste=clamp(stat('CoolTimeDecrease')/10000,0,.60);
    const boost=clamp(stat('AmplifyAllDamage')/10000,0,2);
    const defense=clamp(stat('DecreaseDamage')/10000,0,.70);
-   const active=average(p.offense.map((name,i)=> (1+.035*effect(name))*(1.15-i*.065)));
+   // Exact Global action frames and animation cancels have not been measured.
+   // Compute a normalized execution-time sensitivity from selected, unlocked
+   // Skill Speed options and recorded Combat Speed. This is NOT a cast timer.
+   // An unknown recovery fraction is intentionally left non-speed-scalable.
+   const skillSpeed=name=>{
+     const entry=typeof SPECS==='undefined'?null:SPECS[classId]?.[name];
+     if(!entry)return 0;
+     const level=rank(name);
+     const breakpoint=level>=20?'20':level>=16?'16':level>=12?'12':level>=8?'8':null;
+     const picked=Array.isArray(selectedSpecs[name])
+       ?selectedSpecs[name]:(breakpoint?entry.picks?.[breakpoint]||[]:[]);
+     const slots=level>=20?3:level>=12?2:level>=8?1:0;
+     return clamp(picked.slice(0,slots).reduce((sum,id)=>{
+       if(!hasOption(name,id))return sum;
+       const text=String(entry.options?.[id]||'');
+       const match=text.match(/\+(\d+(?:\.\d+)?)% Skill Speed/i);
+       return sum+(match?Number(match[1])/100:0);
+     },0),0,.75);
+   };
+   const speedSamples=p.offense.map((name,i)=>{
+     const weight=Math.max(.4,1.15-i*.065);
+     const skill=skillSpeed(name);
+     // 75/25 execution/recovery split is an uncalibrated sensitivity
+     // scenario, not an assertion about AION 2's actual animation rules.
+     const normalizedTime=.75/(1+speed+skill)+.25;
+     return {name,weight,skill,normalizedTime};
+   });
+   const allWeight=speedSamples.reduce((sum,x)=>sum+x.weight,0)||1;
+   const normalizedActionTime=speedSamples.reduce(
+     (sum,x)=>sum+x.weight*x.normalizedTime,0)/allWeight;
+   const castThroughput=1/normalizedActionTime;
    const supportRanks=average(p.support.map(name=>1+.028*effect(name)));
+   const active=average(p.offense.map((name,i)=> (1+.035*effect(name))*(1.15-i*.065)));
    const survivalRanks=average(p.defense.map(name=>1+.04*effect(name)));
-   let sustained=active*(1+boost)*(1+.65*crit)*(1+.55*speed)*(1+.45*haste),
-       burst=active*(1+boost)*(1+.75*crit)*(1+.12*speed),
+   // Short encounters still benefit from completing casts before the window
+   // closes; cooldown reductions may permit a second use but are weaker in
+   // short windows. Both are comparative hypotheses, not measured DPS.
+   let sustained=active*(1+boost)*(1+.65*crit)*Math.pow(castThroughput,.70)*(1+.45*haste),
+       burst=active*(1+boost)*(1+.75*crit)*Math.pow(castThroughput,.85)*(1+.12*haste),
        survival=(1+.15*survivalRanks)*(1+defense)*(1+Math.min(1,stat('HPMax')/6000))*
          (1+Math.min(.4,stat('Defense')/12000)),
        party=0,uptime=1;
@@ -236,7 +270,9 @@ const ClassCombatModels=(()=>{
       objective==='survivability'?survival+.08*sustained:
       performance;
    return {score:objectiveScore,sustained,burst,survival,party,uptime,mobility,mechanics,
-      classification:'comparative scenario model; not measured Global DPS or HPS',
+      castThroughput,normalizedActionTime,combatSpeed:speed,cooldownReduction:haste,
+      skillSpeedBonuses:speedSamples.filter(x=>x.skill>0).map(x=>({name:x.name,speed:x.skill})),
+      classification:'comparative execution-time sensitivity; not measured Global DPS or HPS',
       provenance:{version:VERSION,source:p.evidence,assumptions:'rank slopes, encounter uptime and relative utility are uncalibrated'}};
  }
  return Object.freeze({VERSION,profile,advice,evaluate,profiles});

@@ -64,3 +64,28 @@ To expand this corpus, import lawfully accessible, deduplicated and appropriatel
 licensed public build observations with their source, patch and region. Do not
 mislabel an aggregated guide as an independent player sample; obtain compatible
 fight/rotation measurements before treating a high-CP build as best DPS.
+
+## Cast and Skill Speed sensitivity (27 October 2026)
+
+Both Sustained DPS and Burst DPS evaluate **recorded Combat Speed**, the
+**selected and unlocked `+Skill Speed` Specialties** from the imported Global
+tooltip catalog, and Cooldown Reduction. Each class uses a normalized action
+occupancy model: a **provisional** 75% execution / 25% recovery split, with
+execution time scaled by speed bonuses. This is a sensitivity experiment,
+**not measured cast or animation time**. Sustained and burst objectives use
+different throughput and cooldown weights. Short bursts give cooldown
+reduction less value, but no longer ignore it altogether.
+
+Sorcerer already simulates individual cast durations, MP, cooldowns and
+short (30-second) versus long (180-second) encounter windows using unverified
+timing assumptions. Its board-score finalist tuning, Mastery refinement,
+Specialty selection and macro comparison now all use the selected objective's
+same scenario subset, rather than tuning for generic combat before evaluating
+a burst score.
+
+The seven other classes still need explicit, calibrated action schedules,
+animation-lock/cancel timings, available-skill cooldowns and proc frequencies
+before actual extra casts in a fixed burst window can be counted. **Do not
+interpret current objective ranks as proven maximum DPS**. Controlled in-game
+tests, recorded skill timings and cooldown reset frequencies are required for
+accuracy.
