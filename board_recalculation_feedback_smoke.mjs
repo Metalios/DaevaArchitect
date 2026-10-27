@@ -98,6 +98,50 @@ try {
   assert(reset.canceled&&reset.removed);
   assert.equal(reset.crystals,150);
   assert.match(reset.status,/Cleared 1 obtained PvE tile/);
+
+  // Reset selections is the distinct "start over" action. It affects
+  // *all supported boards*, including Azphel, and clears custom routes.
+  // Canceling must be safe; accepting must preserve earned budgets,
+  // equipment and Mastery while recomputing blue suggestions.
+  const resetAll=await page.evaluate(obtainedId=>{
+    const a=account(),az=AZPHEL[state.class].nodes.find(n=>n[5]>0);
+    if(!az)throw Error('No Azphel tile found for reset test');
+    a.azphel=232;
+    a.obtainedNodes=[obtainedId,az[0]];
+    a.customNodes=[obtainedId];a.customAzphelNodes=[az[0]];
+    a.boardMode='custom';a.manualMastery=null;
+    const original={
+      crystals:a.crystals,azphel:a.azphel,mastery:a.mastery,
+      equip:JSON.stringify(a.equipment)
+    };
+    render();
+    window.confirm=()=>false;
+    document.querySelector('#v2-board-reset-selections').click();
+    const canceled=a.obtainedNodes.length===2&&a.customNodes.length===1;
+    window.confirm=()=>true;
+    document.querySelector('#v2-board-reset-selections').click();
+    return {
+      canceled,
+      marked:a.obtainedNodes.slice(),
+      custom:a.customNodes.slice(),
+      customAz:a.customAzphelNodes.slice(),
+      boardMode:a.boardMode,
+      snapshot:!!a.recommendedRouteSnapshot,
+      message:document.querySelector('#v2-board-notice').textContent,
+      original,
+      after:{crystals:a.crystals,azphel:a.azphel,mastery:a.mastery,
+        equip:JSON.stringify(a.equipment)}
+    };
+  },first.id);
+  assert(resetAll.canceled,'Reset selections must require confirmation');
+  assert.deepEqual(resetAll.marked,[]);
+  assert.deepEqual(resetAll.custom,[]);
+  assert.deepEqual(resetAll.customAz,[]);
+  assert.equal(resetAll.boardMode,'recommended');
+  assert(resetAll.snapshot,'Reset should recalculate the default blue path');
+  assert.deepEqual(resetAll.after,resetAll.original);
+  assert.match(resetAll.message,/Reset selections: cleared 2 obtained gold tiles and 2 custom tiles/);
+  assert.match(await page.locator('.v2-board-method').innerText(),/not an exhaustive combat search/);
   assert.deepEqual(errors,[]);
 
   // Shared builds arrive without the cached recommendation. Loading
