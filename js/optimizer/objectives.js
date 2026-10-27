@@ -148,7 +148,7 @@ const PveBuildOptimizer=(()=>{
     }
     if(spent>budget)throw Error('Recorded purchased nodes cannot be connected within entered crystal budget');
     let beam=[{selected,route,spent,score:grade(selected)}],best=beam[0],evaluated=0;
-    const width=4,branches=4,maxRounds=Math.min(20,Math.ceil(budget/2)+1);
+    const width=2,branches=3,maxRounds=Math.min(8,Math.ceil(budget/2)+1);
     for(let round=0;round<maxRounds;round++){
       const expanded=[],seen=new Set();
       for(const state of beam){
@@ -180,7 +180,7 @@ const PveBuildOptimizer=(()=>{
     // The legacy route remains a legal full-board fallback and provides a
     // comparison candidate, but can no longer dictate the funded prefix.
     const variantRoutes=[];
-    for(let variant=0;variant<(classId==='sorcerer'?5:2);variant++){
+    for(let variant=0;variant<(classId==='sorcerer'?2:1);variant++){
       const w=weightsFor(baseWeights,classId,context,objective,variant);
       const legacy=optimizeBoardRoute(classData,w,mastery,gear,0,null,mandatory,characterLevel,skillTargets);
       const fitted=fitConnectedBoardBudget(classData,legacy.route,budget);
