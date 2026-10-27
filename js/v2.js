@@ -47,8 +47,8 @@ const boardControls=make('div','v2-board-controls',`
  </div>
  <details class="v2-board-method">
    <summary>What does the recommendation consider?</summary>
-   <p>The planner uses your class, level, PvE/PvP context, earned crystals, connected tiles, marked purchases, Mastery, Stigmas, recorded equipment skill-level bonuses and an approximate Combat Power baseline where gear is sufficiently recorded. Sorcerer PvE also compares two route candidates with an uncalibrated speed-aware combat model.</p>
-   <p><strong>Not a guaranteed strongest build:</strong> the other classes use weighted route heuristics, not an exhaustive combat search. Full equipment stat rolls, resistance/crit thresholds, every effect interaction, Ariel, and the game's undisclosed Combat Power calculation are not jointly optimized. Estimated Combat Power differs from actual in-game CP and from item level.</p>
+   <p>The planner uses your class, level, PvE/PvP context, earned crystals, connected tiles, marked purchases, Mastery, Stigmas, recorded equipment skill-level bonuses and an approximate Combat Power baseline where gear is sufficiently recorded. PvE uses a bounded multi-candidate connected-route search. Sorcerer evaluates damage finalists with a comparative simulator; other classes use structural synergy estimates, not measured DPS.</p>
+   <p><strong>Not a guaranteed strongest build:</strong> the other classes use synergy-weighted proxies, not measured combat simulations or a proof of global optimality. Full equipment stat rolls, resistance/crit thresholds, every effect interaction, Ariel, and the game's undisclosed Combat Power calculation are not jointly optimized. Estimated Combat Power differs from actual in-game CP and from item level.</p>
  </details>
  <p id="v2-board-notice" role="status" aria-live="polite"></p>`);
 const ariel=make('button','v2-ariel-pending','Ariel · pending');
@@ -257,6 +257,8 @@ function sync(m){
  const a=account();
  $('v2-class').value=state.class;$('v2-level').value=currentLevel();$('v2-level').disabled=!isLeveling();
  $('v2-stage').value=a.journey;$('v2-context').value=a.context;
+ $('v2-objective').value=PVE_OBJECTIVES[a.pveObjective]?a.pveObjective:'performance';
+ $('v2-objective-label').hidden=a.context==='pvp';
  archetype.textContent=PROFILES[state.class].role+' · '+ARCHETYPE_WEAPONS[state.class];
  archetype.setAttribute('aria-label',PROFILES[state.class].name+' class and weapon');
  $('v2-context').querySelector('option[value=pvp]').disabled=isLeveling();
@@ -294,6 +296,11 @@ function bind(){
  $('v2-class').addEventListener('change',e=>$('class-buttons').querySelector(`[data-class="${e.target.value}"]`)?.click());
  $('v2-level').addEventListener('change',e=>setLevel(e.target.value));
  $('v2-stage').addEventListener('change',e=>$(e.target.value==='leveling'?'leveling-mode':'endgame-mode').click());
+ $('v2-objective').addEventListener('change',e=>{
+   account().pveObjective=PVE_OBJECTIVES[e.target.value]?e.target.value:'performance';
+   account().recommendedRouteSnapshot=null;
+   render();
+ });
  $('v2-context').addEventListener('change',e=>$(e.target.value==='solo'?'solo-button':e.target.value==='pvp'?'pvp-button':'party-button').click());
  $('v2-save').addEventListener('click',()=>{save();message='Saved to this browser.';$('v2-board-notice').textContent=message});
  $('v2-share').addEventListener('click',()=>$('share-build-button').click());
