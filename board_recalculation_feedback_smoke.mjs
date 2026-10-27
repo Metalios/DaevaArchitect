@@ -28,6 +28,10 @@ try {
   // Recalculate with identical inputs. The expected behavior is NOT to
   // generate a random new path, but to provide a meaningful report.
   await page.locator('#v2-board-restore').click();
+  const stableRoute=await page.evaluate(()=>plannedRoute().map(x=>x.id));
+  // Even if a previous purchase changed the first replan, a second
+  // calculation with exactly the same inputs must be deterministic.
+  await page.locator('#v2-board-restore').click();
   const unchanged=await page.evaluate(()=>({
     report:lastBoardRecalculation,
     status:document.querySelector('#v2-board-notice').textContent,
@@ -39,7 +43,7 @@ try {
   assert(unchanged.report.message.includes('/119 crystals planned'));
   assert(unchanged.report.message.includes('marked obtained'));
   assert(unchanged.gold.includes(first.id));
-  assert.deepEqual(unchanged.route,first.route);
+  assert.deepEqual(unchanged.route,stableRoute);
   assert.match(unchanged.status,/unchanged/);
 
   // New actual input causes a new calculation, even if the ranked order
@@ -99,7 +103,7 @@ try {
   // Shared builds arrive without the cached recommendation. Loading
   // their account and pressing Recalculate should remain responsive.
   await page.locator('#v2-share').click();
-  await page.locator('#share-url').waitFor();
+  await page.waitForFunction(()=>document.querySelector('#share-url')?.value.includes('#build='));
   const shared=await page.locator('#share-url').inputValue();
   assert(shared.includes('#build='));
   const second=await browser.newPage({viewport:{width:1280,height:900}});
