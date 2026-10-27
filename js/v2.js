@@ -54,7 +54,7 @@ const boardControls=make('div','v2-board-controls',`
  <details class="v2-board-method">
    <summary>What does the recommendation consider?</summary>
    <p>The planner uses your class, level, PvE/PvP context, earned crystals, connected tiles, marked purchases, Mastery, Stigmas, recorded equipment skill-level bonuses and an approximate Combat Power baseline where gear is sufficiently recorded. PvE uses a bounded multi-candidate connected-route search. Sorcerer evaluates damage finalists with a comparative simulator; other classes use structural synergy estimates, not measured DPS.</p>
-   <p><strong>Not a guaranteed strongest build:</strong> the other classes use synergy-weighted proxies, not measured combat simulations or a proof of global optimality. Full equipment stat rolls, resistance/crit thresholds, every effect interaction, Ariel, and the game's undisclosed Combat Power calculation are not jointly optimized. Estimated Combat Power differs from actual in-game CP and from item level.</p>
+   <p><strong>Not a guaranteed strongest build:</strong> the seven other classes use source-linked, mechanics-informed comparative projections, not measured DPS/HPS or proven global optima. Full equipment stat rolls, resistance/crit thresholds, every effect interaction, Ariel, and the game's undisclosed Combat Power calculation are not jointly optimized. Estimated Combat Power differs from actual in-game CP and from item level.</p>
  </details>
  <p id="v2-board-notice" role="status" aria-live="polite"></p>`);
 const ariel=make('button','v2-ariel-pending','Ariel · pending');
@@ -108,7 +108,7 @@ function mount(){
  bind();
 }
 function skillsView(m){
- const a=account(),catalog=Object.values(data().skills),names=skillNames(),hint=typeof adviceFor==='function'?adviceFor(state.class,a.context):null;
+ const a=account(),catalog=Object.values(data().skills),names=skillNames(),hint=typeof adviceFor==='function'?adviceFor(state.class,a.context,a.pveObjective):null;
  const priority=[...(hint?.core||[]),...(hint?.support||[]),...names];
  const order=new Map([...new Set(priority)].map((name,i)=>[name,i]));
  const query=(state.masterySearch||'').toLowerCase().trim();
@@ -174,7 +174,7 @@ function skillsView(m){
 }
 function stigmasView(m){
  const slots=isLeveling()?levelReward().slots:4,load=activeStigmas(),names=Object.keys(STIGMAS[state.class]),
-       advised=typeof adviceFor==='function'?adviceFor(state.class,account().context):null;
+       advised=typeof adviceFor==='function'?adviceFor(state.class,account().context,account().pveObjective):null;
  $('v2-stigma-list').innerHTML=[0,1,2,3].map(i=>{
   if(i>=slots)return `<div class="v2-stigma-card locked"><span class="v2-stigma-locked-art">🔒</span><strong>Slot ${i+1}</strong><small>Opens at Lv ${[22,27,32,37][i]}</small></div>`;
   const name=load[i],level=m.stigma.levels[name]||0;
@@ -254,7 +254,7 @@ function actionsView(m){
  const n=nodeMap().get(state.node);
  $('v2-mark-obtained').disabled=!n||!n.node[5]||!boardOpen(n.board);
  $('v2-mark-obtained').textContent=n&&obtainedNodes().has(n.node[0])?'Unmark obtained':'Mark tile obtained';
- note.innerHTML=`<span>${gear?`${gear} equipment pieces recorded.`:'No gear assumed.'} ${esc((typeof adviceFor==='function'?adviceFor(state.class,account().context)?.why:null)||'Class/context progression priorities.')} Actual equipped bonuses affect breakpoint advice; no gear is invented.</span><button type="button" id="v2-open-comparison">Compare builds</button>`;
+ note.innerHTML=`<span>${gear?`${gear} equipment pieces recorded.`:'No gear assumed.'} ${esc((typeof adviceFor==='function'?adviceFor(state.class,account().context,account().pveObjective)?.why:null)||'Class/context progression priorities.')} Actual equipped bonuses affect breakpoint advice; no gear is invented.</span><button type="button" id="v2-open-comparison">Compare builds</button>`;
 }
 function sync(m){
  if(!state.class)return;
@@ -289,7 +289,7 @@ function compare(){
  const changes=picked.filter(n=>(m.stigma.levels[n]||0)!==(stig.levels[n]||0));
  const recommendedLoadout=recommendedStigmas();
  const loadoutChanged=picked.some((n,i)=>n!==recommendedLoadout[i]);
- const reason=(typeof adviceFor==='function'?adviceFor(state.class,account().context)?.why:null)||'Balance damage and survival according to class.';
+ const reason=(typeof adviceFor==='function'?adviceFor(state.class,account().context,account().pveObjective)?.why:null)||'Balance damage and survival according to class.';
  $('v2-comparison-body').innerHTML=`<h3>Mastery</h3>${diff.length?diff.map(n=>`<p>${esc(n)} · Recommended ${baseline.levels[n]} → Your ${m.mastery.levels[n]}</p>`).join(''):'<p>No Mastery rank differences.</p>'}
  <h3>Stigmas</h3><p>Guide-based loadout (${esc(account().context)}): ${recommendedLoadout.map(esc).join(' · ')}</p>
  ${loadoutChanged?`<p>Your equipped Stigmas: ${picked.map(esc).join(' · ')}</p>`:'<p>Your Stigma choices match the recommended loadout.</p>'}
