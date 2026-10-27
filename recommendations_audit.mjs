@@ -66,3 +66,5 @@ console.log('Verified '+count+' researched class/context/level allocations (8 cl
 
 // Keep connected-board objective invariants in the existing CI audit suite.
 await import('./objective_optimizer_audit.mjs');
+
+await import('./class_models_audit.mjs');
