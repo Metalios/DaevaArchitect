@@ -19,6 +19,14 @@ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
 const errors=[];
 async function verifyAdvancedCards(page,width){
+ // Advanced is part of the Mastery editor, which is intentionally hidden
+ // when Gear or Daevanion is selected at responsive breakpoints.
+ if(!(await page.locator('#mastery').isVisible())){
+  const switcher=page.locator('[data-v3-editor="mastery"]');
+  if(await switcher.isVisible())await switcher.click();
+ }
+ assert.equal(await page.locator('#mastery').isVisible(),true,
+  width+': Mastery must be visible before opening its Advanced editor');
  const details=page.locator('.v2-advanced-skills');
  await details.evaluate(el=>{el.open=true});
  // Chromium's native <details> content can become paintable one frame after
