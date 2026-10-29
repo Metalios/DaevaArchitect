@@ -1578,3 +1578,112 @@
 .v2-active.v2-secondary .v3-editor-switch,
 .v2-active.v2-board-expanded .v3-editor-switch{display:none!important}
 .v2-active.v2-board-expanded .v2-workspace>.v2-right{display:block!important}
+
+
+/* Compact header follows the approved mobile mock: status/actions remain
+   available, while the six configuration fields open only on demand. */
+.v2-active #v3-settings-toggle{display:none}
+@media(max-width:1099px){
+ .v2-active .v2-quickbar{
+  position:sticky!important;
+  top:0;
+  z-index:100;
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  align-items:center;
+  padding:8px 10px;
+  min-height:0;
+ }
+ .v2-active .v2-brand{
+  flex:1 1 195px;
+  min-width:0;
+  margin:0;
+ }
+ .v2-active .v2-brand b{font-size:clamp(21px,5vw,27px)}
+ .v2-active #v3-settings-toggle{
+  display:inline-flex!important;
+  flex:0 0 auto;
+  order:1;
+  min-height:36px;
+  padding:7px 9px;
+  font-size:12px;
+  border:1px solid #4b7aa2;
+  background:#123753;
+  color:#f3dbab;
+  border-radius:5px;
+ }
+ .v2-active .v2-quickbar>label{
+  display:none!important;
+  flex:1 1 150px;
+  min-width:125px;
+  order:4;
+ }
+ .v2-active.v3-settings-open .v2-quickbar>label{
+  display:grid!important;
+ }
+ .v2-active .v2-quickbar>label>select,
+ .v2-active .v2-quickbar>label>input{
+  width:100%;
+  max-width:none;
+  min-width:0;
+ }
+ .v2-active .v2-quickbar>#v2-status{
+  flex:1 1 130px;
+  order:2;
+  margin:0;
+  min-width:0;
+  line-height:1.25;
+ }
+ .v2-active .v2-quickbar>#v2-status small{font-size:10px}
+ .v2-active .v2-quickbar>#v2-save,
+ .v2-active .v2-quickbar>#v2-share{
+  order:3;
+  min-height:35px;
+  padding:7px 9px;
+ }
+ .v2-active .v2-nav{
+  position:sticky;
+  z-index:95;
+  top:var(--v3-quickbar-height,100px);
+  width:100%;
+  display:flex;
+  overflow-x:auto;
+  white-space:nowrap;
+  background:#061628;
+  margin:0 0 8px;
+  padding:5px 1px;
+  scrollbar-width:thin;
+  border-bottom:1px solid #315676;
+ }
+ .v2-active .v2-nav button{
+  flex:0 0 auto;
+  font-size:11px;
+  padding:6px 9px;
+ }
+ .v2-active .v2-nav::after{
+  content:'›';
+  position:sticky;
+  right:0;
+  display:grid;
+  place-items:center;
+  min-width:20px;
+  background:linear-gradient(90deg,#06162855,#061628);
+  color:#dfba74;
+  pointer-events:none;
+ }
+ .v2-active.v2-secondary .v2-quickbar{
+  position:sticky!important;
+ }
+}
+/* Desktop header retains all build filters in one or two usable rows. */
+@media(min-width:1100px) and (max-width:1499px){
+ .v2-active .v2-quickbar{
+  flex-wrap:wrap;
+  gap:6px 10px;
+  padding:7px 10px;
+  min-height:0;
+ }
+ .v2-active .v2-brand{min-width:195px}
+ .v2-active #v2-status{min-width:130px}
+}
