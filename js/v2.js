@@ -23,6 +23,14 @@ const quick=make('div','v2-quickbar',`
  </select></label>
  <div id="v2-status" role="status"></div>
  <button id="v2-save" type="button">Save</button><button id="v2-share" type="button" class="v2-gold">Share build</button>`);
+// Compact mobile header keeps Save/Share visible without imposing the full
+// class/stage/content filter row on every editor view.
+const settingsToggle=make('button','v3-settings-toggle','⚙ Build settings');
+settingsToggle.id='v3-settings-toggle';
+settingsToggle.type='button';
+settingsToggle.setAttribute('aria-expanded','false');
+settingsToggle.setAttribute('aria-label','Show or hide character build settings');
+quick.append(settingsToggle);
 const nav=make('nav','v2-nav',`<button type="button" data-v2-tab="workspace">Build workspace</button><button type="button" data-v2-tab="rotation">Rotation & macro</button><button type="button" data-v2-tab="titles">Titles</button><button type="button" data-v2-tab="sources">Research notes</button><button type="button" id="v2-reset-allocations">Restore recommended allocations</button>`);
 const work=make('div','v2-workspace');work.id='v2-workspace';
 // Approved target: keep all existing editors mounted and their state intact.
@@ -415,6 +423,11 @@ function compare(){
  modal.showModal();
 }
 function bind(){
+ settingsToggle.addEventListener('click',()=>{
+  const opened=document.body.classList.toggle('v3-settings-open');
+  settingsToggle.setAttribute('aria-expanded',String(opened));
+  settingsToggle.textContent=opened?'✕ Hide settings':'⚙ Build settings';
+ });
  editorNav.addEventListener('click',e=>{
   const control=e.target.closest('[data-v3-editor]');
   if(control)selectEditor(control.dataset.v3Editor,true);
