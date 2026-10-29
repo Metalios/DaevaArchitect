@@ -25,6 +25,32 @@ const quick=make('div','v2-quickbar',`
  <button id="v2-save" type="button">Save</button><button id="v2-share" type="button" class="v2-gold">Share build</button>`);
 const nav=make('nav','v2-nav',`<button type="button" data-v2-tab="workspace">Build workspace</button><button type="button" data-v2-tab="rotation">Rotation & macro</button><button type="button" data-v2-tab="titles">Titles</button><button type="button" data-v2-tab="sources">Research notes</button><button type="button" id="v2-reset-allocations">Restore recommended allocations</button>`);
 const work=make('div','v2-workspace');work.id='v2-workspace';
+// Approved target: keep all existing editors mounted and their state intact.
+// Only the panel visibility/layout changes when switching editors.
+const editorNav=make('nav','v3-editor-switch',`
+ <button type="button" data-v3-editor="gear" aria-pressed="false"><span class="v3-editor-symbol" aria-hidden="true">◈</span><span>Equipment</span></button>
+ <button type="button" data-v3-editor="mastery" aria-pressed="false"><span class="v3-editor-symbol" aria-hidden="true">✦</span><span>Mastery</span></button>
+ <button type="button" data-v3-editor="stigma" aria-pressed="false"><span class="v3-editor-symbol" aria-hidden="true">✧</span><span>Stigmas</span></button>
+ <button type="button" data-v3-editor="boards" aria-pressed="false"><span class="v3-editor-symbol" aria-hidden="true">◇</span><span>Daevanion</span></button>`);
+editorNav.setAttribute('aria-label','Choose build editor');
+let editorView=window.innerWidth<1100?'boards':'mastery';
+function selectEditor(editor,focus=false){
+ if(!['gear','mastery','stigma','boards'].includes(editor))return;
+ editorView=editor;
+ work.dataset.editor=editor;
+ editorNav.querySelectorAll('[data-v3-editor]').forEach(b=>{
+  const active=b.dataset.v3Editor===editor;
+  b.classList.toggle('active',active);
+  b.setAttribute('aria-pressed',String(active));
+  if(active&&focus)b.focus({preventScroll:true});
+ });
+ if(focus&&window.innerWidth<1100){
+  const top=work.getBoundingClientRect().top+window.scrollY-86;
+  window.scrollTo({top:Math.max(0,top),behavior:'instant'});
+ }
+ queueBoardFit();
+}
+
 const left=make('div','v2-left v2-column'),center=make('div','v2-center v2-column'),right=make('div','v2-right v2-column');
 const footer=make('div','v2-footer'),next=make('div','v2-next'),note=make('div','v2-gear-note');
 const combatEvidence=make('section','v2-combat-evidence');combatEvidence.id='v2-combat-evidence';
@@ -68,7 +94,8 @@ const stigmaStatus=make('span','v2-stigma-status');stigmaStatus.id='v2-stigma-st
 function mount(){
  const p=$('planner-content');p.classList.add('v2-planner');
  p.insertBefore(quick,p.firstChild);quick.after(nav);
- const tabs=p.querySelector('.tabs');tabs.after(work);work.append(left,center,right);
+ const tabs=p.querySelector('.tabs');tabs.after(work);work.append(editorNav,left,center,right);
+ selectEditor(editorView);
  left.append($('gear'));center.append($('mastery'),$('stigma'));right.append($('boards'));
  $('gear-class-heading').after(archetype);
  // Keep the twenty editable equipment slots visible, but don't force the
@@ -388,6 +415,10 @@ function compare(){
  modal.showModal();
 }
 function bind(){
+ editorNav.addEventListener('click',e=>{
+  const control=e.target.closest('[data-v3-editor]');
+  if(control)selectEditor(control.dataset.v3Editor,true);
+ });
  $('v2-class').addEventListener('change',e=>$('class-buttons').querySelector(`[data-class="${e.target.value}"]`)?.click());
  $('v2-level').addEventListener('change',e=>setLevel(e.target.value));
  $('v2-stage').addEventListener('change',e=>$(e.target.value==='leveling'?'leveling-mode':'endgame-mode').click());
