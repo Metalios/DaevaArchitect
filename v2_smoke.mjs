@@ -70,11 +70,11 @@ try{
     width+': oversized controls separate tabs from map '+JSON.stringify(boardGeometry));
   assert.equal(boardGeometry.expanded,false,width+': destructive tools expanded by default');
   const more=page.locator('#v2-board-options');
-  await more.locator('summary').click();
+  await more.locator(':scope > summary').click();
   assert.equal(await more.evaluate(el=>el.open),true,width+': More tools inaccessible');
   assert.equal(await page.locator('#v2-board-reset-selections').isVisible(),true,
     width+': destructive reset missing from More tools');
-  await more.locator('summary').click();
+  await more.locator(':scope > summary').click();
   assert.equal(await more.evaluate(el=>el.open),false);
   await page.locator('#board-tabs [data-board="Zikel"]').click();
   assert.match(await page.locator('#board-map-title').innerText(),/Zikel/,width+': board switch failed');
