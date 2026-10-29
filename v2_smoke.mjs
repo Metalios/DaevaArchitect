@@ -80,7 +80,7 @@ try{
   assert.match(await page.locator('#board-map-title').innerText(),/Zikel/,width+': board switch failed');
   await page.locator('#v2-board-fit').click();
   const fitZoom=Number((await page.locator('#v2-zoom-label').innerText()).replace('px',''));
-  assert(fitZoom>=26&&fitZoom<=52,width+': invalid fitted zoom');
+  assert(fitZoom>=40&&fitZoom<=52,width+': Fit must never shrink below readable node size');
   if(width===1280){
     const sticky=await page.evaluate(()=>{
       const right=document.querySelector('.v2-right'),nav=document.querySelector('.v2-board-dock');
@@ -246,7 +246,16 @@ try{
   console.log('Auto-fit '+width+'x'+height+': '+JSON.stringify(initial));
   assert(initial.bottom<=height+16,'Workspace beyond viewport: '+JSON.stringify(initial));
   assert(initial.boardHeight>=220,'Board viewport too short: '+JSON.stringify(initial));
-  assert(initial.tile>=26&&initial.tile<=52,'Invalid tile fit');
+  assert(initial.tile>=40&&initial.tile<=52,
+    'Daevanion tiles became illegibly small: '+JSON.stringify(initial));
+  const boardScroll=await page.locator('#boards .board-scroll').evaluate(el=>({
+    clientHeight:el.clientHeight,scrollHeight:el.scrollHeight,
+    clientWidth:el.clientWidth,scrollWidth:el.scrollWidth
+  }));
+  if(initial.gridHeight>boardScroll.clientHeight+4){
+    assert(boardScroll.scrollHeight>boardScroll.clientHeight,
+      'Keep readable nodes and scroll, rather than shrinking: '+JSON.stringify({initial,boardScroll}));
+  }
   if(width===1280){
    const inspect=page.locator('#v2-inspector-toggle');
    assert.equal(await inspect.isVisible(),true,'Short desktop needs an accessible tile inspector');
@@ -268,6 +277,9 @@ try{
    const r=el.getBoundingClientRect();return {top:r.top,bottom:r.bottom};
   });
   assert(focus.top<=1&&focus.bottom>=height-1,'Focus does not fill viewport: '+JSON.stringify(focus));
+  await page.waitForFunction(()=>Number(document.querySelector('#v2-zoom-label')?.textContent.replace('px',''))>=40);
+  const focusedTile=Number((await page.locator('#v2-zoom-label').innerText()).replace('px',''));
+  assert(focusedTile>=40,'Focus mode must preserve legible tiles');
   await page.keyboard.press('Escape');
   assert.equal(await page.evaluate(()=>document.body.classList.contains('v2-board-expanded')),false);
   if(width===1920&&height===768){
