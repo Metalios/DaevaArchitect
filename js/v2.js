@@ -92,7 +92,24 @@ function mount(){
  if(search)master.querySelector('.v2-skill-toolbar').append(search);
  master.querySelector('.v2-mastery-hint').append(slim);
  $('stigma').append(stigmas);$('stigma').querySelector('.section-title').append(stigmaStatus);
- $('board-tabs').after(boardControls);
+ // Keep board-switching immediately beside the board, even when the
+ // workspace's right column scrolls independently from the rest of the page.
+ const boardTabs=$('board-tabs'),boardDock=make('div','v2-board-dock');
+ boardTabs.before(boardDock);
+ boardDock.append(boardTabs,boardControls);
+ const quickActions=boardControls.querySelector('.v2-board-secondary-actions');
+ const primaryActions=boardControls.querySelector('.v2-board-primary-actions');
+ quickActions.insertBefore($('v2-board-restore'),quickActions.firstChild);
+ const more=make('details','v2-board-options','<summary>More tools <span aria-hidden="true">▾</span></summary>');
+ more.setAttribute('aria-label','Additional Daevanion planner actions and model details');
+ const moreBody=make('div','v2-board-options-body');
+ more.append(moreBody);
+ for(const item of [
+   boardControls.querySelector('.v2-board-callout'),primaryActions,
+   boardControls.querySelector('.v2-board-method'),$('v2-optimizer-evidence')
+ ])if(item)moreBody.append(item);
+ quickActions.append(more);
+ // Recalculation/ownership notices stay visible, outside the More menu.
  const side=$('boards').querySelector('.board-side');
  if(side){
   const extras=make('details','v2-board-extra','<summary>Board bonuses, purchase order & next key nodes</summary>');
@@ -431,7 +448,13 @@ function bind(){
  $('v2-board-expand').addEventListener('click',()=>{const expanded=document.body.classList.toggle('v2-board-expanded');$('v2-board-expand').textContent=expanded?'Exit expanded':'Expand board'});
  for(const [id,step] of [['v2-zoom-minus',-4],['v2-zoom-plus',4]])$(id).addEventListener('click',()=>{zoom=Math.min(52,Math.max(32,zoom+step));$('board-grid').style.setProperty('--v2-node',zoom+'px');$('v2-zoom-label').textContent=zoom+'px'});
  $('mastery-search').addEventListener('input',()=>sync(model()));
- $('board-tabs').addEventListener('click',()=>setTimeout(()=>sync(model()),0));
+ $('board-tabs').addEventListener('click',()=>{
+   more.open=false;
+   setTimeout(()=>sync(model()),0);
+ });
+ document.addEventListener('pointerdown',e=>{
+   if(more.open&&!more.contains(e.target))more.open=false;
+ });
  $('board-grid').addEventListener('click',()=>setTimeout(()=>sync(model()),0));
 }
 window.syncV2=sync;
