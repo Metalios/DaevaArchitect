@@ -12,6 +12,8 @@ try {
   page.on('pageerror',error=>errors.push(error.message));
   await page.goto(pathToFileURL(path.resolve('dist/index.html')).href);
   await page.locator('#class-buttons [data-class="templar"]').click();
+  // Medium desktop now uses a persistent editor rail; open Equipment first.
+  await page.locator('[data-v3-editor="gear"]').click();
   await page.locator('#gear-doll-grid').waitFor();
 
   await page.locator('[data-gear-slot="top"]').first().click();
@@ -28,9 +30,22 @@ try {
   await page.locator('[name="stoneStat0"]').fill('HP');
   await page.locator('[name="stoneValue0"]').fill('150');
   await page.locator('[name="stoneGrade0"]').selectOption('Epic');
+  const formDiag=await page.evaluate(()=>{
+    const f=document.querySelector('#gear-form');
+    const data=new FormData(f);
+    const invalid=[...f.querySelectorAll('input,select,textarea')]
+       .filter(el=>!el.checkValidity()).map(el=>({name:el.name,value:el.value,message:el.validationMessage}));
+    return {formValid:f.checkValidity(),invalid,values:{
+      name:data.get('name'),enhancement:data.get('enhancement'),
+      skill0:data.get('skill0'),levels0:data.get('levels0')
+    },draft:gearDraft?.href,slot:gearSlotId};
+  });
+  console.log('GEAR_FORM_DIAG',JSON.stringify(formDiag));
   await page.locator('.gear-save').click();
 
   let current=await page.evaluate(()=>account().equipment.top);
+  console.log('GEAR_SAVE_DIAG',JSON.stringify({enhancement:current?.enhancement,
+    name:current?.name,dialogOpen:await page.locator('#gear-dialog').evaluate(el=>el.open)}));
   assert.equal(current.enhancement,11);
   assert.equal(current.skillBonuses[0].skill,'Insulting Roar');
   assert.equal(current.stones[0].stat,'HP');

@@ -111,6 +111,9 @@ try{
   assert(square,width+': Daevanion tiles must be square');
   assert((await page.locator('#board-grid .node.recommended').count())>0,width+': missing recommendation overlay');
   assert.match(await page.locator('#v2-status').innerText(),/Following recommended/);
+  // Medium widths have an explicit editor rail. Inspect Gear in its
+  // visible editor instead of trying to click an intentionally hidden panel.
+  if(width<1700)await page.locator('[data-v3-editor="gear"]').click();
   // Advanced equipment details must not dominate the main screen.
   const advanced=page.locator('.v2-gear-advanced');
   assert.equal(await advanced.evaluate(el=>el.open),false);
@@ -118,6 +121,7 @@ try{
   assert.equal(await advanced.evaluate(el=>el.open),true);
   assert.equal(await page.locator('#gear-arcana-grid').count(),1);
   await advanced.locator(':scope > summary').click();
+  if(width<1700)await page.locator('[data-v3-editor="mastery"]').click();
   await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
   await page.waitForFunction(()=>window.scrollY===0);
   fs.mkdirSync('v2-previews',{recursive:true});
@@ -132,10 +136,15 @@ try{
      });
      await page.evaluate(()=>{state.class='templar';state.tab='mastery';render()});
    }
+  // Earned point budget inputs currently live in Equipment. Select that
+  // editor at medium width rather than filling an intentionally hidden field.
+  // Switching back to Mastery must preserve the updated budget.
+  if(width<1700)await page.locator('[data-v3-editor="gear"]').click();
   // Inputs are not a build decision.
   await page.locator('#mastery-input').fill('220');
   await page.locator('#mastery-input').press('Tab');
   assert.match(await page.locator('#v2-status').innerText(),/Following recommended/,width+': points marked custom');
+  if(width<1700)await page.locator('[data-v3-editor="mastery"]').click();
   if(width>=1920){
     const cardColumns=await page.locator('#v2-stigma-list').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length);
     assert.equal(cardColumns,4,'Stigmas must show four icon cards across in the desktop mock');
@@ -162,6 +171,15 @@ try{
   assert.match(await page.locator('#v2-status').innerText(),/Modified progression/);
   await page.locator('#v2-reset-allocations').click();
   assert.match(await page.locator('#v2-status').innerText(),/Following recommended/);
+  if(width<1700){
+   await page.locator('[data-v3-editor="stigma"]').click();
+   assert.equal(await page.locator('#stigma').isVisible(),true);
+   assert.equal(await page.locator('#boards').isVisible(),true);
+   if(width===1280)await page.screenshot({path:'v2-previews/approved-medium-stigmas-1280.png'});
+   const w=await page.locator('#v2-stigma-list .v2-stigma-card').first()
+     .evaluate(el=>el.getBoundingClientRect().width);
+   assert(w>=140,width+': Stigma card too narrow '+w);
+  }
   // Stigma level edits must affect the actual allocation and build status.
   assert.equal(await page.locator('#v2-stigma-panel').isVisible(),false);
   await page.locator('#v2-stigma-list [data-v2-open-stigma="0"]').click();
@@ -174,6 +192,7 @@ try{
   assert.equal(await page.locator('#v2-stigma-panel').isVisible(),false);
   await page.locator('#v2-stigma-reset').click();
   // Equipment slots still invoke the catalog and item editor.
+  if(width<1700)await page.locator('[data-v3-editor="gear"]').click();
   await page.locator('#gear-doll-grid [data-gear-slot]').first().click();
   assert.equal(await page.locator('#gear-dialog').evaluate(el=>el.open),true);
   await page.locator('#gear-dialog-close').click();
@@ -205,9 +224,40 @@ try{
   page.on('pageerror',error=>errors.push(width+': '+error.message));
   await page.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'domcontentloaded'});
   await page.locator('#class-buttons [data-class="templar"]').click();
-  await page.locator('#v2-skill-list .v2-skill').first().waitFor();
+  // Mobile initially shows Daevanion, so Mastery is mounted but hidden.
+  // Verify it is populated before explicitly selecting the Mastery editor.
+  await page.locator('#v2-skill-list .v2-skill').first().waitFor({state:width<1100?'attached':'visible'});
+   if(width<1100){
+    assert.equal(await page.locator('.v3-editor-switch').isVisible(),true);
+    assert.equal(await page.locator('#boards').isVisible(),true,
+      'Daevanion must initially be visible on mobile');
+    assert.equal(await page.locator('#gear').isVisible(),false,
+      'Mobile must not stack all the editors');
+    await page.locator('[data-v3-editor="mastery"]').click();
+    assert.equal(await page.locator('#mastery').isVisible(),true);
+    assert.equal(await page.locator('#boards').isVisible(),false);
+   }
    await verifyAdvancedCards(page,width);
+   if(width===390){
+    const settings=page.locator('#v3-settings-toggle');
+    assert.equal(await settings.isVisible(),true);
+    await settings.click();
+    assert.equal(await settings.getAttribute('aria-expanded'),'true');
+    assert.equal(await page.locator('#v2-class').isVisible(),true);
+    await settings.click();
+    assert.equal(await page.locator('#v2-class').isVisible(),false);
+    await page.screenshot({path:'v2-previews/approved-mobile-mastery-390.png'});
+    await page.locator('[data-v3-editor="stigma"]').click();
+    await page.screenshot({path:'v2-previews/approved-mobile-stigmas-390.png'});
+    await page.locator('[data-v3-editor="gear"]').click();
+    await page.screenshot({path:'v2-previews/approved-mobile-equipment-390.png'});
+   }
+   if(width<1100)await page.locator('[data-v3-editor="boards"]').click();
   assert.equal(await page.locator('#board-grid .node').count(),89,width+': board geometry changed');
+   if(width<1100){
+    const h=await page.locator('.v2-workspace').evaluate(el=>el.getBoundingClientRect().height);
+    assert(h<1800,width+': mobile editors are still stacked: '+h);
+   }
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+8),true,width+': page overflow');
   await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
   fs.mkdirSync('v2-previews',{recursive:true});

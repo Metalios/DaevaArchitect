@@ -1303,3 +1303,387 @@
   min-width:max-content;
  }
 }
+
+
+/* -------------------------------------------------------------------------
+   APPROVED RESPONSIVE WORKSPACE (Oct 2026)
+   Genuine existing gear, skill, stigma and 15x15 board widgets are retained.
+   >=1700: three panels; 1100–1699: slim editor rail + active left editor +
+   always-visible Daevanion; <1100: one editor with fixed bottom navigation.
+   All rules below intentionally supersede legacy v2 breakpoint overrides.
+   ------------------------------------------------------------------------- */
+.v2-active .v3-editor-switch{display:none}
+.v2-active .v3-editor-switch button{
+ border:1px solid #365875;
+ color:#bed9eb;
+ background:#0e2942;
+ border-radius:7px;
+ font:700 12px/1.25 system-ui,sans-serif;
+ cursor:pointer;
+ display:flex;
+ gap:5px;
+ align-items:center;
+ justify-content:center;
+ min-width:0;
+ padding:9px 5px;
+}
+.v2-active .v3-editor-switch button.active{
+ border-color:#e0b66c;
+ background:linear-gradient(145deg,#244d6b,#102c47);
+ color:#ffe1a7;
+ box-shadow:inset 0 -3px #d2a64f;
+}
+.v2-active .v3-editor-switch button:focus-visible{
+ outline:2px solid #80d8f5;
+ outline-offset:2px;
+}
+.v2-active .v3-editor-symbol{font-size:20px;line-height:1.1}
+/* Wide desktop: the board receives the most horizontal real estate, but
+   both gear and Mastery retain truly usable widths. */
+@media(min-width:1700px){
+ .v2-active.v2-has-class:not(.v2-secondary):not(.v2-board-expanded) .v2-workspace{
+  grid-template-columns:clamp(320px,20vw,420px) minmax(425px,.95fr) minmax(0,2fr);
+  grid-template-rows:minmax(0,1fr);
+  gap:10px;
+ }
+ .v2-active .v2-right #boards>.board-layout{
+  grid-template-columns:minmax(0,1fr) clamp(210px,14vw,270px);
+ }
+ .v2-active .v2-right .board-scroll{scrollbar-width:thin}
+ .v2-active .v3-editor-switch{display:none!important}
+}
+/* Medium desktops: a fixed left editor rail and an always-available board.
+   Editing Stigmas never shrinks the board or jumps the page vertically. */
+@media(min-width:1100px) and (max-width:1699px){
+ .v2-active.v2-has-class:not(.v2-secondary):not(.v2-board-expanded) .v2-workspace{
+  display:grid!important;
+  grid-template-columns:78px clamp(342px,28vw,470px) minmax(0,1fr)!important;
+  grid-template-rows:minmax(0,1fr)!important;
+  gap:8px;
+  align-items:stretch;
+ }
+ .v2-active .v2-workspace>.v3-editor-switch{
+  grid-column:1;
+  grid-row:1;
+  display:flex!important;
+  flex-direction:column;
+  justify-content:flex-start;
+  gap:8px;
+  min-width:0;
+  padding:8px 5px;
+  height:100%;
+  overflow-y:auto;
+  border:1px solid #385a79;
+  background:#0a2137;
+  border-radius:8px;
+  scrollbar-width:thin;
+ }
+ .v2-active .v2-workspace>.v3-editor-switch button{
+  display:grid;
+  justify-items:center;
+  gap:5px;
+  padding:11px 3px;
+  font-size:10px;
+  word-break:normal;
+ }
+ .v2-active.v2-has-class:not(.v2-secondary):not(.v2-board-expanded) .v2-workspace>.v2-left{
+  grid-column:2!important;
+  grid-row:1!important;
+  min-height:0;
+ }
+ .v2-active.v2-has-class:not(.v2-secondary):not(.v2-board-expanded) .v2-workspace>.v2-center{
+  grid-column:2!important;
+  grid-row:1!important;
+  min-height:0;
+ }
+ .v2-active.v2-has-class:not(.v2-secondary):not(.v2-board-expanded) .v2-workspace>.v2-right{
+  grid-column:3!important;
+  grid-row:1!important;
+  min-height:0;
+ }
+ .v2-active .v2-workspace[data-editor="gear"]>.v2-center,
+ .v2-active .v2-workspace[data-editor="mastery"]>.v2-left,
+ .v2-active .v2-workspace[data-editor="stigma"]>.v2-left,
+ .v2-active .v2-workspace[data-editor="boards"]>.v2-left,
+ .v2-active .v2-workspace[data-editor="boards"]>.v2-center{display:none!important}
+ .v2-active .v2-workspace[data-editor="stigma"] .v2-center #mastery{
+  display:none!important
+ }
+ .v2-active .v2-workspace[data-editor="mastery"] .v2-center #stigma{
+  display:none!important
+ }
+ .v2-active.v2-has-class:not(.v2-secondary):not(.v2-board-expanded)
+ .v2-workspace[data-editor="boards"]>.v2-right{
+  grid-column:2/4!important;
+ }
+ .v2-active .v2-workspace[data-editor="boards"] .v2-right .board-layout{
+  grid-template-columns:minmax(0,1fr) minmax(215px,260px)!important;
+ }
+ .v2-active .v2-workspace[data-editor="boards"] .v2-right #v2-inspector-toggle{
+  display:none!important;
+ }
+ .v2-active .v2-workspace[data-editor="boards"] .v2-right .board-side{
+  display:block!important;
+  position:static!important;
+  width:auto!important;
+  min-height:0;
+  max-height:100%;
+  box-shadow:none;
+ }
+ .v2-active .v2-right .board-scroll{min-height:0}
+}
+/* Skill summary must fit inside its own editor. Effective level and invested
+   rank remain visible; full owned/planned/gear breakdown is still available
+   in the existing selected-skill flyout, with no horizontal table scrolling. */
+.v2-active .v2-center #mastery{
+ container-type:inline-size;
+ min-width:0;
+}
+@container (max-width:650px){
+ .v2-active .v2-editor-title{
+  grid-template-columns:minmax(0,1fr) 101px 73px;
+  gap:5px;
+ }
+ .v2-active .v2-editor-title>span:nth-of-type(2),
+ .v2-active .v2-editor-title>span:nth-of-type(3){
+  display:none;
+ }
+ .v2-active .v2-center .v2-skill-list{overflow-x:hidden}
+ .v2-active .v2-center .v2-skill{
+  grid-template-columns:minmax(0,1fr) 104px 72px;
+  gap:5px;
+  padding:6px;
+  min-width:0;
+ }
+ .v2-active .v2-skill>.v2-board-delta,
+ .v2-active .v2-skill>.v2-green:not(.v2-board-delta){display:none}
+ .v2-active .v2-skill-label{min-width:0}
+ .v2-active .v2-skill-label b{font-size:13px}
+ .v2-active .v2-skill-label small{font-size:10px}
+ .v2-active .v2-skill-art{width:34px;height:34px}
+ .v2-active .v2-effective{font-size:12px}
+}
+@container (max-width:420px){
+ .v2-active .v2-center .v2-skill{
+  grid-template-columns:minmax(0,1fr) 101px 55px;
+  gap:4px;
+ }
+ .v2-active .v2-center .v2-skill-label small{display:none}
+ .v2-active .v2-center .v2-rank button{width:24px}
+}
+/* Four icon cards across do not fit inside a 340px editor; use two per row
+   and keep button targets, names and ranks readable. */
+@media(max-width:1699px){
+ .v2-active .v2-center #v2-stigma-list{
+  grid-template-columns:repeat(2,minmax(145px,1fr))!important;
+  gap:9px;
+ }
+ .v2-active .v2-center #v2-stigma-list .v2-stigma-card{
+  min-width:0;
+  min-height:115px;
+ }
+}
+@media(min-width:1700px){
+ .v2-active .v2-center #v2-stigma-list{
+  grid-template-columns:repeat(4,minmax(0,1fr));
+ }
+}
+/* Tablet and mobile: one selected editor, not a 5,000–14,000px page. The
+   four-button bottom rail stays accessible while any editor scrolls. */
+@media(max-width:1099px){
+ .v2-active.v2-has-class:not(.v2-secondary):not(.v2-board-expanded) .v2-workspace{
+  display:block!important;
+  grid-template-columns:none!important;
+  height:auto!important;
+  min-height:0!important;
+  overflow:visible!important;
+ }
+ .v2-active .v2-workspace>.v3-editor-switch{
+  display:flex!important;
+  position:fixed;
+  inset:auto 0 0 0;
+  z-index:105;
+  gap:4px;
+  align-items:stretch;
+  padding:7px max(8px,env(safe-area-inset-right)) calc(7px + env(safe-area-inset-bottom));
+  background:linear-gradient(#123454,#07192a);
+  border-top:2px solid #467a9d;
+  box-shadow:0 -8px 22px #000a;
+ }
+ .v2-active .v2-workspace>.v3-editor-switch button{
+  flex:1 1 0;
+  display:grid;
+  justify-items:center;
+  gap:2px;
+  min-height:54px;
+  padding:6px 2px;
+  font-size:11px;
+  border-radius:6px;
+ }
+ .v2-active .v2-workspace>.v3-editor-switch .v3-editor-symbol{
+  font-size:21px;
+ }
+ .v2-active .v2-workspace>.v2-column{
+  display:none!important;
+  height:auto!important;
+  max-height:none!important;
+  min-height:0!important;
+  overflow:visible!important;
+ }
+ .v2-active .v2-workspace[data-editor="gear"]>.v2-left,
+ .v2-active .v2-workspace[data-editor="mastery"]>.v2-center,
+ .v2-active .v2-workspace[data-editor="stigma"]>.v2-center,
+ .v2-active .v2-workspace[data-editor="boards"]>.v2-right{
+  display:block!important;
+ }
+ .v2-active .v2-workspace[data-editor="mastery"] .v2-center #stigma,
+ .v2-active .v2-workspace[data-editor="stigma"] .v2-center #mastery{
+  display:none!important;
+ }
+ .v2-active .v2-workspace .tab-panel{
+  padding:12px;
+  margin:0;
+  min-height:0;
+ }
+ .v2-active .v2-right #boards{
+  display:flex!important;
+  flex-direction:column;
+  height:auto!important;
+  min-height:0;
+ }
+ .v2-active .v2-right .board-layout{
+  grid-template-columns:minmax(0,1fr);
+ }
+ .v2-active .v2-right .board-scroll{
+  height:clamp(385px,66dvh,760px);
+  min-height:385px;
+  max-height:none;
+ }
+ .v2-active .v2-right .board-grid{min-width:max-content}
+ .v2-active .v2-footer{margin-bottom:80px}
+ .v2-active main{padding-bottom:90px}
+ .v2-active .v2-workspace[data-editor="boards"] .v2-right .board-map-head{display:none}
+ .v2-active .v2-workspace[data-editor="boards"] #v2-board-expand{
+  display:none;
+ }
+}
+@media(max-width:380px){
+ .v2-active .v2-workspace>.v3-editor-switch button{font-size:10px}
+ .v2-active .v2-center #v2-stigma-list{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important
+ }
+}
+/* Secondary pages, dialogs and expanded-board mode retain their native
+   visible surface; bottom editor navigation is hidden while it is irrelevant. */
+.v2-active.v2-secondary .v3-editor-switch,
+.v2-active.v2-board-expanded .v3-editor-switch{display:none!important}
+.v2-active.v2-board-expanded .v2-workspace>.v2-right{display:block!important}
+
+
+/* Compact header follows the approved mobile mock: status/actions remain
+   available, while the six configuration fields open only on demand. */
+.v2-active #v3-settings-toggle{display:none}
+@media(max-width:1099px){
+ .v2-active .v2-quickbar{
+  position:sticky!important;
+  top:0;
+  z-index:100;
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  align-items:center;
+  padding:8px 10px;
+  min-height:0;
+ }
+ .v2-active .v2-brand{
+  flex:1 1 195px;
+  min-width:0;
+  margin:0;
+ }
+ .v2-active .v2-brand b{font-size:clamp(21px,5vw,27px)}
+ .v2-active #v3-settings-toggle{
+  display:inline-flex!important;
+  flex:0 0 auto;
+  order:1;
+  min-height:36px;
+  padding:7px 9px;
+  font-size:12px;
+  border:1px solid #4b7aa2;
+  background:#123753;
+  color:#f3dbab;
+  border-radius:5px;
+ }
+ .v2-active .v2-quickbar>label{
+  display:none!important;
+  flex:1 1 150px;
+  min-width:125px;
+  order:4;
+ }
+ .v2-active.v3-settings-open .v2-quickbar>label{
+  display:grid!important;
+ }
+ .v2-active .v2-quickbar>label>select,
+ .v2-active .v2-quickbar>label>input{
+  width:100%;
+  max-width:none;
+  min-width:0;
+ }
+ .v2-active .v2-quickbar>#v2-status{
+  flex:1 1 130px;
+  order:2;
+  margin:0;
+  min-width:0;
+  line-height:1.25;
+ }
+ .v2-active .v2-quickbar>#v2-status small{font-size:10px}
+ .v2-active .v2-quickbar>#v2-save,
+ .v2-active .v2-quickbar>#v2-share{
+  order:3;
+  min-height:35px;
+  padding:7px 9px;
+ }
+ .v2-active .v2-nav{
+  position:sticky;
+  z-index:95;
+  top:var(--v3-quickbar-height,100px);
+  width:100%;
+  display:flex;
+  overflow-x:auto;
+  white-space:nowrap;
+  background:#061628;
+  margin:0 0 8px;
+  padding:5px 1px;
+  scrollbar-width:thin;
+  border-bottom:1px solid #315676;
+ }
+ .v2-active .v2-nav button{
+  flex:0 0 auto;
+  font-size:11px;
+  padding:6px 9px;
+ }
+ .v2-active .v2-nav::after{
+  content:'›';
+  position:sticky;
+  right:0;
+  display:grid;
+  place-items:center;
+  min-width:20px;
+  background:linear-gradient(90deg,#06162855,#061628);
+  color:#dfba74;
+  pointer-events:none;
+ }
+ .v2-active.v2-secondary .v2-quickbar{
+  position:sticky!important;
+ }
+}
+/* Desktop header retains all build filters in one or two usable rows. */
+@media(min-width:1100px) and (max-width:1499px){
+ .v2-active .v2-quickbar{
+  flex-wrap:wrap;
+  gap:6px 10px;
+  padding:7px 10px;
+  min-height:0;
+ }
+ .v2-active .v2-brand{min-width:195px}
+ .v2-active #v2-status{min-width:130px}
+}
