@@ -41,7 +41,7 @@ const editorNav=make('nav','v3-editor-switch',`
  <button type="button" data-v3-editor="stigma" aria-pressed="false"><span class="v3-editor-symbol" aria-hidden="true">✧</span><span>Stigmas</span></button>
  <button type="button" data-v3-editor="boards" aria-pressed="false"><span class="v3-editor-symbol" aria-hidden="true">◇</span><span>Daevanion</span></button>`);
 editorNav.setAttribute('aria-label','Choose build editor');
-let editorView=window.innerWidth<1100?'boards':'mastery';
+let editorView=window.innerWidth<1100?'boards':window.innerWidth<1700?'gear':'mastery';
 let editorMode=window.innerWidth<1100?'mobile':window.innerWidth<1700?'medium':'wide';
 function selectEditor(editor,focus=false){
  if(!['gear','mastery','stigma','boards'].includes(editor))return;
@@ -678,7 +678,7 @@ function bind(){
   if(next!==editorMode){
    const previous=editorMode;editorMode=next;
    if(next==='mobile')selectEditor('boards');
-   else if(previous==='mobile')selectEditor('mastery');
+   else if(previous==='mobile')selectEditor(next==='medium'?'gear':'mastery');
   }
   queueBoardFit();
  });
