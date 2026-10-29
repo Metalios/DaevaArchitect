@@ -347,6 +347,9 @@ function actionsView(m){
  ];
  const breakpoint=typeof progressionNextBreakpoint==='function'?progressionNextBreakpoint(state.class,account().context,name=>effective(name,m),budget('crystals')):'';
  next.innerHTML=`<details class="v4-next-details"><summary><b>Next recommended upgrades</b><span>Mastery · Stigma · Daevanion</span></summary><div class="v4-next-content">`+(breakpoint?`<p class="v2-next-progress">${esc(breakpoint)}</p>`:'')+parts.map(([name,detail,target],i)=>`<button data-v2-focus="${target}"><em>${i+1}</em><span><b>${name}</b><small>${esc(detail)}</small></span><span>→</span></button>`).join('')+'</div></details>';
+ // Keep Compare builds, class-specific combat evidence and guidance
+ // accessible in the collapsed upgrade drawer, rather than deleting them.
+ next.querySelector('.v4-next-content')?.append(note,combatEvidence);
  $('v2-status').innerHTML=modifiedBuild()?'<b class="modified">● Modified progression</b><small>Custom allocation</small>':'<b>● Following recommended</b><small>Your own gear stays separate</small>';
  $('v2-reset-allocations').hidden=!modifiedBuild();
  $('v2-board-notice').textContent=lastBoardRecalculation?.message||message||'';
