@@ -62,6 +62,18 @@ try{
    fullPage:width===1280
   });
   assert.equal(await page.locator('.v2-workspace').isVisible(),true,width+': unified workspace hidden');
+  if(width>=1920){
+   const layout=await page.evaluate(()=>{
+    const mastery=document.querySelector('.v2-center #mastery').getBoundingClientRect();
+    const stigma=document.querySelector('.v2-center #stigma').getBoundingClientRect();
+    const cp=document.querySelector('.v2-left .gear-cp').getBoundingClientRect();
+    return {masterBottom:mastery.bottom,stigmaTop:stigma.top,cpHeight:cp.height};
+   });
+   assert(layout.masterBottom<=layout.stigmaTop+2,
+     width+': Mastery overlaps Stigma panel: '+JSON.stringify(layout));
+   assert(layout.cpHeight<=95,
+     width+': Combat Power summary still dominates Equipment: '+JSON.stringify(layout));
+  }
   // Board tabs and routine commands are a single compact dock over the map.
   const dock=page.locator('.v2-board-dock');
   assert.equal(await dock.count(),1,width+': compact board dock is missing');
@@ -323,7 +335,7 @@ try{
    await inspect.click();
    assert.equal(await page.locator('#v2-board-inspector').isVisible(),true,
      'Tile inspector drawer failed to open');
-   await inspect.click();
+   await page.locator('#v4-inspector-close').click();
    assert.equal(await page.locator('#v2-board-inspector').isVisible(),false,
      'Tile inspector drawer failed to close');
   }
