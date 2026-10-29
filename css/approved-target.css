@@ -358,3 +358,98 @@
   max-height:180px;overflow:auto;
  }
 }
+
+/* Screenshot correction: the original Mastery and Stigma tabs used competing
+   content min-heights and overlaid each other in a fixed-height editor. */
+@media(min-width:1100px){
+ .v2-active.v2-has-class:not(.v2-secondary) .v2-workspace>.v2-center{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch;
+  justify-content:flex-start;
+  gap:7px!important;
+  height:100%;
+  min-height:0!important;
+  overflow:hidden!important;
+ }
+ .v2-active.v2-has-class:not(.v2-secondary) .v2-center #mastery{
+  display:flex!important;
+  flex-direction:column;
+  flex:1 1 auto;
+  min-height:0!important;
+  max-height:none!important;
+  overflow:hidden!important;
+ }
+ .v2-active.v2-has-class:not(.v2-secondary) .v2-center .v2-master-editor{
+  display:flex!important;
+  flex-direction:column!important;
+  flex:1 1 auto;
+  min-height:0!important;
+  max-height:100%;
+  overflow:hidden!important;
+ }
+ .v2-active.v2-has-class:not(.v2-secondary) .v2-center #v2-skill-list{
+  flex:1 1 auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  height:auto!important;
+  overflow-y:auto!important;
+ }
+ .v2-active.v2-has-class:not(.v2-secondary) .v2-center #stigma{
+  position:relative!important;
+  display:flex;
+  flex-direction:column;
+  flex:0 0 210px;
+  min-height:0!important;
+  max-height:210px!important;
+  overflow-x:hidden;
+  overflow-y:auto;
+  z-index:1;
+  background:#0a2036;
+ }
+ .v2-active.v2-has-class:not(.v2-secondary) .v2-center #stigma .v2-stigma-cards{
+  flex:0 0 auto;
+ }
+ .v2-active.v2-has-class:not(.v2-secondary) .v2-center .v2-advanced-skills{
+  flex:none;
+ }
+}
+/* There is no need for a 200px explanation panel just to show one CP number.
+   Detailed conditions and calibration moved to Advanced in the DOM. */
+.v2-active .v2-left .gear-cp{
+ grid-template-columns:minmax(0,1fr) auto!important;
+ min-height:52px!important;
+ max-height:80px!important;
+ overflow:hidden;
+}
+.v2-active .v2-left .gear-cp>div:first-child{
+ min-width:0;
+ font-size:10px;
+}
+.v2-active .v2-left .gear-cp>div:first-child .eyebrow{
+ font-size:10px;
+}
+.v2-active .v2-left .gear-cp .cp-estimate-readout{
+ display:block!important;
+}
+.v2-active #v4-inspector-close{display:none}
+@media(min-width:1100px) and (max-width:1699px){
+ .v2-active #boards.v2-inspector-open #v4-inspector-close{
+  display:block!important;
+  position:sticky;
+  top:0;
+  z-index:120;
+  margin:0 0 6px auto;
+  padding:8px 11px;
+  border:1px solid #7a9fbd;
+  border-radius:5px;
+  background:#1b537b;
+  color:#fff0d4;
+  cursor:pointer;
+ }
+}
+/* Mobile one-editor view has no competing Stigma below Mastery. */
+@media(max-width:1099px){
+ .v2-active .v2-center #mastery{min-height:0!important}
+ .v2-active .v2-center #stigma{min-height:0!important}
+}
