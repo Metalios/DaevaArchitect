@@ -54,6 +54,7 @@ try{
  });
  assert.deepEqual(errors,[],'JS exceptions');
  assert.deepEqual(result.failures,[],result.failures.join('\n'));
+ await page.locator('[data-v3-editor="gear"]').click();
  const layout=await page.evaluate(()=>{
   state.gearView='inspect';render();
   const root=document.querySelector('#gear-doll-grid.inspect');
