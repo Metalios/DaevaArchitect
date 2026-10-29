@@ -471,3 +471,17 @@
  }
  .v2-active .v2-center .v2-skill-label b{font-size:12px!important}
 }
+
+
+/* Keep the medium-width editor rail authoritative. The wide-desktop flex
+   fix must not resurrect the Mastery panel while Equipment is selected. */
+@media(min-width:1100px) and (max-width:1699px){
+ .v2-active.v2-has-class:not(.v2-secondary) .v2-workspace[data-editor="gear"]>.v2-center,
+ .v2-active.v2-has-class:not(.v2-secondary) .v2-workspace[data-editor="boards"]>.v2-center{
+  display:none!important;
+ }
+ .v2-active.v2-has-class:not(.v2-secondary) .v2-workspace[data-editor="mastery"]>.v2-center,
+ .v2-active.v2-has-class:not(.v2-secondary) .v2-workspace[data-editor="stigma"]>.v2-center{
+  display:flex!important;
+ }
+}
