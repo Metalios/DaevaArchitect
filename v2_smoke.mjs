@@ -213,6 +213,46 @@ try{
   await page.close();
   console.log('v2 layout checked at '+width+'×'+height);
  }
+
+ // Verify that a short desktop shows a usable board without page scrolling.
+ for(const [width,height] of [[1280,720],[1920,768],[1920,1080]]){
+  const page=await browser.newPage({viewport:{width,height},deviceScaleFactor:1});
+  page.on('pageerror',error=>errors.push(width+'x'+height+': '+error.message));
+  await page.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'domcontentloaded'});
+  await page.locator('#class-buttons [data-class="templar"]').click();
+  await page.waitForFunction(()=>document.querySelector('#v2-board-fit')?.getAttribute('aria-pressed')==='true');
+  const initial=await page.evaluate(()=>{
+   const work=document.querySelector('.v2-workspace').getBoundingClientRect();
+   const view=document.querySelector('#boards .board-scroll').getBoundingClientRect();
+   const grid=document.querySelector('#board-grid').getBoundingClientRect();
+   return {bottom:work.bottom,boardHeight:view.height,gridHeight:grid.height,
+     tile:+document.querySelector('#v2-zoom-label').textContent.replace('px','')};
+  });
+  console.log('Auto-fit '+width+'x'+height+': '+JSON.stringify(initial));
+  assert(initial.bottom<=height+16,'Workspace beyond viewport: '+JSON.stringify(initial));
+  assert(initial.boardHeight>=220,'Board viewport too short: '+JSON.stringify(initial));
+  assert(initial.tile>=26&&initial.tile<=52,'Invalid tile fit');
+  if(height>=900)assert(initial.gridHeight<=initial.boardHeight+3,
+    'Board should fit vertically in 1080p: '+JSON.stringify(initial));
+  await page.locator('#v2-zoom-plus').click();
+  assert.equal(await page.locator('#v2-board-fit').getAttribute('aria-pressed'),'false');
+  await page.locator('#v2-board-fit').click();
+  assert.equal(await page.locator('#v2-board-fit').getAttribute('aria-pressed'),'true');
+  await page.locator('#v2-board-expand').click();
+  const focus=await page.locator('.v2-right').evaluate(el=>{
+   const r=el.getBoundingClientRect();return {top:r.top,bottom:r.bottom};
+  });
+  assert(focus.top<=1&&focus.bottom>=height-1,'Focus does not fill viewport: '+JSON.stringify(focus));
+  await page.keyboard.press('Escape');
+  assert.equal(await page.evaluate(()=>document.body.classList.contains('v2-board-expanded')),false);
+  if(width===1920&&height===768){
+   fs.mkdirSync('v2-previews',{recursive:true});
+   await page.screenshot({path:'v2-previews/viewport-first-1920x768.png'});
+   await page.locator('#v2-board-expand').click();
+   await page.screenshot({path:'v2-previews/board-focus-1920x768.png'});
+  }
+  await page.close();
+ }
  assert.equal(errors.length,0,errors.join('\n'));
  console.log('v2 browser errors:',errors.length);
 }finally{await browser.close();await new Promise(resolve=>server.close(resolve))}
