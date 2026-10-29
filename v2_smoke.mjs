@@ -57,6 +57,43 @@ try{
   await page.locator('#class-buttons [data-class="templar"]').click();
   await page.locator('#v2-skill-list .v2-skill').first().waitFor();
   assert.equal(await page.locator('.v2-workspace').isVisible(),true,width+': unified workspace hidden');
+  // Board tabs and routine commands are a single compact dock over the map.
+  const dock=page.locator('.v2-board-dock');
+  assert.equal(await dock.count(),1,width+': compact board dock is missing');
+  const boardGeometry=await page.evaluate(()=>{
+    const tabs=document.querySelector('#board-tabs').getBoundingClientRect();
+    const map=document.querySelector('.board-map-head').getBoundingClientRect();
+    const options=document.querySelector('#v2-board-options');
+    return {gap:map.top-tabs.bottom,expanded:options.open};
+  });
+  assert(boardGeometry.gap>=0&&boardGeometry.gap<160,
+    width+': oversized controls separate tabs from map '+JSON.stringify(boardGeometry));
+  assert.equal(boardGeometry.expanded,false,width+': destructive tools expanded by default');
+  const more=page.locator('#v2-board-options');
+  await more.locator(':scope > summary').click();
+  assert.equal(await more.evaluate(el=>el.open),true,width+': More tools inaccessible');
+  assert.equal(await page.locator('#v2-board-reset-selections').isVisible(),true,
+    width+': destructive reset missing from More tools');
+  await more.locator(':scope > summary').click();
+  assert.equal(await more.evaluate(el=>el.open),false);
+  await page.locator('#board-tabs [data-board="Zikel"]').click();
+  assert.match(await page.locator('#board-map-title').innerText(),/Zikel/,width+': board switch failed');
+  await page.locator('#v2-board-fit').click();
+  const fitZoom=Number((await page.locator('#v2-zoom-label').innerText()).replace('px',''));
+  assert(fitZoom>=28&&fitZoom<=52,width+': invalid fitted zoom');
+  if(width===1280){
+    const sticky=await page.evaluate(()=>{
+      const right=document.querySelector('.v2-right'),nav=document.querySelector('.v2-board-dock');
+      right.scrollTop=250;
+      const rect=right.getBoundingClientRect(),dock=nav.getBoundingClientRect();
+      const result={scroll:right.scrollTop,top:dock.top-rect.top};
+      right.scrollTop=0;
+      return result;
+    });
+    assert(sticky.scroll<10||Math.abs(sticky.top)<16,
+      width+': board navigation escapes independent scroll column '+JSON.stringify(sticky));
+  }
+
   if(width===1920||width===3440){
     const rects=await page.evaluate(()=>['.v2-left','.v2-center','.v2-right'].map(selector=>{
       const {top,left,width}=document.querySelector(selector).getBoundingClientRect();return {top,left,width}

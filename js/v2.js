@@ -49,7 +49,7 @@ const boardControls=make('div','v2-board-controls',`
  <div class="v2-board-secondary-actions" role="group" aria-label="Daevanion tile and view actions">
    <button type="button" id="v2-board-toggle">Edit selected node</button>
    <button type="button" id="v2-mark-obtained">Mark tile obtained</button>
-   <button type="button" id="v2-zoom-minus" aria-label="Zoom out">−</button><span id="v2-zoom-label">40px</span><button type="button" id="v2-zoom-plus" aria-label="Zoom in">+</button><button type="button" id="v2-board-expand">Expand board</button>
+   <button type="button" id="v2-zoom-minus" aria-label="Zoom out">−</button><span id="v2-zoom-label">40px</span><button type="button" id="v2-zoom-plus" aria-label="Zoom in">+</button><button type="button" id="v2-board-fit" title="Size the board to fit its visible area">Fit board</button><button type="button" id="v2-board-expand">Expand board</button>
  </div>
  <details class="v2-board-method">
    <summary>What does the recommendation consider?</summary>
@@ -92,7 +92,25 @@ function mount(){
  if(search)master.querySelector('.v2-skill-toolbar').append(search);
  master.querySelector('.v2-mastery-hint').append(slim);
  $('stigma').append(stigmas);$('stigma').querySelector('.section-title').append(stigmaStatus);
- $('board-tabs').after(boardControls);
+ // Keep board-switching immediately beside the board, even when the
+ // workspace's right column scrolls independently from the rest of the page.
+ const boardTabs=$('board-tabs'),boardDock=make('div','v2-board-dock');
+ boardTabs.before(boardDock);
+ boardDock.append(boardTabs,boardControls);
+ const quickActions=boardControls.querySelector('.v2-board-secondary-actions');
+ const primaryActions=boardControls.querySelector('.v2-board-primary-actions');
+ quickActions.insertBefore($('v2-board-restore'),quickActions.firstChild);
+ const more=make('details','v2-board-options','<summary>More tools <span aria-hidden="true">▾</span></summary>');
+ more.id='v2-board-options';
+ more.setAttribute('aria-label','Additional Daevanion planner actions and model details');
+ const moreBody=make('div','v2-board-options-body');
+ more.append(moreBody);
+ for(const item of [
+   boardControls.querySelector('.v2-board-callout'),primaryActions,
+   boardControls.querySelector('.v2-board-method'),$('v2-optimizer-evidence')
+ ])if(item)moreBody.append(item);
+ quickActions.append(more);
+ // Recalculation/ownership notices stay visible, outside the More menu.
  const side=$('boards').querySelector('.board-side');
  if(side){
   const extras=make('details','v2-board-extra','<summary>Board bonuses, purchase order & next key nodes</summary>');
@@ -429,9 +447,32 @@ function bind(){
   if(toggleBoardObtained(state.node))render();else renderBoards(model());
  });
  $('v2-board-expand').addEventListener('click',()=>{const expanded=document.body.classList.toggle('v2-board-expanded');$('v2-board-expand').textContent=expanded?'Exit expanded':'Expand board'});
- for(const [id,step] of [['v2-zoom-minus',-4],['v2-zoom-plus',4]])$(id).addEventListener('click',()=>{zoom=Math.min(52,Math.max(32,zoom+step));$('board-grid').style.setProperty('--v2-node',zoom+'px');$('v2-zoom-label').textContent=zoom+'px'});
+ for(const [id,step] of [['v2-zoom-minus',-4],['v2-zoom-plus',4]])$(id).addEventListener('click',()=>{
+   zoom=Math.min(52,Math.max(28,zoom+step));
+   $('board-grid').style.setProperty('--v2-node',zoom+'px');
+   $('v2-zoom-label').textContent=zoom+'px';
+ });
+ $('v2-board-fit').addEventListener('click',()=>{
+   const view=$('boards').querySelector('.board-scroll');
+   // 15 tile rows/columns and fourteen 3px gaps. Fit within the existing
+   // board viewport; do not resize the page, scroll the browser or alter nodes.
+   const availableWidth=Math.max(0,view.clientWidth-28);
+   const availableHeight=Math.max(0,view.clientHeight-28);
+   const fit=Math.floor((Math.min(availableWidth,availableHeight)-42)/15);
+   zoom=Math.min(52,Math.max(28,fit));
+   $('board-grid').style.setProperty('--v2-node',zoom+'px');
+   $('v2-zoom-label').textContent=zoom+'px';
+ });
  $('mastery-search').addEventListener('input',()=>sync(model()));
- $('board-tabs').addEventListener('click',()=>setTimeout(()=>sync(model()),0));
+ $('board-tabs').addEventListener('click',()=>{
+   const options=$('v2-board-options');
+   if(options)options.open=false;
+   setTimeout(()=>sync(model()),0);
+ });
+ document.addEventListener('pointerdown',e=>{
+   const options=$('v2-board-options');
+   if(options?.open&&!options.contains(e.target))options.open=false;
+ });
  $('board-grid').addEventListener('click',()=>setTimeout(()=>sync(model()),0));
 }
 window.syncV2=sync;
