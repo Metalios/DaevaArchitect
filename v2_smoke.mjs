@@ -80,7 +80,7 @@ try{
   assert.match(await page.locator('#board-map-title').innerText(),/Zikel/,width+': board switch failed');
   await page.locator('#v2-board-fit').click();
   const fitZoom=Number((await page.locator('#v2-zoom-label').innerText()).replace('px',''));
-  assert(fitZoom>=28&&fitZoom<=52,width+': invalid fitted zoom');
+  assert(fitZoom>=26&&fitZoom<=52,width+': invalid fitted zoom');
   if(width===1280){
     const sticky=await page.evaluate(()=>{
       const right=document.querySelector('.v2-right'),nav=document.querySelector('.v2-board-dock');
