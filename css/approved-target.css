@@ -453,3 +453,21 @@
  .v2-active .v2-center #mastery{min-height:0!important}
  .v2-active .v2-center #stigma{min-height:0!important}
 }
+
+/* A 340px auxiliary Mastery editor cannot display five dense columns.
+   The approved medium layout shows Gear by default; when Mastery is chosen,
+   preserve complete skill names and rank controls, keeping Specialty choices
+   accessible through the existing selected-skill flyout. */
+@media(min-width:1100px) and (max-width:1699px){
+ .v2-active .v2-center .v2-editor-title{
+  grid-template-columns:minmax(0,1fr) 90px 54px!important;
+ }
+ .v2-active .v2-center .v2-skill{
+  grid-template-columns:minmax(0,1fr) 90px 54px!important;
+ }
+ .v2-active .v2-center .v4-specialty-heading,
+ .v2-active .v2-center .v4-specialty-summary{
+  display:none!important;
+ }
+ .v2-active .v2-center .v2-skill-label b{font-size:12px!important}
+}
