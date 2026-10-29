@@ -18,6 +18,36 @@ const server=http.createServer((req,res)=>{
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
 const errors=[];
+async function verifyAdvancedCards(page,width){
+ const details=page.locator('.v2-advanced-skills');
+ await details.evaluate(el=>{el.open=true});
+ const result=await page.evaluate(()=>{
+   const cards=[...document.querySelectorAll('#mastery .v2-advanced-skills #skill-grid .skill-card')].slice(0,6);
+   return cards.map(card=>{
+     const name=card.querySelector('h3'),identity=card.querySelector('.mastery-identity'),
+       target=card.querySelector('.mastery-target'),specialty=card.querySelector('.mastery-picked li'),
+       nameRect=name.getBoundingClientRect(),identityRect=identity.getBoundingClientRect(),
+       targetRect=target.getBoundingClientRect();
+     const intersection=Math.max(0,Math.min(identityRect.right,targetRect.right)-Math.max(identityRect.left,targetRect.left))*
+       Math.max(0,Math.min(identityRect.bottom,targetRect.bottom)-Math.max(identityRect.top,targetRect.top));
+     const lineHeight=parseFloat(getComputedStyle(name).lineHeight)||24;
+     return {title:name.textContent.trim(),cardWidth:card.getBoundingClientRect().width,
+       titleWidth:nameRect.width,titleLines:nameRect.height/lineHeight,intersection,
+       specialtyWidth:specialty?.getBoundingClientRect().width||0,
+       overflow:card.scrollWidth-card.clientWidth};
+   });
+ });
+ assert(result.length>=3,width+': advanced Mastery cards absent');
+ for(const card of result){
+   assert(card.titleWidth>=100,width+': skill title collapsed into vertical letters: '+JSON.stringify(card));
+   assert(card.titleLines<=3.25,width+': title wrapped excessively: '+JSON.stringify(card));
+   assert(card.intersection<2,width+': name and target rank overlap: '+JSON.stringify(card));
+   assert(card.specialtyWidth===0||card.specialtyWidth>=140,
+     width+': specialty is too narrow: '+JSON.stringify(card));
+   assert(card.overflow<=3,width+': card content clipped: '+JSON.stringify(card));
+ }
+ await details.evaluate(el=>{el.open=false});
+}
 try{
  for(const width of [1280,1920,3440]){
   const page=await browser.newPage({viewport:{width,height:1080},deviceScaleFactor:1});
@@ -53,6 +83,16 @@ try{
   await page.waitForFunction(()=>window.scrollY===0);
   fs.mkdirSync('v2-previews',{recursive:true});
   await page.screenshot({path:'v2-previews/workspace-'+width+'.png',fullPage:true});
+   await verifyAdvancedCards(page,width);
+   if(width===1920){
+     await page.evaluate(()=>{state.class='sorcerer';state.tab='mastery';render()});
+     await verifyAdvancedCards(page,width);
+     await page.locator('.v2-advanced-skills').evaluate(el=>{el.open=true});
+     await page.locator('#mastery .skill-card').first().screenshot({
+       path:'v2-previews/advanced-mastery-sorcerer-1920.png'
+     });
+     await page.evaluate(()=>{state.class='templar';state.tab='mastery';render()});
+   }
   // Inputs are not a build decision.
   await page.locator('#mastery-input').fill('220');
   await page.locator('#mastery-input').press('Tab');
@@ -121,12 +161,13 @@ try{
   console.log('v2 browser smoke passed at '+width+'×1080');
  }
  // Additional layout sanity checks for portrait and 4K displays.
- for(const [width,height] of [[800,1280],[3840,2160]]){
+ for(const [width,height] of [[390,844],[800,1280],[3840,2160]]){
   const page=await browser.newPage({viewport:{width,height},deviceScaleFactor:1});
   page.on('pageerror',error=>errors.push(width+': '+error.message));
   await page.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'domcontentloaded'});
   await page.locator('#class-buttons [data-class="templar"]').click();
   await page.locator('#v2-skill-list .v2-skill').first().waitFor();
+   await verifyAdvancedCards(page,width);
   assert.equal(await page.locator('#board-grid .node').count(),89,width+': board geometry changed');
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+8),true,width+': page overflow');
   await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
