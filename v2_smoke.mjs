@@ -172,6 +172,9 @@ try{
      await page.locator('#mastery .skill-card').first().screenshot({
        path:'v2-previews/advanced-mastery-sorcerer-1920.png'
      });
+     // Advanced is now a focused editor: close it before interacting with
+     // the normal mastery list in the rest of the smoke test.
+     await page.locator('.v2-advanced-skills').evaluate(el=>{el.open=false});
      await page.evaluate(()=>{state.class='templar';state.tab='mastery';render()});
    }
   // Earned point budget inputs currently live in Equipment. Select that
