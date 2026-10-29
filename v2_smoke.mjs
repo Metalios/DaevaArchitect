@@ -224,7 +224,9 @@ try{
   page.on('pageerror',error=>errors.push(width+': '+error.message));
   await page.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'domcontentloaded'});
   await page.locator('#class-buttons [data-class="templar"]').click();
-  await page.locator('#v2-skill-list .v2-skill').first().waitFor();
+  // Mobile initially shows Daevanion, so Mastery is mounted but hidden.
+  // Verify it is populated before explicitly selecting the Mastery editor.
+  await page.locator('#v2-skill-list .v2-skill').first().waitFor({state:width<1100?'attached':'visible'});
    if(width<1100){
     assert.equal(await page.locator('.v3-editor-switch').isVisible(),true);
     assert.equal(await page.locator('#boards').isVisible(),true,
