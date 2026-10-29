@@ -111,6 +111,9 @@ try{
   assert(square,width+': Daevanion tiles must be square');
   assert((await page.locator('#board-grid .node.recommended').count())>0,width+': missing recommendation overlay');
   assert.match(await page.locator('#v2-status').innerText(),/Following recommended/);
+  // Medium widths have an explicit editor rail. Inspect Gear in its
+  // visible editor instead of trying to click an intentionally hidden panel.
+  if(width<1700)await page.locator('[data-v3-editor="gear"]').click();
   // Advanced equipment details must not dominate the main screen.
   const advanced=page.locator('.v2-gear-advanced');
   assert.equal(await advanced.evaluate(el=>el.open),false);
@@ -118,6 +121,7 @@ try{
   assert.equal(await advanced.evaluate(el=>el.open),true);
   assert.equal(await page.locator('#gear-arcana-grid').count(),1);
   await advanced.locator(':scope > summary').click();
+  if(width<1700)await page.locator('[data-v3-editor="mastery"]').click();
   await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
   await page.waitForFunction(()=>window.scrollY===0);
   fs.mkdirSync('v2-previews',{recursive:true});
