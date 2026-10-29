@@ -42,6 +42,7 @@ const editorNav=make('nav','v3-editor-switch',`
  <button type="button" data-v3-editor="boards" aria-pressed="false"><span class="v3-editor-symbol" aria-hidden="true">◇</span><span>Daevanion</span></button>`);
 editorNav.setAttribute('aria-label','Choose build editor');
 let editorView=window.innerWidth<1100?'boards':'mastery';
+let editorMode=window.innerWidth<1100?'mobile':window.innerWidth<1700?'medium':'wide';
 function selectEditor(editor,focus=false){
  if(!['gear','mastery','stigma','boards'].includes(editor))return;
  editorView=editor;
@@ -606,7 +607,15 @@ function bind(){
      queueBoardFit();
    }
  });
- window.addEventListener('resize',queueBoardFit);
+ window.addEventListener('resize',()=>{
+  const next=window.innerWidth<1100?'mobile':window.innerWidth<1700?'medium':'wide';
+  if(next!==editorMode){
+   const previous=editorMode;editorMode=next;
+   if(next==='mobile')selectEditor('boards');
+   else if(previous==='mobile')selectEditor('mastery');
+  }
+  queueBoardFit();
+ });
  if(typeof ResizeObserver!=='undefined'){
    const boardViewport=$('boards').querySelector('.board-scroll');
    new ResizeObserver(queueBoardFit).observe(boardViewport);
