@@ -117,7 +117,9 @@ function mount(){
  // optional Arcana/Wings/CP and fine-grained stat summaries to make every
  // workspace page several screens tall. Their original controls stay live.
  $('gear').append(gearDetails);
- if(window.innerWidth<1700&&!state.gearView)state.gearView='inventory';
+ // The approved medium desktop mock uses the compact paperdoll/Inspect
+ // presentation. Keep Inventory as the touch-first phone default.
+ if(!state.gearView)state.gearView=window.innerWidth<700?'inventory':'inspect';
  const earned=p.querySelector('.controls');
  if(earned)$('gear').append(earned);
  // A subtle, scalable armor silhouette is decorative only. Unlike the
