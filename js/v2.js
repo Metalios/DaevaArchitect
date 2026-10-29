@@ -140,7 +140,17 @@ function mount(){
  const stats=gearDetails.querySelector('#gear-fixed-stats')?.closest('.panel');
  if(stats&&gearMain){stats.classList.add('v4-equipment-stats');gearMain.append(stats);}
  const cp=$('gear').querySelector('.gear-cp');
- if(cp)$('gear').querySelector('.gear-intro')?.after(cp);
+ if(cp){
+   $('gear').querySelector('.gear-intro')?.after(cp);
+   // Keep only the real estimated CP readout in the primary editor.
+   // Detailed goals, calibration, assumptions remain in Advanced.
+   for(const detail of [
+     cp.querySelector(':scope > label'),
+     cp.querySelector('#gear-cp-status'),
+     cp.querySelector('#gear-cp-assumption'),
+     cp.querySelector('.cp-method')
+   ])if(detail)gearDetails.append(detail);
+ }
  for(const extra of ['#gear>.notice','.gear-credit']){
    const part=$('gear').querySelector(extra);
    if(part)gearDetails.append(part);
@@ -190,6 +200,21 @@ function mount(){
    '<div class="v4-progress-track"><span id="v4-progress-fill"></span></div>'+
    '<p id="v4-progress-caption">Recommended and obtained progress</p>');
   side.prepend(progress);
+  const closeInspector=make('button','v4-inspector-close','✕ Close tile details');
+  closeInspector.id='v4-inspector-close';
+  closeInspector.type='button';
+  closeInspector.setAttribute('aria-label','Close tile details inspector');
+  side.prepend(closeInspector);
+  closeInspector.addEventListener('click',()=>{
+    const boards=$('boards');
+    boards.classList.remove('v2-inspector-open');
+    const btn=$('v2-inspector-toggle');
+    if(btn){
+      btn.setAttribute('aria-expanded','false');
+      btn.textContent='Tile details';
+      btn.focus({preventScroll:true});
+    }
+  });
   const extras=make('details','v2-board-extra','<summary>Board bonuses, purchase order & next key nodes</summary>');
   const current=side.querySelector('.board-effects-panel');
   const purchases=$('purchase-list')?.closest('.panel');
