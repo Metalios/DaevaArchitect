@@ -1000,3 +1000,306 @@
   display:none;
  }
 }
+
+/* Viewport-first desktop editing: one workspace, not an endlessly tall page
+   with a second tall board trapped inside it. The next-upgrade footer stays
+   available below the workspace without forcing users to visit it for edits. */
+@media(min-width:1100px) and (min-height:600px){
+ .v2-active.v2-has-class:not(.v2-secondary):not(.v2-board-expanded) .v2-workspace{
+  height:var(--v2-workspace-space,calc(100dvh - 143px));
+  min-height:340px;
+  align-items:stretch;
+  overflow:visible;
+ }
+ .v2-active.v2-has-class:not(.v2-secondary):not(.v2-board-expanded) .v2-workspace>.v2-column{
+  height:100%;
+  min-height:0;
+  max-height:none;
+  overflow-y:auto;
+  overscroll-behavior-y:contain;
+  scrollbar-width:thin;
+ }
+ .v2-active .v2-right #boards{
+  height:100%;
+  min-height:0;
+  display:flex!important;
+  flex-direction:column;
+  overflow:visible;
+ }
+ .v2-active .v2-right #boards>.section-title{
+  /* The dock and crystal tracker already identify the current board. */
+  display:none!important;
+ }
+ .v2-active .v2-right #boards>.board-crystal-tracker{
+  flex:0 0 auto;
+ }
+ .v2-active .v2-right #boards>.v2-board-dock{
+  flex:0 0 auto;
+ }
+ .v2-active .v2-right #boards>.board-layout{
+  flex:1 1 auto;
+  min-height:0;
+  margin:0;
+  align-items:stretch;
+ }
+ .v2-active .v2-right .board-layout>div:first-child{
+  display:flex;
+  min-width:0;
+  min-height:0;
+  flex-direction:column;
+ }
+ .v2-active .v2-right .board-layout .board-scroll{
+  flex:1 1 auto;
+  min-height:0;
+  max-height:none;
+  height:auto;
+  overflow:auto;
+  padding:9px;
+ }
+ .v2-active .v2-right .board-side{
+  min-height:0;
+  max-height:100%;
+  overflow:auto;
+  overscroll-behavior:contain;
+ }
+ .v2-active .v2-board-options-body .timeline,
+ .v2-active .v2-board-options-body .route-footnote,
+ .v2-active .v2-board-options-body .board-icon-credit{
+  width:100%;
+  margin:0;
+ }
+ .v2-active .v2-board-options-body .timeline{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:9px;
+  padding:10px;
+  border:1px solid #35516c;
+  border-radius:5px;
+ }
+ .v2-active .v2-board-options-body .timeline input{flex:1 1 130px;min-width:0}
+ .v2-active .v2-board-options-body .board-icon-credit{
+  font-size:10px;
+  line-height:1.5;
+ }
+ .v2-active .v2-board-options-body .route-footnote{
+  font-size:11px;
+ }
+ .v2-active .v2-right #boards>.v2-board-dock{
+  position:relative;
+  top:auto;
+  margin-bottom:5px;
+  padding:5px 7px;
+  box-shadow:none;
+ }
+ .v2-active .v2-right .board-map-head{
+  flex:0 0 auto;
+  padding:5px 9px;
+  margin-bottom:4px;
+ }
+ .v2-active .v2-right #board-map-progress{
+  display:none;
+ }
+ .v2-active .v2-right .board-grid{
+  margin:auto;
+ }
+}
+/* A deliberate focus state uses the full viewport to make a 15x15 board
+   readable at shorter heights. Exit is always in the toolbar or on Escape.
+   Mobile retains its natural page/board scrolling behavior. */
+@media(min-width:1100px){
+ .v2-active.v2-board-expanded .v2-right{
+  position:fixed!important;
+  inset:0;
+  z-index:110;
+  width:100vw;
+  height:100dvh;
+  max-height:none;
+  min-height:0;
+  overflow:hidden;
+  padding:8px;
+  background:#06111f;
+  display:block;
+ }
+ .v2-active.v2-board-expanded .v2-right #boards{
+  display:flex!important;
+  flex-direction:column;
+  height:100%;
+  min-height:0;
+  overflow:visible;
+  padding:7px;
+ }
+ .v2-active.v2-board-expanded .v2-right #boards>.section-title{
+  display:none!important;
+ }
+ .v2-active.v2-board-expanded .v2-right #boards>.board-layout{
+  flex:1 1 auto;
+  min-height:0;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(235px,295px);
+  align-items:stretch;
+ }
+ .v2-active.v2-board-expanded .v2-right .board-layout>div:first-child{
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+  min-height:0;
+ }
+ .v2-active.v2-board-expanded .v2-right .board-scroll{
+  flex:1 1 auto;
+  min-height:0;
+  max-height:none;
+  height:auto;
+  padding:9px;
+  overflow:auto;
+ }
+ .v2-active.v2-board-expanded .v2-right .board-side{
+  overflow:auto;
+  min-height:0;
+  max-height:100%;
+ }
+ .v2-active.v2-board-expanded .v2-right #boards>.v2-board-dock{
+  position:relative;
+  top:auto;
+ }
+ .v2-active.v2-board-expanded .v2-right .board-map-head{margin-bottom:5px}
+ .v2-active.v2-board-expanded .v2-board-options-body .timeline,
+ .v2-active.v2-board-expanded .v2-board-options-body .board-icon-credit,
+ .v2-active.v2-board-expanded .v2-board-options-body .route-footnote{
+  margin:0;
+  width:100%;
+ }
+}
+
+/* At 1100–1699px, the original inline sidebar became a second grid row
+   below the map, squeezing the map viewport to virtually nothing at 720p.
+   Keep node inspection in a user-invoked, independently scrolling drawer. */
+.v2-active #v2-inspector-toggle{display:none}
+@media(min-width:1100px) and (max-width:1699px){
+ .v2-active:not(.v2-board-expanded) .v2-right #boards>.board-layout{
+  position:relative;
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:minmax(0,1fr);
+  min-height:0;
+ }
+ .v2-active:not(.v2-board-expanded) .v2-right .board-layout>div:first-child{
+  min-height:0;
+ }
+ .v2-active:not(.v2-board-expanded) #v2-inspector-toggle{
+  display:inline-flex;
+ }
+ .v2-active:not(.v2-board-expanded) .v2-right .board-side{
+  display:none;
+  position:fixed;
+  inset:124px 12px 18px auto;
+  z-index:90;
+  width:min(355px,37vw);
+  max-height:none;
+  min-height:0;
+  padding:12px;
+  overflow-y:auto;
+  border:1px solid #6591b5;
+  border-radius:9px;
+  background:#0a2136;
+  box-shadow:0 15px 55px #000d;
+ }
+ .v2-active:not(.v2-board-expanded) #boards.v2-inspector-open .board-side{
+  display:block;
+ }
+ .v2-active:not(.v2-board-expanded) #boards.v2-inspector-open #v2-inspector-toggle{
+  border-color:#8ad3e7;
+  background:#245c81;
+ }
+}
+
+/* Narrow desktop: the map is the only in-flow child of the board canvas.
+   Use flex, not an implicit two-row grid whose leftover second row could
+   collapse the map viewport before the inspector is removed from flow. */
+@media(min-width:1100px) and (max-width:1699px) and (min-height:600px){
+ .v2-active:not(.v2-board-expanded) .v2-right #boards>.board-layout{
+  display:flex!important;
+  flex-direction:column;
+  height:100%;
+  min-height:0;
+ }
+ .v2-active:not(.v2-board-expanded) .v2-right #boards>.board-layout>div:first-child{
+  display:flex;
+  flex:1 1 auto;
+  flex-direction:column;
+  height:100%;
+  min-height:0;
+ }
+ .v2-active:not(.v2-board-expanded) .v2-right #boards .board-scroll{
+  flex:1 1 auto;
+  min-height:0;
+  height:auto;
+ }
+}
+
+
+/* The right-hand .v2-column was still a content-sized CSS grid row. Its
+   inner #boards therefore resolved height:100% against ~266px instead of
+   the viewport-height column. Make it a flex column so the board fills the
+   actual panel, including at 1280x720. */
+@media(min-width:1100px) and (min-height:600px){
+ .v2-active.v2-has-class:not(.v2-secondary):not(.v2-board-expanded) .v2-workspace>.v2-right{
+  display:flex!important;
+  flex-direction:column;
+  align-content:stretch;
+  align-items:stretch;
+ }
+ .v2-active.v2-has-class:not(.v2-secondary):not(.v2-board-expanded) .v2-right #boards{
+  flex:1 1 0%;
+  height:auto;
+  min-height:0;
+  width:100%;
+ }
+}
+
+
+/* Explicitly preserve THREE panes at 1100–1699px. An older max-width
+   1699px rule still placed Daevanion on grid-column:1/-1; in a fixed-height
+   workspace that inadvertently split the available viewport into two 266px
+   rows. All three editors must occupy the same single row. */
+@media(min-width:1100px) and (max-width:1699px) and (min-height:600px){
+ .v2-active.v2-has-class:not(.v2-secondary):not(.v2-board-expanded) .v2-workspace{
+  grid-template-columns:minmax(210px,.70fr) minmax(330px,1.15fr) minmax(480px,1.75fr);
+  grid-template-rows:minmax(0,1fr);
+ }
+ .v2-active.v2-has-class:not(.v2-secondary):not(.v2-board-expanded) .v2-workspace>.v2-left{
+  grid-column:1;grid-row:1;
+ }
+ .v2-active.v2-has-class:not(.v2-secondary):not(.v2-board-expanded) .v2-workspace>.v2-center{
+  grid-column:2;grid-row:1;
+ }
+ .v2-active.v2-has-class:not(.v2-secondary):not(.v2-board-expanded) .v2-workspace>.v2-right{
+  grid-column:3;grid-row:1;
+ }
+}
+
+
+/* Daevanion is the primary visual editor: reserve the remaining width for
+   a legible map, rather than dividing all three panels proportionally.
+   Equipment and Mastery keep functional minimums; board receives the rest. */
+@media(min-width:1100px) and (max-width:1699px) and (min-height:600px){
+ .v2-active.v2-has-class:not(.v2-secondary):not(.v2-board-expanded) .v2-workspace{
+  grid-template-columns:clamp(215px,17vw,290px) clamp(342px,27vw,480px) minmax(0,1fr);
+ }
+}
+/* The active board is already identified by the tab immediately above the
+   canvas. Remove the duplicated 70px map heading, preserving the actual
+   tabs, node statuses and detailed information in More tools. */
+@media(min-width:1100px) and (min-height:600px){
+ .v2-active.v2-has-class .v2-right .board-map-head{
+  display:none!important;
+ }
+ .v2-active.v2-has-class .v2-right .board-scroll{
+  scrollbar-width:thin;
+  scrollbar-color:#4a779a #091e30;
+ }
+ .v2-active.v2-has-class .v2-right #board-grid{
+  /* Never scale artwork down just to suppress the board's scrollbars. */
+  min-width:max-content;
+ }
+}

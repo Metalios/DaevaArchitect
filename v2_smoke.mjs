@@ -62,7 +62,9 @@ try{
   assert.equal(await dock.count(),1,width+': compact board dock is missing');
   const boardGeometry=await page.evaluate(()=>{
     const tabs=document.querySelector('#board-tabs').getBoundingClientRect();
-    const map=document.querySelector('.board-map-head').getBoundingClientRect();
+    // The duplicate map heading is intentionally hidden on desktop.
+    // Measure where the interactive tiles begin, not a non-rendered title.
+    const map=document.querySelector('#boards .board-scroll').getBoundingClientRect();
     const options=document.querySelector('#v2-board-options');
     return {gap:map.top-tabs.bottom,expanded:options.open};
   });
@@ -77,10 +79,10 @@ try{
   await more.locator(':scope > summary').click();
   assert.equal(await more.evaluate(el=>el.open),false);
   await page.locator('#board-tabs [data-board="Zikel"]').click();
-  assert.match(await page.locator('#board-map-title').innerText(),/Zikel/,width+': board switch failed');
+  assert.match(await page.locator('#board-map-title').textContent(),/Zikel/,width+': board switch failed');
   await page.locator('#v2-board-fit').click();
   const fitZoom=Number((await page.locator('#v2-zoom-label').innerText()).replace('px',''));
-  assert(fitZoom>=28&&fitZoom<=52,width+': invalid fitted zoom');
+  assert(fitZoom>=40&&fitZoom<=52,width+': Fit must never shrink below readable node size');
   if(width===1280){
     const sticky=await page.evaluate(()=>{
       const right=document.querySelector('.v2-right'),nav=document.querySelector('.v2-board-dock');
@@ -212,6 +214,83 @@ try{
   await page.screenshot({path:'v2-previews/workspace-'+width+'.png',fullPage:true});
   await page.close();
   console.log('v2 layout checked at '+width+'×'+height);
+ }
+
+ // Verify that a short desktop shows a usable board without page scrolling.
+ for(const [width,height] of [[1280,720],[1920,768],[1920,1080]]){
+  const page=await browser.newPage({viewport:{width,height},deviceScaleFactor:1});
+  page.on('pageerror',error=>errors.push(width+'x'+height+': '+error.message));
+  await page.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'domcontentloaded'});
+  await page.locator('#class-buttons [data-class="templar"]').click();
+  await page.waitForFunction(()=>document.querySelector('#v2-board-fit')?.getAttribute('aria-pressed')==='true');
+  const initial=await page.evaluate(()=>{
+   const work=document.querySelector('.v2-workspace').getBoundingClientRect();
+   const view=document.querySelector('#boards .board-scroll').getBoundingClientRect();
+   const grid=document.querySelector('#board-grid').getBoundingClientRect();
+   return {bottom:work.bottom,boardHeight:view.height,gridHeight:grid.height,
+     boardPanelHeight:document.querySelector('#boards').getBoundingClientRect().height,
+     rightHeight:document.querySelector('.v2-right').getBoundingClientRect().height,
+     rightDisplay:getComputedStyle(document.querySelector('.v2-right')).display,
+     rightCSSHeight:getComputedStyle(document.querySelector('.v2-right')).height,
+     workHeight:work.height,
+     workRows:getComputedStyle(document.querySelector('.v2-workspace')).gridTemplateRows,
+     boardDisplay:getComputedStyle(document.querySelector('#boards')).display,
+     boardFlex:getComputedStyle(document.querySelector('#boards')).flex,
+     boardCSSHeight:getComputedStyle(document.querySelector('#boards')).height,
+     layoutHeight:document.querySelector('#boards .board-layout').getBoundingClientRect().height,
+     canvasHeight:document.querySelector('#boards .board-layout>div:first-child').getBoundingClientRect().height,
+     canvasChildren:[...document.querySelector('#boards .board-layout>div:first-child').children]
+       .map(el=>({tag:el.tagName,cls:el.className,height:el.getBoundingClientRect().height,
+         display:getComputedStyle(el).display,flex:getComputedStyle(el).flex})),
+     dockHeight:document.querySelector('.v2-board-dock').getBoundingClientRect().height,
+     tile:+document.querySelector('#v2-zoom-label').textContent.replace('px','')};
+  });
+  console.log('Auto-fit '+width+'x'+height+': '+JSON.stringify(initial));
+  assert(initial.bottom<=height+16,'Workspace beyond viewport: '+JSON.stringify(initial));
+  assert(initial.boardHeight>=220,'Board viewport too short: '+JSON.stringify(initial));
+  assert(initial.tile>=40&&initial.tile<=52,
+    'Daevanion tiles became illegibly small: '+JSON.stringify(initial));
+  const boardScroll=await page.locator('#boards .board-scroll').evaluate(el=>({
+    clientHeight:el.clientHeight,scrollHeight:el.scrollHeight,
+    clientWidth:el.clientWidth,scrollWidth:el.scrollWidth
+  }));
+  if(initial.gridHeight>boardScroll.clientHeight+4){
+    assert(boardScroll.scrollHeight>boardScroll.clientHeight,
+      'Keep readable nodes and scroll, rather than shrinking: '+JSON.stringify({initial,boardScroll}));
+  }
+  if(width===1280){
+   const inspect=page.locator('#v2-inspector-toggle');
+   assert.equal(await inspect.isVisible(),true,'Short desktop needs an accessible tile inspector');
+   await inspect.click();
+   assert.equal(await page.locator('#v2-board-inspector').isVisible(),true,
+     'Tile inspector drawer failed to open');
+   await inspect.click();
+   assert.equal(await page.locator('#v2-board-inspector').isVisible(),false,
+     'Tile inspector drawer failed to close');
+  }
+  if(height>=900)assert(initial.gridHeight<=initial.boardHeight+3,
+    'Board should fit vertically in 1080p: '+JSON.stringify(initial));
+  await page.locator('#v2-zoom-plus').click();
+  assert.equal(await page.locator('#v2-board-fit').getAttribute('aria-pressed'),'false');
+  await page.locator('#v2-board-fit').click();
+  assert.equal(await page.locator('#v2-board-fit').getAttribute('aria-pressed'),'true');
+  await page.locator('#v2-board-expand').click();
+  const focus=await page.locator('.v2-right').evaluate(el=>{
+   const r=el.getBoundingClientRect();return {top:r.top,bottom:r.bottom};
+  });
+  assert(focus.top<=1&&focus.bottom>=height-1,'Focus does not fill viewport: '+JSON.stringify(focus));
+  await page.waitForFunction(()=>Number(document.querySelector('#v2-zoom-label')?.textContent.replace('px',''))>=40);
+  const focusedTile=Number((await page.locator('#v2-zoom-label').innerText()).replace('px',''));
+  assert(focusedTile>=40,'Focus mode must preserve legible tiles');
+  await page.keyboard.press('Escape');
+  assert.equal(await page.evaluate(()=>document.body.classList.contains('v2-board-expanded')),false);
+  if(width===1920&&height===768){
+   fs.mkdirSync('v2-previews',{recursive:true});
+   await page.screenshot({path:'v2-previews/viewport-first-1920x768.png'});
+   await page.locator('#v2-board-expand').click();
+   await page.screenshot({path:'v2-previews/board-focus-1920x768.png'});
+  }
+  await page.close();
  }
  assert.equal(errors.length,0,errors.join('\n'));
  console.log('v2 browser errors:',errors.length);

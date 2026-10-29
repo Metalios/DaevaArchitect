@@ -4,6 +4,7 @@
 const $=id=>document.getElementById(id);
 const make=(tag,cls,html='')=>{const e=document.createElement(tag);e.className=cls;e.innerHTML=html;return e};
 let skill='',skillTab='active',specialtyOpen=false,stigmaSlotOpen=-1,lastClass='',zoom=window.innerWidth>=2500?52:window.innerWidth>=1900?44:40,message='';
+let boardAutoFit=true,fitQueued=false;
 const ARCHETYPE_WEAPONS={
  gladiator:'Greatsword',templar:'Longsword + shield',assassin:'Daggers',ranger:'Bow',
  sorcerer:'Spellbook',spiritmaster:'Orb',cleric:'Mace + shield',chanter:'Staff'
@@ -49,7 +50,7 @@ const boardControls=make('div','v2-board-controls',`
  <div class="v2-board-secondary-actions" role="group" aria-label="Daevanion tile and view actions">
    <button type="button" id="v2-board-toggle">Edit selected node</button>
    <button type="button" id="v2-mark-obtained">Mark tile obtained</button>
-   <button type="button" id="v2-zoom-minus" aria-label="Zoom out">−</button><span id="v2-zoom-label">40px</span><button type="button" id="v2-zoom-plus" aria-label="Zoom in">+</button><button type="button" id="v2-board-fit" title="Size the board to fit its visible area">Fit board</button><button type="button" id="v2-board-expand">Expand board</button>
+   <button type="button" id="v2-zoom-minus" aria-label="Zoom out">−</button><span id="v2-zoom-label">40px</span><button type="button" id="v2-zoom-plus" aria-label="Zoom in">+</button><button type="button" id="v2-board-fit" title="Fit board at a readable size (40px minimum); scroll if necessary">Fit board</button><button type="button" id="v2-board-expand" aria-pressed="false" title="Focus on the board in a full-screen workspace (Escape to exit)">Focus board</button>
  </div>
  <details class="v2-board-method">
    <summary>What does the recommendation consider?</summary>
@@ -107,9 +108,20 @@ function mount(){
  more.append(moreBody);
  for(const item of [
    boardControls.querySelector('.v2-board-callout'),primaryActions,
-   boardControls.querySelector('.v2-board-method'),$('v2-optimizer-evidence')
+   boardControls.querySelector('.v2-board-method'),$('v2-optimizer-evidence'),
+   $('boards').querySelector('.timeline'),
+   $('boards').querySelector('#route-footnote'),
+   $('boards').querySelector('.board-map-head .board-legend'),
+   $('boards').querySelector('.board-icon-credit')
  ])if(item)moreBody.append(item);
- quickActions.append(more);
+ const inspector=make('button','v2-inspector-toggle','Tile details');
+ inspector.id='v2-inspector-toggle';
+ inspector.type='button';
+ inspector.setAttribute('aria-expanded','false');
+ inspector.setAttribute('aria-controls','v2-board-inspector');
+ const inspectorPanel=$('boards').querySelector('.board-side');
+ if(inspectorPanel)inspectorPanel.id='v2-board-inspector';
+ quickActions.append(inspector,more);
  // Recalculation/ownership notices stay visible, outside the More menu.
  const side=$('boards').querySelector('.board-side');
  if(side){
@@ -275,6 +287,51 @@ function actionsView(m){
  $('v2-mark-obtained').textContent=n&&obtainedNodes().has(n.node[0])?'Unmark obtained':'Mark tile obtained';
  note.innerHTML=`<span>${gear?`${gear} equipment pieces recorded.`:'No gear assumed.'} ${esc((typeof adviceFor==='function'?adviceFor(state.class,account().context,account().pveObjective)?.why:null)||'Class/context progression priorities.')} Actual equipped bonuses affect breakpoint advice; no gear is invented.</span><button type="button" id="v2-open-comparison">Compare builds</button>`;
 }
+// Fit the ACTUAL 15x15 coordinate grid to the board's usable viewport.
+// Preserve manual zoom until the user chooses Fit board again; only desktop
+// auto-fits, keeping touch targets comfortable in the mobile scrolling view.
+function setViewportWorkspaceHeight(){
+ if(window.innerWidth<1100||!state.class)return;
+ const workspace=$('v2-workspace');
+ if(!workspace)return;
+ // The quickbar/nav wrap differently at 1280px and 1920px. Measure their
+ // actual occupied height rather than assuming a magic 143px top offset.
+ const top=workspace.getBoundingClientRect().top+window.scrollY;
+ const height=Math.max(340,window.innerHeight-top-8);
+ workspace.style.setProperty('--v2-workspace-space',height+'px');
+}
+function sizeBoardToViewport(){
+ if(!boardAutoFit||window.innerWidth<1100)return;
+ const view=$('boards')?.querySelector('.board-scroll');
+ const grid=$('board-grid');
+ if(!view||!grid||!view.clientHeight||!view.clientWidth)return;
+ const style=getComputedStyle(view);
+ const padX=parseFloat(style.paddingLeft)+parseFloat(style.paddingRight);
+ const padY=parseFloat(style.paddingTop)+parseFloat(style.paddingBottom);
+ const gap=parseFloat(getComputedStyle(grid).columnGap)||3;
+ const usable=Math.min(view.clientWidth-padX,view.clientHeight-padY)-4;
+ // Never make the primary 15×15 Daevanion board illegible merely to
+ // squeeze its entirety into a short workspace. At 720p, overflow is
+ // intentional; use Focus board for a nearly full-screen, readable map.
+ const minReadableTile=40;
+ const tile=Math.max(minReadableTile,Math.min(52,Math.floor((usable-gap*14)/15)));
+ if(tile!==zoom){
+   zoom=tile;
+   grid.style.setProperty('--v2-node',zoom+'px');
+   $('v2-zoom-label').textContent=zoom+'px';
+ }
+ $('v2-board-fit').setAttribute('aria-pressed','true');
+ $('v2-board-fit').title='Fit board without shrinking below 40px; scroll for remaining rows or use Focus board';
+}
+function queueBoardFit(){
+ if(fitQueued)return;
+ fitQueued=true;
+ requestAnimationFrame(()=>{
+   fitQueued=false;
+   setViewportWorkspaceHeight();
+   sizeBoardToViewport();
+ });
+}
 function sync(m){
  if(!state.class)return;
  document.body.classList.add('v2-has-class');
@@ -300,6 +357,7 @@ function sync(m){
  archetype.setAttribute('aria-label',PROFILES[state.class].name+' class and weapon');
  $('v2-context').querySelector('option[value=pvp]').disabled=isLeveling();
  $('board-grid').style.setProperty('--v2-node',zoom+'px');$('v2-zoom-label').textContent=zoom+'px';
+ queueBoardFit();
  // Ariel is a newly added separate PvE board. Show that it exists, but do
  // not invent nodes, costs, or claim support without verified Global data.
  if(!$('board-tabs').querySelector('.v2-ariel-pending'))$('board-tabs').append(ariel);
@@ -446,23 +504,33 @@ function bind(){
   // double-click and the legacy selected-node button.
   if(toggleBoardObtained(state.node))render();else renderBoards(model());
  });
- $('v2-board-expand').addEventListener('click',()=>{const expanded=document.body.classList.toggle('v2-board-expanded');$('v2-board-expand').textContent=expanded?'Exit expanded':'Expand board'});
+ $('v2-board-expand').addEventListener('click',()=>{
+   const expanded=document.body.classList.toggle('v2-board-expanded');
+   $('v2-board-expand').textContent=expanded?'Exit focus':'Focus board';
+   $('v2-board-expand').setAttribute('aria-pressed',String(expanded));
+   queueBoardFit();
+ });
  for(const [id,step] of [['v2-zoom-minus',-4],['v2-zoom-plus',4]])$(id).addEventListener('click',()=>{
-   zoom=Math.min(52,Math.max(28,zoom+step));
+   boardAutoFit=false;
+   $('v2-board-fit').setAttribute('aria-pressed','false');
+   $('v2-board-fit').title='Resume automatically fitting the board';
+   zoom=Math.min(60,Math.max(40,zoom+step));
    $('board-grid').style.setProperty('--v2-node',zoom+'px');
    $('v2-zoom-label').textContent=zoom+'px';
  });
  $('v2-board-fit').addEventListener('click',()=>{
-   const view=$('boards').querySelector('.board-scroll');
-   // 15 tile rows/columns and fourteen 3px gaps. Fit within the existing
-   // board viewport; do not resize the page, scroll the browser or alter nodes.
-   const availableWidth=Math.max(0,view.clientWidth-28);
-   const availableHeight=Math.max(0,view.clientHeight-28);
-   const fit=Math.floor((Math.min(availableWidth,availableHeight)-42)/15);
-   zoom=Math.min(52,Math.max(28,fit));
-   $('board-grid').style.setProperty('--v2-node',zoom+'px');
-   $('v2-zoom-label').textContent=zoom+'px';
+   boardAutoFit=true;
+   // Reflect the chosen mode synchronously; sizing itself happens next frame.
+   $('v2-board-fit').setAttribute('aria-pressed','true');
+   queueBoardFit();
  });
+ $('v2-inspector-toggle').addEventListener('click',()=>{
+   const boards=$('boards');
+   const opened=boards.classList.toggle('v2-inspector-open');
+   $('v2-inspector-toggle').setAttribute('aria-expanded',String(opened));
+   $('v2-inspector-toggle').textContent=opened?'Close details':'Tile details';
+ });
+
  $('mastery-search').addEventListener('input',()=>sync(model()));
  $('board-tabs').addEventListener('click',()=>{
    const options=$('v2-board-options');
@@ -473,6 +541,26 @@ function bind(){
    const options=$('v2-board-options');
    if(options?.open&&!options.contains(e.target))options.open=false;
  });
+ document.addEventListener('keydown',e=>{
+   if(e.key==='Escape'&&$('boards')?.classList.contains('v2-inspector-open')){
+     $('boards').classList.remove('v2-inspector-open');
+     $('v2-inspector-toggle').setAttribute('aria-expanded','false');
+     $('v2-inspector-toggle').textContent='Tile details';
+     if(!document.body.classList.contains('v2-board-expanded'))return;
+   }
+   if(e.key==='Escape'&&document.body.classList.contains('v2-board-expanded')){
+     document.body.classList.remove('v2-board-expanded');
+     $('v2-board-expand').textContent='Focus board';
+     $('v2-board-expand').setAttribute('aria-pressed','false');
+     $('v2-board-expand').focus();
+     queueBoardFit();
+   }
+ });
+ window.addEventListener('resize',queueBoardFit);
+ if(typeof ResizeObserver!=='undefined'){
+   const boardViewport=$('boards').querySelector('.board-scroll');
+   new ResizeObserver(queueBoardFit).observe(boardViewport);
+ }
  $('board-grid').addEventListener('click',()=>setTimeout(()=>sync(model()),0));
 }
 window.syncV2=sync;
