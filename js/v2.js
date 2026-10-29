@@ -113,7 +113,14 @@ function mount(){
    $('boards').querySelector('.route-footnote'),
    $('boards').querySelector('.board-icon-credit')
  ])if(item)moreBody.append(item);
- quickActions.append(more);
+ const inspector=make('button','v2-inspector-toggle','Tile details');
+ inspector.id='v2-inspector-toggle';
+ inspector.type='button';
+ inspector.setAttribute('aria-expanded','false');
+ inspector.setAttribute('aria-controls','v2-board-inspector');
+ const inspectorPanel=$('boards').querySelector('.board-side');
+ if(inspectorPanel)inspectorPanel.id='v2-board-inspector';
+ quickActions.append(inspector,more);
  // Recalculation/ownership notices stay visible, outside the More menu.
  const side=$('boards').querySelector('.board-side');
  if(side){
@@ -282,6 +289,16 @@ function actionsView(m){
 // Fit the ACTUAL 15x15 coordinate grid to the board's usable viewport.
 // Preserve manual zoom until the user chooses Fit board again; only desktop
 // auto-fits, keeping touch targets comfortable in the mobile scrolling view.
+function setViewportWorkspaceHeight(){
+ if(window.innerWidth<1100||!state.class)return;
+ const workspace=$('v2-workspace');
+ if(!workspace)return;
+ // The quickbar/nav wrap differently at 1280px and 1920px. Measure their
+ // actual occupied height rather than assuming a magic 143px top offset.
+ const top=workspace.getBoundingClientRect().top+window.scrollY;
+ const height=Math.max(340,window.innerHeight-top-8);
+ workspace.style.setProperty('--v2-workspace-space',height+'px');
+}
 function sizeBoardToViewport(){
  if(!boardAutoFit||window.innerWidth<1100)return;
  const view=$('boards')?.querySelector('.board-scroll');
@@ -306,6 +323,7 @@ function queueBoardFit(){
  fitQueued=true;
  requestAnimationFrame(()=>{
    fitQueued=false;
+   setViewportWorkspaceHeight();
    sizeBoardToViewport();
  });
 }
@@ -499,6 +517,13 @@ function bind(){
    boardAutoFit=true;
    queueBoardFit();
  });
+ $('v2-inspector-toggle').addEventListener('click',()=>{
+   const boards=$('boards');
+   const opened=boards.classList.toggle('v2-inspector-open');
+   $('v2-inspector-toggle').setAttribute('aria-expanded',String(opened));
+   $('v2-inspector-toggle').textContent=opened?'Close details':'Tile details';
+ });
+
  $('mastery-search').addEventListener('input',()=>sync(model()));
  $('board-tabs').addEventListener('click',()=>{
    const options=$('v2-board-options');
@@ -510,6 +535,12 @@ function bind(){
    if(options?.open&&!options.contains(e.target))options.open=false;
  });
  document.addEventListener('keydown',e=>{
+   if(e.key==='Escape'&&$('boards')?.classList.contains('v2-inspector-open')){
+     $('boards').classList.remove('v2-inspector-open');
+     $('v2-inspector-toggle').setAttribute('aria-expanded','false');
+     $('v2-inspector-toggle').textContent='Tile details';
+     if(!document.body.classList.contains('v2-board-expanded'))return;
+   }
    if(e.key==='Escape'&&document.body.classList.contains('v2-board-expanded')){
      document.body.classList.remove('v2-board-expanded');
      $('v2-board-expand').textContent='Focus board';
