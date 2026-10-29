@@ -1000,3 +1000,173 @@
   display:none;
  }
 }
+
+/* Viewport-first desktop editing: one workspace, not an endlessly tall page
+   with a second tall board trapped inside it. The next-upgrade footer stays
+   available below the workspace without forcing users to visit it for edits. */
+@media(min-width:1100px) and (min-height:600px){
+ .v2-active.v2-has-class:not(.v2-secondary):not(.v2-board-expanded) .v2-workspace{
+  height:calc(100dvh - 143px);
+  min-height:440px;
+  align-items:stretch;
+  overflow:visible;
+ }
+ .v2-active.v2-has-class:not(.v2-secondary):not(.v2-board-expanded) .v2-workspace>.v2-column{
+  height:100%;
+  min-height:0;
+  max-height:none;
+  overflow-y:auto;
+  overscroll-behavior-y:contain;
+  scrollbar-width:thin;
+ }
+ .v2-active .v2-right #boards{
+  height:100%;
+  min-height:0;
+  display:flex!important;
+  flex-direction:column;
+  overflow:visible;
+ }
+ .v2-active .v2-right #boards>.section-title{
+  /* The dock and crystal tracker already identify the current board. */
+  display:none!important;
+ }
+ .v2-active .v2-right #boards>.board-crystal-tracker{
+  flex:0 0 auto;
+ }
+ .v2-active .v2-right #boards>.v2-board-dock{
+  flex:0 0 auto;
+ }
+ .v2-active .v2-right #boards>.board-layout{
+  flex:1 1 auto;
+  min-height:0;
+  margin:0;
+  align-items:stretch;
+ }
+ .v2-active .v2-right .board-layout>div:first-child{
+  display:flex;
+  min-width:0;
+  min-height:0;
+  flex-direction:column;
+ }
+ .v2-active .v2-right .board-layout .board-scroll{
+  flex:1 1 auto;
+  min-height:0;
+  max-height:none;
+  height:auto;
+  overflow:auto;
+  padding:9px;
+ }
+ .v2-active .v2-right .board-side{
+  min-height:0;
+  max-height:100%;
+  overflow:auto;
+  overscroll-behavior:contain;
+ }
+ .v2-active .v2-board-options-body .timeline,
+ .v2-active .v2-board-options-body .route-footnote,
+ .v2-active .v2-board-options-body .board-icon-credit{
+  width:100%;
+  margin:0;
+ }
+ .v2-active .v2-board-options-body .timeline{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:9px;
+  padding:10px;
+  border:1px solid #35516c;
+  border-radius:5px;
+ }
+ .v2-active .v2-board-options-body .timeline input{flex:1 1 130px;min-width:0}
+ .v2-active .v2-board-options-body .board-icon-credit{
+  font-size:10px;
+  line-height:1.5;
+ }
+ .v2-active .v2-board-options-body .route-footnote{
+  font-size:11px;
+ }
+ .v2-active .v2-right #boards>.v2-board-dock{
+  position:relative;
+  top:auto;
+  margin-bottom:5px;
+  padding:5px 7px;
+  box-shadow:none;
+ }
+ .v2-active .v2-right .board-map-head{
+  flex:0 0 auto;
+  padding:5px 9px;
+  margin-bottom:4px;
+ }
+ .v2-active .v2-right #board-map-progress{
+  display:none;
+ }
+ .v2-active .v2-right .board-grid{
+  margin:auto;
+ }
+}
+/* A deliberate focus state uses the full viewport to make a 15x15 board
+   readable at shorter heights. Exit is always in the toolbar or on Escape.
+   Mobile retains its natural page/board scrolling behavior. */
+@media(min-width:1100px){
+ .v2-active.v2-board-expanded .v2-right{
+  position:fixed!important;
+  inset:0;
+  z-index:110;
+  width:100vw;
+  height:100dvh;
+  max-height:none;
+  min-height:0;
+  overflow:hidden;
+  padding:8px;
+  background:#06111f;
+  display:block;
+ }
+ .v2-active.v2-board-expanded .v2-right #boards{
+  display:flex!important;
+  flex-direction:column;
+  height:100%;
+  min-height:0;
+  overflow:visible;
+  padding:7px;
+ }
+ .v2-active.v2-board-expanded .v2-right #boards>.section-title{
+  display:none!important;
+ }
+ .v2-active.v2-board-expanded .v2-right #boards>.board-layout{
+  flex:1 1 auto;
+  min-height:0;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(235px,295px);
+  align-items:stretch;
+ }
+ .v2-active.v2-board-expanded .v2-right .board-layout>div:first-child{
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+  min-height:0;
+ }
+ .v2-active.v2-board-expanded .v2-right .board-scroll{
+  flex:1 1 auto;
+  min-height:0;
+  max-height:none;
+  height:auto;
+  padding:9px;
+  overflow:auto;
+ }
+ .v2-active.v2-board-expanded .v2-right .board-side{
+  overflow:auto;
+  min-height:0;
+  max-height:100%;
+ }
+ .v2-active.v2-board-expanded .v2-right #boards>.v2-board-dock{
+  position:relative;
+  top:auto;
+ }
+ .v2-active.v2-board-expanded .v2-right .board-map-head{margin-bottom:5px}
+ .v2-active.v2-board-expanded .v2-board-options-body .timeline,
+ .v2-active.v2-board-expanded .v2-board-options-body .board-icon-credit,
+ .v2-active.v2-board-expanded .v2-board-options-body .route-footnote{
+  margin:0;
+  width:100%;
+ }
+}
