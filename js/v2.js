@@ -136,6 +136,9 @@ function mount(){
  const gearMain=$('gear').querySelector('.gear-main');
  const gearExtras=gearMain?.querySelector('.gear-side');
  if(gearExtras)gearDetails.append(gearExtras);
+ // Display only genuine recorded fixed stats alongside the equipment slots.
+ const stats=gearDetails.querySelector('#gear-fixed-stats')?.closest('.panel');
+ if(stats&&gearMain){stats.classList.add('v4-equipment-stats');gearMain.append(stats);}
  const cp=$('gear').querySelector('.gear-cp');
  if(cp)$('gear').querySelector('.gear-intro')?.after(cp);
  for(const extra of ['#gear>.notice','.gear-credit']){
