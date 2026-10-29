@@ -497,3 +497,53 @@
   max-height:none!important;
  }
 }
+
+
+/* Advanced ranks are a focused, independently scrollable Mastery editor
+   state, not a 9,000px grid appended below a clipped fixed-height panel.
+   Preserve the same DOM data and controls; only the presentation changes. */
+.v2-active .v2-center #mastery:has(.v2-advanced-skills[open]) .v2-master-editor{
+ display:flex!important;
+ flex-direction:column;
+ min-height:0!important;
+ max-height:100%!important;
+ overflow:hidden!important;
+}
+.v2-active .v2-center #mastery:has(.v2-advanced-skills[open]) .v2-master-editor>#v2-skill-list,
+.v2-active .v2-center #mastery:has(.v2-advanced-skills[open]) .v2-master-editor>.v2-mastery-hint,
+.v2-active .v2-center #mastery:has(.v2-advanced-skills[open]) .v2-master-editor>.v2-source-legend{
+ display:none!important;
+}
+.v2-active .v2-center #mastery:has(.v2-advanced-skills[open]) .v2-advanced-skills{
+ display:block!important;
+ flex:1 1 auto;
+ min-width:0;
+ min-height:0;
+ height:auto;
+ max-height:100%;
+ overflow-y:auto!important;
+ overflow-x:hidden!important;
+ scrollbar-width:thin;
+}
+.v2-active .v2-center #mastery:has(.v2-advanced-skills[open]) .v2-advanced-skills>summary{
+ position:sticky;
+ top:0;
+ z-index:5;
+ background:#143750;
+ border-color:#74aac8;
+ color:#ffe0a3;
+}
+.v2-active .v2-center #mastery:has(.v2-advanced-skills[open]) #skill-grid{
+ display:grid!important;
+ width:100%;
+ min-width:0;
+ grid-template-columns:minmax(0,1fr)!important;
+ align-items:start;
+ gap:12px;
+}
+.v2-active .v2-center #mastery:has(.v2-advanced-skills[open]) #skill-grid>.skill-card{
+ display:block!important;
+ min-width:0;
+ width:100%;
+ contain:none!important;
+}
