@@ -12,6 +12,8 @@ try {
   page.on('pageerror',error=>errors.push(error.message));
   await page.goto(pathToFileURL(path.resolve('dist/index.html')).href);
   await page.locator('#class-buttons [data-class="templar"]').click();
+  // Medium desktop now uses a persistent editor rail; open Equipment first.
+  await page.locator('[data-v3-editor="gear"]').click();
   await page.locator('#gear-doll-grid').waitFor();
 
   await page.locator('[data-gear-slot="top"]').first().click();
