@@ -62,7 +62,9 @@ try{
   assert.equal(await dock.count(),1,width+': compact board dock is missing');
   const boardGeometry=await page.evaluate(()=>{
     const tabs=document.querySelector('#board-tabs').getBoundingClientRect();
-    const map=document.querySelector('.board-map-head').getBoundingClientRect();
+    // The duplicate map heading is intentionally hidden on desktop.
+    // Measure where the interactive tiles begin, not a non-rendered title.
+    const map=document.querySelector('#boards .board-scroll').getBoundingClientRect();
     const options=document.querySelector('#v2-board-options');
     return {gap:map.top-tabs.bottom,expanded:options.open};
   });
@@ -77,7 +79,7 @@ try{
   await more.locator(':scope > summary').click();
   assert.equal(await more.evaluate(el=>el.open),false);
   await page.locator('#board-tabs [data-board="Zikel"]').click();
-  assert.match(await page.locator('#board-map-title').innerText(),/Zikel/,width+': board switch failed');
+  assert.match(await page.locator('#board-map-title').textContent(),/Zikel/,width+': board switch failed');
   await page.locator('#v2-board-fit').click();
   const fitZoom=Number((await page.locator('#v2-zoom-label').innerText()).replace('px',''));
   assert(fitZoom>=40&&fitZoom<=52,width+': Fit must never shrink below readable node size');
