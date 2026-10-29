@@ -136,10 +136,15 @@ try{
      });
      await page.evaluate(()=>{state.class='templar';state.tab='mastery';render()});
    }
+  // Earned point budget inputs currently live in Equipment. Select that
+  // editor at medium width rather than filling an intentionally hidden field.
+  // Switching back to Mastery must preserve the updated budget.
+  if(width<1700)await page.locator('[data-v3-editor="gear"]').click();
   // Inputs are not a build decision.
   await page.locator('#mastery-input').fill('220');
   await page.locator('#mastery-input').press('Tab');
   assert.match(await page.locator('#v2-status').innerText(),/Following recommended/,width+': points marked custom');
+  if(width<1700)await page.locator('[data-v3-editor="mastery"]').click();
   if(width>=1920){
     const cardColumns=await page.locator('#v2-stigma-list').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length);
     assert.equal(cardColumns,4,'Stigmas must show four icon cards across in the desktop mock');
