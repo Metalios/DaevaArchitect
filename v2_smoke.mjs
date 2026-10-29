@@ -237,6 +237,9 @@ try{
      boardCSSHeight:getComputedStyle(document.querySelector('#boards')).height,
      layoutHeight:document.querySelector('#boards .board-layout').getBoundingClientRect().height,
      canvasHeight:document.querySelector('#boards .board-layout>div:first-child').getBoundingClientRect().height,
+     canvasChildren:[...document.querySelector('#boards .board-layout>div:first-child').children]
+       .map(el=>({tag:el.tagName,cls:el.className,height:el.getBoundingClientRect().height,
+         display:getComputedStyle(el).display,flex:getComputedStyle(el).flex})),
      dockHeight:document.querySelector('.v2-board-dock').getBoundingClientRect().height,
      tile:+document.querySelector('#v2-zoom-label').textContent.replace('px','')};
   });
