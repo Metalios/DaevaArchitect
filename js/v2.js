@@ -49,7 +49,7 @@ const boardControls=make('div','v2-board-controls',`
  <div class="v2-board-secondary-actions" role="group" aria-label="Daevanion tile and view actions">
    <button type="button" id="v2-board-toggle">Edit selected node</button>
    <button type="button" id="v2-mark-obtained">Mark tile obtained</button>
-   <button type="button" id="v2-zoom-minus" aria-label="Zoom out">−</button><span id="v2-zoom-label">40px</span><button type="button" id="v2-zoom-plus" aria-label="Zoom in">+</button><button type="button" id="v2-board-expand">Expand board</button>
+   <button type="button" id="v2-zoom-minus" aria-label="Zoom out">−</button><span id="v2-zoom-label">40px</span><button type="button" id="v2-zoom-plus" aria-label="Zoom in">+</button><button type="button" id="v2-board-fit" title="Size the board to fit its visible area">Fit board</button><button type="button" id="v2-board-expand">Expand board</button>
  </div>
  <details class="v2-board-method">
    <summary>What does the recommendation consider?</summary>
@@ -446,7 +446,22 @@ function bind(){
   if(toggleBoardObtained(state.node))render();else renderBoards(model());
  });
  $('v2-board-expand').addEventListener('click',()=>{const expanded=document.body.classList.toggle('v2-board-expanded');$('v2-board-expand').textContent=expanded?'Exit expanded':'Expand board'});
- for(const [id,step] of [['v2-zoom-minus',-4],['v2-zoom-plus',4]])$(id).addEventListener('click',()=>{zoom=Math.min(52,Math.max(32,zoom+step));$('board-grid').style.setProperty('--v2-node',zoom+'px');$('v2-zoom-label').textContent=zoom+'px'});
+ for(const [id,step] of [['v2-zoom-minus',-4],['v2-zoom-plus',4]])$(id).addEventListener('click',()=>{
+   zoom=Math.min(52,Math.max(28,zoom+step));
+   $('board-grid').style.setProperty('--v2-node',zoom+'px');
+   $('v2-zoom-label').textContent=zoom+'px';
+ });
+ $('v2-board-fit').addEventListener('click',()=>{
+   const view=$('boards').querySelector('.board-scroll');
+   // 15 tile rows/columns and fourteen 3px gaps. Fit within the existing
+   // board viewport; do not resize the page, scroll the browser or alter nodes.
+   const availableWidth=Math.max(0,view.clientWidth-28);
+   const availableHeight=Math.max(0,view.clientHeight-28);
+   const fit=Math.floor((Math.min(availableWidth,availableHeight)-42)/15);
+   zoom=Math.min(52,Math.max(28,fit));
+   $('board-grid').style.setProperty('--v2-node',zoom+'px');
+   $('v2-zoom-label').textContent=zoom+'px';
+ });
  $('mastery-search').addEventListener('input',()=>sync(model()));
  $('board-tabs').addEventListener('click',()=>{
    more.open=false;
