@@ -1212,3 +1212,27 @@
   background:#245c81;
  }
 }
+
+/* Narrow desktop: the map is the only in-flow child of the board canvas.
+   Use flex, not an implicit two-row grid whose leftover second row could
+   collapse the map viewport before the inspector is removed from flow. */
+@media(min-width:1100px) and (max-width:1699px) and (min-height:600px){
+ .v2-active:not(.v2-board-expanded) .v2-right #boards>.board-layout{
+  display:flex!important;
+  flex-direction:column;
+  height:100%;
+  min-height:0;
+ }
+ .v2-active:not(.v2-board-expanded) .v2-right #boards>.board-layout>div:first-child{
+  display:flex;
+  flex:1 1 auto;
+  flex-direction:column;
+  height:100%;
+  min-height:0;
+ }
+ .v2-active:not(.v2-board-expanded) .v2-right #boards .board-scroll{
+  flex:1 1 auto;
+  min-height:0;
+  height:auto;
+ }
+}
