@@ -162,6 +162,14 @@ try{
   assert.match(await page.locator('#v2-status').innerText(),/Modified progression/);
   await page.locator('#v2-reset-allocations').click();
   assert.match(await page.locator('#v2-status').innerText(),/Following recommended/);
+  if(width<1700){
+   await page.locator('[data-v3-editor="stigma"]').click();
+   assert.equal(await page.locator('#stigma').isVisible(),true);
+   assert.equal(await page.locator('#boards').isVisible(),true);
+   const w=await page.locator('#v2-stigma-list .v2-stigma-card').first()
+     .evaluate(el=>el.getBoundingClientRect().width);
+   assert(w>=140,width+': Stigma card too narrow '+w);
+  }
   // Stigma level edits must affect the actual allocation and build status.
   assert.equal(await page.locator('#v2-stigma-panel').isVisible(),false);
   await page.locator('#v2-stigma-list [data-v2-open-stigma="0"]').click();
@@ -174,6 +182,7 @@ try{
   assert.equal(await page.locator('#v2-stigma-panel').isVisible(),false);
   await page.locator('#v2-stigma-reset').click();
   // Equipment slots still invoke the catalog and item editor.
+  if(width<1700)await page.locator('[data-v3-editor="gear"]').click();
   await page.locator('#gear-doll-grid [data-gear-slot]').first().click();
   assert.equal(await page.locator('#gear-dialog').evaluate(el=>el.open),true);
   await page.locator('#gear-dialog-close').click();
@@ -206,8 +215,23 @@ try{
   await page.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'domcontentloaded'});
   await page.locator('#class-buttons [data-class="templar"]').click();
   await page.locator('#v2-skill-list .v2-skill').first().waitFor();
+   if(width<1100){
+    assert.equal(await page.locator('.v3-editor-switch').isVisible(),true);
+    assert.equal(await page.locator('#boards').isVisible(),true,
+      'Daevanion must initially be visible on mobile');
+    assert.equal(await page.locator('#gear').isVisible(),false,
+      'Mobile must not stack all the editors');
+    await page.locator('[data-v3-editor="mastery"]').click();
+    assert.equal(await page.locator('#mastery').isVisible(),true);
+    assert.equal(await page.locator('#boards').isVisible(),false);
+   }
    await verifyAdvancedCards(page,width);
+   if(width<1100)await page.locator('[data-v3-editor="boards"]').click();
   assert.equal(await page.locator('#board-grid .node').count(),89,width+': board geometry changed');
+   if(width<1100){
+    const h=await page.locator('.v2-workspace').evaluate(el=>el.getBoundingClientRect().height);
+    assert(h<1800,width+': mobile editors are still stacked: '+h);
+   }
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+8),true,width+': page overflow');
   await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
   fs.mkdirSync('v2-previews',{recursive:true});
