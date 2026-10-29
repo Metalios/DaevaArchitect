@@ -102,6 +102,12 @@ const stigmaStatus=make('span','v2-stigma-status');stigmaStatus.id='v2-stigma-st
 function mount(){
  const p=$('planner-content');p.classList.add('v2-planner');
  p.insertBefore(quick,p.firstChild);quick.after(nav);
+ // The compact settings row can expand. Keep the secondary navigation
+ // exactly below its actual height, instead of hardcoded breakpoint offsets.
+ const measureHeader=()=>p.style.setProperty('--v3-quickbar-height',
+   Math.ceil(quick.getBoundingClientRect().height)+'px');
+ measureHeader();
+ if(typeof ResizeObserver!=='undefined')new ResizeObserver(measureHeader).observe(quick);
  const tabs=p.querySelector('.tabs');tabs.after(work);work.append(editorNav,left,center,right);
  selectEditor(editorView);
  left.append($('gear'));center.append($('mastery'),$('stigma'));right.append($('boards'));
