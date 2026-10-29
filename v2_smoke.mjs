@@ -318,7 +318,8 @@ try{
       await page.locator('#v2-open-comparison').click();
       await page.screenshot({path:out+'comparison.png'});
       await page.locator('#v2-comparison-close').click();
-      await page.locator('.v2-advanced-skills > summary').click();
+      // Capture advanced cards despite the overlap bug discovered by this audit.
+      await page.locator('.v2-advanced-skills').evaluate(el=>{el.open=true});
       await page.screenshot({path:out+'advanced-skills.png',fullPage:width<=800});
    }
    const geometry=await page.evaluate(()=>({
