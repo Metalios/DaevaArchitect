@@ -56,6 +56,11 @@ try{
   await page.goto('http://127.0.0.1:'+port+'/',{waitUntil:'domcontentloaded'});
   await page.locator('#class-buttons [data-class="templar"]').click();
   await page.locator('#v2-skill-list .v2-skill').first().waitFor();
+  fs.mkdirSync('v2-previews',{recursive:true});
+  await page.screenshot({
+   path:'v2-previews/approved-target-initial-'+width+'.png',
+   fullPage:width===1280
+  });
   assert.equal(await page.locator('.v2-workspace').isVisible(),true,width+': unified workspace hidden');
   // Board tabs and routine commands are a single compact dock over the map.
   const dock=page.locator('.v2-board-dock');
@@ -106,6 +111,10 @@ try{
   }
   assert.equal(await page.locator('#gear-doll-grid').count(),1);
   assert.equal(await page.locator('#board-grid .node').count(),89,width+': Nezekan shape mismatch');
+  assert((await page.locator('.v4-specialty-summary').count())>=3,
+    width+': inline Specialty previews are missing');
+  assert.equal(await page.locator('#v4-board-current').count(),1,
+    width+': persistent board progress is missing');
   assert((await page.locator('#board-grid .node .node-game-icon').count())>0,width+': missing actual class skill artwork');
   const square=await page.locator('#board-grid .node').first().evaluate(el=>Math.abs(el.getBoundingClientRect().width-el.getBoundingClientRect().height)<1);
   assert(square,width+': Daevanion tiles must be square');
