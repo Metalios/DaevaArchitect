@@ -55,7 +55,8 @@ try{
   const port=server.address().port;
   await page.goto('http://127.0.0.1:'+port+'/',{waitUntil:'domcontentloaded'});
   await page.locator('#class-buttons [data-class="templar"]').click();
-  await page.locator('#v2-skill-list .v2-skill').first().waitFor();
+  await page.locator('#v2-skill-list .v2-skill').first()
+    .waitFor({state:width<1700?'attached':'visible'});
   fs.mkdirSync('v2-previews',{recursive:true});
   await page.screenshot({
    path:'v2-previews/approved-target-initial-'+width+'.png',
