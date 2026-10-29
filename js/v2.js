@@ -516,6 +516,8 @@ function bind(){
  });
  $('v2-board-fit').addEventListener('click',()=>{
    boardAutoFit=true;
+   // Reflect the chosen mode synchronously; sizing itself happens next frame.
+   $('v2-board-fit').setAttribute('aria-pressed','true');
    queueBoardFit();
  });
  $('v2-inspector-toggle').addEventListener('click',()=>{
