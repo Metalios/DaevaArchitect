@@ -68,6 +68,9 @@ try{
  assert.equal(layout.tiles,20,'Expected 20 editable equipment slots');
  assert.deepEqual(layout.overflow,[],'Gear slot groups clipped inside inspect view: '+JSON.stringify(layout));
  await page.setViewportSize({width:390,height:844});
+ // The mobile breakpoint intentionally selects Daevanion; open Gear before
+ // testing the real visible paperdoll geometry.
+ await page.locator('[data-v3-editor="gear"]').click();
  const mobile=await page.evaluate(()=>{
   state.gearView='inspect';render();
   const root=document.querySelector('#gear-doll-grid.inspect'),rect=root.getBoundingClientRect();
