@@ -110,7 +110,8 @@ function mount(){
    boardControls.querySelector('.v2-board-callout'),primaryActions,
    boardControls.querySelector('.v2-board-method'),$('v2-optimizer-evidence'),
    $('boards').querySelector('.timeline'),
-   $('boards').querySelector('.route-footnote'),
+   $('boards').querySelector('#route-footnote'),
+   $('boards').querySelector('.board-map-head .board-legend'),
    $('boards').querySelector('.board-icon-credit')
  ])if(item)moreBody.append(item);
  const inspector=make('button','v2-inspector-toggle','Tile details');
