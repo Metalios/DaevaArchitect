@@ -69,7 +69,7 @@ const extra=make('div','v2-extra');extra.id='v2-extra';
 const master=make('div','v2-master-editor',`
  <div class="v2-skill-toolbar" role="group" aria-label="Mastery skill category"><button type="button" id="v2-active-filter" class="active" aria-pressed="true">Active skills (12)</button><button type="button" id="v2-passive-filter" aria-pressed="false">Passive (10)</button><span class="v2-skill-search-label">Find a skill</span></div>
  <div class="v2-source-legend" role="note"><b>Skill levels:</b> Invest Mastery + planned board bonus + recorded gear = final planned level. Obtained board bonuses are separate.</div>
- <div class="v2-editor-title"><b>Skill</b><span>Invest</span><span>Board +</span><span>Gear +</span><span>Final Lv</span></div>
+ <div class="v2-editor-title"><b>Skill</b><span>Invest</span><span class="v4-specialty-heading">Specialties</span><span class="v4-role-heading">Priority</span><span>Board +</span><span>Gear +</span><span>Final Lv</span></div>
  <div id="v2-skill-list" class="v2-skill-list"></div>
  <div class="v2-mastery-hint">Invest shows the <b>Mastery rank to level manually</b>. Board shows <b>obtained / planned</b> bonuses, and Final Lv includes invested rank + planned board + recorded gear. Only tiles marked obtained count as acquired. Unspent points and missing gear are not assumed spent/equipped. Select a skill for its exact breakdown and Specialties.</div>
  <div id="v2-spec-panel" class="v2-in-panel-flyout" role="region" aria-label="Selected skill specialty choices" hidden></div>
@@ -123,7 +123,9 @@ function mount(){
  const gearMain=$('gear').querySelector('.gear-main');
  const gearExtras=gearMain?.querySelector('.gear-side');
  if(gearExtras)gearDetails.append(gearExtras);
- for(const extra of ['.gear-cp','#gear>.notice','.gear-credit']){
+ const cp=$('gear').querySelector('.gear-cp');
+ if(cp)$('gear').querySelector('.gear-intro')?.after(cp);
+ for(const extra of ['#gear>.notice','.gear-credit']){
    const part=$('gear').querySelector(extra);
    if(part)gearDetails.append(part);
  }
@@ -197,6 +199,11 @@ function skillsView(m){
    const picks=specPicks(name,level);
    const summary=!SPECS[state.class]?.[name]?'Rank & bonuses':level<8?'Specialties unlock at effective Lv 8':
      `${picks.length} of ${specialtySlots(level)} Specialties chosen`;
+   const spec=SPECS[state.class]?.[name];
+   const preview=picks.slice(0,3).map(id=>
+     `<span class="v4-spec-token" title="${esc(String(spec?.options?.[id]||'Specialty '+id))}">${esc(String(id))}</span>`).join('');
+   const priority=(hint?.core||[]).includes(name)?'Core':
+     (hint?.support||[]).includes(name)?'Support':i>=12?'Passive':'Flex';
    return `<div class="v2-skill ${specialtyOpen&&skill===name?'chosen':''}" role="group">
     <button type="button" data-v2-select-skill="${esc(name)}" class="v2-skill-label" aria-expanded="${specialtyOpen&&skill===name}"
       aria-controls="v2-spec-panel" title="View ${esc(name)} effects and Specialty choices">
@@ -204,6 +211,8 @@ function skillsView(m){
       <span><b>${esc(name)}</b><small>${esc(summary)}</small></span><span class="v2-open-caret" aria-hidden="true">›</span>
     </button>
     <div class="v2-rank"><button type="button" data-v2-rank="${esc(name)}" data-dir="-1" ${rank<=1?'disabled':''} aria-label="Decrease ${esc(name)} Mastery rank">−</button><b>${rank}<small>/10</small></b><button type="button" data-v2-rank="${esc(name)}" data-dir="1" ${rank>=cap||m.mastery.spent+masteryCost(rank+1)>budget('mastery')?'disabled':''} aria-label="Increase ${esc(name)} Mastery rank">+</button></div>
+    <span class="v4-specialty-summary" title="Selected Specialties: ${esc(summary)}">${preview||'<span class="v4-spec-none">—</span>'}</span>
+    <span class="v4-role-summary">${priority}</span>
     <span class="v2-green v2-board-delta" data-board-owned="${boardOwned}" data-board-planned="${board}" title="Board obtained +${boardOwned}; planned +${board}"><small>+${boardOwned} owned</small><small>+${board} plan</small></span><span class="v2-green" title="Recorded equipment/Arcana bonuses"> ${gear?'+'+gear:'—'}</span><b class="v2-effective v2-level-delta" data-effective-owned="${ownedLevel}" data-effective-planned="${level}" title="Invest ${rank} + planned board ${board} + gear ${gear} = final Lv ${level}"><span>Lv ${level}</span><small>${ownedLevel} obtained</small></b>
    </div>`;
  }).join('')||'<p class="v2-muted">No unlocked skills match this filter.</p>';
@@ -319,7 +328,7 @@ function actionsView(m){
  ['Daevanion',nextBoard?`${nextBoard.board} · ${effectText(nextBoard.node)}`:'Review connected purchase path','boards']
  ];
  const breakpoint=typeof progressionNextBreakpoint==='function'?progressionNextBreakpoint(state.class,account().context,name=>effective(name,m),budget('crystals')):'';
- next.innerHTML=`<div class="v2-next-heading"><b>Next recommended upgrades</b><small>Guidance only, not assumed equipment</small></div>`+(breakpoint?`<p class="v2-next-progress">${esc(breakpoint)}</p>`:'')+parts.map(([name,detail,target],i)=>`<button data-v2-focus="${target}"><em>${i+1}</em><span><b>${name}</b><small>${esc(detail)}</small></span><span>→</span></button>`).join('');
+ next.innerHTML=`<details class="v4-next-details"><summary><b>Next recommended upgrades</b><span>Mastery · Stigma · Daevanion</span></summary><div class="v4-next-content">`+(breakpoint?`<p class="v2-next-progress">${esc(breakpoint)}</p>`:'')+parts.map(([name,detail,target],i)=>`<button data-v2-focus="${target}"><em>${i+1}</em><span><b>${name}</b><small>${esc(detail)}</small></span><span>→</span></button>`).join('')+'</div></details>';
  $('v2-status').innerHTML=modifiedBuild()?'<b class="modified">● Modified progression</b><small>Custom allocation</small>':'<b>● Following recommended</b><small>Your own gear stays separate</small>';
  $('v2-reset-allocations').hidden=!modifiedBuild();
  $('v2-board-notice').textContent=lastBoardRecalculation?.message||message||'';
