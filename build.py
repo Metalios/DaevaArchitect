@@ -92,6 +92,7 @@ shutil.copy2(root / 'css' / 'styles.css', out_dir / 'css' / 'styles.css')
 shutil.copy2(root / 'css' / 'v2.css', out_dir / 'css' / 'v2.css')
 shutil.copy2(root / 'css' / 'leveling.css', out_dir / 'css' / 'leveling.css')
 shutil.copy2(root / 'css' / 'fidelity.css', out_dir / 'css' / 'fidelity.css')
+shutil.copy2(root / 'css' / 'approved-target.css', out_dir / 'css' / 'approved-target.css')
 for asset in (root / 'assets').rglob('*'):
     if asset.is_file():
         destination = out_dir / 'assets' / asset.relative_to(root / 'assets')
