@@ -226,6 +226,10 @@ try{
    const view=document.querySelector('#boards .board-scroll').getBoundingClientRect();
    const grid=document.querySelector('#board-grid').getBoundingClientRect();
    return {bottom:work.bottom,boardHeight:view.height,gridHeight:grid.height,
+     boardPanelHeight:document.querySelector('#boards').getBoundingClientRect().height,
+     layoutHeight:document.querySelector('#boards .board-layout').getBoundingClientRect().height,
+     canvasHeight:document.querySelector('#boards .board-layout>div:first-child').getBoundingClientRect().height,
+     dockHeight:document.querySelector('.v2-board-dock').getBoundingClientRect().height,
      tile:+document.querySelector('#v2-zoom-label').textContent.replace('px','')};
   });
   console.log('Auto-fit '+width+'x'+height+': '+JSON.stringify(initial));
