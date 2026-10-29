@@ -485,3 +485,15 @@
   display:flex!important;
  }
 }
+
+@media(min-width:1100px) and (max-width:1699px){
+ .v2-active.v2-has-class:not(.v2-secondary) .v2-workspace[data-editor="stigma"] .v2-center #mastery,
+ .v2-active.v2-has-class:not(.v2-secondary) .v2-workspace[data-editor="mastery"] .v2-center #stigma{
+  display:none!important;
+ }
+ .v2-active.v2-has-class:not(.v2-secondary) .v2-workspace[data-editor="stigma"] .v2-center #stigma{
+  display:flex!important;
+  flex:1 1 auto;
+  max-height:none!important;
+ }
+}
