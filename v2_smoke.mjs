@@ -21,6 +21,27 @@ const errors=[];
 async function verifyAdvancedCards(page,width){
  const details=page.locator('.v2-advanced-skills');
  await details.evaluate(el=>{el.open=true});
+ // Chromium's native <details> content can become paintable one frame after
+ // open changes. Demand an actual nonzero card box, not just a DOM node.
+ await page.waitForFunction(()=>{
+   const detail=document.querySelector('#mastery .v2-advanced-skills');
+   const card=detail?.querySelector('#skill-grid .skill-card');
+   return detail?.open&&card&&card.getBoundingClientRect().width>=100;
+ },null,{timeout:8000}).catch(async error=>{
+   const diagnostic=await page.evaluate(()=>{
+     const el=document.querySelector('#mastery .v2-advanced-skills');
+     const grid=el?.querySelector('#skill-grid');
+     const card=grid?.querySelector('.skill-card');
+     const info=node=>node?{
+       display:getComputedStyle(node).display,contentVisibility:getComputedStyle(node).contentVisibility,
+       overflow:getComputedStyle(node).overflow,width:node.getBoundingClientRect().width,
+       height:node.getBoundingClientRect().height}:null;
+     return {open:el?.open,details:info(el),grid:info(grid),card:info(card),
+       parent:info(grid?.parentElement),mastery:info(document.querySelector('#mastery')),
+       column:info(document.querySelector('.v2-center'))};
+   });
+   throw new Error('Advanced Mastery failed to render cards: '+JSON.stringify(diagnostic),{cause:error});
+ });
  const result=await page.evaluate(()=>{
    const cards=[...document.querySelectorAll('#mastery .v2-advanced-skills #skill-grid .skill-card')].slice(0,6);
    return cards.map(card=>{
