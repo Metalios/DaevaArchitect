@@ -101,6 +101,7 @@ function mount(){
  const primaryActions=boardControls.querySelector('.v2-board-primary-actions');
  quickActions.insertBefore($('v2-board-restore'),quickActions.firstChild);
  const more=make('details','v2-board-options','<summary>More tools <span aria-hidden="true">▾</span></summary>');
+ more.id='v2-board-options';
  more.setAttribute('aria-label','Additional Daevanion planner actions and model details');
  const moreBody=make('div','v2-board-options-body');
  more.append(moreBody);
