@@ -166,6 +166,7 @@ try{
    await page.locator('[data-v3-editor="stigma"]').click();
    assert.equal(await page.locator('#stigma').isVisible(),true);
    assert.equal(await page.locator('#boards').isVisible(),true);
+   if(width===1280)await page.screenshot({path:'v2-previews/approved-medium-stigmas-1280.png'});
    const w=await page.locator('#v2-stigma-list .v2-stigma-card').first()
      .evaluate(el=>el.getBoundingClientRect().width);
    assert(w>=140,width+': Stigma card too narrow '+w);
@@ -226,6 +227,20 @@ try{
     assert.equal(await page.locator('#boards').isVisible(),false);
    }
    await verifyAdvancedCards(page,width);
+   if(width===390){
+    const settings=page.locator('#v3-settings-toggle');
+    assert.equal(await settings.isVisible(),true);
+    await settings.click();
+    assert.equal(await settings.getAttribute('aria-expanded'),'true');
+    assert.equal(await page.locator('#v2-class').isVisible(),true);
+    await settings.click();
+    assert.equal(await page.locator('#v2-class').isVisible(),false);
+    await page.screenshot({path:'v2-previews/approved-mobile-mastery-390.png'});
+    await page.locator('[data-v3-editor="stigma"]').click();
+    await page.screenshot({path:'v2-previews/approved-mobile-stigmas-390.png'});
+    await page.locator('[data-v3-editor="gear"]').click();
+    await page.screenshot({path:'v2-previews/approved-mobile-equipment-390.png'});
+   }
    if(width<1100)await page.locator('[data-v3-editor="boards"]').click();
   assert.equal(await page.locator('#board-grid .node').count(),89,width+': board geometry changed');
    if(width<1100){
