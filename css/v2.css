@@ -1006,8 +1006,8 @@
    available below the workspace without forcing users to visit it for edits. */
 @media(min-width:1100px) and (min-height:600px){
  .v2-active.v2-has-class:not(.v2-secondary):not(.v2-board-expanded) .v2-workspace{
-  height:calc(100dvh - 143px);
-  min-height:440px;
+  height:var(--v2-workspace-space,calc(100dvh - 143px));
+  min-height:340px;
   align-items:stretch;
   overflow:visible;
  }
@@ -1168,5 +1168,47 @@
  .v2-active.v2-board-expanded .v2-board-options-body .route-footnote{
   margin:0;
   width:100%;
+ }
+}
+
+/* At 1100–1699px, the original inline sidebar became a second grid row
+   below the map, squeezing the map viewport to virtually nothing at 720p.
+   Keep node inspection in a user-invoked, independently scrolling drawer. */
+.v2-active #v2-inspector-toggle{display:none}
+@media(min-width:1100px) and (max-width:1699px){
+ .v2-active:not(.v2-board-expanded) .v2-right #boards>.board-layout{
+  position:relative;
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:minmax(0,1fr);
+  min-height:0;
+ }
+ .v2-active:not(.v2-board-expanded) .v2-right .board-layout>div:first-child{
+  min-height:0;
+ }
+ .v2-active:not(.v2-board-expanded) #v2-inspector-toggle{
+  display:inline-flex;
+ }
+ .v2-active:not(.v2-board-expanded) .v2-right .board-side{
+  display:none;
+  position:fixed;
+  inset:124px 12px 18px auto;
+  z-index:90;
+  width:min(355px,37vw);
+  max-height:none;
+  min-height:0;
+  padding:12px;
+  overflow-y:auto;
+  border:1px solid #6591b5;
+  border-radius:9px;
+  background:#0a2136;
+  box-shadow:0 15px 55px #000d;
+ }
+ .v2-active:not(.v2-board-expanded) #boards.v2-inspector-open .board-side{
+  display:block;
+ }
+ .v2-active:not(.v2-board-expanded) #boards.v2-inspector-open #v2-inspector-toggle{
+  border-color:#8ad3e7;
+  background:#245c81;
  }
 }
