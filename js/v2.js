@@ -319,7 +319,7 @@ function sizeBoardToViewport(){
  $('v2-board-fit').title='Automatically fit the board to its visible viewport';
 }
 function queueBoardFit(){
- if(fitQueued||!boardAutoFit)return;
+ if(fitQueued)return;
  fitQueued=true;
  requestAnimationFrame(()=>{
    fitQueued=false;
