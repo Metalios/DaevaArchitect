@@ -1236,3 +1236,23 @@
   height:auto;
  }
 }
+
+
+/* The right-hand .v2-column was still a content-sized CSS grid row. Its
+   inner #boards therefore resolved height:100% against ~266px instead of
+   the viewport-height column. Make it a flex column so the board fills the
+   actual panel, including at 1280x720. */
+@media(min-width:1100px) and (min-height:600px){
+ .v2-active.v2-has-class:not(.v2-secondary):not(.v2-board-expanded) .v2-workspace>.v2-right{
+  display:flex!important;
+  flex-direction:column;
+  align-content:stretch;
+  align-items:stretch;
+ }
+ .v2-active.v2-has-class:not(.v2-secondary):not(.v2-board-expanded) .v2-right #boards{
+  flex:1 1 0%;
+  height:auto;
+  min-height:0;
+  width:100%;
+ }
+}
