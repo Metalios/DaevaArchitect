@@ -824,6 +824,7 @@
 .v2-active .v2-board-options>summary{list-style:none;gap:5px}
 .v2-active .v2-board-options>summary::-webkit-details-marker{display:none}
 .v2-active .v2-board-options[open]>summary{background:#245579;border-color:#85b9de}
+.v2-active .v2-board-options:not([open]) .v2-board-options-body{display:none}
 .v2-active .v2-board-options-body{
  position:absolute;
  right:0;
