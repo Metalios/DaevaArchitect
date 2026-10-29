@@ -1277,3 +1277,29 @@
   grid-column:3;grid-row:1;
  }
 }
+
+
+/* Daevanion is the primary visual editor: reserve the remaining width for
+   a legible map, rather than dividing all three panels proportionally.
+   Equipment and Mastery keep functional minimums; board receives the rest. */
+@media(min-width:1100px) and (max-width:1699px) and (min-height:600px){
+ .v2-active.v2-has-class:not(.v2-secondary):not(.v2-board-expanded) .v2-workspace{
+  grid-template-columns:clamp(215px,17vw,290px) clamp(342px,27vw,480px) minmax(0,1fr);
+ }
+}
+/* The active board is already identified by the tab immediately above the
+   canvas. Remove the duplicated 70px map heading, preserving the actual
+   tabs, node statuses and detailed information in More tools. */
+@media(min-width:1100px) and (min-height:600px){
+ .v2-active.v2-has-class .v2-right .board-map-head{
+  display:none!important;
+ }
+ .v2-active.v2-has-class .v2-right .board-scroll{
+  scrollbar-width:thin;
+  scrollbar-color:#4a779a #091e30;
+ }
+ .v2-active.v2-has-class .v2-right #board-grid{
+  /* Never scale artwork down just to suppress the board's scrollbars. */
+  min-width:max-content;
+ }
+}
