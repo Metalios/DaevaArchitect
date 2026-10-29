@@ -464,11 +464,13 @@ function bind(){
  });
  $('mastery-search').addEventListener('input',()=>sync(model()));
  $('board-tabs').addEventListener('click',()=>{
-   more.open=false;
+   const options=$('v2-board-options');
+   if(options)options.open=false;
    setTimeout(()=>sync(model()),0);
  });
  document.addEventListener('pointerdown',e=>{
-   if(more.open&&!more.contains(e.target))more.open=false;
+   const options=$('v2-board-options');
+   if(options?.open&&!options.contains(e.target))options.open=false;
  });
  $('board-grid').addEventListener('click',()=>setTimeout(()=>sync(model()),0));
 }
