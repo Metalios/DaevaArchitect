@@ -232,6 +232,16 @@ try{
   assert(initial.bottom<=height+16,'Workspace beyond viewport: '+JSON.stringify(initial));
   assert(initial.boardHeight>=220,'Board viewport too short: '+JSON.stringify(initial));
   assert(initial.tile>=26&&initial.tile<=52,'Invalid tile fit');
+  if(width===1280){
+   const inspect=page.locator('#v2-inspector-toggle');
+   assert.equal(await inspect.isVisible(),true,'Short desktop needs an accessible tile inspector');
+   await inspect.click();
+   assert.equal(await page.locator('#v2-board-inspector').isVisible(),true,
+     'Tile inspector drawer failed to open');
+   await inspect.click();
+   assert.equal(await page.locator('#v2-board-inspector').isVisible(),false,
+     'Tile inspector drawer failed to close');
+  }
   if(height>=900)assert(initial.gridHeight<=initial.boardHeight+3,
     'Board should fit vertically in 1080p: '+JSON.stringify(initial));
   await page.locator('#v2-zoom-plus').click();
