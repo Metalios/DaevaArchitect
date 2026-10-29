@@ -143,7 +143,23 @@ try{
   assert.equal(await advanced.evaluate(el=>el.open),true);
   assert.equal(await page.locator('#gear-arcana-grid').count(),1);
   await advanced.locator(':scope > summary').click();
-  if(width<1700)await page.locator('[data-v3-editor="mastery"]').click();
+  if(width<1700){
+    await page.locator('[data-v3-editor="mastery"]').click();
+    const diag=await page.evaluate(()=>{
+      const read=selector=>{
+        const el=document.querySelector(selector);
+        return el?{display:getComputedStyle(el).display,visibility:getComputedStyle(el).visibility,
+          rect:el.getBoundingClientRect().toJSON()}:null;
+      };
+      return {editor:document.querySelector('.v2-workspace').dataset.editor,
+        column:read('.v2-center'),mastery:read('.v2-center #mastery'),
+        advanced:read('.v2-advanced-skills'),grid:read('#skill-grid')};
+    });
+    console.log('MEDIUM_MASTERY_LAYOUT '+JSON.stringify(diag));
+    assert.equal(diag.editor,'mastery','The editor rail did not select Mastery');
+    assert.equal(await page.locator('#mastery').isVisible(),true,
+      'Selected Mastery panel is hidden at '+width+': '+JSON.stringify(diag));
+  }
   await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
   await page.waitForFunction(()=>window.scrollY===0);
   fs.mkdirSync('v2-previews',{recursive:true});
