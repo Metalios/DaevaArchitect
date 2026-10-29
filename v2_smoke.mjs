@@ -292,6 +292,47 @@ try{
   }
   await page.close();
  }
+
+ // Expanded visual audit screenshots at four breakpoints.
+ for(const [width,height] of [[390,844],[800,1000],[1280,720],[1920,1080]]){
+   const page=await browser.newPage({viewport:{width,height},deviceScaleFactor:1});
+   page.on('pageerror',error=>errors.push('Visual audit '+width+': '+error.message));
+   await page.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'domcontentloaded'});
+   await page.locator('#class-buttons [data-class="templar"]').click();
+   const out='v2-previews/audit-'+width+'-';
+   await page.screenshot({path:out+'workspace.png',fullPage:width<=800});
+   for(const [key,label] of [['rotation','rotation'],['titles','titles'],['sources','research']]){
+      await page.locator('[data-v2-tab="'+key+'"]').click();
+      await page.waitForTimeout(120);
+      await page.screenshot({path:out+label+'.png',fullPage:width<=800});
+   }
+   await page.locator('[data-v2-tab="workspace"]').click();
+   await page.locator('#gear-doll-grid [data-gear-slot]').first().click();
+   await page.screenshot({path:out+'gear-dialog.png'});
+   await page.locator('#gear-dialog-close').click();
+   if(width===1920||width===390){
+      await page.locator('#v2-share').click();
+      await page.locator('#share-dialog').waitFor({state:'visible'});
+      await page.screenshot({path:out+'share-dialog.png'});
+      await page.locator('#share-dialog-close').click();
+      await page.locator('#v2-open-comparison').click();
+      await page.screenshot({path:out+'comparison.png'});
+      await page.locator('#v2-comparison-close').click();
+      await page.locator('.v2-advanced-skills > summary').click();
+      await page.screenshot({path:out+'advanced-skills.png',fullPage:width<=800});
+   }
+   const geometry=await page.evaluate(()=>({
+     viewport:innerWidth,
+     document:document.documentElement.scrollWidth,
+     workspaceHeight:document.querySelector('.v2-workspace').scrollHeight,
+     classes:document.body.className,
+     stigmas:[...document.querySelectorAll('#v2-stigma-list .v2-stigma-card')]
+       .slice(0,4).map(x=>({width:Math.round(x.getBoundingClientRect().width),
+         height:Math.round(x.getBoundingClientRect().height)}))
+   }));
+   console.log('WHOLE_APP_VISUAL_AUDIT '+width+' '+JSON.stringify(geometry));
+   await page.close();
+ }
  assert.equal(errors.length,0,errors.join('\n'));
  console.log('v2 browser errors:',errors.length);
 }finally{await browser.close();await new Promise(resolve=>server.close(resolve))}
