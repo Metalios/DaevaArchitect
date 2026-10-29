@@ -120,6 +120,19 @@ function mount(){
  if(window.innerWidth<1700&&!state.gearView)state.gearView='inventory';
  const earned=p.querySelector('.controls');
  if(earned)$('gear').append(earned);
+ // A subtle, scalable armor silhouette is decorative only. Unlike the
+ // generated mock, this is not presented as an actual AION 2 character.
+ const doll=$('gear').querySelector('.gear-paperdoll');
+ if(doll){
+  const crest=make('div','v4-armor-crest',`<svg viewBox="0 0 240 310" role="presentation" aria-hidden="true">
+   <defs><linearGradient id="v4-armor-blue" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4b8aaf"/><stop offset=".5" stop-color="#153651"/><stop offset="1" stop-color="#8ec6db"/></linearGradient></defs>
+   <path d="M120 14 163 39 158 93 142 119 98 119 82 93 77 39Z" fill="url(#v4-armor-blue)" stroke="#b4cde1" stroke-width="3"/>
+   <path d="M90 54Q120 70 150 54M93 84H147L135 109H105Z" fill="none" stroke="#c6e4ef" stroke-width="4"/>
+   <path d="M76 120 40 143 24 198 51 219 71 195 67 280 120 296 173 280 169 195 189 219 216 198 200 143 164 120 143 147 120 133 97 147Z" fill="url(#v4-armor-blue)" stroke="#9dc7dd" stroke-width="3"/>
+   <path d="M120 141V278M68 184H172M75 246H165M41 152 69 169M199 152 171 169" fill="none" stroke="#accad9" stroke-width="3" opacity=".85"/>
+   <path d="M120 150 140 171 120 196 100 171Z" fill="#d5c07a" opacity=".9"/></svg>`);
+  doll.querySelector('.gear-paperdoll-head')?.after(crest);
+ }
  const gearMain=$('gear').querySelector('.gear-main');
  const gearExtras=gearMain?.querySelector('.gear-side');
  if(gearExtras)gearDetails.append(gearExtras);
@@ -169,6 +182,11 @@ function mount(){
  // Recalculation/ownership notices stay visible, outside the More menu.
  const side=$('boards').querySelector('.board-side');
  if(side){
+  const progress=make('div','v4-board-progress',
+   '<div class="v4-board-progress-head"><b id="v4-board-current">Current board</b><span id="v4-board-count">0 / 0</span></div>'+
+   '<div class="v4-progress-track"><span id="v4-progress-fill"></span></div>'+
+   '<p id="v4-progress-caption">Recommended and obtained progress</p>');
+  side.prepend(progress);
   const extras=make('details','v2-board-extra','<summary>Board bonuses, purchase order & next key nodes</summary>');
   const current=side.querySelector('.board-effects-panel');
   const purchases=$('purchase-list')?.closest('.panel');
@@ -364,7 +382,7 @@ function sizeBoardToViewport(){
  // Never make the primary 15×15 Daevanion board illegible merely to
  // squeeze its entirety into a short workspace. At 720p, overflow is
  // intentional; use Focus board for a nearly full-screen, readable map.
- const minReadableTile=40;
+ const minReadableTile=window.innerWidth>=1700?44:40;
  const tile=Math.max(minReadableTile,Math.min(52,Math.floor((usable-gap*14)/15)));
  if(tile!==zoom){
    zoom=tile;
@@ -413,6 +431,14 @@ function sync(m){
  // not invent nodes, costs, or claim support without verified Global data.
  if(!$('board-tabs').querySelector('.v2-ariel-pending'))$('board-tabs').append(ariel);
  m ||= model();skillsView(m);stigmasView(m);actionsView(m);
+ const activeSteps=routeSteps(activeRoute(),nodeMap()).filter(x=>x.board===state.board);
+ const acquired=obtainedNodes(),owned=activeSteps.filter(x=>acquired.has(x.id)).length;
+ if($('v4-board-count')){
+  $('v4-board-current').textContent=state.board||'Daevanion';
+  $('v4-board-count').textContent=`${owned} / ${activeSteps.length} obtained`;
+  $('v4-progress-fill').style.width=(activeSteps.length?100*owned/activeSteps.length:0)+'%';
+  $('v4-progress-caption').textContent=`${activeSteps.length-owned} funded tiles to obtain`;
+ }
  const secondary=['rotation','titles','sources'].includes(state.tab);
  document.body.classList.toggle('v2-secondary',secondary);
  nav.querySelectorAll('[data-v2-tab]').forEach(b=>b.classList.toggle('active',b.dataset.v2Tab===(secondary?state.tab:'workspace')));
