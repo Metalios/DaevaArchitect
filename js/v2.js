@@ -41,7 +41,7 @@ const editorNav=make('nav','v3-editor-switch',`
  <button type="button" data-v3-editor="stigma" aria-pressed="false"><span class="v3-editor-symbol" aria-hidden="true">✧</span><span>Stigmas</span></button>
  <button type="button" data-v3-editor="boards" aria-pressed="false"><span class="v3-editor-symbol" aria-hidden="true">◇</span><span>Daevanion</span></button>`);
 editorNav.setAttribute('aria-label','Choose build editor');
-let editorView=window.innerWidth<1100?'boards':'mastery';
+let editorView=window.innerWidth<1100?'boards':window.innerWidth<1700?'gear':'mastery';
 let editorMode=window.innerWidth<1100?'mobile':window.innerWidth<1700?'medium':'wide';
 function selectEditor(editor,focus=false){
  if(!['gear','mastery','stigma','boards'].includes(editor))return;
@@ -69,7 +69,7 @@ const extra=make('div','v2-extra');extra.id='v2-extra';
 const master=make('div','v2-master-editor',`
  <div class="v2-skill-toolbar" role="group" aria-label="Mastery skill category"><button type="button" id="v2-active-filter" class="active" aria-pressed="true">Active skills (12)</button><button type="button" id="v2-passive-filter" aria-pressed="false">Passive (10)</button><span class="v2-skill-search-label">Find a skill</span></div>
  <div class="v2-source-legend" role="note"><b>Skill levels:</b> Invest Mastery + planned board bonus + recorded gear = final planned level. Obtained board bonuses are separate.</div>
- <div class="v2-editor-title"><b>Skill</b><span>Invest</span><span>Board +</span><span>Gear +</span><span>Final Lv</span></div>
+ <div class="v2-editor-title"><b>Skill</b><span>Invest</span><span class="v4-specialty-heading">Specialties</span><span class="v4-role-heading">Priority</span><span>Board +</span><span>Gear +</span><span>Final Lv</span></div>
  <div id="v2-skill-list" class="v2-skill-list"></div>
  <div class="v2-mastery-hint">Invest shows the <b>Mastery rank to level manually</b>. Board shows <b>obtained / planned</b> bonuses, and Final Lv includes invested rank + planned board + recorded gear. Only tiles marked obtained count as acquired. Unspent points and missing gear are not assumed spent/equipped. Select a skill for its exact breakdown and Specialties.</div>
  <div id="v2-spec-panel" class="v2-in-panel-flyout" role="region" aria-label="Selected skill specialty choices" hidden></div>
@@ -117,13 +117,43 @@ function mount(){
  // optional Arcana/Wings/CP and fine-grained stat summaries to make every
  // workspace page several screens tall. Their original controls stay live.
  $('gear').append(gearDetails);
- if(window.innerWidth<1700&&!state.gearView)state.gearView='inventory';
+ // The approved medium desktop mock uses the compact paperdoll/Inspect
+ // presentation. Keep Inventory as the touch-first phone default.
+ if(!state.gearView)state.gearView=window.innerWidth<700?'inventory':'inspect';
  const earned=p.querySelector('.controls');
  if(earned)$('gear').append(earned);
+ // A subtle, scalable armor silhouette is decorative only. Unlike the
+ // generated mock, this is not presented as an actual AION 2 character.
+ const doll=$('gear').querySelector('.gear-paperdoll');
+ if(doll){
+  const crest=make('div','v4-armor-crest',`<svg viewBox="0 0 240 310" role="presentation" aria-hidden="true">
+   <defs><linearGradient id="v4-armor-blue" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4b8aaf"/><stop offset=".5" stop-color="#153651"/><stop offset="1" stop-color="#8ec6db"/></linearGradient></defs>
+   <path d="M120 14 163 39 158 93 142 119 98 119 82 93 77 39Z" fill="url(#v4-armor-blue)" stroke="#b4cde1" stroke-width="3"/>
+   <path d="M90 54Q120 70 150 54M93 84H147L135 109H105Z" fill="none" stroke="#c6e4ef" stroke-width="4"/>
+   <path d="M76 120 40 143 24 198 51 219 71 195 67 280 120 296 173 280 169 195 189 219 216 198 200 143 164 120 143 147 120 133 97 147Z" fill="url(#v4-armor-blue)" stroke="#9dc7dd" stroke-width="3"/>
+   <path d="M120 141V278M68 184H172M75 246H165M41 152 69 169M199 152 171 169" fill="none" stroke="#accad9" stroke-width="3" opacity=".85"/>
+   <path d="M120 150 140 171 120 196 100 171Z" fill="#d5c07a" opacity=".9"/></svg>`);
+  doll.querySelector('.gear-paperdoll-head')?.after(crest);
+ }
  const gearMain=$('gear').querySelector('.gear-main');
  const gearExtras=gearMain?.querySelector('.gear-side');
  if(gearExtras)gearDetails.append(gearExtras);
- for(const extra of ['.gear-cp','#gear>.notice','.gear-credit']){
+ // Display only genuine recorded fixed stats alongside the equipment slots.
+ const stats=gearDetails.querySelector('#gear-fixed-stats')?.closest('.panel');
+ if(stats&&gearMain){stats.classList.add('v4-equipment-stats');gearMain.append(stats);}
+ const cp=$('gear').querySelector('.gear-cp');
+ if(cp){
+   $('gear').querySelector('.gear-intro')?.after(cp);
+   // Keep only the real estimated CP readout in the primary editor.
+   // Detailed goals, calibration, assumptions remain in Advanced.
+   for(const detail of [
+     cp.querySelector(':scope > label'),
+     cp.querySelector('#gear-cp-status'),
+     cp.querySelector('#gear-cp-assumption'),
+     cp.querySelector('.cp-method')
+   ])if(detail)gearDetails.append(detail);
+ }
+ for(const extra of ['#gear>.notice','.gear-credit']){
    const part=$('gear').querySelector(extra);
    if(part)gearDetails.append(part);
  }
@@ -167,6 +197,26 @@ function mount(){
  // Recalculation/ownership notices stay visible, outside the More menu.
  const side=$('boards').querySelector('.board-side');
  if(side){
+  const progress=make('div','v4-board-progress',
+   '<div class="v4-board-progress-head"><b id="v4-board-current">Current board</b><span id="v4-board-count">0 / 0</span></div>'+
+   '<div class="v4-progress-track"><span id="v4-progress-fill"></span></div>'+
+   '<p id="v4-progress-caption">Recommended and obtained progress</p>');
+  side.prepend(progress);
+  const closeInspector=make('button','v4-inspector-close','✕ Close tile details');
+  closeInspector.id='v4-inspector-close';
+  closeInspector.type='button';
+  closeInspector.setAttribute('aria-label','Close tile details inspector');
+  side.prepend(closeInspector);
+  closeInspector.addEventListener('click',()=>{
+    const boards=$('boards');
+    boards.classList.remove('v2-inspector-open');
+    const btn=$('v2-inspector-toggle');
+    if(btn){
+      btn.setAttribute('aria-expanded','false');
+      btn.textContent='Tile details';
+      btn.focus({preventScroll:true});
+    }
+  });
   const extras=make('details','v2-board-extra','<summary>Board bonuses, purchase order & next key nodes</summary>');
   const current=side.querySelector('.board-effects-panel');
   const purchases=$('purchase-list')?.closest('.panel');
@@ -197,6 +247,11 @@ function skillsView(m){
    const picks=specPicks(name,level);
    const summary=!SPECS[state.class]?.[name]?'Rank & bonuses':level<8?'Specialties unlock at effective Lv 8':
      `${picks.length} of ${specialtySlots(level)} Specialties chosen`;
+   const spec=SPECS[state.class]?.[name];
+   const preview=picks.slice(0,3).map(id=>
+     `<span class="v4-spec-token" title="${esc(String(spec?.options?.[id]||'Specialty '+id))}">${esc(String(id))}</span>`).join('');
+   const priority=(hint?.core||[]).includes(name)?'Core':
+     (hint?.support||[]).includes(name)?'Support':i>=12?'Passive':'Flex';
    return `<div class="v2-skill ${specialtyOpen&&skill===name?'chosen':''}" role="group">
     <button type="button" data-v2-select-skill="${esc(name)}" class="v2-skill-label" aria-expanded="${specialtyOpen&&skill===name}"
       aria-controls="v2-spec-panel" title="View ${esc(name)} effects and Specialty choices">
@@ -204,6 +259,8 @@ function skillsView(m){
       <span><b>${esc(name)}</b><small>${esc(summary)}</small></span><span class="v2-open-caret" aria-hidden="true">›</span>
     </button>
     <div class="v2-rank"><button type="button" data-v2-rank="${esc(name)}" data-dir="-1" ${rank<=1?'disabled':''} aria-label="Decrease ${esc(name)} Mastery rank">−</button><b>${rank}<small>/10</small></b><button type="button" data-v2-rank="${esc(name)}" data-dir="1" ${rank>=cap||m.mastery.spent+masteryCost(rank+1)>budget('mastery')?'disabled':''} aria-label="Increase ${esc(name)} Mastery rank">+</button></div>
+    <span class="v4-specialty-summary" title="Selected Specialties: ${esc(summary)}">${preview||'<span class="v4-spec-none">—</span>'}</span>
+    <span class="v4-role-summary">${priority}</span>
     <span class="v2-green v2-board-delta" data-board-owned="${boardOwned}" data-board-planned="${board}" title="Board obtained +${boardOwned}; planned +${board}"><small>+${boardOwned} owned</small><small>+${board} plan</small></span><span class="v2-green" title="Recorded equipment/Arcana bonuses"> ${gear?'+'+gear:'—'}</span><b class="v2-effective v2-level-delta" data-effective-owned="${ownedLevel}" data-effective-planned="${level}" title="Invest ${rank} + planned board ${board} + gear ${gear} = final Lv ${level}"><span>Lv ${level}</span><small>${ownedLevel} obtained</small></b>
    </div>`;
  }).join('')||'<p class="v2-muted">No unlocked skills match this filter.</p>';
@@ -319,7 +376,10 @@ function actionsView(m){
  ['Daevanion',nextBoard?`${nextBoard.board} · ${effectText(nextBoard.node)}`:'Review connected purchase path','boards']
  ];
  const breakpoint=typeof progressionNextBreakpoint==='function'?progressionNextBreakpoint(state.class,account().context,name=>effective(name,m),budget('crystals')):'';
- next.innerHTML=`<div class="v2-next-heading"><b>Next recommended upgrades</b><small>Guidance only, not assumed equipment</small></div>`+(breakpoint?`<p class="v2-next-progress">${esc(breakpoint)}</p>`:'')+parts.map(([name,detail,target],i)=>`<button data-v2-focus="${target}"><em>${i+1}</em><span><b>${name}</b><small>${esc(detail)}</small></span><span>→</span></button>`).join('');
+ next.innerHTML=`<details class="v4-next-details"><summary><b>Next recommended upgrades</b><span>Mastery · Stigma · Daevanion</span></summary><div class="v4-next-content">`+(breakpoint?`<p class="v2-next-progress">${esc(breakpoint)}</p>`:'')+parts.map(([name,detail,target],i)=>`<button data-v2-focus="${target}"><em>${i+1}</em><span><b>${name}</b><small>${esc(detail)}</small></span><span>→</span></button>`).join('')+'</div></details>';
+ // Keep Compare builds, class-specific combat evidence and guidance
+ // accessible in the collapsed upgrade drawer, rather than deleting them.
+ next.querySelector('.v4-next-content')?.append(note,combatEvidence);
  $('v2-status').innerHTML=modifiedBuild()?'<b class="modified">● Modified progression</b><small>Custom allocation</small>':'<b>● Following recommended</b><small>Your own gear stays separate</small>';
  $('v2-reset-allocations').hidden=!modifiedBuild();
  $('v2-board-notice').textContent=lastBoardRecalculation?.message||message||'';
@@ -355,7 +415,7 @@ function sizeBoardToViewport(){
  // Never make the primary 15×15 Daevanion board illegible merely to
  // squeeze its entirety into a short workspace. At 720p, overflow is
  // intentional; use Focus board for a nearly full-screen, readable map.
- const minReadableTile=40;
+ const minReadableTile=window.innerWidth>=1700?44:40;
  const tile=Math.max(minReadableTile,Math.min(52,Math.floor((usable-gap*14)/15)));
  if(tile!==zoom){
    zoom=tile;
@@ -404,6 +464,14 @@ function sync(m){
  // not invent nodes, costs, or claim support without verified Global data.
  if(!$('board-tabs').querySelector('.v2-ariel-pending'))$('board-tabs').append(ariel);
  m ||= model();skillsView(m);stigmasView(m);actionsView(m);
+ const activeSteps=routeSteps(activeRoute(),nodeMap()).filter(x=>x.board===state.board);
+ const acquired=obtainedNodes(),owned=activeSteps.filter(x=>acquired.has(x.id)).length;
+ if($('v4-board-count')){
+  $('v4-board-current').textContent=state.board||'Daevanion';
+  $('v4-board-count').textContent=`${owned} / ${activeSteps.length} obtained`;
+  $('v4-progress-fill').style.width=(activeSteps.length?100*owned/activeSteps.length:0)+'%';
+  $('v4-progress-caption').textContent=`${activeSteps.length-owned} funded tiles to obtain`;
+ }
  const secondary=['rotation','titles','sources'].includes(state.tab);
  document.body.classList.toggle('v2-secondary',secondary);
  nav.querySelectorAll('[data-v2-tab]').forEach(b=>b.classList.toggle('active',b.dataset.v2Tab===(secondary?state.tab:'workspace')));
@@ -612,7 +680,7 @@ function bind(){
   if(next!==editorMode){
    const previous=editorMode;editorMode=next;
    if(next==='mobile')selectEditor('boards');
-   else if(previous==='mobile')selectEditor('mastery');
+   else if(previous==='mobile')selectEditor(next==='medium'?'gear':'mastery');
   }
   queueBoardFit();
  });

@@ -19,8 +19,37 @@ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const browser=await chromium.launch({headless:true,args:['--no-sandbox']});
 const errors=[];
 async function verifyAdvancedCards(page,width){
+ // Advanced is part of the Mastery editor, which is intentionally hidden
+ // when Gear or Daevanion is selected at responsive breakpoints.
+ if(!(await page.locator('#mastery').isVisible())){
+  const switcher=page.locator('[data-v3-editor="mastery"]');
+  if(await switcher.isVisible())await switcher.click();
+ }
+ assert.equal(await page.locator('#mastery').isVisible(),true,
+  width+': Mastery must be visible before opening its Advanced editor');
  const details=page.locator('.v2-advanced-skills');
  await details.evaluate(el=>{el.open=true});
+ // Chromium's native <details> content can become paintable one frame after
+ // open changes. Demand an actual nonzero card box, not just a DOM node.
+ await page.waitForFunction(()=>{
+   const detail=document.querySelector('#mastery .v2-advanced-skills');
+   const card=detail?.querySelector('#skill-grid .skill-card');
+   return detail?.open&&card&&card.getBoundingClientRect().width>=100;
+ },null,{timeout:8000}).catch(async error=>{
+   const diagnostic=await page.evaluate(()=>{
+     const el=document.querySelector('#mastery .v2-advanced-skills');
+     const grid=el?.querySelector('#skill-grid');
+     const card=grid?.querySelector('.skill-card');
+     const info=node=>node?{
+       display:getComputedStyle(node).display,contentVisibility:getComputedStyle(node).contentVisibility,
+       overflow:getComputedStyle(node).overflow,width:node.getBoundingClientRect().width,
+       height:node.getBoundingClientRect().height}:null;
+     return {open:el?.open,details:info(el),grid:info(grid),card:info(card),
+       parent:info(grid?.parentElement),mastery:info(document.querySelector('#mastery')),
+       column:info(document.querySelector('.v2-center'))};
+   });
+   throw new Error('Advanced Mastery failed to render cards: '+JSON.stringify(diagnostic),{cause:error});
+ });
  const result=await page.evaluate(()=>{
    const cards=[...document.querySelectorAll('#mastery .v2-advanced-skills #skill-grid .skill-card')].slice(0,6);
    return cards.map(card=>{
@@ -55,8 +84,26 @@ try{
   const port=server.address().port;
   await page.goto('http://127.0.0.1:'+port+'/',{waitUntil:'domcontentloaded'});
   await page.locator('#class-buttons [data-class="templar"]').click();
-  await page.locator('#v2-skill-list .v2-skill').first().waitFor();
+  await page.locator('#v2-skill-list .v2-skill').first()
+    .waitFor({state:width<1700?'attached':'visible'});
+  fs.mkdirSync('v2-previews',{recursive:true});
+  await page.screenshot({
+   path:'v2-previews/approved-target-initial-'+width+'.png',
+   fullPage:width===1280
+  });
   assert.equal(await page.locator('.v2-workspace').isVisible(),true,width+': unified workspace hidden');
+  if(width>=1920){
+   const layout=await page.evaluate(()=>{
+    const mastery=document.querySelector('.v2-center #mastery').getBoundingClientRect();
+    const stigma=document.querySelector('.v2-center #stigma').getBoundingClientRect();
+    const cp=document.querySelector('.v2-left .gear-cp').getBoundingClientRect();
+    return {masterBottom:mastery.bottom,stigmaTop:stigma.top,cpHeight:cp.height};
+   });
+   assert(layout.masterBottom<=layout.stigmaTop+2,
+     width+': Mastery overlaps Stigma panel: '+JSON.stringify(layout));
+   assert(layout.cpHeight<=95,
+     width+': Combat Power summary still dominates Equipment: '+JSON.stringify(layout));
+  }
   // Board tabs and routine commands are a single compact dock over the map.
   const dock=page.locator('.v2-board-dock');
   assert.equal(await dock.count(),1,width+': compact board dock is missing');
@@ -106,6 +153,10 @@ try{
   }
   assert.equal(await page.locator('#gear-doll-grid').count(),1);
   assert.equal(await page.locator('#board-grid .node').count(),89,width+': Nezekan shape mismatch');
+  assert((await page.locator('.v4-specialty-summary').count())>=3,
+    width+': inline Specialty previews are missing');
+  assert.equal(await page.locator('#v4-board-current').count(),1,
+    width+': persistent board progress is missing');
   assert((await page.locator('#board-grid .node .node-game-icon').count())>0,width+': missing actual class skill artwork');
   const square=await page.locator('#board-grid .node').first().evaluate(el=>Math.abs(el.getBoundingClientRect().width-el.getBoundingClientRect().height)<1);
   assert(square,width+': Daevanion tiles must be square');
@@ -121,7 +172,23 @@ try{
   assert.equal(await advanced.evaluate(el=>el.open),true);
   assert.equal(await page.locator('#gear-arcana-grid').count(),1);
   await advanced.locator(':scope > summary').click();
-  if(width<1700)await page.locator('[data-v3-editor="mastery"]').click();
+  if(width<1700){
+    await page.locator('[data-v3-editor="mastery"]').click();
+    const diag=await page.evaluate(()=>{
+      const read=selector=>{
+        const el=document.querySelector(selector);
+        return el?{display:getComputedStyle(el).display,visibility:getComputedStyle(el).visibility,
+          rect:el.getBoundingClientRect().toJSON()}:null;
+      };
+      return {editor:document.querySelector('.v2-workspace').dataset.editor,
+        column:read('.v2-center'),mastery:read('.v2-center #mastery'),
+        advanced:read('.v2-advanced-skills'),grid:read('#skill-grid')};
+    });
+    console.log('MEDIUM_MASTERY_LAYOUT '+JSON.stringify(diag));
+    assert.equal(diag.editor,'mastery','The editor rail did not select Mastery');
+    assert.equal(await page.locator('#mastery').isVisible(),true,
+      'Selected Mastery panel is hidden at '+width+': '+JSON.stringify(diag));
+  }
   await page.evaluate(()=>window.scrollTo({top:0,behavior:'instant'}));
   await page.waitForFunction(()=>window.scrollY===0);
   fs.mkdirSync('v2-previews',{recursive:true});
@@ -134,6 +201,9 @@ try{
      await page.locator('#mastery .skill-card').first().screenshot({
        path:'v2-previews/advanced-mastery-sorcerer-1920.png'
      });
+     // Advanced is now a focused editor: close it before interacting with
+     // the normal mastery list in the rest of the smoke test.
+     await page.locator('.v2-advanced-skills').evaluate(el=>{el.open=false});
      await page.evaluate(()=>{state.class='templar';state.tab='mastery';render()});
    }
   // Earned point budget inputs currently live in Equipment. Select that
@@ -314,7 +384,7 @@ try{
    await inspect.click();
    assert.equal(await page.locator('#v2-board-inspector').isVisible(),true,
      'Tile inspector drawer failed to open');
-   await inspect.click();
+   await page.locator('#v4-inspector-close').click();
    assert.equal(await page.locator('#v2-board-inspector').isVisible(),false,
      'Tile inspector drawer failed to close');
   }
