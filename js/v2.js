@@ -50,7 +50,7 @@ const boardControls=make('div','v2-board-controls',`
  <div class="v2-board-secondary-actions" role="group" aria-label="Daevanion tile and view actions">
    <button type="button" id="v2-board-toggle">Edit selected node</button>
    <button type="button" id="v2-mark-obtained">Mark tile obtained</button>
-   <button type="button" id="v2-zoom-minus" aria-label="Zoom out">−</button><span id="v2-zoom-label">40px</span><button type="button" id="v2-zoom-plus" aria-label="Zoom in">+</button><button type="button" id="v2-board-fit" title="Size the board to fit its visible area">Fit board</button><button type="button" id="v2-board-expand" aria-pressed="false" title="Focus on the board in a full-screen workspace (Escape to exit)">Focus board</button>
+   <button type="button" id="v2-zoom-minus" aria-label="Zoom out">−</button><span id="v2-zoom-label">40px</span><button type="button" id="v2-zoom-plus" aria-label="Zoom in">+</button><button type="button" id="v2-board-fit" title="Fit board at a readable size (40px minimum); scroll if necessary">Fit board</button><button type="button" id="v2-board-expand" aria-pressed="false" title="Focus on the board in a full-screen workspace (Escape to exit)">Focus board</button>
  </div>
  <details class="v2-board-method">
    <summary>What does the recommendation consider?</summary>
@@ -310,14 +310,18 @@ function sizeBoardToViewport(){
  const padY=parseFloat(style.paddingTop)+parseFloat(style.paddingBottom);
  const gap=parseFloat(getComputedStyle(grid).columnGap)||3;
  const usable=Math.min(view.clientWidth-padX,view.clientHeight-padY)-4;
- const tile=Math.max(26,Math.min(52,Math.floor((usable-gap*14)/15)));
+ // Never make the primary 15×15 Daevanion board illegible merely to
+ // squeeze its entirety into a short workspace. At 720p, overflow is
+ // intentional; use Focus board for a nearly full-screen, readable map.
+ const minReadableTile=40;
+ const tile=Math.max(minReadableTile,Math.min(52,Math.floor((usable-gap*14)/15)));
  if(tile!==zoom){
    zoom=tile;
    grid.style.setProperty('--v2-node',zoom+'px');
    $('v2-zoom-label').textContent=zoom+'px';
  }
  $('v2-board-fit').setAttribute('aria-pressed','true');
- $('v2-board-fit').title='Automatically fit the board to its visible viewport';
+ $('v2-board-fit').title='Fit board without shrinking below 40px; scroll for remaining rows or use Focus board';
 }
 function queueBoardFit(){
  if(fitQueued)return;
@@ -510,7 +514,7 @@ function bind(){
    boardAutoFit=false;
    $('v2-board-fit').setAttribute('aria-pressed','false');
    $('v2-board-fit').title='Resume automatically fitting the board';
-   zoom=Math.min(52,Math.max(26,zoom+step));
+   zoom=Math.min(60,Math.max(40,zoom+step));
    $('board-grid').style.setProperty('--v2-node',zoom+'px');
    $('v2-zoom-label').textContent=zoom+'px';
  });
