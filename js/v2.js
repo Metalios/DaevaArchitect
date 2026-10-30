@@ -14,7 +14,8 @@ const quick=make('div','v2-quickbar',`
  <label>Class<select id="v2-class"></select></label>
  <label>Level<input id="v2-level" type="number" min="1" max="45"></label>
  <label>Stage<select id="v2-stage"><option value="leveling">Leveling</option><option value="endgame">Fresh 45 / Endgame</option></select></label>
- <label>Content<select id="v2-context"><option value="solo">Solo PvE</option><option value="party">Group PvE</option><option value="pvp">PvP</option></select></label>
+ <label>Content<select id="v2-context"><option value="solo">Solo PvE</option><option value="party">Group PvE</option><option value="pvp">General PvP</option><option value="pvp-arena">Arena PvP (1v1)</option>
+ <option value="pvp-abyss-solo">Solo PvP (Abyss)</option><option value="pvp-abyss-group">Group PvP (Abyss)</option></select></label>
  <label id="v2-objective-label">Build goal<select id="v2-objective">
   <option value="performance">Maximum PvE performance</option>
   <option value="survivability">Maximum survivability</option>
@@ -348,7 +349,7 @@ function stigmasView(m){
 }
 function actionsView(m){
  const combat=m.combat;
- combatEvidence.hidden=!combat||state.class!=='sorcerer'||account().context==='pvp';
+ combatEvidence.hidden=!combat||state.class!=='sorcerer'||isPvpContext(account().context);
  if(!combatEvidence.hidden){
    const variance=Number.isFinite(combat.baselineScore)&&combat.baselineScore>0
      ?Math.max(0,(combat.score/combat.baselineScore-1)*100):0;
@@ -442,10 +443,10 @@ function sync(m){
  $('v2-class').value=state.class;$('v2-level').value=currentLevel();$('v2-level').disabled=!isLeveling();
  $('v2-stage').value=a.journey;$('v2-context').value=a.context;
  $('v2-objective').value=PVE_OBJECTIVES[a.pveObjective]?a.pveObjective:'performance';
- $('v2-objective-label').hidden=a.context==='pvp';
+ $('v2-objective-label').hidden=isPvpContext(a.context);
  const evidence=$('v2-optimizer-evidence'),result=a.lastObjectiveAnalysis;
- evidence.hidden=a.context==='pvp';
- if(a.context!=='pvp'){
+ evidence.hidden=isPvpContext(a.context);
+ if(!isPvpContext(a.context)){
    if(result?.error) evidence.textContent='Research-based route search was unavailable; the previous legal recommendation was retained.';
    else if(result){
      const source=typeof ClassCombatModels!=='undefined'?ClassCombatModels.profile(state.class)?.evidence||null:null;
@@ -457,7 +458,7 @@ function sync(m){
  }
  archetype.textContent=PROFILES[state.class].role+' · '+ARCHETYPE_WEAPONS[state.class];
  archetype.setAttribute('aria-label',PROFILES[state.class].name+' class and weapon');
- $('v2-context').querySelector('option[value=pvp]').disabled=isLeveling();
+ for(const option of $('v2-context').options)if(isPvpContext(option.value))option.disabled=isLeveling();
  $('board-grid').style.setProperty('--v2-node',zoom+'px');$('v2-zoom-label').textContent=zoom+'px';
  queueBoardFit();
  // Ariel is a newly added separate PvE board. Show that it exists, but do
@@ -484,13 +485,13 @@ function restore(){
 function compare(){
  const m=model(),baseline=allocate(masteryStages(),budget('mastery'),masteryCost,skillNames(),1,masteryRankCap),
  names=skillNames(),diff=names.filter(n=>m.mastery.levels[n]!==baseline.levels[n]);
- const picked=activeStigmas(),stig=allocate(stigmaStages(),budget('stigma'),stigmaCost,picked,0);
+ const picked=activeStigmas(),stig=optimizeRecommendedStigmas(picked,budget('stigma'));
  const changes=picked.filter(n=>(m.stigma.levels[n]||0)!==(stig.levels[n]||0));
  const recommendedLoadout=recommendedStigmas();
  const loadoutChanged=picked.some((n,i)=>n!==recommendedLoadout[i]);
  const reason=(typeof adviceFor==='function'?adviceFor(state.class,account().context,account().pveObjective)?.why:null)||'Balance damage and survival according to class.';
  $('v2-comparison-body').innerHTML=`<h3>Mastery</h3>${diff.length?diff.map(n=>`<p>${esc(n)} · Recommended ${baseline.levels[n]} → Your ${m.mastery.levels[n]}</p>`).join(''):'<p>No Mastery rank differences.</p>'}
- <h3>Stigmas</h3><p>Guide-based loadout (${esc(account().context)}): ${recommendedLoadout.map(esc).join(' · ')}</p>
+ <h3>Stigmas</h3><p>Breakpoint-optimized ranks with a research-informed loadout (${esc(account().context)}): ${recommendedLoadout.map(esc).join(' · ')}</p>
  ${loadoutChanged?`<p>Your equipped Stigmas: ${picked.map(esc).join(' · ')}</p>`:'<p>Your Stigma choices match the recommended loadout.</p>'}
  ${changes.length?changes.map(n=>`<p>${esc(n)} · Suggested investment Lv ${stig.levels[n]||0} → Your Lv ${m.stigma.levels[n]||0}</p>`).join(''):'<p>No equipped Stigma level differences.</p>'}
  <h3>Why this context?</h3><p>${esc(reason)}</p>
@@ -515,7 +516,7 @@ function bind(){
    account().recommendedRouteSnapshot=null;
    render();
  });
- $('v2-context').addEventListener('change',e=>$(e.target.value==='solo'?'solo-button':e.target.value==='pvp'?'pvp-button':'party-button').click());
+ $('v2-context').addEventListener('change',e=>setContext(e.target.value));
  $('v2-save').addEventListener('click',()=>{save();message='Saved to this browser.';$('v2-board-notice').textContent=message});
  $('v2-share').addEventListener('click',()=>$('share-build-button').click());
  nav.addEventListener('click',e=>{const b=e.target.closest('[data-v2-tab]');if(!b)return;state.tab=b.dataset.v2Tab==='workspace'?'mastery':b.dataset.v2Tab;render();if(state.tab!=='mastery')extra.scrollIntoView({block:'start',behavior:'smooth'})});

@@ -131,7 +131,7 @@ function sorcererEasyMasteryStages(level,leveling,unlocks,skillNames,adjust){
  return stages;
 }
 function progressionMasteryStages(cls,mode,level,leveling,advice,unlocks,skillNames,adjust){
- if(cls==='sorcerer'&&mode!=='pvp')
+ if(cls==='sorcerer'&&!isPvpContext(mode))
   return sorcererEasyMasteryStages(level,leveling,unlocks,skillNames,adjust);
  const policy=PROGRESSION_PLANS[cls];if(!policy)return null;
  const names=new Set(skillNames),known=name=>names.has(name)&&(unlocks[name]||1)<=level;
@@ -143,7 +143,7 @@ function progressionMasteryStages(cls,mode,level,leveling,advice,unlocks,skillNa
  const isGroupHealer=mode==='party'&&cls==='cleric';
  const healOrder=unique(['Light of Regeneration','Radiant Recovery','Healing Light']);
  const principal=isGroupHealer?unique([...healOrder,...context,...base])
-  :mode==='pvp'?context
+  :isPvpContext(mode)?context
   :mode==='solo'?unique([...base.slice(0,2),...context,...base])
   :unique([...context.slice(0,3),...base,...context]);
  const rest=unique(skillNames.filter(name=>!principal.includes(name)&&!support.includes(name)));
@@ -204,7 +204,7 @@ function progressionStigmaStages(cls,mode,equipped,advice){
  for(const name of priority)if(name!==first&&name!==second)stages.push([name,5]);
  const preference=(mode==='party'&&cls==='templar'&&Array.isArray(advice.stigmaMilestones))
   ?advice.stigmaMilestones
-  :mode!=='pvp'?policy.stigma:[];
+  :!isPvpContext(mode)?policy.stigma:[];
  for(const [name,rank] of preference)if(selected.has(name))stages.push([name,rank]);
  for(const rank of [10,15,20])for(const name of priority)stages.push([name,rank]);
  return stages;
@@ -212,7 +212,7 @@ function progressionStigmaStages(cls,mode,equipped,advice){
 // Keep all checkpoints. Object.fromEntries keyed only by skill incorrectly
 // overwrote intermediate Lv16 objectives with the eventual Lv20 objective.
 function progressionBreakpoints(cls,mode){
- const policy=PROGRESSION_PLANS[cls];if(!policy||mode==='pvp')return [];
+ const policy=PROGRESSION_PLANS[cls];if(!policy||isPvpContext(mode))return [];
  if(cls==='cleric'&&mode==='party')return [
   ['Light of Regeneration',16],['Radiant Recovery',16],['Healing Light',16]];
  return policy.breakpoints;
@@ -231,7 +231,7 @@ function progressionBoardTargets(cls,mode){
 function progressionNextBreakpoint(cls,mode,effectiveLevel,ownedCrystals){
  const p=PROGRESSION_PLANS[cls];
  if(!p)return '';
- if(mode==='pvp')return 'PvP priorities depend on matchup; verify your defensive Stigma and control tools.';
+ if(isPvpContext(mode))return 'PvP priorities depend on matchup; verify your defensive Stigma and control tools.';
  const next=progressionBreakpoints(cls,mode).find(([name,rank])=>effectiveLevel(name)<rank);
  if(!next)return 'Key damage breakpoints reached. Recheck your chosen Specialties and combat rotation.';
  const [name,rank]=next,gap=rank-effectiveLevel(name);

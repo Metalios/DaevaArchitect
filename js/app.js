@@ -123,7 +123,8 @@ function toggleBoardObtained(id){
   marked.add(id);boardPurchaseNotice='';storeObtained(marked);return true;
 }
 let liveRoute=null,liveRouteKey='',liveRouteBasis=null;
-function activeRoute(){const route=liveRoute||ROUTES[state.class][account().context];return isLeveling()?route.filter(x=>boardOpen(x.board)):route}
+function appIsPvpContext(mode){return typeof mode==='string'&&/^pvp(?:-|$)/.test(mode)}
+function activeRoute(){const ctx=account().context;const route=liveRoute||ROUTES[state.class][appIsPvpContext(ctx)?'pvp':ctx];return isLeveling()?route.filter(x=>boardOpen(x.board)):route}
 function customMode(){return account().boardMode==='custom'}
 function customIds(azphel=false){const valid=nodeMap();return (azphel?account().customAzphelNodes||[]:account().customNodes||[]).filter(id=>valid.has(id)&&(azphel?valid.get(id).board==='Azphel':valid.get(id).board!=='Azphel')&&(!isLeveling()||boardOpen(valid.get(id).board)))}
 function plannedRoute(azphel=false){return customMode()?customIds(azphel).map(id=>({board:nodeMap().get(id).board,id})):azphel?ROUTES[state.class].azphel:activeRoute()}
@@ -138,7 +139,8 @@ function setCustomNode(id){
 let boardEditNotice='',boardRecalculationNotice='';
 let lastBoardRecalculation=null;
 function activeWeights(){
-  const base=ROUTES[state.class].weights[account().context];
+  const ctx=account().context;
+  const base=ROUTES[state.class].weights[appIsPvpContext(ctx)?'pvp':ctx];
   const advised=typeof adviceFor==='function'?adviceFor(state.class,account().context,account().pveObjective):null;
   if(!advised)return base;
   const skills={...base.skills};
@@ -146,7 +148,14 @@ function activeWeights(){
   // rather than relying only on the previous generic DPS coefficient weights.
   (advised.core||[]).forEach((name,i)=>{skills[name]=Math.max(skills[name]||0,64-i*6)});
   (advised.support||[]).forEach((name,i)=>{skills[name]=Math.max(skills[name]||0,28-i*3)});
-  return {...base,skills};
+  const stats={...base.stats};
+  const pvpStatScale={
+    'pvp-arena':{PvPAddDamage:1.35,PvPAccuracy:1.3,AbnormalAccuracy:1.25,AbnormalResistance:1.25,CombatSpeed:1.15},
+    'pvp-abyss-solo':{PvPDamageDefense:1.5,PvPEvasion:1.3,AbnormalResistance:1.35,HPMax:1.4,CombatSpeed:1.25},
+    'pvp-abyss-group':{PvPDamageDefense:1.65,PvPCriticalResist:1.3,AbnormalResistance:1.4,CoolTimeDecrease:1.2,HPMax:1.35}
+  }[ctx]||{};
+  for(const [name,scale] of Object.entries(pvpStatScale))stats[name]=(stats[name]||0)*scale;
+  return {...base,skills,stats};
 }
 function recommendedStigmas(){
   const standard=profile().stigmas;
@@ -190,6 +199,75 @@ function stigmaTotal(rank){let value=0;for(let r=1;r<=rank;r++)value+=stigmaCost
 function masteryCost(rank){return rank<=4?1:rank<=7?2:4}
 function masteryTotal(rank){let points=0;for(let n=2;n<=rank;n++)points+=masteryCost(n);return points}
 function stigmaCost(rank){return rank<=5?1:rank<=10?2:rank<=15?4:8}
+
+/* Complete budget-aware Stigma allocation. These utilities compare verified
+   perk breakpoints; scores are explicit judgment weights, not measured DPS. */
+const TEMPLAR_GROUP_PERKS={
+ 'Noble Armor':[8,6,5,17,3],
+ 'Shield of Protection':[8,10,18,3,3],
+ Taunt:[8,16,6,6,2],
+ 'Doom Shield':[8,17,3,2,2]
+};
+function stigmaUtility(cls,context,name,rank,order){
+ if(!rank)return 0;
+ const known=cls==='templar'&&context==='party'?TEMPLAR_GROUP_PERKS[name]:null;
+ if(known){
+   let score=known[0]+Math.min(rank,4)*.1;
+   [5,10,15,20].forEach((at,i)=>{if(rank>=at)score+=known[i+1]});
+   return score;
+ }
+ const perk=STIGMAS[cls]?.[name]?.perks||{};
+ const priority=Math.max(0,4-order),pvp=appIsPvpContext(context),
+   group=context==='party'||context==='pvp-abyss-group';
+ let score=8+priority*.5+Math.min(rank,4)*.12;
+ for(const [i,at] of [5,10,15,20].entries()){
+   if(rank<at)continue;
+   const description=String(perk[at]||'');
+   let value=[11,6,4,3][i]+priority*[.5,.6,.5,.4][i];
+   if(pvp&&/PvP|Seal|Stun|Root|Fear|Blind|Stealth|Evasion|Block|Immun|move|duration|cooldown|Speed|Shield|Resist/i.test(description))value+=3;
+   if(group&&/party|nearby|allies|ally|tolerance reduction|Incoming Heal|Protection|Absolution/i.test(description))value+=3;
+   if(context==='pvp-abyss-solo'&&/move|Stealth|HP|Evasion|Block|immun|Root|Shield/i.test(description))value+=2;
+   if(!pvp&&/PvE|cooldown|Critical|Damage|Fury|Robe|hit/i.test(description))value+=2;
+   score+=value;
+ }
+ return score;
+}
+function optimizeRecommendedStigmas(names,points,cls=state.class,context=account().context){
+ const limit=Math.max(0,Math.min(300,Math.floor(Number(points)||0)));
+ const priority=(typeof adviceFor==='function'?adviceFor(cls,context,account().pveObjective):null)?.stigmaPriority||names;
+ const costs=Array.from({length:21},(_,rank)=>stigmaTotal(rank));
+ let options=new Map([[0,{score:0,ranks:[]}]]);
+ for(const name of names){
+   const revised=new Map(),order=Math.max(0,priority.indexOf(name));
+   for(const [spent,candidate] of options)for(let rank=0;rank<=20;rank++){
+     const total=spent+costs[rank];if(total>limit)break;
+     // At a fresh-45 budget, secure one meaningful Lv 10 perk instead
+     // of distributing points into four Lv 5 perks without a Lv 10.
+     // The bonus only applies to 15–29 points, so it cannot distort
+     // higher-budget tradeoffs such as the Templar 61-point benchmark.
+     const starterBonus=limit>=15&&limit<=29&&rank>=10&&order===0?18:0;
+     const score=candidate.score+stigmaUtility(cls,context,name,rank,order)+starterBonus;
+     if(!revised.has(total)||score>revised.get(total).score+1e-8)
+       revised.set(total,{score,ranks:[...candidate.ranks,rank]});
+   }
+   options=revised;
+ }
+ let best=null,spent=0;
+ for(const [total,candidate] of options)
+   if(!best||candidate.score>best.score+1e-8||
+      Math.abs(candidate.score-best.score)<1e-8&&total<spent){best=candidate;spent=total}
+ const levels=Object.fromEntries(names.map((name,i)=>[name,best?.ranks[i]||0]));
+ const remaining=limit-spent;
+ let next=null;
+ for(const name of names){
+   if(levels[name]>=20)continue;
+   const cost=stigmaCost(levels[name]+1);
+   if(cost>remaining&&(!next||cost-remaining<next.need))
+     next={name,rank:levels[name]+1,cost,need:cost-remaining};
+ }
+ return {levels,spent,next,method:'Full-budget breakpoint search: research-weighted, not measured DPS'};
+}
+
 function masteryRankCap(name){
   if(!isLeveling())return 10;
   const unlocked=SKILL_UNLOCKS[state.class][name];
@@ -288,7 +366,7 @@ function stigmaStages(){
   }
   if(state.class==='templar'){
     // Reach each equipped skill's first breakpoint, then its context-defining breakpoints.
-    const priority=account().context==='solo'?['Doom Shield','Noble Armor',"Empyrean Lord's Punishment",'Executing Blade']:account().context==='pvp'?['Noble Armor','Doom Shield','Taunt','Second Skin']:['Noble Armor','Taunt','Doom Shield','Shield of Protection'];
+    const priority=account().context==='solo'?['Doom Shield','Noble Armor',"Empyrean Lord's Punishment",'Executing Blade']:appIsPvpContext(account().context)?['Noble Armor','Doom Shield','Taunt','Second Skin']:['Noble Armor','Taunt','Doom Shield','Shield of Protection'];
     const equipped=priority.filter(name=>s.includes(name));
     return [...equipped.map(name=>[name,5]),...([10,15,20].flatMap(rank=>equipped.map(name=>[name,rank])))];
   }
@@ -377,7 +455,7 @@ function engineBuild(masteryLevels,boardEffects,stigmaLevels,equipped){
   };
 }
 function sorcererCombatEligible(){
-  return state.class==='sorcerer'&&account().context!=='pvp'&&typeof GlobalCombatEngine!=='undefined';
+  return state.class==='sorcerer'&&!appIsPvpContext(account().context)&&typeof GlobalCombatEngine!=='undefined';
 }
 function chooseCombatBoardRoute(provisional,stigma,gearRanks,target,baseCp,actual){
   const baseWeights=activeWeights(),targets=typeof progressionBoardTargets==='function'
@@ -476,7 +554,7 @@ function enhanceSorcererCombat(master,boardEffects,stigmas){
 function model(){
   const a=account(),names=skillNames(),recommendedMastery=allocate(masteryStages(),budget('mastery'),masteryCost,names,1,isLeveling()?masteryRankCap:null),
     mastery=a.manualMastery?manualAllocation(a.manualMastery,names,budget('mastery'),masteryCost,1,masteryRankCap):recommendedMastery,
-    stigmas=activeStigmas(),recommendedStigma=allocate(stigmaStages(),budget('stigma'),stigmaCost,stigmas,0),
+    stigmas=activeStigmas(),recommendedStigma=optimizeRecommendedStigmas(stigmas,budget('stigma')),
     stigma=a.manualStigma?manualAllocation(a.manualStigma,stigmas,budget('stigma'),stigmaCost,0,20):recommendedStigma;
   {
     // Freeze the RECOMMENDED route during each crystal-spending cycle.
@@ -525,7 +603,7 @@ function model(){
       const estimated=estimateCombatPower(reference);
       const baseCp=estimated.ready?estimated.value:null;
       let computed=null;
-       if(a.context!=='pvp' && typeof PveBuildOptimizer!=='undefined'){
+       if(!appIsPvpContext(a.context) && typeof PveBuildOptimizer!=='undefined'){
          try {
            const boardData=data(), baseWeights=activeWeights(), crystalBudget=budget('crystals');
            const objective=PVE_OBJECTIVES[a.pveObjective]?a.pveObjective:'performance';
@@ -633,7 +711,12 @@ function render(){
   $('reset-button').textContent=isLeveling()?'Reset class progress':'Reset class to fresh 45';
   if(isLeveling())renderLevelControls();
   $('fresh-45-button').classList.toggle('active',Object.entries(FRESH_45).every(([key,value])=>a[key]===value)&&!(a.azphel||0));
-  for(const [id,ctx] of [['party-button','party'],['solo-button','solo'],['pvp-button','pvp']]){$(id).classList.toggle('active',a.context===ctx);$(id).setAttribute('aria-pressed',a.context===ctx)}
+  for(const [id,ctx] of [['party-button','party'],['solo-button','solo'],['pvp-button','pvp']]){
+ const selected=a.context===ctx||(ctx==='pvp'&&appIsPvpContext(a.context));
+ $(id).classList.toggle('active',selected);$(id).setAttribute('aria-pressed',String(selected));
+}
+$('pvp-variant-control').hidden=isLeveling()||!appIsPvpContext(a.context);
+$('pvp-mode-select').value=appIsPvpContext(a.context)?a.context:'pvp';
   $('azphel-input').value=a.azphel||0;
   document.querySelectorAll('[data-tab]').forEach(b=>{b.classList.toggle('active',b.dataset.tab===state.tab);b.setAttribute('aria-current',b.dataset.tab===state.tab?'page':'false')});
   $('mobile-more-button').classList.toggle('active',['stigma','rotation','titles','sources'].includes(state.tab));
@@ -666,14 +749,14 @@ function renderOverview(m){
   $('build-flow').innerHTML=`<button type="button" data-flow-tab="gear"><small>01 / establish your loadout</small><b>Equipment</b><span>${gearCount} / 20 slots recorded · grades, stats and skill rolls</span></button><button type="button" data-flow-tab="boards"><small>02 / route your crystals</small><b>Daevanion</b><span>${m.boards.spent} / ${a.crystals} PvE crystals in the plan</span></button><button type="button" data-flow-tab="mastery"><small>03 / finish the kit</small><b>Mastery & Stigmas</b><span>Use gear and board bonuses to check specialty levels</span></button>`;
   const mode=p.kind==='healer'?'healing':'damage';
   const steps=[`<b>Gear:</b> ${gearCount} / 20 slots recorded. Equip current pieces first; fixed stats, enhancement and rolled skill levels change the final build.`,
-    `<b>Daevanion:</b> ${BOARD_NAMES.map(n=>`${n} ${m.boards.perBoard[n]}`).join(' · ')}. Follow the connected ${a.context==='pvp'?'PvP-oriented':'PvE'} route at ${a.crystals} crystals.`,
+    `<b>Daevanion:</b> ${BOARD_NAMES.map(n=>`${n} ${m.boards.perBoard[n]}`).join(' · ')}. Follow the connected ${appIsPvpContext(a.context)?'PvP-oriented':'PvE'} route at ${a.crystals} crystals.`,
     `<b>Mastery:</b> ${top.map(n=>`${esc(n)} Lv ${m.mastery.levels[n]||1}`).join(' · ')}. Check specialty unlocks using gear and board bonuses.`,
     `<b>Stigmas:</b> ${activeStigmas().map(n=>`${esc(n)} Lv ${m.stigma.levels[n]||0}`).join(' · ')}. ${esc(p.swap)}`,
     `<b>${mode==='healing'?'Healing':'Fight'} priority:</b> ${esc(p.rule)}`];
   if(a.context==='solo')steps.push(`<b>Solo route:</b> Mastery, Stigmas and the board order favor personal damage and self-sustain. The board route differs from Group PvE.`);
-  if(a.context==='pvp')steps.push(`<b>PvP route:</b> Mastery, Stigmas and PvE crystal clicks prioritize control, escape and survival. Azphel uses a separate ${a.azphel||0}-crystal budget; it has no skill-level nodes.`);
+  if(appIsPvpContext(a.context))steps.push(`<b>PvP route:</b> Mastery, Stigmas and PvE crystal clicks prioritize control, escape and survival. Azphel uses a separate ${a.azphel||0}-crystal budget; it has no skill-level nodes.`);
   $('now-steps').innerHTML=steps.map((v,i)=>`<li><span class="step-num">${i+1}</span><span>${v}</span></li>`).join('');
-  const next=[];if(m.mastery.next)next.push([`+${m.mastery.next.need} mastery`,`${m.mastery.next.name} rank ${m.mastery.next.rank}`]);if(m.stigma.next)next.push([`+${m.stigma.next.need} stigma`,`${m.stigma.next.name} rank ${m.stigma.next.rank}`]);if(m.boards.next)next.push([`+${m.boards.next.need} PvE crystals`,`${m.boards.next.board}: ${effectText(nodeMap().get(m.boards.next.id).node)}`]);if(a.context==='pvp'&&m.azphel.next)next.push([`+${m.azphel.next.need} Azphel crystals`,effectText(nodeMap().get(m.azphel.next.id).node)]);
+  const next=[];if(m.mastery.next)next.push([`+${m.mastery.next.need} mastery`,`${m.mastery.next.name} rank ${m.mastery.next.rank}`]);if(m.stigma.next)next.push([`+${m.stigma.next.need} stigma`,`${m.stigma.next.name} rank ${m.stigma.next.rank}`]);if(m.boards.next)next.push([`+${m.boards.next.need} PvE crystals`,`${m.boards.next.board}: ${effectText(nodeMap().get(m.boards.next.id).node)}`]);if(appIsPvpContext(a.context)&&m.azphel.next)next.push([`+${m.azphel.next.need} Azphel crystals`,effectText(nodeMap().get(m.azphel.next.id).node)]);
   const needs=top.map(n=>({name:n,level:effective(n,m)})).find(x=>x.level<16);if(needs)next.push(['Lv 16 specialty',`${needs.name}: ${16-needs.level} more effective levels from mastery, board or gear`]);
   $('next-unlocks').innerHTML=next.length?next.map(([label,detail])=>`<div class="next-unlock"><strong>${esc(label)}</strong><span>${esc(detail)}</span></div>`).join(''):'<p>All planned ranks and nodes are funded.</p>';
   renderGoal(m);
@@ -722,7 +805,7 @@ function recommendedSpecPicks(name,eff){const spec=SPECS[state.class]?.[name];if
       eff>=(id<=3?8:id===4?12:16)).slice(0,specialtySlots(eff));let key=eff>=20?'20':eff>=16?'16':eff>=12?'12':eff>=8?'8':null;if(!key)return [];
   const contextual=typeof adviceSpecialtyChoices==='function'?adviceSpecialtyChoices(state.class,account().context,name,eff,spec.options):null;
   if(contextual)return contextual;
-  let picks=spec.picks[key]||[];if(state.class==='templar'&&account().context==='pvp'&&name==='Poach'&&eff>=12)picks=eff>=20?[2,4,3]:[2,4];if(state.class==='templar'&&account().context==='pvp'&&name==='Defiance'&&eff>=12)picks=eff>=20?[1,3,5]:eff>=16?[1,3]:[1,3];return picks}
+  let picks=spec.picks[key]||[];if(state.class==='templar'&&appIsPvpContext(account().context)&&name==='Poach'&&eff>=12)picks=eff>=20?[2,4,3]:[2,4];if(state.class==='templar'&&appIsPvpContext(account().context)&&name==='Defiance'&&eff>=12)picks=eff>=20?[1,3,5]:eff>=16?[1,3]:[1,3];return picks}
 function specPicks(name,eff){
   const spec=SPECS[state.class]?.[name],manual=account().customSpecialties?.[name];
   if(!spec||!Array.isArray(manual))return recommendedSpecPicks(name,eff);
@@ -753,7 +836,7 @@ function renderMastery(m){
   }).join('')||(query?`<div class="mastery-empty">No unlocked skills match “${esc(state.masterySearch)}” at level ${currentLevel()}. Clear the search or choose a higher level.</div>`:isLeveling()?`<div class="mastery-empty">No Mastery upgrades are available at level ${currentLevel()}. Mastery points begin at level 4; your unlocked skills start at rank 1.</div>`:'');
 }
 function renderStigma(m){
-  const p=profile(),a=account(),slots=isLeveling()?levelReward().slots:4,selected=activeStigmas().slice(0,slots),mode={party:'Group PvE',solo:'Solo',pvp:'PvP'}[a.context];$('stigma-spent').textContent=`${m.stigma.spent} / ${budget('stigma')} spent`;$('loadout-title').textContent=isLeveling()?`${p.name} · ${slots} of 4 slots open`:`${p.name} ${mode} bar`;$('loadout-text').textContent=slots?selected.join(', ')+'. '+(a.context==='party'?p.swap:'This is a context-specific starting set; compare your live tooltips and matchups.'):'Stigmas open at level 22. The first Stigma point comes at level 23; more slots open at 27, 32 and 37.';
+  const p=profile(),a=account(),slots=isLeveling()?levelReward().slots:4,selected=activeStigmas().slice(0,slots),mode={party:'Group PvE',solo:'Solo PvE',...PVP_CONTEXT_LABELS}[a.context];$('stigma-spent').textContent=`${m.stigma.spent} / ${budget('stigma')} spent`;$('loadout-title').textContent=isLeveling()?`${p.name} · ${slots} of 4 slots open`:`${p.name} ${mode} bar`;$('loadout-text').textContent=slots?selected.join(', ')+'. '+(a.context==='party'?p.swap:'This is a context-specific starting set; compare your live tooltips and matchups.'):'Stigmas open at level 22. The first Stigma point comes at level 23; more slots open at 27, 32 and 37.';
   $('stigma-heading').textContent=isLeveling()?`Stigmas · ${slots} of 4 slots open`:'Four stigma slots';$('stigma-description').textContent=isLeveling()?'Slots open at levels 22, 27, 32 and 37. Leveling points start at 23.':'Points advance the four equipped choices to their 5, 10, 15 and 20 breakpoints.';
   $('loadout-tags').innerHTML=selected.map(n=>`<span class="tag ${m.stigma.levels[n]>=5?'green':''}">${esc(n)} · Lv ${m.stigma.levels[n]||0}</span>`).join('');
   $('stigma-grid').innerHTML=selected.map(name=>{const info=STIGMAS[state.class]?.[name],lv=m.stigma.levels[name]||0,perks=info?.perks||{};
@@ -833,8 +916,8 @@ function renderRotation(m){
   // not just Solo/PvP. An unequipped Stigma must never appear as usable.
   if(equippedStigmas.length){
     const chosen=equippedStigmas,missing=chosen.filter(name=>!p.stigmas.includes(name)&&!hotbar.some(([skills])=>skills.includes(name)));
-    for(const slot of hotbar){const replaced=slot[0].some(name=>p.stigmas.includes(name)&&!chosen.includes(name));slot[0]=slot[0].map(name=>p.stigmas.includes(name)&&!chosen.includes(name)?missing.shift()||null:name).filter(Boolean);if(replaced){slot[1]=`${a.context==='pvp'?'PvP':a.context==='party'?'Group':'Solo'} Stigma · use manually`;slot[2]='defense'}if(!slot[0].length){slot[1]='Available for a matchup-specific skill';slot[2]='utility'}}
-    for(const name of missing){const index=hotbar.findLastIndex(([skills])=>skills.length===0);const target=index>=0?index:hotbar.length-1;hotbar[target]=[[name],`${a.context==='pvp'?'PvP':a.context==='party'?'Group':'Solo'} Stigma · use manually`,'defense']}
+    for(const slot of hotbar){const replaced=slot[0].some(name=>p.stigmas.includes(name)&&!chosen.includes(name));slot[0]=slot[0].map(name=>p.stigmas.includes(name)&&!chosen.includes(name)?missing.shift()||null:name).filter(Boolean);if(replaced){slot[1]=`${appIsPvpContext(a.context)?'PvP':a.context==='party'?'Group':'Solo'} Stigma · use manually`;slot[2]='defense'}if(!slot[0].length){slot[1]='Available for a matchup-specific skill';slot[2]='utility'}}
+    for(const name of missing){const index=hotbar.findLastIndex(([skills])=>skills.length===0);const target=index>=0?index:hotbar.length-1;hotbar[target]=[[name],`${appIsPvpContext(a.context)?'PvP':a.context==='party'?'Group':'Solo'} Stigma · use manually`,'defense']}
   }
   // Do not advertise unequipped Stigmas in a manual slot.
   hotbar=hotbar.map(([skills,cue,tone])=>[skills.filter(name=>usableSkills.has(name)),cue,tone]);
@@ -851,19 +934,19 @@ function renderRotation(m){
   $('rotation-gate').textContent=levelingMode?`Level ${level}: Macro uses only ${macroSteps.length?displayedMacroSteps.join(' then '):'the weave skill for now'}. ${slots?`${equippedStigmas.length} equipped Stigma skill${equippedStigmas.length===1?'':'s'} currently usable.`:'Stigmas open at level 22.'} ${level<16?'Defiance opens at level 16; reserve Space for it.':'Defiance is available on Space.'} Keep healing, charged attacks and defensive timing manual.`:state.class==='templar'?`Judgment is Lv ${skillLevelBreakdown('Judgment',m).withOwned} with obtained boards. ${specPicks('Judgment',skillLevelBreakdown('Judgment',m).withOwned).includes(5)?'The cooldown-removal Specialty is selected, so the E stack can spend repeated Judgment casts during trigger windows.':'The cooldown-removal Specialty is not selected yet; expect a single Judgment cast for each available proc.'} The macro tries Judgment first within E. Fully charge Punishment manually, then use Doom Shield when that interaction is available; pause the held macro if it clips the charge or trigger.`:p.kind==='healer'?'Heals, toggles and emergency buttons remain manual. Use the macro only while the group is stable.':`Current first priority: ${main} Lv ${skillLevelBreakdown(main,m).withOwned} with obtained boards. Keep charged and movement skills on their own keys.`;
   const macroRanks=stacks.filter(stack=>!stack.manual).flatMap(stack=>stack.skills).map(name=>name in m.mastery.levels?`${name} Lv ${skillLevelBreakdown(name,m).withOwned} with obtained boards`:name in m.stigma.levels?`${name} Stigma Lv ${m.stigma.levels[name]}`:name);
   $('macro-rank-summary').textContent=`Macro skill levels at your current point and gear totals: ${macroRanks.join(' · ')}. Change crystals, Mastery, Stigma or gear to update these ranks.`;
-  $('rotation-opener-title').textContent={party:'Group opener',solo:'Solo opener',pvp:'PvP engage'}[a.context];
+  $('rotation-opener-title').textContent=appIsPvpContext(a.context)?'PvP engage':{party:'Group opener',solo:'Solo opener'}[a.context];
   const manualNow=hotbar.flatMap(([skills])=>skills),buffNow=hotbar.filter(([, ,tone])=>tone==='buff').flatMap(([skills])=>skills),healNow=hotbar.filter(([, ,tone])=>tone==='heal').flatMap(([skills])=>skills);
-  const opener=levelingMode?[buffNow.length?`Use ${buffNow.slice(0,2).join(' and ')} before the pull when ready.`:'Approach a manageable target and watch its first attack.',`Hold ${weaveKey} (${p.weave}) with ${macroKey} to cycle ${displayedMacroSteps.join(' then ')||'your unlocked damage key'} while safe.`,healNow.length?`Keep ${healNow.slice(0,2).join(' and ')} available for recovery.`:manualNow.length?`Use ${manualNow.slice(0,2).join(' and ')} manually when their timing helps.`:'Add manual skills to 1–8 as they unlock.']:a.context==='pvp'?['Approach with cover and keep your escape or control break available.','Open with a manual control or gap close after the opponent commits.','Use the damage macro only while your target is in range and you can safely finish the cast.']:p.opener.map(displayKeyCopy);
-  const loop=levelingMode?[`Keep ${p.weave} and the unlocked Macro cycling during safe damage.`,healNow.length?'Release Macro to heal; restart it only when health is stable.':'Release Macro for enemy mechanics, movement, or a charge window.',level>=16?'Use Defiance on Space when control or a dangerous hit calls for it.':'Keep the manual keys visible as new powers unlock.']:a.context==='pvp'?['Use manual control, defensive Stigmas and Defiance (Space) around enemy burst.','Weave your safe damage skills when the target is in range; stop the macro during a chase or disengage.','Keep a mobility or peel skill ready instead of spending every cooldown for damage.']:p.loop.map(displayKeyCopy);
+  const opener=levelingMode?[buffNow.length?`Use ${buffNow.slice(0,2).join(' and ')} before the pull when ready.`:'Approach a manageable target and watch its first attack.',`Hold ${weaveKey} (${p.weave}) with ${macroKey} to cycle ${displayedMacroSteps.join(' then ')||'your unlocked damage key'} while safe.`,healNow.length?`Keep ${healNow.slice(0,2).join(' and ')} available for recovery.`:manualNow.length?`Use ${manualNow.slice(0,2).join(' and ')} manually when their timing helps.`:'Add manual skills to 1–8 as they unlock.']:appIsPvpContext(a.context)?['Approach with cover and keep your escape or control break available.','Open with a manual control or gap close after the opponent commits.','Use the damage macro only while your target is in range and you can safely finish the cast.']:p.opener.map(displayKeyCopy);
+  const loop=levelingMode?[`Keep ${p.weave} and the unlocked Macro cycling during safe damage.`,healNow.length?'Release Macro to heal; restart it only when health is stable.':'Release Macro for enemy mechanics, movement, or a charge window.',level>=16?'Use Defiance on Space when control or a dangerous hit calls for it.':'Keep the manual keys visible as new powers unlock.']:appIsPvpContext(a.context)?['Use manual control, defensive Stigmas and Defiance (Space) around enemy burst.','Weave your safe damage skills when the target is in range; stop the macro during a chase or disengage.','Keep a mobility or peel skill ready instead of spending every cooldown for damage.']:p.loop.map(displayKeyCopy);
   $('rotation-opener').innerHTML=numbered(opener);$('rotation-loop').innerHTML=numbered(loop);
   $('macro-bind').value=macroKey;$('weave-basic-key').textContent=weaveKey;$('weave-macro-key').textContent=macroKey;
-  $('weave-guide').textContent=a.context==='pvp'?`Tap ${weaveKey} + ${macroKey} only during safe pressure windows. Release the macro to move, peel, or answer an opponent's burst; manual control takes priority.`:`Hold ${weaveKey} (${p.weave}) with ${macroKey} (the in-game Macro bind) as your default safe-damage state. Press manual keys over the held loop; they take priority.`;
+  $('weave-guide').textContent=appIsPvpContext(a.context)?`Tap ${weaveKey} + ${macroKey} only during safe pressure windows. Release the macro to move, peel, or answer an opponent's burst; manual control takes priority.`:`Hold ${weaveKey} (${p.weave}) with ${macroKey} (the in-game Macro bind) as your default safe-damage state. Press manual keys over the held loop; they take priority.`;
   $('rhythm-base-keys').textContent=`${weaveKey} + ${macroKey}`;
   $('rhythm-base-note').textContent=macroSteps.length?`Keep ${p.weave} held while Macro attempts ${displayedMacroSteps.join(' and ')}. Maintain this through safe damage uptime.`:`Use ${p.weave} alone until an unlocked damage skill can be added to Macro.`;
-  $('rhythm-weave-note').textContent=levelingMode?`The 1–8 bar below contains ${manualNow.length} currently available manual power${manualNow.length===1?'':'s'}. Press healing, movement, charges and defenses yourself; release Macro when timing matters.`:a.context==='pvp'?'Keep control, escape and defensive keys manual. Use the Stigmas tab for this PvP loadout; press the macro only for safe pressure.':state.class==='templar'?'E handles Judgment and Pummel during safe uptime. Fully charge Punishment manually, follow with Doom Shield when ready, and time Shield of Protection for a blockable hit. Pause the macro if it interrupts that sequence.':p.kind==='healer'?'Press the needed 1–8 heal or support key; manual input wins. Shift fully to healing when the group is in danger.':'Press or hold a 1–8 skill at its cue. During safe uptime, keep the base held; manual input wins over the macro.';
+  $('rhythm-weave-note').textContent=levelingMode?`The 1–8 bar below contains ${manualNow.length} currently available manual power${manualNow.length===1?'':'s'}. Press healing, movement, charges and defenses yourself; release Macro when timing matters.`:appIsPvpContext(a.context)?'Keep control, escape and defensive keys manual. Use the Stigmas tab for this PvP loadout; press the macro only for safe pressure.':state.class==='templar'?'E handles Judgment and Pummel during safe uptime. Fully charge Punishment manually, follow with Doom Shield when ready, and time Shield of Protection for a blockable hit. Pause the macro if it interrupts that sequence.':p.kind==='healer'?'Press the needed 1–8 heal or support key; manual input wins. Shift fully to healing when the group is in danger.':'Press or hold a 1–8 skill at its cue. During safe uptime, keep the base held; manual input wins over the macro.';
   $('rhythm-pause-note').textContent=p.kind==='healer'?`Release ${macroKey} and ${weaveKey} for healing triage or mechanics. Restart both when damage is safe.`:`Release ${macroKey} to stop Macro; release ${weaveKey} too when all attacks must stop. Pause Macro if a charge gets clipped.`;
   $('hotbar-grid').innerHTML=hotbar.map(([skills,cue,tone],i)=>`<article class="hotbar-card tone-${esc(tone)}"><div class="hotbar-top"><span class="hotbar-number">${i+1}</span><small>${esc(tone)}</small></div><div class="hotbar-skills">${skills.length?skills.map(name=>`<span class="game-hotbar-entry">${gameSkillIconMarkup(state.class,name,'hotbar-game-icon')}<strong>${esc(name)}</strong></span>`).join(''):'<strong>Flex slot</strong>'}</div><p>${esc(cue)}</p></article>`).join('');
-  $('hotbar-note').textContent=levelingMode?`Only unlocked skills appear here. Empty slots are free for future unlocks; update the layout when your level or Stigma points change. ${level>=16?'Defiance is on Space by default, shared with jump/glide.':'Defiance opens at level 16 and uses Space by default.'}`:`Defiance shares Space with jump/glide by default for every class; it does not consume a number-bar slot. Optional: turn on Separate Defiance Hotkey and give it a dedicated nearby key to avoid accidental glides. ${a.context==='pvp'?'The 1–8 bar includes this PvP Stigma set. Place matchup-specific control and defense where your hand can reach them.':a.context==='solo'?'The 1–8 bar includes the Solo Stigma set; keep its recovery and movement keys manual.':fusionCharged?'Elemental Fusion has a charge specialty at this level, so put it on 7 and remove it from macro E. Keep Wind Spirit on a secondary row.':displayKeyCopy(p.hotbarNote)}`;
+  $('hotbar-note').textContent=levelingMode?`Only unlocked skills appear here. Empty slots are free for future unlocks; update the layout when your level or Stigma points change. ${level>=16?'Defiance is on Space by default, shared with jump/glide.':'Defiance opens at level 16 and uses Space by default.'}`:`Defiance shares Space with jump/glide by default for every class; it does not consume a number-bar slot. Optional: turn on Separate Defiance Hotkey and give it a dedicated nearby key to avoid accidental glides. ${appIsPvpContext(a.context)?'The 1–8 bar includes this PvP Stigma set. Place matchup-specific control and defense where your hand can reach them.':a.context==='solo'?'The 1–8 bar includes the Solo Stigma set; keep its recovery and movement keys manual.':fusionCharged?'Elemental Fusion has a charge specialty at this level, so put it on 7 and remove it from macro E. Keep Wind Spirit on a secondary row.':displayKeyCopy(p.hotbarNote)}`;
   // One physical stack diagram is one hotbar KEY, not a list of sequential
   // actions. Draw the actual in-game position: row 3 at the TOP and row 0
   // (first attempted skill) at the BOTTOM. Previous UI inverted this.
@@ -918,7 +1001,7 @@ function renderBoards(m){
       : 'Single-click to preview a node. Double-click to mark it obtained; blue rings show the stable recommended path, gold rings show actual purchases. Planned amounts stay in each board tab.';
   renderGlobalBoardRoute(m,nodes);
   // Keep board tabs and their planned allocation exactly as before.
-  $('board-spent').textContent=a.context==='pvp'&&!isLeveling()?`${m.boards.spent}/${budget('crystals')} PvE · ${m.azphel.spent}/${a.azphel||0} Azphel`:`${m.boards.spent} / ${budget('crystals')} PvE crystals planned`;
+  $('board-spent').textContent=appIsPvpContext(a.context)&&!isLeveling()?`${m.boards.spent}/${budget('crystals')} PvE · ${m.azphel.spent}/${a.azphel||0} Azphel`:`${m.boards.spent} / ${budget('crystals')} PvE crystals planned`;
   const crystalSpent=obtainedCrystalSpend(isAz);
   $('board-crystal-value').textContent=`${crystalSpent} / ${crystalBudget}`;
   $('board-crystal-remaining').textContent=`${Math.max(0,crystalBudget-crystalSpent)} remaining`;
@@ -930,7 +1013,7 @@ function renderBoards(m){
   const wanted=isAz?[['PvPAmplifyDamage','PvP Damage Boost'],['PvPDecreaseDamage','PvP Damage Tolerance'],['AbnormalResistance','Status Resist'],['PvPAddDamage','PvP Attack']]:profile().kind==='healer'?[['Defense','Defense'],['HPMax','Max HP'],['CombatSpeed','Combat Speed'],['CoolTimeDecrease','Cooldown Reduction']]:[['AmplifyAllDamage','Damage Boost'],['DecreaseDamage','Damage Tolerance'],['CombatSpeed','Combat Speed'],['CoolTimeDecrease','Cooldown Reduction']];
   const shownEffects=isAz?m.azphelEffects:m.effects;
   $('board-summary').innerHTML=wanted.map(([key,label])=>{const meta=data().stats[key],v=shownEffects.stats[key]||0;return `<div><b>+${v/(meta?.div||1)}${meta?.pct?'%':''}</b><span>${label}</span></div>`}).join('');
-  const available=a.context==='pvp'?allBoards():data().boards;
+  const available=appIsPvpContext(a.context)?allBoards():data().boards;
   $('board-tabs').innerHTML=available.map(b=>`<button type="button" data-board="${b.name}" class="${state.board===b.name?'active':''}" ${boardOpen(b.name)?'':`disabled title="Opens at level ${BOARD_UNLOCKS[b.name]}"`}>${b.name}<small>${boardOpen(b.name)?`${(b.name==='Azphel'?m.azphel:m.boards).perBoard[b.name]} / ${b.totalCost}`:`Opens Lv ${BOARD_UNLOCKS[b.name]}`}</small></button>`).join('');
   $('route-slider').max=crystalBudget;state.preview=Math.min(state.preview,crystalBudget);$('route-slider').value=state.preview;$('route-slider-value').textContent=state.preview;
   const preview=boardPlan(state.preview,isAz),board=available.find(b=>b.name===state.board),grid=new Map(board.nodes.map(n=>[`${n[1]}:${n[2]}`,n]));let html='';
@@ -956,7 +1039,7 @@ function renderBoards(m){
   const priority=new Set(masteryStages().slice(0,12).map(x=>x[0]));let total=0;const upcoming=[];for(const x of route){const n=nodes.get(x.id).node;total+=n[5];if(total<=plan.spent)continue;if(n[5]===4||typeof n[6]?.[0]?.[0]==='number'&&priority.has(data().skills[n[6][0][0]]?.name))upcoming.push({total,board:x.board,label:effectText(n)});if(upcoming.length>=5)break}
   $('board-next-heading').textContent=customMode()?'Your custom route':'Next key nodes';
   $('board-next').innerHTML=customMode()?`<p>${boardSteps.length} tiles selected on ${state.board}. ${crystalBudget-plan.spent} ${isAz?'Azphel':'PvE'} crystals remain unassigned. Select a connected tile to extend your plan.</p>`:upcoming.length?upcoming.map(x=>`<div class="next-unlock"><strong>${x.total} total</strong><span>${x.board}: ${esc(x.label)}</span></div>`).join(''):'<p>All key nodes on this route are funded.</p>';
-  const method=isAz?ROUTES[state.class].methods.azphel:ROUTES[state.class].methods[a.context];
+  const method=isAz?ROUTES[state.class].methods.azphel:ROUTES[state.class].methods[appIsPvpContext(a.context)?'pvp':a.context];
   const cpRoute=profile().kind!=='healer'&&Number(a.goalTarget)>0;
   const cpBasis=cpRoute?(liveRouteBasis?.baseCp===null?'Your gear is not recorded fully enough for CP calibration, so this route follows class/context mechanics without CP weighting.':'A complete recorded loadout can give a secondary CP-goal influence after class/context priorities.'):'The route follows researched class and context priorities using only gear bonuses you entered.';
   $('route-footnote').textContent=customMode()?`Custom mode uses the connected tiles you selected, in click order. Raising your crystal total lets you add more; lowering it makes later tiles unfunded until the budget returns. Marked obtained tiles are recorded separately from planned tiles. Azphel has its own currency and no skill levels.`:`${method}. The recommended path remains fixed through the current crystal-spending cycle and refreshes after your total is marked obtained; switching class/context or unlocking new boards starts a new cycle. No equipment is assumed. Each crystal total funds a prefix; save crystals when the next tile costs more than you have. ${cpBasis} Marked tiles are carried into the route first, using connecting nodes where needed. This is an approximate scoring model, not a proven combat optimum. Azphel has its own currency and no skill levels.`;
@@ -994,7 +1077,7 @@ function renderTitles(){
   $('faction-select').value=faction;
   const count=TITLE_CATALOG.filter(t=>owned[t.id]&&eligibleTitle(t,faction)).length;
   $('titles-count').textContent=`${count} earned · ${TITLE_CATALOG.length} titles listed`;
-  $('titles-role-note').textContent=a.context==='pvp'?'PvP: favor PvP Damage Boost, PvP Damage Tolerance and escape or cooldown uptime; equip picks use a simple effect heuristic, so compare the matchup.':state.class==='templar'?'Templar: prioritize boss tolerance and a cooldown/HP Other title while retaining an Attack title for threat and damage.':profile().kind==='healer'?'Healer: the Attack title supports damage between heals; Defense and Other improve survival and cooldown uptime. These titles do not directly add a verified heal multiplier.':'Damage class: the Attack slot is your PvE damage title; Defense and Other preserve uptime and survivability.';
+  $('titles-role-note').textContent=appIsPvpContext(a.context)?'PvP: favor PvP Damage Boost, PvP Damage Tolerance and escape or cooldown uptime; equip picks use a simple effect heuristic, so compare the matchup.':state.class==='templar'?'Templar: prioritize boss tolerance and a cooldown/HP Other title while retaining an Attack title for threat and damage.':profile().kind==='healer'?'Healer: the Attack title supports damage between heals; Defense and Other improve survival and cooldown uptime. These titles do not directly add a verified heal multiplier.':'Damage class: the Attack slot is your PvE damage title; Defense and Other preserve uptime and survivability.';
   const previews=[];
   $('title-grid').innerHTML=['Attack','Defense','Other'].map(slot=>{
     const priority=titlePriority(slot),items=priority.map(id=>TITLES.find(t=>t.id===id)),available=TITLE_CATALOG.filter(t=>t.slot===slot&&eligibleTitle(t,faction)&&owned[t.id]);
@@ -1073,7 +1156,15 @@ for(const [id,key,max] of [['mastery-input','mastery',462],['stigma-input','stig
 }
 $('azphel-input').addEventListener('input',e=>{account().azphel=clamp(e.target.value,0,232);if(state.board==='Azphel')state.preview=account().azphel;save()});
 $('azphel-input').addEventListener('change',e=>{account().azphel=clamp(e.target.value,0,232);if(state.board==='Azphel')state.preview=account().azphel;render()});
-for(const [id,ctx] of [['party-button','party'],['solo-button','solo'],['pvp-button','pvp']])$(id).addEventListener('click',()=>{if(isLeveling()&&ctx==='pvp')return;account().context=ctx;account()[isLeveling()?'levelingContext':'endgameContext']=ctx;if(ctx!=='pvp'&&state.board==='Azphel')state.board='Nezekan';state.preview=state.board==='Azphel'?(account().azphel||0):budget('crystals');render()});
+function setContext(ctx){
+ if(!['party','solo',...Object.keys(PVP_CONTEXT_LABELS)].includes(ctx)||isLeveling()&&appIsPvpContext(ctx))return;
+ account().context=ctx;account()[isLeveling()?'levelingContext':'endgameContext']=ctx;
+ if(!appIsPvpContext(ctx)&&state.board==='Azphel')state.board='Nezekan';
+ state.preview=state.board==='Azphel'?(account().azphel||0):budget('crystals');
+ render();
+}
+for(const [id,ctx] of [['party-button','party'],['solo-button','solo'],['pvp-button','pvp']])$(id).addEventListener('click',()=>setContext(ctx));
+$('pvp-mode-select').addEventListener('change',e=>setContext(e.target.value));
 $('macro-bind').addEventListener('change',e=>{account().macroBind=e.target.value;render()});
 $('quick-use-2-bind').addEventListener('change',e=>{
   if(!['R','T'].includes(e.target.value))return;

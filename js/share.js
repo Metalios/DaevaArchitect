@@ -33,10 +33,10 @@
     const result=DEFAULT_ACCOUNT(cls),validSkills=new Set(Object.values(DATA[cls].skills).map(skill=>skill.name));
     for(const [key,max] of [['mastery',462],['stigma',300],['crystals',570],['azphel',232],['goalTarget',1000000000],['gearCpTarget',1000000000]])if(raw[key]!==undefined)result[key]=numeric(raw[key],max);
     if(PROFILES[cls].kind==='healer'&&raw.goalObserved!==undefined)result.goalObserved=numeric(raw.goalObserved,1000000000);
-    result.context=['party','solo','pvp'].includes(raw.context)?raw.context:'party';
+    result.context=['party','solo','pvp','pvp-arena','pvp-abyss-solo','pvp-abyss-group'].includes(raw.context)?raw.context:'party';
     result.pveObjective=['performance','survivability','sustained','burst'].includes(raw.pveObjective)
       ?raw.pveObjective:'performance';
-    result.endgameContext=['party','solo','pvp'].includes(raw.endgameContext)?raw.endgameContext:result.context;
+    result.endgameContext=['party','solo','pvp','pvp-arena','pvp-abyss-solo','pvp-abyss-group'].includes(raw.endgameContext)?raw.endgameContext:result.context;
     result.levelingContext=['party','solo'].includes(raw.levelingContext)?raw.levelingContext:'solo';
     result.journey=raw.journey==='leveling'?'leveling':'endgame';
     result.faction=raw.faction==='asmodian'?'asmodian':'elyos';
