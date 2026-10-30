@@ -241,7 +241,12 @@ function optimizeRecommendedStigmas(names,points,cls=state.class,context=account
    const revised=new Map(),order=Math.max(0,priority.indexOf(name));
    for(const [spent,candidate] of options)for(let rank=0;rank<=20;rank++){
      const total=spent+costs[rank];if(total>limit)break;
-     const score=candidate.score+stigmaUtility(cls,context,name,rank,order);
+     // At a fresh-45 budget, secure one meaningful Lv 10 perk instead
+     // of distributing points into four Lv 5 perks without a Lv 10.
+     // The bonus only applies to 15–29 points, so it cannot distort
+     // higher-budget tradeoffs such as the Templar 61-point benchmark.
+     const starterBonus=limit>=15&&limit<=29&&rank>=10&&order===0?18:0;
+     const score=candidate.score+stigmaUtility(cls,context,name,rank,order)+starterBonus;
      if(!revised.has(total)||score>revised.get(total).score+1e-8)
        revised.set(total,{score,ranks:[...candidate.ranks,rank]});
    }
