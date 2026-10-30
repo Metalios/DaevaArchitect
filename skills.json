@@ -1,0 +1,112 @@
+{
+  "12010000": {
+    "name": "Vicious Strike",
+    "slug": "12010000-vicious-strike",
+    "icon": "/game/skills/ICON_TE_SKILL_001.webp"
+  },
+  "12040000": {
+    "name": "Pummel",
+    "slug": "12040000-pummel",
+    "icon": "/game/skills/ICON_TE_SKILL_006.webp"
+  },
+  "12090000": {
+    "name": "Punishment",
+    "slug": "12090000-punishment",
+    "icon": "/game/skills/ICON_TE_SKILL_009.webp"
+  },
+  "12100000": {
+    "name": "Shield Smite",
+    "slug": "12100000-shield-smite",
+    "icon": "/game/skills/ICON_TE_SKILL_010.webp"
+  },
+  "12130000": {
+    "name": "Poach",
+    "slug": "12130000-poach",
+    "icon": "/game/skills/ICON_TE_SKILL_013.webp"
+  },
+  "12240000": {
+    "name": "Judgment",
+    "slug": "12240000-judgment",
+    "icon": "/game/skills/ICON_TE_SKILL_004.webp"
+  },
+  "12260000": {
+    "name": "Defiance",
+    "slug": "12260000-defiance",
+    "icon": "/game/skills/ICON_CO_SKILL_002.webp"
+  },
+  "12270000": {
+    "name": "Debilitating Smash",
+    "slug": "12270000-debilitating-smash",
+    "icon": "/game/skills/ICON_TE_SKILL_025.webp"
+  },
+  "12300000": {
+    "name": "Annihilate",
+    "slug": "12300000-annihilate",
+    "icon": "/game/skills/ICON_TE_SKILL_028.webp"
+  },
+  "12340000": {
+    "name": "Flash Rampage",
+    "slug": "12340000-flash-rampage",
+    "icon": "/game/skills/ICON_GL_SKILL_027.webp"
+  },
+  "12350000": {
+    "name": "Warding Strike",
+    "slug": "12350000-warding-strike",
+    "icon": "/game/skills/ICON_TE_SKILL_035.webp"
+  },
+  "12430000": {
+    "name": "Shield Rush",
+    "slug": "12430000-shield-rush",
+    "icon": "/game/skills/ICON_TE_SKILL_015.webp"
+  },
+  "12710000": {
+    "name": "Enhance Health",
+    "slug": "12710000-enhance-health",
+    "icon": "/game/skills/ICON_TE_SKILL_Passive_001.webp"
+  },
+  "12720000": {
+    "name": "Warding Shield",
+    "slug": "12720000-warding-shield",
+    "icon": "/game/skills/ICON_TE_SKILL_Passive_002.webp"
+  },
+  "12730000": {
+    "name": "Punishing Benediction",
+    "slug": "12730000-punishing-benediction",
+    "icon": "/game/skills/ICON_TE_SKILL_Passive_003.webp"
+  },
+  "12740000": {
+    "name": "Ironclad Defense",
+    "slug": "12740000-ironclad-defense",
+    "icon": "/game/skills/ICON_TE_SKILL_Passive_004.webp"
+  },
+  "12750000": {
+    "name": "Guarding Seal",
+    "slug": "12750000-guarding-seal",
+    "icon": "/game/skills/ICON_TE_SKILL_Passive_005.webp"
+  },
+  "12760000": {
+    "name": "Impact Hit",
+    "slug": "12760000-impact-hit",
+    "icon": "/game/skills/ICON_TE_SKILL_Passive_006.webp"
+  },
+  "12770000": {
+    "name": "Insulting Roar",
+    "slug": "12770000-insulting-roar",
+    "icon": "/game/skills/ICON_TE_SKILL_Passive_007.webp"
+  },
+  "12780000": {
+    "name": "Fury",
+    "slug": "12780000-fury",
+    "icon": "/game/skills/ICON_TE_SKILL_Passive_008.webp"
+  },
+  "12790000": {
+    "name": "Survival Willpower",
+    "slug": "12790000-survival-willpower",
+    "icon": "/game/skills/ICON_TE_SKILL_Passive_009.webp"
+  },
+  "12800000": {
+    "name": "Block Pain",
+    "slug": "12800000-block-pain",
+    "icon": "/game/skills/ICON_TE_SKILL_Passive_010.webp"
+  }
+}

@@ -1,0 +1,549 @@
+/* Approved target visual system: overrides are deliberately isolated from
+   the legacy v2/fidelity sheets. Data and calculations remain unchanged.
+   This layer is loaded LAST after the existing responsive styles. */
+.v2-active{
+ --v4-bg:#061421;--v4-panel:#0a2036;--v4-stroke:#325979;
+ --v4-gold:#edc473;--v4-blue:#6bbfec;--v4-text:#e6f1fc;
+}
+.v2-active .v2-workspace{gap:10px!important;margin-top:6px!important}
+.v2-active .v2-workspace>.v2-column{
+ border:1px solid #385977;
+ border-radius:9px;
+ background:linear-gradient(145deg,#10273e,#071b2e);
+}
+.v2-active .v2-workspace .tab-panel{
+ background:transparent!important;
+ border:0!important;
+ box-shadow:none!important;
+ padding:10px!important;
+}
+.v2-active .v2-workspace .section-title{
+ margin-bottom:7px!important;
+ padding-bottom:7px!important;
+}
+.v2-active .v2-workspace .section-title h2{
+ font-size:19px!important;
+ line-height:1.2!important;
+}
+.v2-active .v2-workspace .section-title p{
+ display:none!important;
+}
+.v2-active .v2-workspace .section-title .tag{font-size:10px}
+.v2-active .v2-source-legend{display:none!important}
+.v2-active .v2-mastery-hint{font-size:11px;line-height:1.35}
+.v2-active .v2-editor-title{
+ display:grid!important;
+ grid-template-columns:minmax(0,1fr) 88px 67px 56px 50px!important;
+ gap:5px!important;
+ align-items:center;
+ min-width:0!important;
+ padding:5px 7px!important;
+}
+.v2-active .v2-editor-title>span:nth-of-type(4),
+.v2-active .v2-editor-title>span:nth-of-type(5){display:none!important}
+.v2-active .v2-skill{
+ display:grid!important;
+ grid-template-columns:minmax(0,1fr) 88px 67px 56px 50px!important;
+ min-width:0!important;
+ gap:5px!important;
+ padding:6px 7px!important;
+ min-height:52px!important;
+ align-items:center!important;
+}
+.v2-active .v2-skill>.v2-board-delta,
+.v2-active .v2-skill>.v2-green:not(.v2-board-delta){display:none!important}
+.v2-active .v2-skill-label{gap:7px!important;min-width:0}
+.v2-active .v2-skill-label b{
+ font-size:12px!important;
+ overflow:hidden;
+ white-space:nowrap;
+ text-overflow:ellipsis;
+}
+.v2-active .v2-skill-label small{font-size:9px!important}
+.v2-active .v2-rank button{height:26px!important;width:21px!important}
+.v2-active .v2-rank{gap:2px!important}
+.v2-active .v2-rank b{font-size:11px!important}
+.v2-active .v4-specialty-summary{
+ display:flex;
+ justify-content:center;
+ gap:4px;
+ overflow:hidden;
+ min-width:0;
+}
+.v2-active .v4-spec-token{
+ display:inline-grid;
+ place-items:center;
+ width:20px;height:20px;flex:none;
+ border:1px solid #7fb8cf;
+ border-radius:50%;
+ background:radial-gradient(circle at 30% 25%,#2e7392,#0e304c);
+ box-shadow:0 0 7px #59add23a;
+ color:#fff4cd;font-size:10px;font-weight:800;
+}
+.v2-active .v4-spec-none{color:#6989a0}
+.v2-active .v4-role-summary{
+ display:block;
+ font-size:10px;
+ color:#b1d8ec;
+ text-align:center;
+}
+.v2-active .v2-effective{font-size:12px!important;text-align:right}
+.v2-active .v2-effective small{font-size:9px}
+.v2-active .v2-skill-list{
+ min-height:0!important;
+ max-height:none!important;
+ flex:1 1 auto;
+ overflow-y:auto;
+ overflow-x:hidden!important;
+ scrollbar-width:thin;
+}
+.v2-active .v2-master-editor{min-height:0}
+.v2-active .v2-skill-toolbar{margin-bottom:5px!important}
+.v2-active .v2-skill-toolbar>button{padding:6px 8px!important;font-size:11px!important}
+.v2-active .v2-skill-toolbar .mastery-search input{height:29px!important}
+.v2-active .v2-stigmas{
+ border-top:1px solid #365674;
+ padding-top:10px;
+}
+.v2-active #v2-stigma-list .v2-stigma-card{min-height:100px}
+.v2-active .v2-stigma-breakpoints{font-size:10px}
+/* Equipment: a light armor silhouette guides the eye behind the authentic
+   gear slots. It is intentionally not represented as an actual game avatar. */
+.v2-active .v2-left .gear-intro{
+ padding:9px 10px!important;
+ margin-bottom:7px!important;
+}
+.v2-active .v2-left .gear-intro p{display:none}
+.v2-active .v2-left .gear-summary{
+ display:flex;
+ flex-wrap:wrap;
+ gap:5px;
+ margin-top:5px;
+}
+.v2-active .v2-left .gear-summary>*{
+ min-width:0;
+ padding:4px!important;
+ font-size:10px!important;
+}
+.v2-active .v2-left .gear-cp{
+ display:grid!important;
+ grid-template-columns:minmax(0,1fr) auto!important;
+ align-items:center;
+ gap:4px 9px;
+ min-height:0!important;
+ padding:6px 9px!important;
+ margin:0 0 7px!important;
+}
+.v2-active .v2-left .gear-cp>div:first-child h3{display:none}
+.v2-active .v2-left .gear-cp>div:first-child>p{display:none}
+.v2-active .v2-left .gear-cp .cp-estimate-readout{
+ text-align:right;
+ justify-self:end;
+ padding:0!important;
+}
+.v2-active .v2-left .gear-cp .cp-estimate-readout strong{
+ display:block;
+ font-size:20px!important;
+ color:var(--v4-gold);
+}
+.v2-active .v2-left .gear-cp .cp-estimate-readout small{font-size:9px!important}
+.v2-active .v2-left .gear-cp>label{grid-column:1/-1;font-size:10px}
+.v2-active .v2-left .gear-cp>label input{max-width:135px}
+.v2-active .v2-left .gear-paperdoll{
+ position:relative;
+ isolation:isolate;
+ overflow:hidden;
+}
+.v2-active .v2-left .v4-armor-crest{
+ position:absolute;
+ pointer-events:none;
+ inset:50px 25px 15px;
+ display:grid;
+ align-items:center;
+ justify-items:center;
+ opacity:.20;
+ z-index:0;
+ filter:drop-shadow(0 0 12px #67b4db);
+}
+.v2-active .v2-left .v4-armor-crest svg{
+ display:block;
+ width:min(78%,230px);
+ height:100%;
+ max-height:380px;
+}
+.v2-active .v2-left .gear-doll-grid,
+.v2-active .v2-left .gear-paperdoll-head,
+.v2-active .v2-left .gear-doll-tip{position:relative;z-index:1}
+.v2-active .v2-left .gear-doll-grid{gap:5px!important}
+.v2-active .v2-left .gear-doll-tip{font-size:10px!important}
+/* Daevanion is the primary editor. Avoid repeated instructions in its
+   default inspector, keep selected information and progress visible. */
+.v2-active .v2-right #boards>.board-crystal-tracker{
+ background:linear-gradient(90deg,#0d3150,#0c263e)!important;
+ padding:6px 10px!important;
+ margin:0 0 5px!important;
+}
+.v2-active .v2-right #boards>.board-crystal-tracker .board-crystal-tracker-copy small{
+ display:none!important;
+}
+.v2-active .v2-right .v2-board-dock{
+ padding:5px!important;
+ margin-bottom:5px!important;
+}
+.v2-active .v2-board-dock .v2-board-secondary-actions button{
+ min-height:30px!important;
+}
+.v2-active .v2-right #boards>.board-layout{
+ gap:8px!important;
+ min-height:0;
+}
+.v2-active .v2-right .board-layout .board-scroll{
+ padding:6px!important;
+ background:radial-gradient(ellipse at center,#11344e 0%,#091d30 55%,#061624 100%)!important;
+ border:1px solid #244e6c!important;
+ border-radius:6px;
+}
+.v2-active .v2-right .board-grid{margin:auto!important}
+.v2-active .v2-right .board-side{
+ display:flex;
+ flex-direction:column;
+ gap:7px;
+}
+.v2-active .v2-right .v4-board-progress{
+ padding:10px 9px;
+ border:1px solid #3e7193;
+ border-radius:6px;
+ background:linear-gradient(#133753,#0d273e);
+ flex:none;
+}
+.v2-active .v4-board-progress-head{
+ display:flex;
+ justify-content:space-between;
+ gap:6px;
+ align-items:center;
+ color:#f2d69b;
+ font-size:12px;
+}
+.v2-active .v4-board-progress-head span{font-size:11px;color:#c9e0ed}
+.v2-active .v4-progress-track{
+ height:8px;margin:9px 0 5px;
+ border-radius:99px;overflow:hidden;
+ background:#061521;border:1px solid #54748f;
+}
+.v2-active .v4-progress-track span{
+ display:block;height:100%;width:0;
+ background:linear-gradient(90deg,#4eaff4,#edca7d);
+}
+.v2-active .v4-board-progress p{margin:0;color:#a9c6d8;font-size:10px}
+.v2-active .board-side #selected-node{
+ padding:9px!important;
+ background:#0e2942;
+ border:1px solid #315576;
+ border-radius:6px;
+}
+.v2-active .board-side .board-effects-panel{border-radius:6px}
+.v2-active .board-side .v2-board-extra{margin-top:4px}
+/* The old full-width summary was consuming hundreds of vertical pixels
+   beneath the editor. Keep recommendations available with one disclosure. */
+.v2-active .v2-footer{padding:0!important;margin:7px 0!important;display:block!important}
+.v2-active .v2-next{display:block!important;margin:0!important;padding:0!important;border:0!important}
+.v2-active .v4-next-details{
+ width:100%;
+ background:#0c263c;
+ border:1px solid #365d7c;
+ border-radius:7px;
+}
+.v2-active .v4-next-details>summary{
+ display:flex;justify-content:space-between;align-items:center;
+ cursor:pointer;padding:10px 13px;
+ color:#e9c786;font-size:13px;
+}
+.v2-active .v4-next-details>summary span{color:#93b7d0;font-size:11px}
+.v2-active .v4-next-content{
+ display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;
+ padding:10px;border-top:1px solid #315473;
+}
+.v2-active .v4-next-content>.v2-next-progress{grid-column:1/-1}
+.v2-active .v2-footer>.v2-gear-note,
+.v2-active .v2-footer>.v2-combat-evidence{display:none!important}
+.v2-active .v2-footer .v2-full-overview{margin-top:6px}
+/* Preview target uses a near viewport-height application workspace. */
+@media(min-width:1700px){
+ .v2-active.v2-has-class:not(.v2-secondary):not(.v2-board-expanded) .v2-workspace{
+  grid-template-columns:minmax(330px,23%) minmax(425px,29%) minmax(0,1fr)!important;
+  gap:10px!important;
+ }
+ .v2-active .v2-right #boards>.board-layout{
+  grid-template-columns:minmax(0,1fr) minmax(215px,24%)!important;
+ }
+ .v2-active .v2-workspace .section-title h2{font-size:20px!important}
+}
+/* Medium design keeps board fixed alongside selected editor; in a 340px
+   Mastery column display Core/Support role in the skill flyout only. */
+@media(min-width:1100px) and (max-width:1699px){
+ .v2-active .v2-editor-title{
+  grid-template-columns:minmax(0,1fr) 88px 59px 53px!important;
+ }
+ .v2-active .v2-skill{
+  grid-template-columns:minmax(0,1fr) 88px 59px 53px!important;
+ }
+ .v2-active .v2-editor-title .v4-role-heading,
+ .v2-active .v2-skill .v4-role-summary{display:none!important}
+ .v2-active .v4-specialty-summary{gap:2px}
+ .v2-active .v4-spec-token{width:17px;height:17px;font-size:9px}
+}
+/* Phone layout remains one-editor, with no horizontal scroll. */
+@media(max-width:1099px){
+ .v2-active .v2-editor-title{display:none!important}
+ .v2-active .v2-skill{
+  grid-template-columns:minmax(0,1fr) 90px 62px!important;
+  row-gap:5px!important;
+ }
+ .v2-active .v2-skill-label{grid-column:1!important}
+ .v2-active .v2-skill .v4-specialty-summary{grid-column:2!important}
+ .v2-active .v2-skill .v2-rank{grid-column:3!important;grid-row:1!important}
+ .v2-active .v2-skill .v4-role-summary,
+ .v2-active .v2-skill .v2-effective{display:none!important}
+ .v2-active .v4-next-content{grid-template-columns:1fr}
+ .v2-active .v2-left .gear-cp{grid-template-columns:1fr auto!important}
+}
+@media(max-width:420px){
+ .v2-active .v2-skill{grid-template-columns:minmax(0,1fr) 60px 87px!important}
+ .v2-active .v2-skill-label small{display:none!important}
+ .v2-active .v4-spec-token{width:17px;height:17px}
+}
+
+/* Real equipment stat rail: the screenshot mock used illustrative totals;
+   this rail displays only game data the player actually recorded. */
+@media(min-width:1100px){
+ .v2-active .v2-left .gear-main{
+  display:grid!important;
+  grid-template-columns:minmax(0,1.6fr) minmax(122px,.8fr)!important;
+  gap:7px!important;
+  align-items:stretch;
+ }
+ .v2-active .v2-left .gear-main>.gear-paperdoll{min-width:0}
+ .v2-active .v2-left .gear-main>.v4-equipment-stats{
+  min-width:0;
+  max-width:none;
+  margin:0;
+  padding:8px 5px!important;
+  max-height:100%;
+  overflow:auto;
+  background:#0b263c;
+  border:1px solid #365b7a;
+  border-radius:6px;
+ }
+ .v2-active .v2-left .gear-main>.v4-equipment-stats h3{
+  font:600 12px/1.3 system-ui,sans-serif;
+  color:#eac780;
+ }
+ .v2-active .v2-left .v4-equipment-stats #gear-fixed-stats{
+  font-size:10px;
+  overflow-wrap:break-word;
+ }
+ .v2-active .v2-left .gear-doll-grid{gap:3px!important}
+ .v2-active .v2-left .gear-paperdoll{padding:7px!important}
+}
+@media(min-width:1100px) and (max-width:1399px){
+ .v2-active .v2-left .gear-main{
+  grid-template-columns:minmax(0,1fr)!important;
+ }
+ .v2-active .v2-left .gear-main>.v4-equipment-stats{max-height:160px}
+}
+@media(max-width:1099px){
+ .v2-active .v2-left .gear-main{display:block!important}
+ .v2-active .v2-left .v4-equipment-stats{
+  margin-top:8px;padding:8px;
+  max-height:180px;overflow:auto;
+ }
+}
+
+/* Screenshot correction: the original Mastery and Stigma tabs used competing
+   content min-heights and overlaid each other in a fixed-height editor. */
+@media(min-width:1100px){
+ .v2-active.v2-has-class:not(.v2-secondary) .v2-workspace>.v2-center{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch;
+  justify-content:flex-start;
+  gap:7px!important;
+  height:100%;
+  min-height:0!important;
+  overflow:hidden!important;
+ }
+ .v2-active.v2-has-class:not(.v2-secondary) .v2-center #mastery{
+  display:flex!important;
+  flex-direction:column;
+  flex:1 1 auto;
+  min-height:0!important;
+  max-height:none!important;
+  overflow:hidden!important;
+ }
+ .v2-active.v2-has-class:not(.v2-secondary) .v2-center .v2-master-editor{
+  display:flex!important;
+  flex-direction:column!important;
+  flex:1 1 auto;
+  min-height:0!important;
+  max-height:100%;
+  overflow:hidden!important;
+ }
+ .v2-active.v2-has-class:not(.v2-secondary) .v2-center #v2-skill-list{
+  flex:1 1 auto!important;
+  min-height:0!important;
+  max-height:none!important;
+  height:auto!important;
+  overflow-y:auto!important;
+ }
+ .v2-active.v2-has-class:not(.v2-secondary) .v2-center #stigma{
+  position:relative!important;
+  display:flex;
+  flex-direction:column;
+  flex:0 0 210px;
+  min-height:0!important;
+  max-height:210px!important;
+  overflow-x:hidden;
+  overflow-y:auto;
+  z-index:1;
+  background:#0a2036;
+ }
+ .v2-active.v2-has-class:not(.v2-secondary) .v2-center #stigma .v2-stigma-cards{
+  flex:0 0 auto;
+ }
+ .v2-active.v2-has-class:not(.v2-secondary) .v2-center .v2-advanced-skills{
+  flex:none;
+ }
+}
+/* There is no need for a 200px explanation panel just to show one CP number.
+   Detailed conditions and calibration moved to Advanced in the DOM. */
+.v2-active .v2-left .gear-cp{
+ grid-template-columns:minmax(0,1fr) auto!important;
+ min-height:52px!important;
+ max-height:80px!important;
+ overflow:hidden;
+}
+.v2-active .v2-left .gear-cp>div:first-child{
+ min-width:0;
+ font-size:10px;
+}
+.v2-active .v2-left .gear-cp>div:first-child .eyebrow{
+ font-size:10px;
+}
+.v2-active .v2-left .gear-cp .cp-estimate-readout{
+ display:block!important;
+}
+.v2-active #v4-inspector-close{display:none}
+@media(min-width:1100px) and (max-width:1699px){
+ .v2-active #boards.v2-inspector-open #v4-inspector-close{
+  display:block!important;
+  position:sticky;
+  top:0;
+  z-index:120;
+  margin:0 0 6px auto;
+  padding:8px 11px;
+  border:1px solid #7a9fbd;
+  border-radius:5px;
+  background:#1b537b;
+  color:#fff0d4;
+  cursor:pointer;
+ }
+}
+/* Mobile one-editor view has no competing Stigma below Mastery. */
+@media(max-width:1099px){
+ .v2-active .v2-center #mastery{min-height:0!important}
+ .v2-active .v2-center #stigma{min-height:0!important}
+}
+
+/* A 340px auxiliary Mastery editor cannot display five dense columns.
+   The approved medium layout shows Gear by default; when Mastery is chosen,
+   preserve complete skill names and rank controls, keeping Specialty choices
+   accessible through the existing selected-skill flyout. */
+@media(min-width:1100px) and (max-width:1699px){
+ .v2-active .v2-center .v2-editor-title{
+  grid-template-columns:minmax(0,1fr) 90px 54px!important;
+ }
+ .v2-active .v2-center .v2-skill{
+  grid-template-columns:minmax(0,1fr) 90px 54px!important;
+ }
+ .v2-active .v2-center .v4-specialty-heading,
+ .v2-active .v2-center .v4-specialty-summary{
+  display:none!important;
+ }
+ .v2-active .v2-center .v2-skill-label b{font-size:12px!important}
+}
+
+
+/* Keep the medium-width editor rail authoritative. The wide-desktop flex
+   fix must not resurrect the Mastery panel while Equipment is selected. */
+@media(min-width:1100px) and (max-width:1699px){
+ .v2-active.v2-has-class:not(.v2-secondary) .v2-workspace[data-editor="gear"]>.v2-center,
+ .v2-active.v2-has-class:not(.v2-secondary) .v2-workspace[data-editor="boards"]>.v2-center{
+  display:none!important;
+ }
+ .v2-active.v2-has-class:not(.v2-secondary) .v2-workspace[data-editor="mastery"]>.v2-center,
+ .v2-active.v2-has-class:not(.v2-secondary) .v2-workspace[data-editor="stigma"]>.v2-center{
+  display:flex!important;
+ }
+}
+
+@media(min-width:1100px) and (max-width:1699px){
+ .v2-active.v2-has-class:not(.v2-secondary) .v2-workspace[data-editor="stigma"] .v2-center #mastery,
+ .v2-active.v2-has-class:not(.v2-secondary) .v2-workspace[data-editor="mastery"] .v2-center #stigma{
+  display:none!important;
+ }
+ .v2-active.v2-has-class:not(.v2-secondary) .v2-workspace[data-editor="stigma"] .v2-center #stigma{
+  display:flex!important;
+  flex:1 1 auto;
+  max-height:none!important;
+ }
+}
+
+
+/* Advanced ranks are a focused, independently scrollable Mastery editor
+   state, not a 9,000px grid appended below a clipped fixed-height panel.
+   Preserve the same DOM data and controls; only the presentation changes. */
+.v2-active .v2-center #mastery:has(.v2-advanced-skills[open]) .v2-master-editor{
+ display:flex!important;
+ flex-direction:column;
+ min-height:0!important;
+ max-height:100%!important;
+ overflow:hidden!important;
+}
+.v2-active .v2-center #mastery:has(.v2-advanced-skills[open]) .v2-master-editor>#v2-skill-list,
+.v2-active .v2-center #mastery:has(.v2-advanced-skills[open]) .v2-master-editor>.v2-mastery-hint,
+.v2-active .v2-center #mastery:has(.v2-advanced-skills[open]) .v2-master-editor>.v2-source-legend{
+ display:none!important;
+}
+.v2-active .v2-center #mastery:has(.v2-advanced-skills[open]) .v2-advanced-skills{
+ display:block!important;
+ flex:1 1 auto;
+ min-width:0;
+ min-height:0;
+ height:auto;
+ max-height:100%;
+ overflow-y:auto!important;
+ overflow-x:hidden!important;
+ scrollbar-width:thin;
+}
+.v2-active .v2-center #mastery:has(.v2-advanced-skills[open]) .v2-advanced-skills>summary{
+ position:sticky;
+ top:0;
+ z-index:5;
+ background:#143750;
+ border-color:#74aac8;
+ color:#ffe0a3;
+}
+.v2-active .v2-center #mastery:has(.v2-advanced-skills[open]) #skill-grid{
+ display:grid!important;
+ width:100%;
+ min-width:0;
+ grid-template-columns:minmax(0,1fr)!important;
+ align-items:start;
+ gap:12px;
+}
+.v2-active .v2-center #mastery:has(.v2-advanced-skills[open]) #skill-grid>.skill-card{
+ display:block!important;
+ min-width:0;
+ width:100%;
+ contain:none!important;
+}

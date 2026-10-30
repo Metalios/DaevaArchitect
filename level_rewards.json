@@ -1,0 +1,272 @@
+{
+  "1": {
+    "mastery": 0,
+    "stigma": 0,
+    "slots": 0,
+    "crystals": 0
+  },
+  "2": {
+    "mastery": 0,
+    "stigma": 0,
+    "slots": 0,
+    "crystals": 0
+  },
+  "3": {
+    "mastery": 0,
+    "stigma": 0,
+    "slots": 0,
+    "crystals": 0
+  },
+  "4": {
+    "mastery": 1,
+    "stigma": 0,
+    "slots": 0,
+    "crystals": 0
+  },
+  "5": {
+    "mastery": 3,
+    "stigma": 0,
+    "slots": 0,
+    "crystals": 0
+  },
+  "6": {
+    "mastery": 5,
+    "stigma": 0,
+    "slots": 0,
+    "crystals": 0
+  },
+  "7": {
+    "mastery": 7,
+    "stigma": 0,
+    "slots": 0,
+    "crystals": 0
+  },
+  "8": {
+    "mastery": 10,
+    "stigma": 0,
+    "slots": 0,
+    "crystals": 0
+  },
+  "9": {
+    "mastery": 13,
+    "stigma": 0,
+    "slots": 0,
+    "crystals": 0
+  },
+  "10": {
+    "mastery": 16,
+    "stigma": 0,
+    "slots": 0,
+    "crystals": 0
+  },
+  "11": {
+    "mastery": 20,
+    "stigma": 0,
+    "slots": 0,
+    "crystals": 0
+  },
+  "12": {
+    "mastery": 24,
+    "stigma": 0,
+    "slots": 0,
+    "crystals": 4
+  },
+  "13": {
+    "mastery": 28,
+    "stigma": 0,
+    "slots": 0,
+    "crystals": 8
+  },
+  "14": {
+    "mastery": 32,
+    "stigma": 0,
+    "slots": 0,
+    "crystals": 12
+  },
+  "15": {
+    "mastery": 36,
+    "stigma": 0,
+    "slots": 0,
+    "crystals": 16
+  },
+  "16": {
+    "mastery": 41,
+    "stigma": 0,
+    "slots": 0,
+    "crystals": 20
+  },
+  "17": {
+    "mastery": 46,
+    "stigma": 0,
+    "slots": 0,
+    "crystals": 24
+  },
+  "18": {
+    "mastery": 51,
+    "stigma": 0,
+    "slots": 0,
+    "crystals": 28
+  },
+  "19": {
+    "mastery": 56,
+    "stigma": 0,
+    "slots": 0,
+    "crystals": 32
+  },
+  "20": {
+    "mastery": 61,
+    "stigma": 0,
+    "slots": 0,
+    "crystals": 36
+  },
+  "21": {
+    "mastery": 66,
+    "stigma": 0,
+    "slots": 0,
+    "crystals": 40
+  },
+  "22": {
+    "mastery": 71,
+    "stigma": 0,
+    "slots": 1,
+    "crystals": 44
+  },
+  "23": {
+    "mastery": 76,
+    "stigma": 1,
+    "slots": 1,
+    "crystals": 48
+  },
+  "24": {
+    "mastery": 81,
+    "stigma": 2,
+    "slots": 1,
+    "crystals": 52
+  },
+  "25": {
+    "mastery": 86,
+    "stigma": 3,
+    "slots": 1,
+    "crystals": 56
+  },
+  "26": {
+    "mastery": 91,
+    "stigma": 4,
+    "slots": 1,
+    "crystals": 60
+  },
+  "27": {
+    "mastery": 96,
+    "stigma": 5,
+    "slots": 2,
+    "crystals": 64
+  },
+  "28": {
+    "mastery": 101,
+    "stigma": 6,
+    "slots": 2,
+    "crystals": 68
+  },
+  "29": {
+    "mastery": 106,
+    "stigma": 7,
+    "slots": 2,
+    "crystals": 72
+  },
+  "30": {
+    "mastery": 111,
+    "stigma": 8,
+    "slots": 2,
+    "crystals": 76
+  },
+  "31": {
+    "mastery": 117,
+    "stigma": 9,
+    "slots": 2,
+    "crystals": 80
+  },
+  "32": {
+    "mastery": 123,
+    "stigma": 10,
+    "slots": 3,
+    "crystals": 84
+  },
+  "33": {
+    "mastery": 129,
+    "stigma": 11,
+    "slots": 3,
+    "crystals": 88
+  },
+  "34": {
+    "mastery": 135,
+    "stigma": 12,
+    "slots": 3,
+    "crystals": 92
+  },
+  "35": {
+    "mastery": 141,
+    "stigma": 13,
+    "slots": 3,
+    "crystals": 96
+  },
+  "36": {
+    "mastery": 147,
+    "stigma": 14,
+    "slots": 3,
+    "crystals": 100
+  },
+  "37": {
+    "mastery": 153,
+    "stigma": 15,
+    "slots": 4,
+    "crystals": 104
+  },
+  "38": {
+    "mastery": 159,
+    "stigma": 16,
+    "slots": 4,
+    "crystals": 108
+  },
+  "39": {
+    "mastery": 165,
+    "stigma": 17,
+    "slots": 4,
+    "crystals": 112
+  },
+  "40": {
+    "mastery": 171,
+    "stigma": 19,
+    "slots": 4,
+    "crystals": 116
+  },
+  "41": {
+    "mastery": 177,
+    "stigma": 21,
+    "slots": 4,
+    "crystals": 120
+  },
+  "42": {
+    "mastery": 183,
+    "stigma": 23,
+    "slots": 4,
+    "crystals": 124
+  },
+  "43": {
+    "mastery": 189,
+    "stigma": 25,
+    "slots": 4,
+    "crystals": 128
+  },
+  "44": {
+    "mastery": 196,
+    "stigma": 27,
+    "slots": 4,
+    "crystals": 132
+  },
+  "45": {
+    "mastery": 203,
+    "stigma": 29,
+    "slots": 4,
+    "crystals": 136
+  }
+}
