@@ -33,8 +33,10 @@
     const result=DEFAULT_ACCOUNT(cls),validSkills=new Set(Object.values(DATA[cls].skills).map(skill=>skill.name));
     for(const [key,max] of [['mastery',462],['stigma',300],['crystals',570],['azphel',232],['goalTarget',1000000000],['gearCpTarget',1000000000]])if(raw[key]!==undefined)result[key]=numeric(raw[key],max);
     if(PROFILES[cls].kind==='healer'&&raw.goalObserved!==undefined)result.goalObserved=numeric(raw.goalObserved,1000000000);
-    result.context=['party','solo','pvp'].includes(raw.context)?raw.context:'party';
-    result.endgameContext=['party','solo','pvp'].includes(raw.endgameContext)?raw.endgameContext:result.context;
+    result.context=['party','solo','pvp','pvp-arena','pvp-abyss-solo','pvp-abyss-group'].includes(raw.context)?raw.context:'party';
+    result.pveObjective=['performance','survivability','sustained','burst'].includes(raw.pveObjective)
+      ?raw.pveObjective:'performance';
+    result.endgameContext=['party','solo','pvp','pvp-arena','pvp-abyss-solo','pvp-abyss-group'].includes(raw.endgameContext)?raw.endgameContext:result.context;
     result.levelingContext=['party','solo'].includes(raw.levelingContext)?raw.levelingContext:'solo';
     result.journey=raw.journey==='leveling'?'leveling':'endgame';
     result.faction=raw.faction==='asmodian'?'asmodian':'elyos';
@@ -53,6 +55,25 @@
     };
     result.customNodes=safeRoute(raw.customNodes,false);result.customAzphelNodes=safeRoute(raw.customAzphelNodes,true);
     for(const [key,max] of [['gear',30],['currentRanks',10]]){result[key]={};for(const [name,value] of Object.entries(raw[key]||{}))if(validSkills.has(name))result[key][name]=clamp(value,key==='gear'?0:1,max)}
+    // v2 shared builds preserve real manual allocations, Stigma loadout and
+    // Specialty selections. Each field is validated against this class's
+    // catalog so crafted URLs cannot install invalid skills or ranks.
+    if(raw.manualMastery&&typeof raw.manualMastery==='object'&&!Array.isArray(raw.manualMastery)){
+      result.manualMastery={};
+      for(const [name,value] of Object.entries(raw.manualMastery))if(validSkills.has(name))result.manualMastery[name]=clamp(value,1,10);
+    }
+    if(raw.manualStigma&&typeof raw.manualStigma==='object'&&!Array.isArray(raw.manualStigma)){
+      result.manualStigma={};
+      for(const [name,value] of Object.entries(raw.manualStigma))if(STIGMAS[cls][name])result.manualStigma[name]=clamp(value,0,20);
+    }
+    if(Array.isArray(raw.customStigmas)&&raw.customStigmas.length===4&&new Set(raw.customStigmas).size===4&&raw.customStigmas.every(name=>typeof name==='string'&&STIGMAS[cls][name]))
+      result.customStigmas=[...raw.customStigmas];
+    result.customSpecialties={};
+    for(const [name,choices] of Object.entries(raw.customSpecialties||{})){
+      const options=SPECS[cls]?.[name]?.options;
+      if(!validSkills.has(name)||!options||!Array.isArray(choices))continue;
+      result.customSpecialties[name]=[...new Set(choices.map(Number).filter(n=>Number.isInteger(n)&&n>=1&&n<=5&&options[n]))].slice(0,3);
+    }
     result.titlesOwned={};for(const [id,owned] of Object.entries(raw.titlesOwned||{}))if(TITLE_BY_ID.has(id)&&owned===true)result.titlesOwned[id]=true;
     result.equipment={};
     for(const slot of GEAR_SLOTS){const item=raw.equipment?.[slot.id];if(!item||typeof item!=='object')continue;
