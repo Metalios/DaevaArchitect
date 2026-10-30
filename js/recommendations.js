@@ -1,3 +1,7 @@
+// Global PvP scenarios: four actual build contexts, not four UI aliases.
+const PVP_CONTEXT_LABELS=Object.freeze({pvp:'General PvP','pvp-arena':'Arena PvP','pvp-abyss-solo':'Solo PvP (Abyss)','pvp-abyss-group':'Group PvP (Abyss)'});
+function isPvpContext(mode){return Object.prototype.hasOwnProperty.call(PVP_CONTEXT_LABELS,mode)}
+const PVP_CONTEXT_SOURCES=Object.freeze(['https://metabot.gg/en/aion-2/guides/arena-pvp-guide','https://aion2maps.com/guides/pvp/','https://aion2data.com/guides','https://aion2.gg/tier-list/pvp-group']);
 /* AION 2 Global build advice, reviewed 2026-10-22.
    These are progression priorities, NOT exact damage-simulation outputs.
    Sources: https://aion2data.com/guides (global-client-labelled player builds)
@@ -48,7 +52,484 @@ const BUILD_ADVICE={
   pvp:{core:['Recuperation','Dark Crush','Onslaught','Rushing Smash','Impactful Crush','Spinning Strike'],support:['Blessing of Life','Protection Circle',"Wind's Promise",'Survival Willpower'],stigmas:['Undefeated Mantra','Barrier Spell','Healing Touch','Focused Defense'],stigmaPriority:['Barrier Spell','Healing Touch','Focused Defense','Undefeated Mantra'],why:'Move some resources from group damage into timely heals, shields and anti-burst defenses.'}
  }
 };
+// Variants are research-informed Global skill-kit hypotheses, not measured win rates.
+const PVP_VARIANTS={
+ "gladiator": {
+  "pvp-arena": {
+   "stigmas": [
+    "Tenaciousness",
+    "Forced Restraint",
+    "Focused Block",
+    "Zikel's Blessing"
+   ],
+   "lead": [
+    "Rush Strike",
+    "Ankle Slice",
+    "Leaping Slam"
+   ],
+   "supportLead": [
+    "Survival Willpower",
+    "Experienced Counterstrike"
+   ],
+   "why": "Arena of Solitude (1v1): bait Defiance, land Seal or gap-close control, use Tenaciousness through enemy burst and preserve a mobile Parry window. Gear and opponent matchup matter."
+  },
+  "pvp-abyss-solo": {
+   "stigmas": [
+    "Tenaciousness",
+    "Fracturing Rush",
+    "Lifestealing Blade",
+    "Focused Block"
+   ],
+   "lead": [
+    "Rush Strike",
+    "Leaping Slam",
+    "Ankle Slice"
+   ],
+   "supportLead": [
+    "Blood Absorption",
+    "Survival Willpower"
+   ],
+   "why": "Solo Abyss: mobility, an escape route, a controlled engage and recovery after skirmishes matter more than stationary peak damage."
+  },
+  "pvp-abyss-group": {
+   "stigmas": [
+    "Wrath Wave",
+    "Tenaciousness",
+    "Fracturing Rush",
+    "Armor of Balance"
+   ],
+   "lead": [
+    "Leaping Slam",
+    "Rending Blow",
+    "Overhead Slam"
+   ],
+   "supportLead": [
+    "Survival Willpower",
+    "Protection Armor"
+   ],
+   "why": "Group Abyss: bring area knockdowns, approach control and frontline damage tolerance. Coordinate CC around opposing Defiance rather than spending every control together."
+  }
+ },
+ "templar": {
+  "pvp-arena": {
+   "stigmas": [
+    "Grapple",
+    "Doom Shield",
+    "Second Skin",
+    "Shield of Protection"
+   ],
+   "lead": [
+    "Poach",
+    "Debilitating Smash",
+    "Judgment",
+    "Pummel"
+   ],
+   "supportLead": [
+    "Survival Willpower",
+    "Block Pain"
+   ],
+   "why": "Arena of Solitude (1v1): pull/root, threaten Judgment through Doom Shield, maintain mobile guaranteed Block and survive the opponent's burst. Taunt PvE tolerance does not apply as a full PvP modifier."
+  },
+  "pvp-abyss-solo": {
+   "stigmas": [
+    "Doom Shield",
+    "Grapple",
+    "Shield of Protection",
+    "Second Skin"
+   ],
+   "lead": [
+    "Poach",
+    "Judgment",
+    "Punishment",
+    "Pummel"
+   ],
+   "supportLead": [
+    "Survival Willpower",
+    "Enhance Health"
+   ],
+   "why": "Solo Abyss: pick fights with gap closure and Grapple, keep guaranteed Block mobile and retain a defensive disengage option."
+  },
+  "pvp-abyss-group": {
+   "stigmas": [
+    "Grapple",
+    "Nezekan's Shield",
+    "Comrade in Arms",
+    "Second Skin"
+   ],
+   "lead": [
+    "Warding Strike",
+    "Poach",
+    "Judgment",
+    "Shield Rush"
+   ],
+   "supportLead": [
+    "Block Pain",
+    "Guarding Seal",
+    "Survival Willpower"
+   ],
+   "why": "Group Abyss: pull and root priority targets, protect nearby allies with Nezekan's Shield, absorb focused damage with Comrade in Arms and hold the front line."
+  }
+ },
+ "assassin": {
+  "pvp-arena": {
+   "stigmas": [
+    "Illusive Clone",
+    "Evasion Contract",
+    "Smoke Bomb",
+    "Shadowstep"
+   ],
+   "lead": [
+    "Ambush",
+    "Shadowstrike",
+    "Heart Gore",
+    "Insignia Explosion"
+   ],
+   "supportLead": [
+    "Determination",
+    "Revitalization Contract"
+   ],
+   "why": "Arena of Solitude (1v1): stage a controlled opener, force Defiance or a defensive cooldown, then synchronize Clone burst; reserve evasion and blind for retaliation."
+  },
+  "pvp-abyss-solo": {
+   "stigmas": [
+    "Shadow Walk",
+    "Illusive Clone",
+    "Evasion Contract",
+    "Shadowstep"
+   ],
+   "lead": [
+    "Ambush",
+    "Shadowstrike",
+    "Quick Slice"
+   ],
+   "supportLead": [
+    "Revitalization Contract",
+    "Determination"
+   ],
+   "why": "Solo Abyss: approach from stealth, isolate one target, burst and preserve repositioning or an exit. Shadow Walk's in-combat use requires its level-15 perk."
+  },
+  "pvp-abyss-group": {
+   "stigmas": [
+    "Assault Ambush",
+    "Smoke Bomb",
+    "Triniel's Dagger",
+    "Evasion Stance"
+   ],
+   "lead": [
+    "Shadowstrike",
+    "Ambush",
+    "Insignia Explosion"
+   ],
+   "supportLead": [
+    "Determination",
+    "Revitalization Contract"
+   ],
+   "why": "Group Abyss: flank rather than brawl at the frontline, pressure vulnerable backliners, blind clustered opponents and keep Evasion Stance for area retaliation."
+  }
+ },
+ "ranger": {
+  "pvp-arena": {
+   "stigmas": [
+    "Sealing Arrow",
+    "Ensnaring Trap",
+    "Mother Nature's Breath",
+    "Bow of Blessing"
+   ],
+   "lead": [
+    "Snare Shot",
+    "Suppressing Arrow",
+    "Gale Arrow",
+    "Deadshot"
+   ],
+   "supportLead": [
+    "Wind Vigor",
+    "Unyielding Resolve"
+   ],
+   "why": "Arena of Solitude (1v1): force distance with Seal, trap and slows; time Bow burst around an opponent's CC break and preserve Mother Nature's Breath against counterpressure."
+  },
+  "pvp-abyss-solo": {
+   "stigmas": [
+    "Stealth",
+    "Sealing Arrow",
+    "Mother Nature's Breath",
+    "Explosive Arrow"
+   ],
+   "lead": [
+    "Snipe",
+    "Snare Shot",
+    "Deadshot"
+   ],
+   "supportLead": [
+    "Wind Vigor",
+    "Vigilant Eye"
+   ],
+   "why": "Solo Abyss: scout from stealth, strike at range, root/Seal pursuers and keep a defensive escape window. Stealth cannot be used in combat without its level-15 perk."
+  },
+  "pvp-abyss-group": {
+   "stigmas": [
+    "Arrow Storm",
+    "Sealing Arrow",
+    "Vaizel's Authority",
+    "Mother Nature's Breath"
+   ],
+   "lead": [
+    "Suppressing Arrow",
+    "Gale Arrow",
+    "Deadshot",
+    "Tempest Shot"
+   ],
+   "supportLead": [
+    "Wind Vigor",
+    "Unyielding Resolve"
+   ],
+   "why": "Group Abyss: ranged area stun and Seal pressure can disrupt clustered threats; maintain distance and coordinate control with party focus targets."
+  }
+ },
+ "sorcerer": {
+  "pvp-arena": {
+   "stigmas": [
+    "Curse: Tree",
+    "Hibernation",
+    "Steel Barrier",
+    "Soul Freeze"
+   ],
+   "lead": [
+    "Winter's Shackles",
+    "Frost",
+    "Hellfire",
+    "Ice Chain"
+   ],
+   "supportLead": [
+    "Grace of Resistance",
+    "Robe of Earth",
+    "Cold Snap"
+   ],
+   "why": "Arena of Solitude (1v1): protect the opening with Steel Barrier, force Defiance, then create a safe cast window through polymorph/Seal; Hibernation is a manual emergency reset."
+  },
+  "pvp-abyss-solo": {
+   "stigmas": [
+    "Hibernation",
+    "Steel Barrier",
+    "Curse: Tree",
+    "Element Enhancement"
+   ],
+   "lead": [
+    "Ice Chain",
+    "Winter's Shackles",
+    "Firestorm",
+    "Hellfire"
+   ],
+   "supportLead": [
+    "Grace of Resistance",
+    "Robe of Earth"
+   ],
+   "why": "Solo Abyss: survive unexpected engagements with Barrier and Hibernation; retreat through slows/polymorph before committing to stationary spell bursts."
+  },
+  "pvp-abyss-group": {
+   "stigmas": [
+    "Lumiel's Space",
+    "Steel Barrier",
+    "Soul Freeze",
+    "Fire Wall"
+   ],
+   "lead": [
+    "Firestorm",
+    "Winter's Shackles",
+    "Frost",
+    "Hellfire"
+   ],
+   "supportLead": [
+    "Grace of Resistance",
+    "Cold Snap"
+   ],
+   "why": "Group Abyss: aim area Airborne and ground effects at clustered opponents, use Seal for priority targets and cast from allied protection."
+  }
+ },
+ "spiritmaster": {
+  "pvp-arena": {
+   "stigmas": [
+    "Magic Block",
+    "Cry of Terror",
+    "Command: Proxy",
+    "Siphon"
+   ],
+   "lead": [
+    "Cold Shock",
+    "Combustion",
+    "Elemental Fusion"
+   ],
+   "supportLead": [
+    "Spirit Protection",
+    "Spirit Revitalization"
+   ],
+   "why": "Arena of Solitude (1v1): pressure through spirits, stagger Seal/Fear rather than stacking both into Defiance, use Proxy defensively and sustain through Siphon."
+  },
+  "pvp-abyss-solo": {
+   "stigmas": [
+    "Siphon",
+    "Command: Proxy",
+    "Cry of Terror",
+    "Magic Block"
+   ],
+   "lead": [
+    "Cold Shock",
+    "Jointstrike: Curse",
+    "Combustion"
+   ],
+   "supportLead": [
+    "Spirit Protection",
+    "Spirit Revitalization"
+   ],
+   "why": "Solo Abyss: maintain a defensive spirit for Proxy, use sustain/MP return and disengage behind Fear or Seal when outnumbered."
+  },
+  "pvp-abyss-group": {
+   "stigmas": [
+    "Cry of Terror",
+    "Seize Magic",
+    "Kaisinel's Power",
+    "Magic Block"
+   ],
+   "lead": [
+    "Dimensional Control",
+    "Jointstrike: Curse",
+    "Combustion"
+   ],
+   "supportLead": [
+    "Spirit Protection",
+    "Mental Focus"
+   ],
+   "why": "Group Abyss: area Fear, multi-target buff removal and accurate control help the team win coordinated engagements more than isolated pet burst."
+  }
+ },
+ "cleric": {
+  "pvp-arena": {
+   "stigmas": [
+    "Salvation",
+    "Absolution",
+    "Root",
+    "Light of Protection"
+   ],
+   "lead": [
+    "Healing Light",
+    "Radiant Recovery",
+    "Condemnation"
+   ],
+   "supportLead": [
+    "Survival Willpower",
+    "Healing Enhancement",
+    "Immortal Veil"
+   ],
+   "why": "Arena of Solitude (1v1): survive burst and control through Salvation/Absolution, Root to create space and maintain protection; this is a survival/attrition plan, not a fast-kill claim."
+  },
+  "pvp-abyss-solo": {
+   "stigmas": [
+    "Salvation",
+    "Absolution",
+    "Root",
+    "Yustiel's Power"
+   ],
+   "lead": [
+    "Healing Light",
+    "Condemnation",
+    "Radiant Recovery"
+   ],
+   "supportLead": [
+    "Survival Willpower",
+    "Healing Enhancement"
+   ],
+   "why": "Solo Abyss: defensive cooldowns and cleansing keep an escape route; short Root windows create room to reposition rather than chase kills."
+  },
+  "pvp-abyss-group": {
+   "stigmas": [
+    "Absolution",
+    "Salvation",
+    "Yustiel's Power",
+    "Light of Protection"
+   ],
+   "lead": [
+    "Radiant Recovery",
+    "Light of Regeneration",
+    "Healing Light",
+    "Defiance"
+   ],
+   "supportLead": [
+    "Healing Enhancement",
+    "Immortal Veil",
+    "Survival Willpower"
+   ],
+   "why": "Group Abyss: protect allied uptime with manual burst heals, cleanse, party PvP damage tolerance and an emergency invulnerability save."
+  }
+ },
+ "chanter": {
+  "pvp-arena": {
+   "stigmas": [
+    "Focused Defense",
+    "Ensnaring Mark",
+    "Barrier Spell",
+    "Power of the Storm"
+   ],
+   "lead": [
+    "Dark Crush",
+    "Rushing Smash",
+    "Spinning Strike"
+   ],
+   "supportLead": [
+    "Blessing of Life",
+    "Survival Willpower",
+    "Protection Circle"
+   ],
+   "why": "Arena of Solitude (1v1): create Dark Crush windows through Seal, block mobile at level 10 and reserve Barrier Spell for counter-burst."
+  },
+  "pvp-abyss-solo": {
+   "stigmas": [
+    "Sprint Mantra",
+    "Focused Defense",
+    "Ensnaring Mark",
+    "Healing Touch"
+   ],
+   "lead": [
+    "Rushing Smash",
+    "Dark Crush",
+    "Onslaught"
+   ],
+   "supportLead": [
+    "Blessing of Life",
+    "Survival Willpower"
+   ],
+   "why": "Solo Abyss: mobility, mobile Block and manual self-heals extend skirmish safety; use Seal to disengage when a second enemy joins."
+  },
+  "pvp-abyss-group": {
+   "stigmas": [
+    "Undefeated Mantra",
+    "Barrier Spell",
+    "Healing Touch",
+    "Guardian Blessing"
+   ],
+   "lead": [
+    "Recuperation",
+    "Dark Crush",
+    "Rushing Smash"
+   ],
+   "supportLead": [
+    "Inspiring Spell",
+    "Blessing of Life",
+    "Protection Circle"
+   ],
+   "why": "Group Abyss: party PvP mitigation/damage aura, no-death window, group healing and defensive sustain are more useful than a selfish duel package."
+  }
+ }
+};
 function adviceFor(cls,context,objective='performance'){
+ if(isPvpContext(context)){
+   const original=BUILD_ADVICE[cls]?.pvp||null;
+   const preset=PVP_VARIANTS[cls]?.[context];
+   if(!original||!preset)return original;
+   const distinct=items=>[...new Set(items)];
+   return {...original,core:distinct([...(preset.lead||[]),...original.core]).slice(0,8),
+     support:distinct([...(preset.supportLead||[]),...original.support]).slice(0,7),
+     stigmas:[...preset.stigmas],stigmaPriority:[...preset.stigmas],
+     why:preset.why,researchSources:PVP_CONTEXT_SOURCES,buildContext:context};
+ }
  const base=BUILD_ADVICE[cls]?.[context]||BUILD_ADVICE[cls]?.party||null;
  return typeof ClassCombatModels!=='undefined'
    ?ClassCombatModels.advice(cls,context,objective,base):base;
@@ -92,7 +573,8 @@ const SPECIALTY_CONTEXT={
 function adviceSpecialtyChoices(cls,context,name,effective,options){
  const breakKey=effective>=20?'20':effective>=16?'16':effective>=12?'12':effective>=8?'8':null;
  if(!breakKey)return null;
- const preferred=SPECIALTY_CONTEXT[cls]?.[context]?.[name]?.[breakKey];
+ const preferred=SPECIALTY_CONTEXT[cls]?.[context]?.[name]?.[breakKey]||
+   (isPvpContext(context)?SPECIALTY_CONTEXT[cls]?.pvp?.[name]?.[breakKey]:null);
  if(!preferred)return null;
  const count=effective>=20?3:effective>=12?2:1;
  const eligible=n=>options?.[n]&&effective>=(n<=3?8:n===4?12:16);
