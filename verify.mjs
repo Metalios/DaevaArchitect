@@ -26,7 +26,9 @@ for(let level=1;level<=45;level++){
   const row=rewards[level],prior=rewards[level-1]||{mastery:0,stigma:0,slots:0,crystals:0};
   assert(row&&['mastery','stigma','slots','crystals'].every(key=>Number.isInteger(row[key])&&row[key]>=prior[key]),`leveling: invalid reward row ${level}`);
 }
-assert(JSON.stringify(rewards[45])===JSON.stringify({mastery:203,stigma:29,slots:4,crystals:136}),'leveling: fresh 45 totals changed');
+// Source table includes ONLY level-up rewards. The third Ascension quest adds
+// one Stigma Shard and the live planner must start fresh level 45 with 30.
+assert(JSON.stringify(rewards[45])===JSON.stringify({mastery:203,stigma:29,slots:4,crystals:136}),'leveling: level-up-only source table changed (expected 29 + 1 Ascension quest shard)');
 assert([22,27,32,37].every((level,index)=>rewards[level].slots===index+1&&rewards[level-1].slots===index),'leveling: stigma gates changed');
 
 for(const slug of classes){

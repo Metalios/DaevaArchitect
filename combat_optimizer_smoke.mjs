@@ -43,7 +43,7 @@ try{
     if(at36.mastery!==147||at37.mastery!==153)failures.push('Lv 36-37 Mastery budget incorrect');
     if(at36.crystals!==100||at37.crystals!==104)failures.push('Lv 36-37 crystal budget incorrect');
     if(at36.slots!==3||at37.slots!==4)failures.push('Lv 37 Stigma slot did not unlock');
-    if(at36.stigma!==14||at37.stigma!==15)failures.push('Lv 37 stigma points wrong');
+    if(at36.stigma!==15||at37.stigma!==16)failures.push('Lv 37 stigma points wrong (includes the +1 Ascension quest Shard)');
     if(!document.querySelector('#v2-combat-evidence')?.textContent.includes('not measured DPS'))
       failures.push('Evidence label should disclose modeled/unverified nature');
     if(!document.querySelector('#rotation-control-status')?.textContent.includes('Q/E/R'))

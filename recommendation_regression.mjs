@@ -49,8 +49,8 @@ for(const cls of classes){
   for(const name of equipped)assert(stigmaSet.has(name),cls+' '+mode+': unknown equipped Stigma '+name);
   const stages=p.progressionStigmaStages(cls,mode,equipped,advice);
   for(const [name,rank] of stages)assert(equipped.includes(name)&&rank>=1&&rank<=20,cls+' '+mode+': illegal Stigma priority');
-  const fresh=fund(stages,29,equipped);
-  assert(fresh.spent<=29,cls+' '+mode+': fresh 45 overspend');
+  const fresh=fund(stages,30,equipped);
+  assert(fresh.spent<=30,cls+' '+mode+': fresh 45 overspend');
   assert(Math.max(...Object.values(fresh.ranks))>=10,cls+' '+mode+': fresh 45 failed first Lv10 perk');
   assert(Object.values(fresh.ranks).every(n=>n>=1),cls+' '+mode+': equipped but unlearned Stigma');
   const high=fund(stages,100,equipped);

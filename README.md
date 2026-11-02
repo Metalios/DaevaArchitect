@@ -2,7 +2,7 @@
 
 [Open the GitHub Pages planner](https://metalios.github.io/DaevaArchitect/)
 
-An interactive, static build planner for all eight **AION 2 Global** classes. A fresh level 45 starts with 136 Daevanion crystals, 203 Mastery points and 29 Stigma points; players can enter higher earned totals. It covers level 1–45 progression, Mastery and specialties, Stigmas, connected Daevanion routes, rotations, titles, and a searchable equipment loadout. Taiwan and Korea use separate clients and are outside this data set.
+An interactive, static build planner for all eight **AION 2 Global** classes. A fresh level 45 after the required third Ascension quest starts with 136 Daevanion crystals, 203 Mastery points and **30 Stigma points** (29 from leveling plus 1 Ascension quest Shard); players can enter higher earned totals. It covers level 1–45 progression, Mastery and specialties, Stigmas, connected Daevanion routes, rotations, titles, and a searchable equipment loadout. Taiwan and Korea use separate clients and are outside this data set.
 
 The **Rotation & macro** tab works while leveling. At each selected level it shows only unlocked class skills and Stigmas with assigned points, an available Q/E Macro sequence, and a compact 1–8 manual bar. The layout updates as levels, Stigma slots, and point totals change. Charged attacks, healing, movement, defenses, and Defiance remain manual. This is a safe starting layout to test with the current Global client and your input latency.
 

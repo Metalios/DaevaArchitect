@@ -2,7 +2,11 @@ const $ = id => document.getElementById(id);
 const CLASS_ORDER = ['templar','gladiator','assassin','ranger','sorcerer','spiritmaster','cleric','chanter'];
 const BOARD_NAMES = ['Nezekan','Zikel','Vaizel','Triniel'];
 const ALL_BOARD_NAMES = [...BOARD_NAMES,'Ariel','Azphel'];
-const FRESH_45 = {mastery:203,stigma:29,crystals:136};
+// Global client grants 29 points from level-ups by 45; the third
+// Ascension quest grants one separate Shard when Stigmas unlock at 22.
+// Baseline progression assumes that required Ascension quest is complete.
+const ASCENSION_STIGMA_SHARD = {unlockLevel:22,points:1};
+const FRESH_45 = {mastery:203,stigma:30,crystals:136};
 const BOARD_UNLOCKS = {Nezekan:12,Zikel:20,Vaizel:30,Triniel:40,Ariel:45,Azphel:45};
 const LEVEL_MILESTONES = [[4,'First point'],[12,'Nezekan'],[20,'Zikel'],[22,'Stigma I'],[23,'Stigma points'],[27,'Stigma II'],[30,'Vaizel'],[32,'Stigma III'],[37,'Stigma IV'],[40,'Triniel'],[45,'Endgame']];
 // The first purchases during leveling go to skills available and useful in the
@@ -85,10 +89,30 @@ function setLevelingBudget(key,total){
   leveling().extraByLevel[level]=extra;
 }
 function currentLevel(){return isLeveling()?clamp(leveling().level,1,45):45}
-function levelReward(){return LEVEL_REWARDS[currentLevel()]}
+function levelReward(){
+  const at=currentLevel(),raw=LEVEL_REWARDS[at];
+  return {...raw,stigma:raw.stigma+
+    (at>=ASCENSION_STIGMA_SHARD.unlockLevel?ASCENSION_STIGMA_SHARD.points:0)};
+}
 function budget(key){return isLeveling()?levelReward()[key]+(activeLevelingExtra()[key]||0):account()[key]}
 function boardOpen(name){return !isLeveling()||currentLevel()>=BOARD_UNLOCKS[name]}
-function pointLabels(){for(const key of ['mastery','stigma','crystals']){$(`${key==='crystals'?'crystal':key}-hint`).textContent=isLeveling()?`Level ${currentLevel()} baseline ${levelReward()[key]} + ${activeLevelingExtra()[key]||0} extra earned by this level`:{mastery:'Earned total, including spent points',stigma:'Four equipped stigmas',crystals:'Four PvE boards'}[key]}}
+function pointLabels(){
+  const a=account();
+  for(const key of ['mastery','stigma','crystals']){
+    const label=$(`${key==='crystals'?'crystal':key}-hint`);
+    if(isLeveling()){
+      const base=levelReward()[key],extra=activeLevelingExtra()[key]||0;
+      const quest=key==='stigma'&&currentLevel()>=ASCENSION_STIGMA_SHARD.unlockLevel
+        ?' (including +1 Ascension quest Shard)':'';
+      label.textContent=`Level ${currentLevel()} baseline ${base}${quest} + ${extra} extra earned by this level`;
+    }else if(key==='stigma'){
+      label.textContent=a.stigma===29&&a.mastery===203&&a.crystals===136
+        ?'Saved 29 points. Global fresh 45 after Ascension has 30; use Fresh Global 45 to apply it.'
+        :'Four equipped Stigmas · fresh 45 includes 29 leveling + 1 Ascension';
+    }else label.textContent={mastery:'Earned total, including spent points',
+      crystals:'Four PvE boards'}[key];
+  }
+}
 const ARIEL_STATS={PvEAmplifyDamage:{name:'PvE Damage Boost',pct:true,div:100},PvEDecreaseDamage:{name:'PvE Damage Tolerance',pct:true,div:100},PvEAddDamage:{name:'PvE Attack',div:1},PvEDamageDefense:{name:'PvE Defense',div:1},PvEAccuracy:{name:'PvE Accuracy',div:1},PvEEvasion:{name:'PvE Evasion',div:1},BossNpcAddDamage:{name:'Boss Attack',div:1},BossNpcDefense:{name:'Boss Defense',div:1},BossNpcAmplifyDamage:{name:'Boss Damage Boost',pct:true,div:100},BossNpcDecreaseDamage:{name:'Boss Damage Tolerance',pct:true,div:100}};
 function data(){const d=DATA[state.class];if(!d._arielStats){Object.assign(d.stats,ARIEL_STATS);d._arielStats=true}return d}
 function profile(){return PROFILES[state.class]}
@@ -345,9 +369,9 @@ function optimizeRecommendedStigmas(names,points,cls=state.class,context=account
      const total=spent+costs[rank];if(total>limit)break;
      // At a fresh-45 budget, secure one meaningful Lv 10 perk instead
      // of distributing points into four Lv 5 perks without a Lv 10.
-     // The bonus only applies to 15–29 points, so it cannot distort
+     // The bonus only applies to 15–30 points, so it cannot distort
      // higher-budget tradeoffs such as the Templar 61-point benchmark.
-     const starterBonus=limit>=15&&limit<=29&&rank>=10&&order===0?18:0;
+     const starterBonus=limit>=15&&limit<=30&&rank>=10&&order===0?18:0;
      const score=candidate.score+stigmaUtility(cls,context,name,rank,order)+starterBonus;
      if(!revised.has(total)||score>revised.get(total).score+1e-8)
        revised.set(total,{score,ranks:[...candidate.ranks,rank]});
@@ -892,7 +916,7 @@ function render(){
   for(const key of ['mastery','stigma','crystals'])$(`${key==='crystals'?'crystal':key}-input`).value=budget(key);
   pointLabels();$('leveling-controls').hidden=!isLeveling();$('fresh-preset').hidden=isLeveling();$('azphel-control').hidden=isLeveling();$('ariel-control').hidden=isLeveling();$('gear-rating-control').hidden=isLeveling();$('pvp-button').hidden=isLeveling();$('goal-panel').hidden=isLeveling();$('leveling-guide').hidden=!isLeveling();
   for(const [id,active] of [['leveling-mode',isLeveling()],['endgame-mode',!isLeveling()]]){$(id).classList.toggle('active',active);$(id).setAttribute('aria-pressed',active)}
-  $('intro-copy').innerHTML=isLeveling()?`Enter <b>total points earned</b>, including spent and unspent. The level-only points are the baseline; extra rewards apply from the level where you enter them onward. Mastery skills, Stigma slots, and boards obey Global level gates. The Rotation & macro tab shows a setup for your current level.`:'Enter <b>total points earned, including spent and unspent</b>. Recommended ranks are a reset plan; displayed in-game skill levels can also include board, gear and Arcana bonuses. Each class saves its own inputs. Research reviewed October 19, 2026.';
+  $('intro-copy').innerHTML=isLeveling()?`Enter <b>total points earned</b>, including spent and unspent. The level-up rewards plus the required +1 Ascension Stigma Shard (from level 22) form the baseline; other earned rewards apply from the level where you enter them onward. Mastery skills, Stigma slots, and boards obey Global level gates. The Rotation & macro tab shows a setup for your current level.`:'Enter <b>total points earned, including spent and unspent</b>. Recommended ranks are a reset plan; displayed in-game skill levels can also include board, gear and Arcana bonuses. Each class saves its own inputs. Research reviewed October 19, 2026.';
   $('reset-button').textContent=isLeveling()?'Reset class progress':'Reset class to fresh 45';
   if(isLeveling())renderLevelControls();
   $('fresh-45-button').classList.toggle('active',Object.entries(FRESH_45).every(([key,value])=>a[key]===value)&&!(a.azphel||0)&&!(a.ariel||0));
@@ -920,7 +944,9 @@ function renderLevelControls(){
   const level=currentLevel(),r=levelReward(),next=LEVEL_MILESTONES.find(([at])=>at>level);
   $('level-display').textContent=level;$('level-input').value=level;$('level-slider').value=level;
   $('handoff-button').hidden=level<45;
-  $('leveling-summary').textContent=`${r.mastery} Mastery · ${r.stigma} Stigma · ${r.crystals} crystals from levels alone · ${r.slots} Stigma slot${r.slots===1?'':'s'}${next?` · Next: ${next[1]} at ${next[0]}`:''}`;
+  const stigmaSource=level>=ASCENSION_STIGMA_SHARD.unlockLevel
+    ?' (level points + 1 Ascension Shard)':'';
+  $('leveling-summary').textContent=`${r.mastery} Mastery · ${r.stigma} Stigma${stigmaSource} · ${r.crystals} crystals from leveling · ${r.slots} Stigma slot${r.slots===1?'':'s'}${next?` · Next: ${next[1]} at ${next[0]}`:''}`;
   $('level-milestones').innerHTML=LEVEL_MILESTONES.map(([at,label])=>`<button type="button" data-milestone="${at}" class="${level>=at?'reached':''} ${level===at?'current':''}"><b>${at}</b><small>${label}</small></button>`).join('');
 }
 function renderOverview(m){
@@ -1379,7 +1405,7 @@ function renderSources(){
     ['Global service scope','Daeva Architect uses Global client data across Global regions. Taiwan and Korea have separate clients and progression rules; their items and point tables are outside this planner.',`https://aion2.gg/guides/global-vs-asia`,'Compare client rules'],
     ['Searchable Global equipment',`${GEAR_CATALOG.items.length} equipment, Arcana and wing entries from Aion2Data Global client ${GEAR_CATALOG.clientVersion}, retrieved ${GEAR_CATALOG.retrieved}. Item icons use game asset paths; live tooltips show base values. Newer Global patch items may be absent until the index is refreshed. Record your own soul binding and skill rolls. Game art © NCSOFT.`,`https://aion2data.com/creators`,'Open reuse and data source'],
     ['Gear sockets and Theostones','Global item tooltips list stone and Theostone sockets. The editor uses those counts when available and lets you record the stone, rolled stat and value. Weapons and guards can carry one Theostone at Epic or Unique grade; identical effects do not stack. Valid stone rolls add a conservative amount to the planner’s approximate CP estimate.',`https://metabot.gg/en/aion-2/guides/gear-enhancement-guide`,'Open Global socket rules'],
-    ['Levels 1–45 point table','The Global client level table supplies the level-only Mastery, Stigma, slot and crystal baseline. Quest, Sealed Dungeon and other rewards are additional. This planner carries user-entered extras forward as the level changes.',`https://aion2data.com/leveling`,'Open level table'],
+    ['Levels 1–45 point table','The Global client level table grants 29 Stigma points through level 45, and the required third Ascension quest adds one Stigma Shard, giving 30 at fresh 45. The planner includes this quest point from level 22. Other earned rewards are entered separately and carried forward as the level changes.',`https://aion2data.com/leveling`,'Open level table'],
     ['Skill and board level gates',`The Global class table supplies each ${p.name} skill's unlock level. Nezekan, Zikel, Vaizel and Triniel open at 12, 20, 30 and 40; Stigma slots open at 22, 27, 32 and 37.`, `https://aion2data.com/classes/${state.class}`,'Open class unlocks'],
     ['Mastery rank gates','SkillAcquireData limits rank 2 to the unlock level, then adds one purchasable rank every three character levels. The leveling plan respects that gate and buys usable early skills before chasing rank 8. Point costs are 1 for ranks 2–4, 2 for 5–7, and 4 for 8–10.',`https://aion2data.com/skills/${firstSkill.slug}`,'Open skill rank table'],
     ['Combat Power estimate','The game calculates exact Combat Power server-side. The planner provides a level-45 build estimate fitted to public NA East profiles and uses reverse-engineered weights for supported board stats. It is a planning range, and unrecorded systems can move the real score outside it.',`https://aion2data.com/get-stronger`,'Open stat sources'],

@@ -505,7 +505,15 @@ function bind(){
  });
  $('v2-class').addEventListener('change',e=>$('class-buttons').querySelector(`[data-class="${e.target.value}"]`)?.click());
  $('v2-level').addEventListener('change',e=>setLevel(e.target.value));
- $('v2-stage').addEventListener('change',e=>$(e.target.value==='leveling'?'leveling-mode':'endgame-mode').click());
+ $('v2-stage').addEventListener('change',e=>{
+   // The legacy handoff control is hidden by the v2 layout. Use its existing
+   // level-45 transfer logic when the visible stage switch enters endgame.
+   if(e.target.value==='endgame'&&isLeveling()&&currentLevel()===45){
+    $('handoff-button').click();
+   }else{
+    $(e.target.value==='leveling'?'leveling-mode':'endgame-mode').click();
+   }
+  });
  $('v2-objective').addEventListener('change',e=>{
    account().pveObjective=PVE_OBJECTIVES[e.target.value]?e.target.value:'performance';
    account().recommendedRouteSnapshot=null;
