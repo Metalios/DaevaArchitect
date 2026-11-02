@@ -221,7 +221,45 @@ function recommendedStigmas(){
   const variants={templar:{solo:['Doom Shield','Noble Armor',"Empyrean Lord's Punishment",'Executing Blade'],pvp:['Noble Armor','Doom Shield','Taunt','Second Skin']},cleric:{solo:['Earth Punishment','Noble Aura','Prayer of Amplification','Light of Protection'],pvp:['Prayer of Amplification','Light of Protection',"Yustiel's Power",'Absolution']},sorcerer:{pvp:['Element Enhancement','Steel Barrier','Soul Freeze','Hibernation']},gladiator:{pvp:["Zikel's Blessing",'Focused Block','Lifestealing Blade','Armor of Balance']},assassin:{pvp:['Evasion Contract','Smoke Bomb','Swift Contract','Illusive Clone']},ranger:{pvp:["Vaizel's Authority",'Mother Nature\'s Breath','Ensnaring Trap','Stealth']},spiritmaster:{pvp:['Summon: Ancient Spirit',"Enhance: Spirit's Benediction",'Seize Magic','Cry of Terror']},chanter:{solo:['Undefeated Mantra','Sprint Mantra','Power of the Storm',"Marchutan's Wrath"],pvp:['Undefeated Mantra','Barrier Spell','Healing Touch','Focused Defense']}};
   const advised=typeof adviceFor==='function'?adviceFor(state.class,account().context,account().pveObjective):null;
   const result=advised?.stigmas||variants[state.class]?.[account().context]||standard;
-  return result.length===4&&new Set(result).size===4&&result.every(name=>STIGMAS[state.class]?.[name])?result:standard;
+  const baseline=result.length===4&&new Set(result).size===4&&
+    result.every(name=>STIGMAS[state.class]?.[name])?result:standard;
+  const a=account(),combat=typeof ClassCombatModels!=='undefined'?
+    ClassCombatModels.profile(state.class):null;
+  // Templar party support's known Shield of Protection/Taunt balance must not
+  // be displaced by a generic uncalibrated personal-DPS proxy.
+  if(!combat||typeof JointProgression==='undefined'||isLeveling()||
+     a.customStigmas||a.manualStigma||budget('stigma')<30||
+     (state.class==='templar'&&a.context==='party'))return baseline;
+  const candidates=[standard,combat.damageStigmas,combat.survivalStigmas,
+    variants[state.class]?.pvp,variants[state.class]?.solo,
+    advised?.stigmas].filter(Array.isArray);
+  const key=JSON.stringify([state.class,a.context,a.pveObjective,
+    budget('stigma'),budget('mastery'),a.equipment,a.gear,
+    a.obtainedNodes,a.customSpecialties,baseline,candidates]);
+  if(stigmaLoadoutCache.key===key)return stigmaLoadoutCache.names;
+  try{
+    const initial=allocate(masteryStages(),budget('mastery'),
+      masteryCost,skillNames(),1,masteryRankCap);
+    const obtained=effects(obtainedNodes());
+    const base=engineBuild(initial.levels,obtained,{},[]);
+    const selected=JointProgression.chooseStigmaLoadout({
+      baseline,candidates,
+      isKnown:name=>!!STIGMAS[state.class]?.[name],
+      rankPlan:names=>optimizeRecommendedStigmas(names,budget('stigma'),
+        state.class,a.context),
+      score:(names,levels)=>ClassCombatModels.evaluate({
+        classId:state.class,context:a.context,
+        objective:a.pveObjective||'performance',
+        build:{...base,stigma:levels,equippedStigmas:names},
+        selectedSpecs:a.customSpecialties||{}
+      }).score
+    });
+    stigmaLoadoutCache={key,names:selected.names};
+    return selected.names;
+  }catch(error){
+    console.warn('Stigma candidate search fallback',error);
+    return baseline;
+  }
 }
 function activeStigmas(){
   const chosen=account().customStigmas;
@@ -494,6 +532,7 @@ function nodeVisual(n){
 let lastOptimizedCombat=null;
 let combatResultCache={key:null,result:null};
 let jointResultCache={key:null,result:null};
+let stigmaLoadoutCache={key:null,names:null};
 function engineBuild(masteryLevels,boardEffects,stigmaLevels,equipped){
   const equippedRanks={...gearSkillLevels()};
   for(const [name,n] of Object.entries(account().gear||{}))
