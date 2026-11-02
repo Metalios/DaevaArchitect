@@ -539,6 +539,7 @@ let combatResultCache={key:null,result:null};
 let jointResultCache={key:null,result:null};
 let stigmaLoadoutCache={key:null,names:null};
 let jointSpecialtyCache={key:null,result:null};
+let currentCombatEvidence=null;
 let latestSpecialtyPlan={classId:null,picks:null};
 function engineBuild(masteryLevels,boardEffects,stigmaLevels,equipped){
   const equippedRanks={...gearSkillLevels()};
@@ -879,6 +880,11 @@ function render(){
   $('welcome-panel').hidden=selected;$('planner-content').hidden=!selected;
   $('class-role').textContent=selected?profile().role:'Select a class';
   if(!selected){$('hero-description').textContent='Choose a class to plan leveling from 1 to 45 or build from a fresh Global level 45.';save();return}
+  if(currentCombatEvidence&&currentCombatEvidence.classId!==state.class){
+    currentCombatEvidence=null;
+    $('combat-evidence-status').textContent='Class changed. No combat recording loaded.';
+    $('combat-evidence-file').value='';
+  }
   const a=account(),m=model(),p=profile();
   document.body.classList.toggle('is-leveling',isLeveling());
   $('hero-description').textContent=isLeveling()?`${p.name} · Level ${currentLevel()} · ${a.context==='solo'?'Solo':'Group'} leveling. Follow the next unlocks and update your earned points as you play.`:p.summary+' Change your point totals to see what to buy now and next.';
@@ -1551,4 +1557,35 @@ $('clear-obtained-button').addEventListener('click',()=>{
 });
 $('purchase-list').addEventListener('click',e=>{const b=e.target.closest('[data-purchase]');if(b){state.node=Number(b.dataset.purchase);renderBoards(model())}});
 $('route-slider').addEventListener('input',e=>{state.preview=clamp(e.target.value,0,['Azphel','Ariel'].includes(state.board)?(account()[state.board.toLowerCase()]||0):budget('crystals'));renderBoards(model())});
+$('combat-evidence-file').addEventListener('change',async e=>{
+  const file=e.target.files?.[0],target=$('combat-evidence-status');
+  currentCombatEvidence=null;
+  if(!file){target.textContent='No combat recording loaded.';return}
+  if(file.size>5*1024*1024){
+    target.textContent='Recording exceeds 5 MB. Choose one normalized Global fight JSON export.';
+    e.target.value='';return;
+  }
+  try{
+    const input=JSON.parse(await file.text());
+    const allowed=[...skillNames(),...Object.keys(STIGMAS[state.class]||{})];
+    const report=GlobalCombatEvidence.analyze(input,{
+      classId:state.class,allowedSkills:allowed
+    });
+    if(!report.ok){target.textContent='Recording rejected: '+report.error;return}
+    currentCombatEvidence=report;
+    const top=Object.entries(report.skills)
+      .sort((a,b)=>b[1].damage-a[1].damage).slice(0,5)
+      .map(([name,detail])=>name+': '+detail.casts+' casts, '+
+        Math.round(detail.damage).toLocaleString()+' damage');
+    target.textContent='Global client '+report.clientVersion+
+      ' · '+report.durationSeconds+'s · '+report.casts+' observed casts · '+
+      Math.round(report.observedDps).toLocaleString()+' observed DPS · '+
+      Math.round(report.observedHps).toLocaleString()+' observed HPS. '+
+      'Top recorded skills: '+(top.join(' · ')||'none')+'. '+
+      report.evidence+' '+report.limitations.join(' ');
+  }catch(error){
+    target.textContent='Could not read normalized Global fight JSON: '+
+      (error instanceof SyntaxError?'Invalid JSON.':'Unexpected data format.');
+  }
+});
 initGear();state.preview=state.class?budget('crystals'):FRESH_45.crystals;render();
