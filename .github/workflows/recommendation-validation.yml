@@ -62,3 +62,4 @@ jobs:
           node v2_smoke.mjs
           node joint_progression_smoke.mjs
           node global_cohort_smoke.mjs
+          node fresh45_stigma_smoke.mjs
