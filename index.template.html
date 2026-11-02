@@ -113,6 +113,9 @@
           <label for="combat-evidence-file">Choose Global fight JSON (maximum 5 MB)</label>
           <input type="file" id="combat-evidence-file" accept=".json,application/json" />
           <p id="combat-evidence-status" class="notice" role="status" aria-live="polite">No combat recording loaded. Recommendations remain research-based estimates until validated against real encounters.</p>
+          <label for="matched-calibration-files">Compare at least 5 baseline and 5 candidate fights (normalized Global JSON with matching benchmark metadata; select all files at once)</label>
+          <input type="file" id="matched-calibration-files" accept=".json,application/json" multiple />
+          <p id="matched-calibration-status" class="notice" role="status" aria-live="polite">No before/after measurements compared. A result requires matched boss, difficulty, gear, client patch, and repeat recordings.</p>
         </div>
       </details>
       <div class="two-col rotation-columns"><div class="panel"><h3 id="rotation-opener-title">Group opener</h3><ol id="rotation-opener" class="rotation-list"></ol></div><div class="panel"><h3>During the fight</h3><ol id="rotation-loop" class="rotation-list"></ol></div></div>
@@ -190,6 +193,7 @@
   <script defer src="./js/engine/combat_timeline.js"></script>
   <script defer src="./js/engine/combat_evidence.js"></script>
   <script defer src="./js/engine/cohort_analysis.js"></script>
+  <script defer src="./js/engine/matched_calibration.js"></script>
   <script defer src="./js/engine/combat.js"></script>
   <script defer src="./js/engine/class_models.js"></script>
   <script defer src="./js/optimizer/objectives.js"></script>
