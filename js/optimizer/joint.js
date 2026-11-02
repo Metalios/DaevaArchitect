@@ -271,6 +271,68 @@ const JointProgression = (()=>{
       baselineScore:first.score,compared:tested.length,
       evidence:'conservative comparative mechanics, not measured PvP win-rate or DPS'};
   }
+  function optimizeSpecialties({skillNames,effectiveLevel,specData,
+      manual={},score,maxEvaluations=300}){
+    if(typeof score!=='function'||typeof effectiveLevel!=='function')
+      throw Error('Specialty search requires an effective-rank combat model');
+    const candidates={};
+    const powers=skillNames.filter(name=>specData?.[name]&&
+      effectiveLevel(name)>=8);
+    const slots=level=>level>=20?3:level>=12?2:level>=8?1:0;
+    const legal=(name)=>{
+      const level=effectiveLevel(name);
+      return Object.keys(specData[name]?.options||{}).map(Number)
+        .filter(id=>Number.isInteger(id)&&id>=1&&id<=5&&
+          level>=(id<=3?8:id===4?12:16)).sort((a,b)=>a-b);
+    };
+    const normalize=(name,values)=>{
+      const options=new Set(legal(name));
+      return [...new Set((values||[]).map(Number))]
+        .filter(id=>options.has(id)).slice(0,slots(effectiveLevel(name)));
+    };
+    const combinations=(values,count,start=0)=>{
+      if(count===0)return [[]];
+      const result=[];
+      for(let i=start;i<=values.length-count;i++)
+        for(const rest of combinations(values,count-1,i+1))
+          result.push([values[i],...rest]);
+      return result;
+    };
+    for(const name of powers){
+      const level=effectiveLevel(name),key=level>=20?'20':
+        level>=16?'16':level>=12?'12':'8';
+      const defaultPicks=specData[name].picks?.[key]||[];
+      const selected=manual[name]??defaultPicks;
+      candidates[name]=normalize(name,selected);
+    }
+    let scoreNow=Number(score(candidates)),evaluations=1,changes=0;
+    if(!Number.isFinite(scoreNow))throw Error('Specialty model score is invalid');
+    for(let pass=0;pass<2;pass++){
+      let changed=false;
+      for(const name of powers){
+        if(Array.isArray(manual[name]))continue;
+        const choices=legal(name),count=Math.min(slots(effectiveLevel(name)),choices.length);
+        if(count===0)continue;
+        let best=candidates[name],bestScore=scoreNow;
+        for(const alternative of combinations(choices,count)){
+          if(evaluations>=maxEvaluations)break;
+          if(alternative.join(',')===candidates[name].join(','))continue;
+          const candidate={...candidates,[name]:alternative};
+          const value=Number(score(candidate));evaluations++;
+          if(Number.isFinite(value)&&value>bestScore+EPS){
+            bestScore=value;best=alternative;
+          }
+        }
+        if(best!==candidates[name]){
+          candidates[name]=best;scoreNow=bestScore;changes++;changed=true;
+        }
+        if(evaluations>=maxEvaluations)break;
+      }
+      if(!changed||evaluations>=maxEvaluations)break;
+    }
+    return {picks:candidates,score:scoreNow,evaluations,changes,
+      evidence:'Specialty combinations scored by class mechanics, not verified action-time DPS'};
+  }
   const MANUAL_MOTION=new Set(['Hellfire','Deadshot','Punishment']);
   function adviseMacro({classId,context,objective='performance',profile,
       available=[],stigma=[],levels={},specialties={}}){
@@ -300,5 +362,5 @@ const JointProgression = (()=>{
       objective,context,classId,
       coverage:stacks.flatMap(s=>s.knownCooldowns)};
   }
-  return Object.freeze({improveRanks,optimizeCombined,rankConnectedBoard,chooseStigmaLoadout,adviseMacro,spend});
+  return Object.freeze({improveRanks,optimizeCombined,rankConnectedBoard,chooseStigmaLoadout,optimizeSpecialties,adviseMacro,spend});
 })();
