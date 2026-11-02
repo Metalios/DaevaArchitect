@@ -124,5 +124,28 @@ for(const [cls,datum] of Object.entries(DATA)){
     'A noisy five-percent proxy improvement must not replace a known loadout');
   assert.equal(weak.compared,2);
 }
+{
+  const spec={A:{options:{1:'one',2:'two',3:'three',4:'four',5:'five'},
+      picks:{8:[1],12:[1,4],16:[1,4],20:[1,4,5]}},
+    B:{options:{1:'one',2:'two',3:'three',4:'four',5:'five'},
+      picks:{8:[2],12:[2,4],16:[2,4],20:[2,4,5]}}};
+  const ranks={A:20,B:12};
+  const best=joint.optimizeSpecialties({
+    skillNames:['A','B'],specData:spec,effectiveLevel:x=>ranks[x],
+    score:picks=>(picks.A||[]).reduce((n,id)=>n+(id===5?20:id),0)+
+      (picks.B||[]).reduce((n,id)=>n+id,0)
+  });
+  assert(best.picks.A.includes(5),'Lv20 should permit a useful 5th specialty option');
+  assert.equal(best.picks.A.length,3);
+  assert.equal(best.picks.B.length,2);
+  assert(!best.picks.B.includes(5),'Lv12 cannot select an option5 specialty');
+  const pinned=joint.optimizeSpecialties({
+    skillNames:['A','B'],specData:spec,effectiveLevel:x=>ranks[x],
+    manual:{A:[1,4,5]},score:picks=>100*(picks.A||[]).includes(2)+
+      (picks.B||[]).reduce((n,id)=>n+id,0)
+  });
+  assert.equal(JSON.stringify(pinned.picks.A),JSON.stringify([1,4,5]),
+    'Explicitly chosen Specialty options are hard locks');
+}
 console.log('Checked '+builds+' all-class context builds and '+boards+
   ' full connected Ariel/Azphel routes with legal Mastery, Stigma and macro constraints.');
