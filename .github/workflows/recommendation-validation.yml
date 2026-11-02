@@ -56,3 +56,4 @@ jobs:
           node board_recalculation_feedback_smoke.mjs
           node gear_swap_board_recalculate_smoke.mjs
           node v2_smoke.mjs
+          node joint_progression_smoke.mjs
