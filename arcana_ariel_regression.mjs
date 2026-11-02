@@ -38,4 +38,10 @@ for(const [cls,skills] of Object.entries(classes)){
   assert.equal(new Set(board.nodes.map(n=>n[0])).size,153);
   assert.equal(new Set(board.nodes.map(n=>n[1]+':'+n[2])).size,153);
 }
+// The board-tabs widget already renders the Ariel tab from allBoards().
+// Never append a second disabled Ariel placeholder from the V2 overlay.
+assert(!read('js/v2.js').includes('v2-ariel-pending'),
+  'Remove obsolete Ariel pending UI rather than rendering a duplicate tab');
+assert(read('js/app.js').includes('const available=allBoards();'),
+  'Ariel and Azphel must be present in the board tab collection in every context');
 console.log('Verified Arcana grade/line gates, all eight skill pools, and Ariel board shape/cost.');
