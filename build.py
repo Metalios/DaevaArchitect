@@ -72,6 +72,25 @@ compiled_research = {
     for cls, group in research_groups.items()
 }
 js_data += 'const RESEARCH_PRIORS=' + json.dumps(compiled_research, separators=(',',':'), ensure_ascii=False) + ';'
+# A separate, genuinely observed Global combat cohort is a benchmark, not
+# optimizer ground truth. Validate the cohort sample count and preserve source
+# metadata; it must never be relabeled as a verified user-specific DPS value.
+global_cohort = json.loads((root / 'research' / 'global_combat_cohort_2026-11-02.json').read_text(encoding='utf8'))
+assert global_cohort['schema'] == 'daeva-global-combat-cohort/v1'
+assert global_cohort['source'].startswith('https://a2tools.app/stats')
+assert set(global_cohort['classes']) == set(data)
+assert sum(row['samples'] for row in global_cohort['classes'].values()) == global_cohort['sourceTotalPlayerSamples']
+for cls, row in global_cohort['classes'].items():
+    if row['samples'] < 50 or row['medianDps'] <= 0 or len(row['middleHalfDps']) != 2:
+        raise ValueError(f'Global combat cohort incomplete for {cls}')
+    if not row['middleHalfDps'][0] <= row['medianDps'] <= row['middleHalfDps'][1]:
+        raise ValueError(f'Global cohort median outside middle-half range: {cls}')
+    for observation in row['skillObservations']:
+        if not (0 <= observation['usedByPct'] <= 100):
+            raise ValueError(f'Invalid observed skill-use percentage: {cls}')
+js_data += 'const GLOBAL_COMBAT_COHORT=' + json.dumps(
+    global_cohort, separators=(',',':'), ensure_ascii=False).replace('</','<\\/') + ';'
+
 
 
 
@@ -92,6 +111,7 @@ shutil.copy2(root / 'js' / 'engine' / 'global_actions.js', out_dir / 'js' / 'eng
 shutil.copy2(root / 'js' / 'engine' / 'animation_evidence.js', out_dir / 'js' / 'engine' / 'animation_evidence.js')
 shutil.copy2(root / 'js' / 'engine' / 'combat_timeline.js', out_dir / 'js' / 'engine' / 'combat_timeline.js')
 shutil.copy2(root / 'js' / 'engine' / 'combat_evidence.js', out_dir / 'js' / 'engine' / 'combat_evidence.js')
+shutil.copy2(root / 'js' / 'engine' / 'cohort_analysis.js', out_dir / 'js' / 'engine' / 'cohort_analysis.js')
 shutil.copy2(root / 'js' / 'engine' / 'combat.js', out_dir / 'js' / 'engine' / 'combat.js')
 shutil.copy2(root / 'js' / 'engine' / 'class_models.js', out_dir / 'js' / 'engine' / 'class_models.js')
 shutil.copy2(root / 'css' / 'styles.css', out_dir / 'css' / 'styles.css')
