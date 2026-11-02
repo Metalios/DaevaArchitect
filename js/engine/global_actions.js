@@ -66,19 +66,22 @@ const GlobalActionData = (() => {
    */
   function cooldownWithSpecialties(classId,name,rank,specialties={},specData={}){
     const base=lookup(classId,name);
-    if(base===null)return null;
-    if(base===0)return 0;
-    const rules=specData?.[classId]?.[name]?.options||{};
+    if(base===null||base===0)return base;
+    // Resolve exact Global tooltip effects. The preceding implementation
+    // required "Xs cooldown" and silently missed "-10s cooldown",
+    // "Remove cooldown", and cross-skill on-hit reductions.
+    const selected=Array.isArray(specialties[name])?specialties[name]:[];
     const slots=rank>=20?3:rank>=12?2:rank>=8?1:0;
-    const valid=Array.isArray(specialties[name])?specialties[name].slice(0,slots):[];
-    let seconds=base;
-    for(const id of valid){
-      if(!Number.isInteger(id)||id<1||id>5||rank<(id<=3?8:id===4?12:16))continue;
-      const desc=String(rules[id]||'');
-      const reduction=desc.match(/(?:-|reduce[sd]?\s+by\s*)(\d+(?:\.\d+)?)\s*s(?:ec(?:onds?)?)?\s+cooldown/i);
-      if(reduction)seconds-=Number(reduction[1]);
+    if(typeof GlobalCooldownRules!=='undefined'){
+      const rules=[];
+      for(const id of selected.slice(0,slots)){
+        const text=specData?.[classId]?.[name]?.options?.[id]||'';
+        const rule=GlobalCooldownRules.compileSpecialty(text,classId,name,id);
+        if(rule&&rank>=(id<=3?8:id===4?12:16))rules.push(rule);
+      }
+      return GlobalCooldownRules.effectiveCooldown(base,name,rules);
     }
-    return Math.max(.1,seconds);
+    return base;
   }
   function readyWindows(cooldown,duration,haste=0){
     if(!Number.isFinite(cooldown)||cooldown<0)return null;

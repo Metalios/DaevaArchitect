@@ -98,6 +98,26 @@
         <p id="rotation-control-status" role="status"></p>
       </section>
       <div class="rotation-hero panel"><div class="rotation-mark">01 / THE RULE</div><h3 id="rotation-rule-title"></h3><p id="rotation-rule-text"></p><div id="rotation-gate" class="notice"></div><div id="macro-rank-summary" class="macro-rank-summary"></div></div>
+      <details class="rotation-advanced" id="global-cohort-panel"><summary>Observed Global combat benchmark · class-specific fight samples</summary>
+        <div class="panel">
+          <h3>Real Global combat cohort</h3>
+          <p id="global-cohort-summary" role="status">Loading versioned combat evidence…</p>
+          <p>Cross-boss aggregate, not a prediction for your gear or a guaranteed superior build. Popular skills and Specialty picks indicate use, not causal DPS gains. Animation cancel frames are not included.</p>
+          <a href="https://a2tools.app/stats?inline=1&amp;lang=en&amp;region=global" target="_blank" rel="noopener noreferrer">Original Global encounter evidence</a>
+        </div>
+      </details>
+      <details class="rotation-advanced" id="combat-evidence-panel"><summary>Optional · compare real Global combat evidence</summary>
+        <div class="panel">
+          <h3>Global combat recording</h3>
+          <p>Import a normalized JSON fight timeline to compare actual casts, damage, and buff uptime. The recording is read locally, never uploaded or shared in your build link. Server event gaps do not establish minimum animation or cancel times.</p>
+          <label for="combat-evidence-file">Choose Global fight JSON (maximum 5 MB)</label>
+          <input type="file" id="combat-evidence-file" accept=".json,application/json" />
+          <p id="combat-evidence-status" class="notice" role="status" aria-live="polite">No combat recording loaded. Recommendations remain research-based estimates until validated against real encounters.</p>
+          <label for="matched-calibration-files">Compare at least 5 baseline and 5 candidate fights (normalized Global JSON with matching benchmark metadata; select all files at once)</label>
+          <input type="file" id="matched-calibration-files" accept=".json,application/json" multiple />
+          <p id="matched-calibration-status" class="notice" role="status" aria-live="polite">No before/after measurements compared. A result requires matched boss, difficulty, gear, client patch, and repeat recordings.</p>
+        </div>
+      </details>
       <div class="two-col rotation-columns"><div class="panel"><h3 id="rotation-opener-title">Group opener</h3><ol id="rotation-opener" class="rotation-list"></ol></div><div class="panel"><h3>During the fight</h3><ol id="rotation-loop" class="rotation-list"></ol></div></div>
       <div class="section-title macro-title"><div><h2>Set up the in-game macro</h2><p>Macro steps press hotbar keys, not typed skill commands. Keep the basic attack or filler held separately to weave it between skills.</p></div><span class="tag gold">10 ms start</span></div>
       <div id="rotation-quick-guide" class="rotation-quick-guide panel" role="region" aria-label="Simple in-game macro setup"></div>
@@ -167,9 +187,13 @@
   <script defer src="./js/recommendations.js"></script>
   <script defer src="./js/progression.js"></script>
   <script defer src="./js/leveling_rotation.js"></script>
+  <script defer src="./js/engine/cooldown_rules.js"></script>
   <script defer src="./js/engine/global_actions.js"></script>
   <script defer src="./js/engine/animation_evidence.js"></script>
   <script defer src="./js/engine/combat_timeline.js"></script>
+  <script defer src="./js/engine/combat_evidence.js"></script>
+  <script defer src="./js/engine/cohort_analysis.js"></script>
+  <script defer src="./js/engine/matched_calibration.js"></script>
   <script defer src="./js/engine/combat.js"></script>
   <script defer src="./js/engine/class_models.js"></script>
   <script defer src="./js/optimizer/objectives.js"></script>

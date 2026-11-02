@@ -182,9 +182,17 @@ const ClassCombatModels=(()=>{
        if(cd===null)continue;
        observed++;
        // Set ranks from actual gear + Daevanion + purchased Mastery.
+       const entry=typeof SPECS!=='undefined'?SPECS[classId]?.[name]:null;
+       const level=rank(name);
+       const tier=level>=20?'20':level>=16?'16':level>=12?'12':
+         level>=8?'8':null;
+       const picked=Array.isArray(selectedSpecs[name])
+         ?selectedSpecs[name]:(tier?entry?.picks?.[tier]||[]:[]);
        const base=globalCooldowns.cooldownWithSpecialties(classId,name,
-         rank(name),selectedSpecs,typeof SPECS!=='undefined'?SPECS:{});
-       const unmodified=globalCooldowns.readyWindows(base,seconds,0);
+         level,{[name]:picked},typeof SPECS!=='undefined'?SPECS:{});
+       // Comparing two copies of the reduced cooldown previously erased
+       // much of the modeled value of a cooldown-reduction Specialty.
+       const unmodified=globalCooldowns.readyWindows(cd,seconds,0);
        const reduced=globalCooldowns.readyWindows(base,seconds,haste);
        const relative=unmodified===null||unmodified===0?1:reduced/unmodified;
        sum+=weight*relative;total+=weight;

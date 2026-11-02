@@ -539,6 +539,7 @@ let combatResultCache={key:null,result:null};
 let jointResultCache={key:null,result:null};
 let stigmaLoadoutCache={key:null,names:null};
 let jointSpecialtyCache={key:null,result:null};
+let currentCombatEvidence=null;
 let latestSpecialtyPlan={classId:null,picks:null};
 function engineBuild(masteryLevels,boardEffects,stigmaLevels,equipped){
   const equippedRanks={...gearSkillLevels()};
@@ -879,6 +880,11 @@ function render(){
   $('welcome-panel').hidden=selected;$('planner-content').hidden=!selected;
   $('class-role').textContent=selected?profile().role:'Select a class';
   if(!selected){$('hero-description').textContent='Choose a class to plan leveling from 1 to 45 or build from a fresh Global level 45.';save();return}
+  if(currentCombatEvidence&&currentCombatEvidence.classId!==state.class){
+    currentCombatEvidence=null;
+    $('combat-evidence-status').textContent='Class changed. No combat recording loaded.';
+    $('combat-evidence-file').value='';
+  }
   const a=account(),m=model(),p=profile();
   document.body.classList.toggle('is-leveling',isLeveling());
   $('hero-description').textContent=isLeveling()?`${p.name} · Level ${currentLevel()} · ${a.context==='solo'?'Solo':'Group'} leveling. Follow the next unlocks and update your earned points as you play.`:p.summary+' Change your point totals to see what to buy now and next.';
@@ -1078,6 +1084,39 @@ function renderRotation(m){
     $('leveling-rotation').innerHTML=renderLevelingCombatMarkup(plan,macroKey,quickUse2Bind);
     return;
   }
+  if(typeof GlobalCohortBenchmarks!=='undefined'){
+    const ranks=Object.fromEntries(skillNames().map(name=>
+      [name,skillLevelBreakdown(name,m).withOwned]));
+    const specs=Object.fromEntries(skillNames().map(name=>
+      [name,specPicks(name,ranks[name])]));
+    const observed=GlobalCohortBenchmarks.examine({
+      classId:state.class,effectiveSkills:ranks,
+      selectedSpecialties:specs,characterGearRating:a.gearRating
+    });
+    const target=$('global-cohort-summary');
+    if(observed.available){
+      const top=observed.skillOverlaps.slice()
+        .sort((x,y)=>y.observedUsedByPercent-x.observedUsedByPercent)
+        .slice(0,6).map(x=>
+          x.skill+' '+x.observedUsedByPercent+'% used'+
+          (x.typicalSpecialties.length?
+            ' (often '+x.typicalSpecialties.join('+')+')':''));
+      target.textContent='A2Tools Global snapshot '+observed.snapshotDate+
+        ' · '+observed.samples.toLocaleString()+' '+state.class+
+        ' player samples · Median observed DPS '+
+        Math.round(observed.medianDps).toLocaleString()+
+        ' (middle half '+observed.middleHalfDps.map(v=>
+          Math.round(v).toLocaleString()).join('–')+')'+
+        ' · Cohort median CP '+observed.medianCombatPower.toLocaleString()+
+        ' / GR '+observed.medianGearRating.toLocaleString()+
+        '. Commonly observed skills: '+top.join(' · ')+
+        '. Your chosen Specialty options exactly match the most common '+
+        'observed combination on '+observed.matchesCommonSpecialties+
+        ' of '+observed.skillOverlaps.length+' comparable skills. '+
+        'These observations come from PvE boss fights ONLY (not Arena/Abyss PvP). They are not normalized DPS, '+
+        'cast speed, action lock, or proof of optimization.';
+    }else target.textContent=observed.reason;
+  }
   const classActive=new Set(Object.values(data().skills).slice(0,12).map(s=>s.name));
   const unlockedClass=new Set([...classActive].filter(name=>!levelingMode||(SKILL_UNLOCKS[state.class][name]||1)<=level));
   const slots=levelingMode?levelReward().slots:4;
@@ -1141,7 +1180,27 @@ function renderRotation(m){
   const macroRanks=stacks.filter(stack=>!stack.manual).flatMap(stack=>stack.skills).map(name=>name in m.mastery.levels?`${name} Lv ${skillLevelBreakdown(name,m).withOwned} with obtained boards`:name in m.stigma.levels?`${name} Stigma Lv ${m.stigma.levels[name]}`:name);
   const cooldownSummary=(macroAdvice?.coverage||[]).filter(x=>x.seconds!==null)
     .slice(0,8).map(x=>`${x.name}: ${x.seconds===0?'no listed CD':x.seconds+'s base CD'}`);
-  $('macro-rank-summary').textContent=`Macro skill levels at your current point and gear totals: ${macroRanks.join(' · ')}. ${cooldownSummary.length?'Global base cooldowns: '+cooldownSummary.join(' · ')+'. ':''}Cooldown-reducing Specialties, buffs and triggered resets change effective availability; this is not a fixed casting schedule. Change gear, boards, ranks or Stigmas to recalculate.`;
+  const cooldownEffects=typeof GlobalCooldownRules!=='undefined'?
+    GlobalCooldownRules.fromBuild({
+      classId:state.class,
+      effectiveLevels:Object.fromEntries(skillNames().map(name=>
+        [name,skillLevelBreakdown(name,m).withOwned])),
+      specialties:Object.fromEntries(skillNames().map(name=>
+        [name,specPicks(name,skillLevelBreakdown(name,m).withOwned)])),
+      stigmaLevels:m.stigma.levels,equippedStigmas,
+      specData:SPECS[state.class],stigmaData:STIGMAS[state.class]
+    }):null;
+  const effectsSummary=(cooldownEffects?.effects||[]).slice(0,8).map(rule=>{
+    const action=rule.type==='base-reduction'?`reduces listed cooldown ${rule.seconds}s`:
+      rule.type==='reduce'?`cuts ${rule.target} by ${rule.seconds}s`:
+      rule.type==='reset'?`resets ${rule.target}`:
+      rule.type==='remove'?`removes conditional skill cooldown`:
+      `adjusts ${rule.target} cooldown`;
+    const when=rule.event&&rule.event!=='conditional-use'?
+      ` on ${rule.event}`:rule.type==='remove'?' (conditional use only)':'';
+    return `${rule.skill}: ${action}${when}${rule.probability!==null&&rule.probability!==undefined?' · '+Math.round(rule.probability*100)+'% proc':''}`;
+  });
+  $('macro-rank-summary').textContent=`Macro skill levels: ${macroRanks.join(' · ')}. ${cooldownSummary.length?'Global base cooldowns: '+cooldownSummary.join(' · ')+'. ':''}${effectsSummary.length?'Your selected cooldown interactions: '+effectsSummary.join(' · ')+'. ':''}Conditional resets and chances are not guaranteed. Cast, animation and macro timing still require valid Global or patch-compatible measurements.`;
   $('rotation-opener-title').textContent=appIsPvpContext(a.context)?'PvP engage':{party:'Group opener',solo:'Solo opener'}[a.context];
   const manualNow=hotbar.flatMap(([skills])=>skills),buffNow=hotbar.filter(([, ,tone])=>tone==='buff').flatMap(([skills])=>skills),healNow=hotbar.filter(([, ,tone])=>tone==='heal').flatMap(([skills])=>skills);
   const opener=levelingMode?[buffNow.length?`Use ${buffNow.slice(0,2).join(' and ')} before the pull when ready.`:'Approach a manageable target and watch its first attack.',`Hold ${weaveKey} (${p.weave}) with ${macroKey} to cycle ${displayedMacroSteps.join(' then ')||'your unlocked damage key'} while safe.`,healNow.length?`Keep ${healNow.slice(0,2).join(' and ')} available for recovery.`:manualNow.length?`Use ${manualNow.slice(0,2).join(' and ')} manually when their timing helps.`:'Add manual skills to 1–8 as they unlock.']:appIsPvpContext(a.context)?['Approach with cover and keep your escape or control break available.','Open with a manual control or gap close after the opponent commits.','Use the damage macro only while your target is in range and you can safely finish the cast.']:p.opener.map(displayKeyCopy);
@@ -1531,4 +1590,79 @@ $('clear-obtained-button').addEventListener('click',()=>{
 });
 $('purchase-list').addEventListener('click',e=>{const b=e.target.closest('[data-purchase]');if(b){state.node=Number(b.dataset.purchase);renderBoards(model())}});
 $('route-slider').addEventListener('input',e=>{state.preview=clamp(e.target.value,0,['Azphel','Ariel'].includes(state.board)?(account()[state.board.toLowerCase()]||0):budget('crystals'));renderBoards(model())});
+$('matched-calibration-files').addEventListener('change',async e=>{
+  const files=Array.from(e.target.files||[]),
+    status=$('matched-calibration-status');
+  if(!files.length){status.textContent='No before/after recordings selected.';return}
+  if(files.length<10||files.length>100||files.some(f=>f.size>5*1024*1024)){
+    status.textContent='Select 10–100 Global fight JSON files (each ≤5 MB), with at least five baseline and five candidate encounters.';
+    return;
+  }
+  status.textContent='Validating locally selected fight measurements…';
+  try{
+    const allowed=[...skillNames(),...Object.keys(STIGMAS[state.class]||{})];
+    const reports=[];
+    for(const file of files){
+      const parsed=JSON.parse(await file.text());
+      const report=GlobalCombatEvidence.analyze(parsed,{
+        classId:state.class,allowedSkills:allowed
+      });
+      if(!report.ok){
+        status.textContent='Recording rejected ('+file.name+'): '+report.error;
+        return;
+      }
+      reports.push(report);
+    }
+    const result=GlobalMatchedCalibration.compare(reports);
+    if(!result.comparable){
+      status.textContent='Cannot calibrate these fights: '+result.reason+
+        '. No recommendation changes have been made.';
+      return;
+    }
+    status.textContent='User-declared Global '+result.classId+' fights · '+
+      result.bossId+' ('+result.difficulty+') · '+result.baselineFights+
+      ' baseline and '+result.candidateFights+' candidate · observed median DPS '+
+      Math.round(result.baselineMedianDps).toLocaleString()+' → '+
+      Math.round(result.candidateMedianDps).toLocaleString()+' ('+
+      (result.measuredDifferencePercent>=0?'+':'')+
+      result.measuredDifferencePercent.toFixed(1)+'%). '+
+      '90% resampled interval: '+result.bootstrap90PercentRange.map(v=>
+        (v>=0?'+':'')+v.toFixed(1)+'%').join(' to ')+
+      '. Direction: '+result.direction+'. '+
+      result.warnings.join(' ')+' No build was automatically changed.';
+  }catch(error){
+    status.textContent='Could not parse the matched fight files. Check normalized JSON structure and numeric combat events.';
+  }
+});
+$('combat-evidence-file').addEventListener('change',async e=>{
+  const file=e.target.files?.[0],target=$('combat-evidence-status');
+  currentCombatEvidence=null;
+  if(!file){target.textContent='No combat recording loaded.';return}
+  if(file.size>5*1024*1024){
+    target.textContent='Recording exceeds 5 MB. Choose one normalized Global fight JSON export.';
+    e.target.value='';return;
+  }
+  try{
+    const input=JSON.parse(await file.text());
+    const allowed=[...skillNames(),...Object.keys(STIGMAS[state.class]||{})];
+    const report=GlobalCombatEvidence.analyze(input,{
+      classId:state.class,allowedSkills:allowed
+    });
+    if(!report.ok){target.textContent='Recording rejected: '+report.error;return}
+    currentCombatEvidence=report;
+    const top=Object.entries(report.skills)
+      .sort((a,b)=>b[1].damage-a[1].damage).slice(0,5)
+      .map(([name,detail])=>name+': '+detail.casts+' casts, '+
+        Math.round(detail.damage).toLocaleString()+' damage');
+    target.textContent='User-declared Global client '+report.clientVersion+
+      ' · '+report.durationSeconds+'s · '+report.casts+' observed casts · '+
+      Math.round(report.observedDps).toLocaleString()+' observed DPS · '+
+      Math.round(report.observedHps).toLocaleString()+' observed HPS. '+
+      'Top recorded skills: '+(top.join(' · ')||'none')+'. '+
+      report.evidence+' '+report.limitations.join(' ');
+  }catch(error){
+    target.textContent='Could not read normalized Global fight JSON: '+
+      (error instanceof SyntaxError?'Invalid JSON.':'Unexpected data format.');
+  }
+});
 initGear();state.preview=state.class?budget('crystals'):FRESH_45.crystals;render();

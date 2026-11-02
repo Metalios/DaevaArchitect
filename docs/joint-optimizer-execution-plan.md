@@ -14,6 +14,38 @@
 
 These are **comparison improvements**, not the final calibrated all-class simulator. A class cannot be truthfully called fully optimized using only a list of high-CR characters and unmeasured relative skill coefficients.
 
+
+## Source-backed cooldown and combat evidence completed in the current revision
+
+- `js/engine/cooldown_rules.js` compiles all eight classes' **current Global Specialty and equipped Stigma tooltip** cooldown interactions. Base self-cooldown reductions are distinguished from on-hit reductions of another ability and from conditional critical/block/evasion/kill resets. Proc chances require observed event outcomes and are never silently treated as 100%. Conditional "Remove cooldown" does **not** imply that the ability can be spammed without its trigger.
+- `js/engine/global_actions.js` calculates known Global base/self Specialty cooldown changes. The seven comparative class models now use the true **original cooldown as the baseline** for cooldown-opportunity scoring; previously comparing two identical reduced cooldowns erased that benefit.
+- `js/engine/combat_timeline.js` accepts actual sourced cooldown effects, applies cross-skill/all-skill changes, deterministic observed proc outcomes and optional cast-start/completion policies, without fabricating event probabilities or action locks.
+- The Rotation/Macro panel reports selected Global cooldown changes and conditions rather than showing base cooldowns alone.
+- `js/engine/combat_evidence.js` and the collapsed Rotation evidence panel accept a **local-only normalized Global JSON fight** for cast counts, damage, healing and observed buff uptime. The file remains in browser memory and is never uploaded or shared in build URLs.
+
+### Normalized Global fight evidence JSON
+
+The importer consumes a deliberately narrow interoperable schema, **not raw exports from a specific DPS meter**. Raw proprietary JSON/CSV must be converted to this format using the source's own field meanings. This is a format illustration, NOT a claim that the numeric values came from any player:
+
+```json
+{
+  "region": "Global",
+  "clientVersion": "2.0.9.0",
+  "classId": "templar",
+  "durationSeconds": 10,
+  "events": [
+    {"timeMs": 100, "skill": "Pummel", "type": "cast"},
+    {"timeMs": 300, "skill": "Pummel", "type": "hit", "damage": 1000},
+    {"timeMs": 500, "skill": "Judgment", "type": "cast"},
+    {"timeMs": 750, "skill": "Judgment", "type": "hit", "damage": 2000}
+  ]
+}
+```
+
+Accepted event types are `cast`, `hit`, `heal`, `buff-start`, `buff-end` with monotonically increasing `timeMs`. At least three events are needed, at most 50,000, and files must be no larger than 5 MB. Skill names must match the selected Global class or Stigma data. Unknown skills are omitted and counted; damage from missing network packets cannot be reconstructed. The system counts casts separately from hit packets and **never** presents an observed inter-cast gap as an animation-lock measurement.
+
+**This is a data-validation tool, not automatic derivation of optimum from one fight.** A fair performance comparison also requires equivalent target, gear, motion/latency, encounter duration, current patch, player skill and defensive responsibilities.
+
 ## Remaining concrete completion gates
 
 ### Gate A — verified ability-event data (all eight classes)
