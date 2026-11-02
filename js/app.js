@@ -119,7 +119,7 @@ function toggleBoardObtained(id){
   const isAz=entry.board==='Azphel',isAriel=entry.board==='Ariel',budgetTotal=isAz?(account().azphel||0):isAriel?(account().ariel||0):budget('crystals');
   const cost=entry.node[5],spent=obtainedCrystalSpend(isAz?'azphel':isAriel?'ariel':'crystals');
   if(spent+cost>budgetTotal){
-    boardPurchaseNotice=`Cannot mark this ${cost}-crystal tile: ${spent} / ${budgetTotal} ${isAz?'Azphel':'PvE'} crystals are already spent. Increase your earned total or unmark a tile first.`;
+    boardPurchaseNotice=`Cannot mark this ${cost}-crystal tile: ${spent} / ${budgetTotal} ${isAz?'Azphel':isAriel?'Ariel':'PvE'} crystals are already spent. Increase your earned total or unmark a tile first.`;
     return false;
   }
   marked.add(id);boardPurchaseNotice='';storeObtained(marked);return true;
@@ -1012,7 +1012,7 @@ function renderBoards(m){
   $('board-crystal-remaining').textContent=`${Math.max(0,crystalBudget-crystalSpent)} remaining`;
   $('board-crystal-counter').classList.toggle('completed',crystalBudget>0&&crystalSpent>=crystalBudget);
   $('board-crystal-counter').querySelector('.board-crystal-tracker-copy b').textContent=isAz?'Azphel crystals spent':isAriel?'Ariel crystals spent':'PvE crystals spent';
-  $('board-crystal-counter').querySelector('.board-crystal-tracker-copy small').textContent=isAz?'Obtained Azphel nodes · separate PvP budget':'Actual obtained tiles across all four PvE boards · planned allocations stay in board tabs';
+  $('board-crystal-counter').querySelector('.board-crystal-tracker-copy small').textContent=isAz?'Obtained Azphel nodes · separate PvP budget':isAriel?'Obtained Ariel nodes · separate PvE budget':'Actual obtained tiles across all four original PvE boards';
   $('board-purchase-notice').hidden=!boardPurchaseNotice;
   $('board-purchase-notice').textContent=boardPurchaseNotice;
   const wanted=isAriel?[['PvEAmplifyDamage','PvE Damage Boost'],['BossNpcAmplifyDamage','Boss Damage Boost'],['PvEDecreaseDamage','PvE Damage Tolerance'],['BossNpcDecreaseDamage','Boss Damage Tolerance']]:isAz?[['PvPAmplifyDamage','PvP Damage Boost'],['PvPDecreaseDamage','PvP Damage Tolerance'],['AbnormalResistance','Status Resist'],['PvPAddDamage','PvP Attack']]:profile().kind==='healer'?[['Defense','Defense'],['HPMax','Max HP'],['CombatSpeed','Combat Speed'],['CoolTimeDecrease','Cooldown Reduction']]:[['AmplifyAllDamage','Damage Boost'],['DecreaseDamage','Damage Tolerance'],['CombatSpeed','Combat Speed'],['CoolTimeDecrease','Cooldown Reduction']];
@@ -1048,15 +1048,15 @@ function renderBoards(m){
   const cpRoute=profile().kind!=='healer'&&Number(a.goalTarget)>0;
   const cpBasis=cpRoute?(liveRouteBasis?.baseCp===null?'Your gear is not recorded fully enough for CP calibration, so this route follows class/context mechanics without CP weighting.':'A complete recorded loadout can give a secondary CP-goal influence after class/context priorities.'):'The route follows researched class and context priorities using only gear bonuses you entered.';
   $('route-footnote').textContent=customMode()?`Custom mode uses the connected tiles you selected, in click order. Raising your crystal total lets you add more; lowering it makes later tiles unfunded until the budget returns. Marked obtained tiles are recorded separately from planned tiles. Azphel has its own currency and no skill levels.`:`${method}. The recommended path remains fixed through the current crystal-spending cycle and refreshes after your total is marked obtained; switching class/context or unlocking new boards starts a new cycle. No equipment is assumed. Each crystal total funds a prefix; save crystals when the next tile costs more than you have. ${cpBasis} Marked tiles are carried into the route first, using connecting nodes where needed. This is an approximate scoring model, not a proven combat optimum. Azphel has its own currency and no skill levels.`;
-  const weights=isAz?{skills:{},stats:activeWeights()?.stats||{}}:activeWeights();
+  const weights=isAz||isAriel?{skills:{},stats:activeWeights()?.stats||{}}:activeWeights();
   const topSkills=Object.entries(weights.skills||{}).sort((x,y)=>y[1]-x[1]).slice(0,3).map(x=>x[0]);
-  const topStats=Object.entries(weights.stats||{}).filter(([key])=>isAz?key.startsWith('PvP')||key.startsWith('Abnormal'):!key.startsWith('PvP')).sort((x,y)=>y[1]-x[1]).slice(0,3).map(([key])=>data().stats[key]?.name||key);
+  const topStats=Object.entries(weights.stats||{}).filter(([key])=>isAz?key.startsWith('PvP')||key.startsWith('Abnormal'):isAriel?key.startsWith('PvE')||key.startsWith('Boss'):!key.startsWith('PvP')).sort((x,y)=>y[1]-x[1]).slice(0,3).map(([key])=>data().stats[key]?.name||key);
   const boardPurpose={Ariel:'PvE damage, boss attack and defensive bonuses add to character progression.',Nezekan:'Combat Speed and Cooldown Reduction corners support faster actions; inner branches give early skill ranks.',Zikel:'Damage Boost and Damage Tolerance corners trade offensive pressure against damage taken.',Vaizel:'Critical Damage Boost and Critical Damage Tolerance support burst and burst defense.',Triniel:'Multi-Hit Chance and Multi-Hit Resist support repeated hits and defense.',Azphel:'PvP Damage Boost, PvP Damage Tolerance and status resistance are the dedicated PvP gains.'};
   const bought=rows.filter(x=>x.spent<=state.preview&&x.cost>=2).slice(-3).map(x=>x.label);
   const nextRows=rows.filter(x=>x.spent>state.preview).slice(0,2).map(x=>x.label);
   const previewEffects=effects(preview.owned),bonusFromGear=!isAz?gearSkillLevels():{};
   const breakpointNames=Object.entries(weights.skills||{}).sort((x,y)=>y[1]-x[1]).slice(0,4).map(x=>x[0]);
-  const breakpointCheck=!isAz?breakpointNames.map(name=>{const boardBonus=previewEffects.skills[name]||0,level=Math.min(40,(m.mastery.levels[name]||1)+boardBonus+(a.gear[name]||0)+(bonusFromGear[name]||0));const nextGate=[12,16].find(gate=>gate>level);return `${name}: +${boardBonus} board → effective ${level}${nextGate?` (${nextGate-level} to ${nextGate})`:''}`}).join(' · '):'';
+  const breakpointCheck=!isAz&&!isAriel?breakpointNames.map(name=>{const boardBonus=previewEffects.skills[name]||0,level=Math.min(40,(m.mastery.levels[name]||1)+boardBonus+(a.gear[name]||0)+(bonusFromGear[name]||0));const nextGate=[12,16].find(gate=>gate>level);return `${name}: +${boardBonus} board → effective ${level}${nextGate?` (${nextGate-level} to ${nextGate})`:''}`}).join(' · '):'';
   const routeSource=`Scored from Global node effects, your CP goal and recorded build, plus rotation, healing, and survival priorities. ${cpBasis} No creator route is copied. This is a heuristic, not measured DPS or a proven optimum.`;
   $('board-rationale').innerHTML=customMode()?`<h3>Your ${esc(state.board)} path</h3><p>You selected ${boardSteps.length} connected tiles here. ${boardPlanned} are funded at the preview budget. The colored board tiles and purchase order show your own route.</p><p><b>How to edit:</b> Click a tile touching your selected path. Remove branch-end tiles before an earlier tile that supports them. Mark obtained from the selected tile panel.</p><p><b>Effects:</b> Mastery uses the funded custom skill nodes. Your selected plan is saved with this class and included in a share link.</p>`:`<h3>Why this ${esc(state.board)} path?</h3><p><b>${esc({party:'Group PvE',solo:'Solo',pvp:'PvP'}[a.context])}:</b> ${esc(boardPurpose[state.board])}</p><p><b>Priority skills:</b> ${esc(topSkills.join(', ')||'Azphel has no skill nodes')}. <b>Priority stats:</b> ${esc(topStats.join(', '))}.</p><p><b>At ${state.preview} crystals:</b> ${esc(bought.join(' · ')||'follow the connected approach to the first key node')}.</p>${breakpointCheck?`<p><b>Across all four boards at ${state.preview} crystals:</b> ${esc(breakpointCheck)}. Effective levels include planned Mastery and entered gear bonuses.</p>`:''}<p><b>Next on this board:</b> ${esc(nextRows.join(' → ')||'this board is fully planned')}.</p><p><b>Route basis:</b> ${esc(method)}. ${esc(routeSource)}</p><a href="${esc(data().sources.nodes)}" target="_blank" rel="noopener noreferrer">Check the Global board data ↗</a>`;
 }
@@ -1155,7 +1155,7 @@ $('level-plus').addEventListener('click',()=>setLevel(currentLevel()+1));
 $('level-milestones').addEventListener('click',e=>{const b=e.target.closest('[data-milestone]');if(b)setLevel(b.dataset.milestone)});
 $('handoff-button').addEventListener('click',()=>{if(!isLeveling()||currentLevel()<45)return;const a=account(),totals=Object.fromEntries(['mastery','stigma','crystals'].map(key=>[key,budget(key)]));Object.assign(a,totals);a.journey='endgame';a.context=a.endgameContext||'party';state.preview=a.crystals;state.tab='overview';render()});
 for(const [id,key,max] of [['mastery-input','mastery',462],['stigma-input','stigma',300],['crystal-input','crystals',570]]){
-  const update=e=>{const value=clamp(e.target.value,isLeveling()?levelReward()[key]:0,max);if(isLeveling())setLevelingBudget(key,value);else account()[key]=value;if(key==='crystals'&&state.board!=='Azphel')state.preview=budget('crystals');render()};
+  const update=e=>{const value=clamp(e.target.value,isLeveling()?levelReward()[key]:0,max);if(isLeveling())setLevelingBudget(key,value);else account()[key]=value;if(key==='crystals'&&!['Azphel','Ariel'].includes(state.board))state.preview=budget('crystals');render()};
   $(id).addEventListener('input',e=>{if(e.target.value==='')return;const value=clamp(e.target.value,isLeveling()?levelReward()[key]:0,max);if(isLeveling())setLevelingBudget(key,value);else account()[key]=value;save()});
   $(id).addEventListener('change',update);
 }
@@ -1216,6 +1216,7 @@ function recalculateRecommendedBoards(){
   a.boardMode='recommended';
   a.customNodes=[];
   a.customAzphelNodes=[];
+  a.customArielNodes=[];
   a.recommendedRouteSnapshot=null;
   liveRoute=null;
   liveRouteKey='';
@@ -1262,8 +1263,8 @@ $('board-mode-recommended').addEventListener('click',()=>{
   render();
 });
 $('board-mode-custom').addEventListener('click',()=>{account().boardMode='custom';boardEditNotice='Select a connected tile on any unlocked board, or copy the current recommendation.';render()});
-$('copy-recommended-board').addEventListener('click',()=>{const nodes=nodeMap();account().customNodes=routeSteps(activeRoute(),nodes).filter(x=>x.total<=budget('crystals')).map(x=>x.id);account().customAzphelNodes=routeSteps(ROUTES[state.class].azphel,nodes).filter(x=>x.total<=(account().azphel||0)).map(x=>x.id);boardEditNotice='Copied the funded recommended route. Click tiles to customize it.';render()});
-$('clear-custom-board').addEventListener('click',()=>{account().customNodes=[];account().customAzphelNodes=[];boardEditNotice='Custom plan cleared. Obtained marks are kept separately.';state.node=null;render()});
+$('copy-recommended-board').addEventListener('click',()=>{const nodes=nodeMap();account().customNodes=routeSteps(activeRoute(),nodes).filter(x=>x.total<=budget('crystals')).map(x=>x.id);account().customAzphelNodes=routeSteps(ROUTES[state.class].azphel,nodes).filter(x=>x.total<=(account().azphel||0)).map(x=>x.id);account().customArielNodes=routeSteps(arielRoute(),nodes).filter(x=>x.total<=(account().ariel||0)).map(x=>x.id);boardEditNotice='Copied the funded recommended route. Click tiles to customize it.';render()});
+$('clear-custom-board').addEventListener('click',()=>{account().customNodes=[];account().customAzphelNodes=[];account().customArielNodes=[];boardEditNotice='Custom plan cleared. Obtained marks are kept separately.';state.node=null;render()});
 $('global-board-allocation').addEventListener('click',e=>{const b=e.target.closest('[data-board-jump]');if(!b||!boardOpen(b.dataset.boardJump))return;state.board=b.dataset.boardJump;state.preview=budget('crystals');state.node=null;renderBoards(model())});
 $('global-route-next').addEventListener('click',e=>{const b=e.target.closest('[data-route-node]');if(!b)return;state.board=b.dataset.routeBoard;state.preview=budget('crystals');state.node=Number(b.dataset.routeNode);renderBoards(model());document.querySelector('.node.selected')?.scrollIntoView({behavior:'smooth',block:'center',inline:'center'})});
 // A single click MUST NOT rebuild the node grid. Replacing the clicked DOM
@@ -1316,7 +1317,7 @@ $('mark-planned-button').addEventListener('click',()=>{
 });
 $('clear-obtained-button').addEventListener('click',()=>{
   const nodes=nodeMap();
-  storeObtained(new Set([...obtainedNodes()].filter(id=>nodes.get(id).board==='Azphel')));
+  storeObtained(new Set([...obtainedNodes()].filter(id=>['Azphel','Ariel'].includes(nodes.get(id).board))));
   account().recommendedRouteSnapshot=null;
   boardPurchaseNotice='';
   render();
