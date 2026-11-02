@@ -180,7 +180,7 @@ const JointProgression = (()=>{
   // and point-type boundary. Its order is driven by marginal contextual
   // utility, not by cosmetic tab order or the next unconnected high stat.
   function rankConnectedBoard({board,context='party',objective='performance',
-      role='damage',stats={},weights={},meta={}}){
+      role='damage',stats={},weights={},meta={},budget=Infinity}){
     if(!board?.nodes?.length)throw Error('Board nodes required');
     const nodes=board.nodes;
     const grid=new Map(nodes.map(n=>[n[1]+':'+n[2],n]));
@@ -188,6 +188,9 @@ const JointProgression = (()=>{
     if(starts.length!==1)throw Error('Board requires one free root');
     const visited=new Set(starts.map(n=>n[0]));
     const totals={...stats},route=[];
+    const availablePoints=Number.isFinite(budget)?
+      Math.max(0,Math.floor(budget)):Infinity;
+    let spent=0;
     const frontier=new Map();
     const offer=n=>{
       for(const [r,c] of [[n[1]-1,n[2]],[n[1]+1,n[2]],
@@ -218,13 +221,21 @@ const JointProgression = (()=>{
     }
     while(frontier.size){
       let choice=null,score=-Infinity;
-      for(const node of frontier.values()){
+      // Optimize the *actual available currency*, not only the order of a
+      // 232-point completed board. Avoid leading the user into a 4-point
+      // branch while an affordable connected 1-point node remains.
+      const candidates=[...frontier.values()];
+      const affordable=candidates.filter(node=>
+        spent+node[5]<=availablePoints);
+      const pool=affordable.length?affordable:candidates;
+      for(const node of pool){
         const current=marginal(node);
         if(current>score+EPS||Math.abs(current-score)<=EPS&&
           (choice===null||node[0]<choice[0])){choice=node;score=current}
       }
       if(!choice)break;
       frontier.delete(choice[0]);visited.add(choice[0]);
+      spent+=choice[5];
       route.push({board:board.name,id:choice[0]});
       for(const [key,value] of choice[6]||[])
         totals[key]=(totals[key]||0)+value;
