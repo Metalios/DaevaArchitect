@@ -17,9 +17,9 @@ const context={
   fitConnectedBoardBudget:(classData,route,budget)=>({route:[],spent:0})
 };
 vm.createContext(context);
-vm.runInContext(js+'\nthis.api={PveBuildOptimizer,PVE_OBJECTIVES};',context);
+vm.runInContext(read('js/optimizer/roles.js')+'\n'+js+'\nthis.api={PveBuildOptimizer,PVE_OBJECTIVES,RoleBuildGoals};',context);
 const api=context.api;
-assert.equal(Object.keys(api.PVE_OBJECTIVES).length,4);
+assert(Object.keys(api.PVE_OBJECTIVES).length>=12,'Role goals should be added to the old four objectives');
 for(const cls of Object.keys(data)){
   const graphs=api.PveBuildOptimizer.buildGraph(data[cls],45);
   assert.equal(graphs.length,4);
@@ -57,7 +57,7 @@ const run=(objective,budget,locked=[])=>{
   try{return api.PveBuildOptimizer.optimize(args)}
   finally{context.optimizeBoardRoute=previous}
 };
-for(const goal of Object.keys(api.PVE_OBJECTIVES))for(const budget of [0,1,2,3,4]){
+for(const goal of api.RoleBuildGoals.available('sorcerer','party').map(x=>x.id))for(const budget of [0,1,2,3,4]){
   const result=run(goal,budget);
   const funded=result.route.slice(0,budget).map(x=>x.id);
   assert(funded.length<=budget);
@@ -72,9 +72,10 @@ for(const goal of Object.keys(api.PVE_OBJECTIVES))for(const budget of [0,1,2,3,4
     selected.add(id);
   }
 }
-for(const goal of Object.keys(api.PVE_OBJECTIVES)){
+for(const goal of api.RoleBuildGoals.available('sorcerer','party').map(x=>x.id)){
   const result=run(goal,4,[3]);
   assert(result.route.slice(0,4).some(x=>x.id===3),'Previously obtained node lost');
 }
 assert.throws(()=>run('invalid',3),/Unknown PvE objective/);
-console.log('Objective planner fixture invariants verified for four objectives, budgets and protected nodes.');
+assert.throws(()=>run('healing',3),/Unsupported role for class/);
+console.log('Objective planner fixture invariants verified for every Sorcerer role, budget and protected node.');
