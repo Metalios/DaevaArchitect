@@ -493,6 +493,7 @@ function nodeVisual(n){
 // keep their existing legal progression until their mechanics are validated.
 let lastOptimizedCombat=null;
 let combatResultCache={key:null,result:null};
+let jointResultCache={key:null,result:null};
 function engineBuild(masteryLevels,boardEffects,stigmaLevels,equipped){
   const equippedRanks={...gearSkillLevels()};
   for(const [name,n] of Object.entries(account().gear||{}))
@@ -752,14 +753,22 @@ function model(){
       build:{...fixed,mastery:masteryRanks,stigma:stigmaRanks},
       selectedSpecs:a.customSpecialties||{}
     }).score;
+    const jointKey=JSON.stringify([
+      state.class,a.context,a.pveObjective,currentLevel(),budget('mastery'),
+      budget('stigma'),finalMastery.levels,stigma.levels,stigmas,
+      combatEffects,fixed.gearSkills,fixed.gearStats,a.customSpecialties,
+      !!a.manualMastery,!!a.manualStigma
+    ]);
     try{
-      joint=JointProgression.optimizeCombined({
+      joint=jointResultCache.key===jointKey?jointResultCache.result:
+        JointProgression.optimizeCombined({
         classId:state.class,context:a.context,objective:a.pveObjective||'performance',
         mastery:finalMastery,stigma,masteryNames:names,stigmaNames:stigmas,
         masteryBudget:budget('mastery'),stigmaBudget:budget('stigma'),
         masteryCost,stigmaCost,masteryCap:masteryRankCap,scoreBuild:scoring,
         pinMastery:!!a.manualMastery,
         pinStigma:!!a.manualStigma||isLeveling()||budget('stigma')<30});
+      jointResultCache={key:jointKey,result:joint};
       chosenMastery=joint.mastery;
       chosenStigma=joint.stigma;
     }catch(error){
