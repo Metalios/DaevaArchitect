@@ -233,6 +233,44 @@ const JointProgression = (()=>{
     if(route.length!==nodes.length-1)throw Error('Unreachable board nodes');
     return route;
   }
+  /**
+   * Conservative four-slot Global Stigma comparison. Full real-score search
+   * is limited by incomplete damage and animation evidence; avoid altering a
+   * research-grounded default on a tiny or ambiguous proxy-score gain.
+   */
+  function chooseStigmaLoadout({baseline,candidates=[],isKnown,rankPlan,score,
+      minimumImprovement=.12}){
+    if(!Array.isArray(baseline)||baseline.length!==4)
+      throw Error('Global Stigma candidates require four equipped slots');
+    const legal=names=>Array.isArray(names)&&names.length===4&&
+      new Set(names).size===4&&names.every(name=>
+        typeof name==='string'&&isKnown(name));
+    if(!legal(baseline))throw Error('Baseline equipped Stigmas are not legal');
+    const unique=new Map();
+    for(const names of [baseline,...candidates]){
+      if(!legal(names))continue;
+      const key=[...names].sort().join('|');
+      if(!unique.has(key))unique.set(key,names.slice());
+    }
+    const tested=[];
+    for(const names of unique.values()){
+      const allocation=rankPlan(names);
+      if(!allocation||!allocation.levels)continue;
+      const value=Number(score(names,allocation.levels));
+      if(!Number.isFinite(value))continue;
+      tested.push({names,allocation,score:value});
+    }
+    const first=tested.find(candidate=>
+      candidate.names.every(name=>baseline.includes(name)));
+    if(!first)return {names:baseline.slice(),changed:false,evidence:'unavailable'};
+    const improved=tested.slice().sort((a,b)=>b.score-a.score)[0];
+    const delta=improved.score-first.score;
+    const significant=delta>Math.max(1e-7,Math.abs(first.score)*minimumImprovement);
+    return {names:significant?improved.names:first.names,
+      changed:significant,score:significant?improved.score:first.score,
+      baselineScore:first.score,compared:tested.length,
+      evidence:'conservative comparative mechanics, not measured PvP win-rate or DPS'};
+  }
   const MANUAL_MOTION=new Set(['Hellfire','Deadshot','Punishment']);
   function adviseMacro({classId,context,objective='performance',profile,
       available=[],stigma=[],levels={},specialties={}}){
@@ -262,5 +300,5 @@ const JointProgression = (()=>{
       objective,context,classId,
       coverage:stacks.flatMap(s=>s.knownCooldowns)};
   }
-  return Object.freeze({improveRanks,optimizeCombined,rankConnectedBoard,adviseMacro,spend});
+  return Object.freeze({improveRanks,optimizeCombined,rankConnectedBoard,chooseStigmaLoadout,adviseMacro,spend});
 })();
