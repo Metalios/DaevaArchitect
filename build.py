@@ -87,6 +87,7 @@ shutil.copy2(root / 'js' / 'optimizer' / 'objectives.js', out_dir / 'js' / 'opti
 shutil.copy2(root / 'js' / 'optimizer' / 'joint.js', out_dir / 'js' / 'optimizer' / 'joint.js')
 shutil.copy2(root / 'js' / 'mastery_budget.js', out_dir / 'js' / 'mastery_budget.js')
 (out_dir / 'js' / 'engine').mkdir(parents=True, exist_ok=True)
+shutil.copy2(root / 'js' / 'engine' / 'cooldown_rules.js', out_dir / 'js' / 'engine' / 'cooldown_rules.js')
 shutil.copy2(root / 'js' / 'engine' / 'global_actions.js', out_dir / 'js' / 'engine' / 'global_actions.js')
 shutil.copy2(root / 'js' / 'engine' / 'animation_evidence.js', out_dir / 'js' / 'engine' / 'animation_evidence.js')
 shutil.copy2(root / 'js' / 'engine' / 'combat_timeline.js', out_dir / 'js' / 'engine' / 'combat_timeline.js')
