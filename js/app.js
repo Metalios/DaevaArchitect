@@ -49,7 +49,7 @@ const LEVELING_MASTERY_NEXT = {
   cleric:['Radiant Recovery','Condemnation',"Earth's Retribution",'Healing Light','Chain of Torment'],
   chanter:['Dark Crush','Onslaught','Recuperation','Spinning Strike','Incandescent Blow']
 };
-const DEFAULT_ACCOUNT = (cls='templar') => ({...FRESH_45,azphel:0,ariel:0,pveObjective:'performance',context:'party',journey:'endgame',endgameContext:'party',levelingContext:'solo',leveling:{level:1,extraByLevel:{}},gear:{},equipment:{},currentRanks:{},manualMastery:null,manualStigma:null,customStigmas:null,customSpecialties:{},obtainedNodes:[],boardMode:'recommended',customNodes:[],customAzphelNodes:[],customArielNodes:[],titlesOwned:{},faction:'elyos',macroBind:'RMB',quickUse2Bind:'R',goalTarget:['cleric','chanter'].includes(cls)?0:cls==='templar'?60000:100000,goalObserved:0,gearCpTarget:0});
+const DEFAULT_ACCOUNT = (cls='templar') => ({...FRESH_45,azphel:0,ariel:0,gearRating:0,pveObjective:'performance',context:'party',journey:'endgame',endgameContext:'party',levelingContext:'solo',leveling:{level:1,extraByLevel:{}},gear:{},equipment:{},currentRanks:{},manualMastery:null,manualStigma:null,customStigmas:null,customSpecialties:{},obtainedNodes:[],boardMode:'recommended',customNodes:[],customAzphelNodes:[],customArielNodes:[],titlesOwned:{},faction:'elyos',macroBind:'RMB',quickUse2Bind:'R',goalTarget:['cleric','chanter'].includes(cls)?0:cls==='templar'?60000:100000,goalObserved:0,gearCpTarget:0});
 let saved = {};
 try { saved = JSON.parse(localStorage.getItem('daeva-architect-all-v1') || localStorage.getItem('aion2-pathfinder-all-v3') || '{}') || {}; } catch (_) {}
 let state = {class:CLASS_ORDER.includes(saved.class)?saved.class:null,accounts:saved.accounts||{},gearView:['inventory','inspect'].includes(saved.gearView)?saved.gearView:null,tab:'overview',board:'Nezekan',preview:FRESH_45.crystals,node:null,titleSearch:'',titleSlot:'all',titleOwnership:'all',titleFaction:'all'};
@@ -711,7 +711,7 @@ function render(){
   $('hero-description').textContent=isLeveling()?`${p.name} · Level ${currentLevel()} · ${a.context==='solo'?'Solo':'Group'} leveling. Follow the next unlocks and update your earned points as you play.`:p.summary+' Change your point totals to see what to buy now and next.';
   $('class-role').textContent=p.role;$('overview-role').textContent=p.role;
   for(const key of ['mastery','stigma','crystals'])$(`${key==='crystals'?'crystal':key}-input`).value=budget(key);
-  pointLabels();$('leveling-controls').hidden=!isLeveling();$('fresh-preset').hidden=isLeveling();$('azphel-control').hidden=isLeveling();$('ariel-control').hidden=isLeveling();$('pvp-button').hidden=isLeveling();$('goal-panel').hidden=isLeveling();$('leveling-guide').hidden=!isLeveling();
+  pointLabels();$('leveling-controls').hidden=!isLeveling();$('fresh-preset').hidden=isLeveling();$('azphel-control').hidden=isLeveling();$('ariel-control').hidden=isLeveling();$('gear-rating-control').hidden=isLeveling();$('pvp-button').hidden=isLeveling();$('goal-panel').hidden=isLeveling();$('leveling-guide').hidden=!isLeveling();
   for(const [id,active] of [['leveling-mode',isLeveling()],['endgame-mode',!isLeveling()]]){$(id).classList.toggle('active',active);$(id).setAttribute('aria-pressed',active)}
   $('intro-copy').innerHTML=isLeveling()?`Enter <b>total points earned</b>, including spent and unspent. The level-only points are the baseline; extra rewards apply from the level where you enter them onward. Mastery skills, Stigma slots, and boards obey Global level gates. The Rotation & macro tab shows a setup for your current level.`:'Enter <b>total points earned, including spent and unspent</b>. Recommended ranks are a reset plan; displayed in-game skill levels can also include board, gear and Arcana bonuses. Each class saves its own inputs. Research reviewed October 19, 2026.';
   $('reset-button').textContent=isLeveling()?'Reset class progress':'Reset class to fresh 45';
@@ -723,7 +723,7 @@ function render(){
 }
 $('pvp-variant-control').hidden=isLeveling()||!appIsPvpContext(a.context);
 $('pvp-mode-select').value=appIsPvpContext(a.context)?a.context:'pvp';
-  $('azphel-input').value=a.azphel||0;$('ariel-input').value=a.ariel||0;
+  $('azphel-input').value=a.azphel||0;$('ariel-input').value=a.ariel||0;$('gear-rating-input').value=a.gearRating||'';
   document.querySelectorAll('[data-tab]').forEach(b=>{b.classList.toggle('active',b.dataset.tab===state.tab);b.setAttribute('aria-current',b.dataset.tab===state.tab?'page':'false')});
   $('mobile-more-button').classList.toggle('active',['stigma','rotation','titles','sources'].includes(state.tab));
   document.querySelectorAll('.tab-panel').forEach(el=>el.classList.toggle('active',el.id===state.tab));
@@ -1006,8 +1006,10 @@ function renderBoards(m){
       ? `Only boards unlocked by level ${currentLevel()} are included. Single-click a tile to preview; double-click to mark obtained. Blue rings are recommended, gold rings are obtained.`
       : 'Single-click to preview a node. Double-click to mark it obtained; blue rings show the stable recommended path, gold rings show actual purchases. Planned amounts stay in each board tab.';
   renderGlobalBoardRoute(m,nodes);
+  const arielEligibility=arielAccess(a.gearRating,a.ariel,currentLevel());
+  $('ariel-access-hint').textContent=arielEligibility.message;
   // Keep board tabs and their planned allocation exactly as before.
-  $('board-spent').textContent=appIsPvpContext(a.context)&&!isLeveling()?`${m.boards.spent}/${budget('crystals')} PvE · ${m.azphel.spent}/${a.azphel||0} Azphel`:`${m.boards.spent}/${budget('crystals')} base PvE · ${m.ariel.spent}/${a.ariel||0} Ariel · ${m.azphel.spent}/${a.azphel||0} Azphel`;
+  $('board-spent').textContent=`${m.boards.spent}/${budget('crystals')} base PvE · ${m.ariel.spent}/${a.ariel||0} Ariel · ${m.azphel.spent}/${a.azphel||0} Azphel`;
   const crystalSpent=obtainedCrystalSpend(group);
   $('board-crystal-value').textContent=`${crystalSpent} / ${crystalBudget}`;
   $('board-crystal-remaining').textContent=`${Math.max(0,crystalBudget-crystalSpent)} remaining`;
@@ -1026,7 +1028,7 @@ function renderBoards(m){
   const boardSteps=steps.filter(x=>x.board===state.board),boardMarked=boardSteps.filter(x=>actual.has(x.id)).length,boardPlanned=boardSteps.filter(x=>preview.owned.has(x.id)).length;
   const recommendedTiles=new Set(routeSteps(route,nodes).filter(x=>x.total<=crystalBudget).map(x=>x.id));
   $('board-map-title').textContent=`${state.board} · choose tiles on the board`;
-  $('board-map-progress').textContent=`${boardPlanned} planned on this board · ${boardMarked} recommended tiles obtained. Single-click previews · double-click marks gold · your blue path stays fixed until your crystals are spent.`;
+  $('board-map-progress').textContent=(isAriel?arielEligibility.message+' ':'')+`${boardPlanned} planned on this board · ${boardMarked} recommended tiles obtained. Single-click previews · double-click marks gold · your blue path stays fixed until your crystals are spent.`;
   for(let r=1;r<=15;r++)for(let c=1;c<=15;c++){const n=grid.get(`${r}:${c}`);if(!n){html+='<span></span>';continue}const planned=preview.owned.has(n[0])||n[5]===0,obtained=actual.has(n[0]),order=queue.get(n[0]),kind=n[5]===0?'start':n[5]===4?'unique':typeof n[6]?.[0]?.[0]==='number'?'skill':'stat';html+=`<button type="button" class="node ${kind} ${planned?'planned':''} ${recommendedTiles.has(n[0])?'recommended board-suggested':''} ${obtained?'obtained':''} ${order?'queued':''} ${order&&!planned?'queued-later':''} ${boardNext?.id===n[0]?'next':''} ${state.node===n[0]?'selected':''}" data-node="${n[0]}" title="${esc(effectText(n))}${order?` · upcoming click ${order} across boards`:''}${n[5]&&boardOpen(state.board)?' · click to preview · double-click to mark obtained':''}" aria-label="${esc(effectText(n))}; row ${r}, column ${c}; ${obtained?'obtained':planned?'planned':'later'}${order?`; upcoming click ${order}`:''}" aria-pressed="${customMode()?!!planned:obtained}" ${boardOpen(state.board)?'': 'disabled'}>${nodeVisual(n)}${order?`<span class="queue-badge" aria-hidden="true">${order}</span>`:''}</button>`}
   $('board-grid').innerHTML=html;const selected=state.node&&nodes.get(state.node)?.board===state.board?nodes.get(state.node).node:null;
   $('selected-node').innerHTML=selected?`<div class="selected-icon">${nodeVisual(selected)}</div><div><strong>${esc(effectText(selected))}</strong><small>Row ${selected[1]}, column ${selected[2]} · ${selected[5]} crystal${selected[5]===1?'':'s'} · ${selected[5]===0?'Start node':actual.has(selected[0])?'Obtained':preview.owned.has(selected[0])?'Planned within budget':'Unplanned'}. ${selected[5]?'Single-click previews; double-click the tile to '+(actual.has(selected[0])?'unmark':'mark')+' obtained.':''}</small></div>`:`<strong>${state.board}</strong><small>${boardOpen(state.board)?customMode()?'Click a connected tile to plan it. Numbered badges show the order of your next selected tiles.':'Blue ring = recommended route · gold ring = obtained tile. Single-click to preview its effect; double-click to toggle obtained. The recommendations stay fixed until your total crystals have been spent.':`Locked until level ${BOARD_UNLOCKS[state.board]}. Nodes become selectable then.`}</small>`;
@@ -1160,6 +1162,8 @@ for(const [id,key,max] of [['mastery-input','mastery',462],['stigma-input','stig
   $(id).addEventListener('input',e=>{if(e.target.value==='')return;const value=clamp(e.target.value,isLeveling()?levelReward()[key]:0,max);if(isLeveling())setLevelingBudget(key,value);else account()[key]=value;save()});
   $(id).addEventListener('change',update);
 }
+$('gear-rating-input').addEventListener('input',e=>{if(e.target.value!==''){account().gearRating=clamp(e.target.value,0,10000);save()}});
+$('gear-rating-input').addEventListener('change',e=>{account().gearRating=e.target.value===''?0:clamp(e.target.value,0,10000);render()});
 $('ariel-input').addEventListener('input',e=>{account().ariel=clamp(e.target.value,0,232);if(state.board==='Ariel')state.preview=account().ariel;save()});
 $('ariel-input').addEventListener('change',e=>{account().ariel=clamp(e.target.value,0,232);if(state.board==='Ariel')state.preview=account().ariel;render()});
 $('azphel-input').addEventListener('input',e=>{account().azphel=clamp(e.target.value,0,232);if(state.board==='Azphel')state.preview=account().azphel;save()});
