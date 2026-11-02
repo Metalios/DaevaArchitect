@@ -83,7 +83,7 @@ const GlobalCombatEvidence=(()=>{
       observedDps:damage/duration,observedHps:healing/duration,
       casts:castEvents,hits:hitEvents,unsupportedEvents:unsupported,
       skills:counts,buffUptimeSeconds:uptime,observedCastGaps,
-      evidence:'User-supplied Global fight events; observed cast gaps include decisions, movement and latency and are NOT validated animation/cancel times.',
+      evidence:'User-declared Global fight events (origin is not independently authenticated); observed cast gaps include decisions, movement and latency and are NOT validated animation/cancel times.',
       limitations:[
         'Only recognized class skill events included; some server packets and summoned/pet damage may be absent.',
         'Damage totals reflect received events, not necessarily the full boss/party damage.',
