@@ -11,11 +11,16 @@ const CP_STAT_WEIGHTS = {
   'Cooldown Reduction':289,'Perfect Chance':100,'Strike Chance':500,
   'Damage Tolerance':160,'PvE Damage Tolerance':100,
   'Critical Damage Tolerance':80,'Multi-hit Resist':17,'Multi-Hit Resist':17,
-  'Attack Increase':907.5
+  'Attack Increase':907.5,
+  'PvE Attack':35,'PvE Defense':1,'PvE Accuracy':7.7,'PvE Evasion':7.7,
+  'Boss Attack':30,'Boss Defense':1,'Boss Damage Boost':300,'Boss Damage Tolerance':120,
+  'PvE Damage Tolerance':120,'PvP Attack':25,'PvP Defense':1,'PvP Accuracy':7.7,'PvP Evasion':7.7,
+  'PvP Critical Hit':8.2,'PvP Critical Hit Resist':8.2,'PvP Damage Boost':330,
+  'PvP Damage Tolerance':120,'Status Effect Chance':150,'Status Effect Resist':150
 };
 const CP_MODEL = {intercept:-11051.5268,gearBase:57.0352,enhance:61.5471,titles:17.9964,stigma:143.8335,mastery:15};
 function cpFingerprint(m){
-  return JSON.stringify([state.class,gearEquipment(),[...m.boards.owned].sort((a,b)=>a-b),m.mastery.levels,activeStigmas(),m.stigma.levels,account().titlesOwned]);
+  return JSON.stringify([state.class,gearEquipment(),[...m.boards.owned].sort((a,b)=>a-b),m.mastery.levels,[...m.ariel.owned].sort((a,b)=>a-b),[...m.azphel.owned].sort((a,b)=>a-b),activeStigmas(),m.stigma.levels,account().titlesOwned]);
 }
 
 function estimateCombatPower(m){
@@ -34,9 +39,14 @@ function estimateCombatPower(m){
   // A direct board stat score distinguishes routes with equal node counts.
   // Skill-level nodes also flow into the effective Mastery sum below.
   let boardScore=0;
-  for(const [key,value] of Object.entries(m.effects.stats)){
+  for(const [key,value] of Object.entries({...m.effects.stats,...{}})){
     const meta=data().stats[key];
     if(meta)boardScore+=(CP_STAT_WEIGHTS[meta.name]||0)*value/(meta.div||1);
+  }
+  // Ariel (PvE) and Azphel (PvP) are permanent character progression,
+  // irrespective of the current build-mode selector. Approximate values only.
+  for(const boardEffects of [m.arielEffects,m.azphelEffects])for(const [key,value] of Object.entries(boardEffects?.stats||{})){
+    const meta=data().stats[key];if(meta)boardScore+=(CP_STAT_WEIGHTS[meta.name]||0)*value/(meta.div||1);
   }
   const mastery=skillNames().reduce((total,name)=>total+Math.max(0,effective(name,m)-1),0);
   const stigma=activeStigmas().reduce((total,name)=>total+(m.stigma.levels[name]||0),0);
