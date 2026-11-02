@@ -102,6 +102,7 @@ for name in ('profiles.js', 'titles.js', 'ariel_data.js', 'ariel_progression.js'
     shutil.copy2(root / 'js' / name, out_dir / 'js' / name)
 shutil.copy2(root / 'js' / 'board_budget.js', out_dir / 'js' / 'board_budget.js')
 (out_dir / 'js' / 'optimizer').mkdir(parents=True, exist_ok=True)
+shutil.copy2(root / 'js' / 'optimizer' / 'roles.js', out_dir / 'js' / 'optimizer' / 'roles.js')
 shutil.copy2(root / 'js' / 'optimizer' / 'objectives.js', out_dir / 'js' / 'optimizer' / 'objectives.js')
 shutil.copy2(root / 'js' / 'optimizer' / 'joint.js', out_dir / 'js' / 'optimizer' / 'joint.js')
 shutil.copy2(root / 'js' / 'mastery_budget.js', out_dir / 'js' / 'mastery_budget.js')
