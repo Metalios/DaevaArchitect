@@ -95,18 +95,19 @@ const ClassCombatModels=(()=>{
  function profile(cls){return profiles[cls]||null}
  function advice(cls,context,objective,base){
    const p=profile(cls);
-   if(!p||!base||context==='pvp'||!objective||objective==='performance')return base;
+   if(!base||context==='pvp'||!objective||objective==='performance')return base;
    const role=RoleBuildGoals.info(cls,objective);
    if(role){
      // A role selection must modify legal Mastery and Stigma recommendations.
-     const priority=uniq([...role.focus,...role.utility,...p.offense]);
-     const support=uniq([...role.utility,...p.defense,...p.support]).slice(0,8);
+     const priority=uniq([...role.focus,...role.utility,...(p?.offense||base.core||[])]);
+     const support=uniq([...role.utility,...(p?.defense||[]),...(p?.support||base.support||[])]).slice(0,8);
      const stigmas=uniq(role.stigma).slice(0,4);
      return {...base,buildObjective:objective,core:priority.slice(0,10),
        support,stigmas,stigmaPriority:[...stigmas],
        stigmaMilestones:undefined,
        why:`${base.why} ${RoleBuildGoals.available(cls,context).find(x=>x.id===objective)?.label||objective}: ${role.description}. ${role.manual} Comparative score is not measured HPS, DPS or threat.`};
    }
+   if(!p)return base;
    const survival=objective==='survivability';
    const core=survival?uniq([...p.defense.slice(0,3),...p.offense.slice(0,4)]):
      objective==='burst'?uniq([...p.offense.slice(0,3),...p.offense.slice(3,6)]):
