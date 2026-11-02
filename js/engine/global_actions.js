@@ -83,7 +83,8 @@ const GlobalActionData = (() => {
   function readyWindows(cooldown,duration,haste=0){
     if(!Number.isFinite(cooldown)||cooldown<0)return null;
     if(cooldown===0)return null;
-    const interval=Math.max(.1,cooldown*(1-clamp(haste,0,.75)));
+    // Global Cooldown description caps cooldown reduction at 60%.
+    const interval=Math.max(.1,cooldown*(1-clamp(haste,0,.60)));
     const length=clamp(duration,0,3600);
     return length===0?0:Math.min(36001,1+Math.floor((length-1e-9)/interval));
   }
