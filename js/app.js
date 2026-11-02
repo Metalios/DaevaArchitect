@@ -715,7 +715,7 @@ function render(){
   $('intro-copy').innerHTML=isLeveling()?`Enter <b>total points earned</b>, including spent and unspent. The level-only points are the baseline; extra rewards apply from the level where you enter them onward. Mastery skills, Stigma slots, and boards obey Global level gates. The Rotation & macro tab shows a setup for your current level.`:'Enter <b>total points earned, including spent and unspent</b>. Recommended ranks are a reset plan; displayed in-game skill levels can also include board, gear and Arcana bonuses. Each class saves its own inputs. Research reviewed October 19, 2026.';
   $('reset-button').textContent=isLeveling()?'Reset class progress':'Reset class to fresh 45';
   if(isLeveling())renderLevelControls();
-  $('fresh-45-button').classList.toggle('active',Object.entries(FRESH_45).every(([key,value])=>a[key]===value)&&!(a.azphel||0));
+  $('fresh-45-button').classList.toggle('active',Object.entries(FRESH_45).every(([key,value])=>a[key]===value)&&!(a.azphel||0)&&!(a.ariel||0));
   for(const [id,ctx] of [['party-button','party'],['solo-button','solo'],['pvp-button','pvp']]){
  const selected=a.context===ctx||(ctx==='pvp'&&appIsPvpContext(a.context));
  $(id).classList.toggle('active',selected);$(id).setAttribute('aria-pressed',String(selected));
@@ -1006,7 +1006,7 @@ function renderBoards(m){
       : 'Single-click to preview a node. Double-click to mark it obtained; blue rings show the stable recommended path, gold rings show actual purchases. Planned amounts stay in each board tab.';
   renderGlobalBoardRoute(m,nodes);
   // Keep board tabs and their planned allocation exactly as before.
-  $('board-spent').textContent=appIsPvpContext(a.context)&&!isLeveling()?`${m.boards.spent}/${budget('crystals')} PvE · ${m.azphel.spent}/${a.azphel||0} Azphel`:`${m.boards.spent} / ${budget('crystals')} PvE crystals planned`;
+  $('board-spent').textContent=appIsPvpContext(a.context)&&!isLeveling()?`${m.boards.spent}/${budget('crystals')} PvE · ${m.azphel.spent}/${a.azphel||0} Azphel`:`${m.boards.spent}/${budget('crystals')} base PvE · ${m.ariel.spent}/${a.ariel||0} Ariel · ${m.azphel.spent}/${a.azphel||0} Azphel`;
   const crystalSpent=obtainedCrystalSpend(group);
   $('board-crystal-value').textContent=`${crystalSpent} / ${crystalBudget}`;
   $('board-crystal-remaining').textContent=`${Math.max(0,crystalBudget-crystalSpent)} remaining`;
@@ -1143,7 +1143,7 @@ $('mobile-next-action').addEventListener('click',()=>{state.tab=$('mobile-next')
 function clearMasterySearch(){state.masterySearch='';$('mastery-search').value=''}
 $('class-buttons').addEventListener('click',e=>{const b=e.target.closest('[data-class]');if(!b)return;state.class=b.dataset.class;state.board='Nezekan';state.preview=budget('crystals');state.node=null;clearMasterySearch();render()});
 function useBudget(values){Object.assign(account(),values);state.preview=account().crystals;state.node=null;render()}
-$('fresh-45-button').addEventListener('click',()=>useBudget({...FRESH_45,azphel:0}));
+$('fresh-45-button').addEventListener('click',()=>useBudget({...FRESH_45,azphel:0,ariel:0}));
 function setLevel(value){leveling().level=clamp(value,1,45);if(!boardOpen(state.board))state.board='Nezekan';state.preview=budget('crystals');state.node=null;clearMasterySearch();render()}
 $('leveling-mode').addEventListener('click',()=>{const a=account();if(!isLeveling()){a.endgameContext=a.context;a.context=a.levelingContext||'solo'}a.journey='leveling';state.board='Nezekan';state.preview=budget('crystals');state.tab='overview';clearMasterySearch();render()});
 $('endgame-mode').addEventListener('click',()=>{const a=account();if(isLeveling()){a.levelingContext=a.context;a.context=a.endgameContext||'party'}a.journey='endgame';state.preview=budget('crystals');state.tab='overview';clearMasterySearch();render()});
