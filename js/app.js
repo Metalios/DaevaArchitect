@@ -680,9 +680,42 @@ function model(){
     optimizedMastery,budget('mastery'),masteryCost,masteryRankCap,names,
     masteryStages(plannedEffects.skills),activeWeights().skills,
     plannedEffects.skills,{...gearSkillLevels(),...a.gear});
-  return {mastery:finalMastery,stigma,boards,ariel,azphel,
+  const arielEffects=effects(ariel.owned),azphelEffects=effects(azphel.owned);
+  // Every candidate includes all six boards, without transferring crystals
+  // between the independent standard, Ariel and Azphel currency pools.
+  const combatStats={...plannedEffects.stats};
+  for(const extra of [arielEffects,azphelEffects])
+    for(const [key,value] of Object.entries(extra.stats||{}))
+      combatStats[key]=(combatStats[key]||0)+value;
+  const combatEffects={skills:plannedEffects.skills,stats:combatStats};
+  let joint=null,chosenMastery=finalMastery,chosenStigma=stigma;
+  if(typeof JointProgression!=='undefined'&&
+     typeof ClassCombatModels!=='undefined'&&
+     ClassCombatModels.profile(state.class)){
+    const fixed=engineBuild(finalMastery.levels,combatEffects,stigma.levels,stigmas);
+    const scoring=(masteryRanks,stigmaRanks)=>ClassCombatModels.evaluate({
+      classId:state.class,context:a.context,objective:a.pveObjective||'performance',
+      build:{...fixed,mastery:masteryRanks,stigma:stigmaRanks},
+      selectedSpecs:a.customSpecialties||{}
+    }).score;
+    try{
+      joint=JointProgression.optimizeCombined({
+        classId:state.class,context:a.context,objective:a.pveObjective||'performance',
+        mastery:finalMastery,stigma,masteryNames:names,stigmaNames:stigmas,
+        masteryBudget:budget('mastery'),stigmaBudget:budget('stigma'),
+        masteryCost,stigmaCost,masteryCap:masteryRankCap,scoreBuild:scoring,
+        pinMastery:!!a.manualMastery,
+        pinStigma:!!a.manualStigma||isLeveling()||budget('stigma')<30});
+      chosenMastery=joint.mastery;
+      chosenStigma=joint.stigma;
+    }catch(error){
+      console.warn('Joint progression scoring unavailable; retaining legal baseline',error);
+      joint={error:String(error),evidence:'baseline recommendation retained'};
+    }
+  }
+  return {mastery:chosenMastery,stigma:chosenStigma,boards,ariel,azphel,
     effects:plannedEffects,acquiredEffects,combat:lastOptimizedCombat,
-    arielEffects:effects(ariel.owned),azphelEffects:effects(azphel.owned)};
+    joint,arielEffects,azphelEffects};
 }
 function skillLevelBreakdown(name,m){
   const mastery=m.mastery.levels[name]||1,
