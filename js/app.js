@@ -233,6 +233,9 @@ function recommendedStigmas(){
   // be displaced by a generic uncalibrated personal-DPS proxy.
   if(!combat||typeof JointProgression==='undefined'||isLeveling()||
      a.customStigmas||a.manualStigma||budget('stigma')<30||
+     // A simple personal-DPS proxy must not displace a manually researched
+     // healing, tanking, CC or group-support Stigma set.
+     RoleBuildGoals.info(state.class,a.pveObjective)||
      (state.class==='templar'&&a.context==='party'))return baseline;
   const candidates=[standard,combat.damageStigmas,combat.survivalStigmas,
     variants[state.class]?.pvp,variants[state.class]?.solo,
