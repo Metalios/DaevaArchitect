@@ -1113,7 +1113,7 @@ function renderRotation(m){
         '. Your chosen Specialty options exactly match the most common '+
         'observed combination on '+observed.matchesCommonSpecialties+
         ' of '+observed.skillOverlaps.length+' comparable skills. '+
-        'These are cross-encounter OBSERVATIONS, not normalized DPS, '+
+        'These observations come from PvE boss fights ONLY (not Arena/Abyss PvP). They are not normalized DPS, '+
         'cast speed, action lock, or proof of optimization.';
     }else target.textContent=observed.reason;
   }
