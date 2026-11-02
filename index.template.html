@@ -98,6 +98,14 @@
         <p id="rotation-control-status" role="status"></p>
       </section>
       <div class="rotation-hero panel"><div class="rotation-mark">01 / THE RULE</div><h3 id="rotation-rule-title"></h3><p id="rotation-rule-text"></p><div id="rotation-gate" class="notice"></div><div id="macro-rank-summary" class="macro-rank-summary"></div></div>
+      <details class="rotation-advanced" id="global-cohort-panel"><summary>Observed Global combat benchmark · class-specific fight samples</summary>
+        <div class="panel">
+          <h3>Real Global combat cohort</h3>
+          <p id="global-cohort-summary" role="status">Loading versioned combat evidence…</p>
+          <p>Cross-boss aggregate, not a prediction for your gear or a guaranteed superior build. Popular skills and Specialty picks indicate use, not causal DPS gains. Animation cancel frames are not included.</p>
+          <a href="https://a2tools.app/stats?inline=1&amp;lang=en&amp;region=global" target="_blank" rel="noopener noreferrer">Original Global encounter evidence</a>
+        </div>
+      </details>
       <details class="rotation-advanced" id="combat-evidence-panel"><summary>Optional · compare real Global combat evidence</summary>
         <div class="panel">
           <h3>Global combat recording</h3>
@@ -181,6 +189,7 @@
   <script defer src="./js/engine/animation_evidence.js"></script>
   <script defer src="./js/engine/combat_timeline.js"></script>
   <script defer src="./js/engine/combat_evidence.js"></script>
+  <script defer src="./js/engine/cohort_analysis.js"></script>
   <script defer src="./js/engine/combat.js"></script>
   <script defer src="./js/engine/class_models.js"></script>
   <script defer src="./js/optimizer/objectives.js"></script>
