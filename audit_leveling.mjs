@@ -106,3 +106,29 @@ vm.runInContext("account().leveling={level:11,extra:{mastery:200,stigma:0,crysta
 assert.equal(vm.runInContext("budget('mastery')",context),20);
 assert.equal(vm.runInContext("account().leveling.level=45;budget('mastery')",context),403);
 console.log('Checked earned-point history and migration from older saved accounts.');
+
+
+// Global Stigma budget = 29 level-up points by 45 + one Shard rewarded by
+// the third Ascension quest. Raw client rows intentionally exclude quest loot.
+assert.equal(context.LEVEL_REWARDS[45].stigma,29);
+assert.equal(vm.runInContext('FRESH_45.stigma',context),30);
+vm.runInContext("state.class='templar'; account().journey='leveling'; account().leveling={level:1,extraByLevel:{}}",context);
+const stigmaMilestones={1:0,21:0,22:1,23:2,27:6,32:11,37:16,40:20,45:30};
+for(const [level,points] of Object.entries(stigmaMilestones)){
+  vm.runInContext('leveling().level='+Number(level),context);
+  assert.equal(vm.runInContext('levelReward().stigma',context),points,
+    'Level '+level+' should include exactly one Ascension Stigma Shard after unlock');
+  assert.equal(vm.runInContext("budget('stigma')",context),points,
+    'Level '+level+' actual Stigma budget must use quest-inclusive baseline');
+}
+vm.runInContext("leveling().level=45;setLevelingBudget('stigma',36)",context);
+assert.equal(vm.runInContext("budget('stigma')",context),36);
+assert.equal(vm.runInContext("leveling().extraByLevel[45].stigma",context),6,
+  'Only six extra shards beyond the 30-point baseline should be stored');
+assert.equal(vm.runInContext("leveling().level=22;budget('stigma')",context),1,
+  'Endgame bonus shards must never apply to level 22 retroactively');
+vm.runInContext("leveling().level=45;setLevelingBudget('stigma',30)",context);
+assert.equal(vm.runInContext("budget('stigma')",context),30);
+assert.equal(vm.runInContext("leveling().extraByLevel[45].stigma",context),0,
+  'Resetting to the fresh baseline must not store an extra shard');
+console.log('Verified Global Ascension quest +1 point, 30-point fresh-45, and level-specific earned shard carry-forward.');
