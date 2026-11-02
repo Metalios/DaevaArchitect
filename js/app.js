@@ -129,10 +129,66 @@ function appIsPvpContext(mode){return typeof mode==='string'&&/^pvp(?:-|$)/.test
 function activeRoute(){const ctx=account().context;const route=liveRoute||ROUTES[state.class][appIsPvpContext(ctx)?'pvp':ctx];return isLeveling()?route.filter(x=>boardOpen(x.board)):route}
 function customMode(){return account().boardMode==='custom'}
 function customIds(group='crystals'){if(typeof group==='boolean')group=group?'azphel':'crystals';const valid=nodeMap(),key=group==='azphel'?'customAzphelNodes':group==='ariel'?'customArielNodes':'customNodes';return (account()[key]||[]).filter(id=>valid.has(id)&&(valid.get(id).board==='Azphel'?'azphel':valid.get(id).board==='Ariel'?'ariel':'crystals')===group&&(!isLeveling()||boardOpen(valid.get(id).board)))}
-function plannedRoute(group='crystals'){if(typeof group==='boolean')group=group?'azphel':'crystals';return customMode()?customIds(group).map(id=>({board:nodeMap().get(id).board,id})):group==='azphel'?ROUTES[state.class].azphel:group==='ariel'?arielRoute():activeRoute()}
-const ARIEL_ROUTE_CACHE=new Map();
-function arielRoute(){const cacheKey=state.class+'|'+account().pveObjective;if(ARIEL_ROUTE_CACHE.has(cacheKey))return ARIEL_ROUTE_CACHE.get(cacheKey);const b=ARIEL[state.class],visited=new Set(b.nodes.filter(n=>n[5]===0).map(n=>n[0])),route=[];while(visited.size<b.nodes.length){const frontier=b.nodes.filter(n=>!visited.has(n[0])&&b.nodes.some(v=>visited.has(v[0])&&Math.abs(v[1]-n[1])+Math.abs(v[2]-n[2])===1));if(!frontier.length)break;frontier.sort((x,y)=>arielNodeScore(y)-arielNodeScore(x)||x[0]-y[0]);const n=frontier[0];visited.add(n[0]);route.push({board:'Ariel',id:n[0]})}ARIEL_ROUTE_CACHE.set(cacheKey,route);return route}
-function arielNodeScore(n){const defens=account().pveObjective==='survivability',weights={PvEAmplifyDamage:defens?3:15,BossNpcAmplifyDamage:defens?3:13,BossNpcAddDamage:9,PvEAddDamage:9,PvEAccuracy:7,PvEDecreaseDamage:defens?15:5,BossNpcDecreaseDamage:defens?14:6,HPMax:5,PvEDamageDefense:5};return n[6].reduce((a,[k])=>a+(weights[k]||2),0)/Math.max(1,n[5])}
+function plannedRoute(group='crystals'){if(typeof group==='boolean')group=group?'azphel':'crystals';return customMode()?customIds(group).map(id=>({board:nodeMap().get(id).board,id})):group==='azphel'?azphelRoute():group==='ariel'?arielRoute():activeRoute()}
+const SPECIAL_BOARD_ROUTE_CACHE=new Map();
+function specialBoardRoute(name){
+  const a=account(),context=name==='Azphel'&&
+    !appIsPvpContext(a.context)?'pvp':name==='Ariel'&&
+    appIsPvpContext(a.context)?'party':a.context;
+  const objective=a.pveObjective||'performance';
+  const equipment=gearEquipment();
+  const fingerprint=JSON.stringify([state.class,name,context,objective,
+    equipment,a.gear,a.titlesOwned,
+    name==='Ariel'?a.ariel:a.azphel]);
+  if(SPECIAL_BOARD_ROUTE_CACHE.has(fingerprint))
+    return SPECIAL_BOARD_ROUTE_CACHE.get(fingerprint);
+  const board=name==='Ariel'?ARIEL[state.class]:AZPHEL[state.class];
+  let route;
+  if(typeof JointProgression!=='undefined'){
+    try{
+      const totals={},fixed=[...gearFixedTotals().stats,...gearSocketTotals().stats];
+      for(const [key,meta] of Object.entries(data().stats))
+        totals[key]=fixed.filter(row=>row.name===meta.name).reduce((sum,row)=>
+          sum+(Number(row.value)||0)*(row.unit==='%'?100:1),0);
+      const weights=activeWeights().stats;
+      route=JointProgression.rankConnectedBoard({
+        board,context,objective,role:profile().kind,stats:totals,
+        budget:name==='Ariel'?(a.ariel||0):(a.azphel||0),
+        weights,meta:data().stats
+      });
+    }catch(error){
+      console.warn(name+' contextual board route fallback',error);
+    }
+  }
+  route ||= name==='Azphel'?ROUTES[state.class].azphel:legacyArielRoute();
+  if(SPECIAL_BOARD_ROUTE_CACHE.size>16)
+    SPECIAL_BOARD_ROUTE_CACHE.delete(SPECIAL_BOARD_ROUTE_CACHE.keys().next().value);
+  SPECIAL_BOARD_ROUTE_CACHE.set(fingerprint,route);
+  return route;
+}
+function arielRoute(){return specialBoardRoute('Ariel')}
+function azphelRoute(){return specialBoardRoute('Azphel')}
+function legacyArielRoute(){
+  const b=ARIEL[state.class],visited=new Set(
+    b.nodes.filter(n=>n[5]===0).map(n=>n[0])),route=[];
+  while(visited.size<b.nodes.length){
+    const frontier=b.nodes.filter(n=>!visited.has(n[0])&&
+      b.nodes.some(v=>visited.has(v[0])&&
+        Math.abs(v[1]-n[1])+Math.abs(v[2]-n[2])===1));
+    if(!frontier.length)break;
+    frontier.sort((x,y)=>arielNodeScore(y)-arielNodeScore(x)||x[0]-y[0]);
+    const n=frontier[0];visited.add(n[0]);route.push({board:'Ariel',id:n[0]});
+  }
+  return route;
+}
+function arielNodeScore(n){
+  const defens=account().pveObjective==='survivability',
+    weights={PvEAmplifyDamage:defens?3:15,BossNpcAmplifyDamage:defens?3:13,
+      BossNpcAddDamage:9,PvEAddDamage:9,PvEAccuracy:7,
+      PvEDecreaseDamage:defens?15:5,
+      BossNpcDecreaseDamage:defens?14:6,HPMax:5,PvEDamageDefense:5};
+  return n[6].reduce((a,[k])=>a+(weights[k]||2),0)/Math.max(1,n[5]);
+}
 function connectedToEarlier(ids){const nodes=nodeMap(),seen=new Set();for(const id of ids){const entry=nodes.get(id);if(!entry)return false;const n=entry.node,board=entry.board,neighbors=allBoards().find(b=>b.name===board).nodes.filter(x=>Math.abs(x[1]-n[1])+Math.abs(x[2]-n[2])===1);if(!neighbors.some(x=>x[5]===0||seen.has(x[0])))return false;seen.add(id)}return true}
 function setCustomNode(id){
   const entry=nodeMap().get(id);if(!entry||entry.node[5]===0)return;
@@ -167,7 +223,48 @@ function recommendedStigmas(){
   const variants={templar:{solo:['Doom Shield','Noble Armor',"Empyrean Lord's Punishment",'Executing Blade'],pvp:['Noble Armor','Doom Shield','Taunt','Second Skin']},cleric:{solo:['Earth Punishment','Noble Aura','Prayer of Amplification','Light of Protection'],pvp:['Prayer of Amplification','Light of Protection',"Yustiel's Power",'Absolution']},sorcerer:{pvp:['Element Enhancement','Steel Barrier','Soul Freeze','Hibernation']},gladiator:{pvp:["Zikel's Blessing",'Focused Block','Lifestealing Blade','Armor of Balance']},assassin:{pvp:['Evasion Contract','Smoke Bomb','Swift Contract','Illusive Clone']},ranger:{pvp:["Vaizel's Authority",'Mother Nature\'s Breath','Ensnaring Trap','Stealth']},spiritmaster:{pvp:['Summon: Ancient Spirit',"Enhance: Spirit's Benediction",'Seize Magic','Cry of Terror']},chanter:{solo:['Undefeated Mantra','Sprint Mantra','Power of the Storm',"Marchutan's Wrath"],pvp:['Undefeated Mantra','Barrier Spell','Healing Touch','Focused Defense']}};
   const advised=typeof adviceFor==='function'?adviceFor(state.class,account().context,account().pveObjective):null;
   const result=advised?.stigmas||variants[state.class]?.[account().context]||standard;
-  return result.length===4&&new Set(result).size===4&&result.every(name=>STIGMAS[state.class]?.[name])?result:standard;
+  const baseline=result.length===4&&new Set(result).size===4&&
+    result.every(name=>STIGMAS[state.class]?.[name])?result:standard;
+  const a=account(),combat=typeof ClassCombatModels!=='undefined'?
+    ClassCombatModels.profile(state.class):null;
+  // Templar party support's known Shield of Protection/Taunt balance must not
+  // be displaced by a generic uncalibrated personal-DPS proxy.
+  if(!combat||typeof JointProgression==='undefined'||isLeveling()||
+     a.customStigmas||a.manualStigma||budget('stigma')<30||
+     (state.class==='templar'&&a.context==='party'))return baseline;
+  const candidates=[standard,combat.damageStigmas,combat.survivalStigmas,
+    variants[state.class]?.pvp,variants[state.class]?.solo,
+    advised?.stigmas].filter(Array.isArray);
+  const key=JSON.stringify([state.class,a.context,a.pveObjective,
+    budget('stigma'),budget('mastery'),a.equipment,a.gear,
+    a.obtainedNodes,a.manualMastery,a.customSpecialties,baseline,candidates]);
+  if(stigmaLoadoutCache.key===key)return stigmaLoadoutCache.names;
+  try{
+    const initial=a.manualMastery?
+      manualAllocation(a.manualMastery,skillNames(),budget('mastery'),
+        masteryCost,1,masteryRankCap):
+      allocate(masteryStages(),budget('mastery'),masteryCost,
+        skillNames(),1,masteryRankCap);
+    const obtained=effects(obtainedNodes());
+    const base=engineBuild(initial.levels,obtained,{},[]);
+    const selected=JointProgression.chooseStigmaLoadout({
+      baseline,candidates,
+      isKnown:name=>!!STIGMAS[state.class]?.[name],
+      rankPlan:names=>optimizeRecommendedStigmas(names,budget('stigma'),
+        state.class,a.context),
+      score:(names,levels)=>ClassCombatModels.evaluate({
+        classId:state.class,context:a.context,
+        objective:a.pveObjective||'performance',
+        build:{...base,stigma:levels,equippedStigmas:names},
+        selectedSpecs:a.customSpecialties||{}
+      }).score
+    });
+    stigmaLoadoutCache={key,names:selected.names};
+    return selected.names;
+  }catch(error){
+    console.warn('Stigma candidate search fallback',error);
+    return baseline;
+  }
 }
 function activeStigmas(){
   const chosen=account().customStigmas;
@@ -439,6 +536,10 @@ function nodeVisual(n){
 // keep their existing legal progression until their mechanics are validated.
 let lastOptimizedCombat=null;
 let combatResultCache={key:null,result:null};
+let jointResultCache={key:null,result:null};
+let stigmaLoadoutCache={key:null,names:null};
+let jointSpecialtyCache={key:null,result:null};
+let latestSpecialtyPlan={classId:null,picks:null};
 function engineBuild(masteryLevels,boardEffects,stigmaLevels,equipped){
   const equippedRanks={...gearSkillLevels()};
   for(const [name,n] of Object.entries(account().gear||{}))
@@ -635,7 +736,7 @@ function model(){
            };
            computed=PveBuildOptimizer.optimize({classData:boardData,classId:state.class,context:a.context,
              objective,baseWeights,mastery:mastery.levels,gear:gearRanks,
-             locked:[...actual].filter(id=>nodeMap().get(id)?.board!=='Azphel'),
+             locked:[...actual].filter(id=>BOARD_NAMES.includes(nodeMap().get(id)?.board)),
              crystalBudget,characterLevel:currentLevel(),
              skillTargets:typeof progressionBoardTargets==='function'?progressionBoardTargets(state.class,a.context):{},
              scoreFinal});
@@ -680,9 +781,81 @@ function model(){
     optimizedMastery,budget('mastery'),masteryCost,masteryRankCap,names,
     masteryStages(plannedEffects.skills),activeWeights().skills,
     plannedEffects.skills,{...gearSkillLevels(),...a.gear});
-  return {mastery:finalMastery,stigma,boards,ariel,azphel,
+  const arielEffects=effects(ariel.owned),azphelEffects=effects(azphel.owned);
+  // Every candidate includes all six boards, without transferring crystals
+  // between the independent standard, Ariel and Azphel currency pools.
+  const combatStats={...plannedEffects.stats};
+  for(const extra of [arielEffects,azphelEffects])
+    for(const [key,value] of Object.entries(extra.stats||{}))
+      combatStats[key]=(combatStats[key]||0)+value;
+  const combatEffects={skills:plannedEffects.skills,stats:combatStats};
+  let joint=null,chosenMastery=finalMastery,chosenStigma=stigma;
+  if(typeof JointProgression!=='undefined'&&
+     typeof ClassCombatModels!=='undefined'&&
+     ClassCombatModels.profile(state.class)){
+    const fixed=engineBuild(finalMastery.levels,combatEffects,stigma.levels,stigmas);
+    const scoring=(masteryRanks,stigmaRanks)=>ClassCombatModels.evaluate({
+      classId:state.class,context:a.context,objective:a.pveObjective||'performance',
+      build:{...fixed,mastery:masteryRanks,stigma:stigmaRanks},
+      selectedSpecs:a.customSpecialties||{}
+    }).score;
+    const jointKey=JSON.stringify([
+      state.class,a.context,a.pveObjective,currentLevel(),budget('mastery'),
+      budget('stigma'),finalMastery.levels,stigma.levels,stigmas,
+      combatEffects,fixed.gearSkills,fixed.gearStats,a.customSpecialties,
+      !!a.manualMastery,!!a.manualStigma
+    ]);
+    try{
+      joint=jointResultCache.key===jointKey?jointResultCache.result:
+        JointProgression.optimizeCombined({
+        classId:state.class,context:a.context,objective:a.pveObjective||'performance',
+        mastery:finalMastery,stigma,masteryNames:names,stigmaNames:stigmas,
+        masteryBudget:budget('mastery'),stigmaBudget:budget('stigma'),
+        masteryCost,stigmaCost,masteryCap:masteryRankCap,scoreBuild:scoring,
+        pinMastery:!!a.manualMastery,
+        pinStigma:!!a.manualStigma||isLeveling()||budget('stigma')<30});
+      jointResultCache={key:jointKey,result:joint};
+      chosenMastery=joint.mastery;
+      chosenStigma=joint.stigma;
+    }catch(error){
+      console.warn('Joint progression scoring unavailable; retaining legal baseline',error);
+      joint={error:String(error),evidence:'baseline recommendation retained'};
+    }
+  }
+  let specialtyOptimization=null;
+  if(typeof JointProgression!=='undefined'&&
+     typeof ClassCombatModels!=='undefined'&&
+     ClassCombatModels.profile(state.class)){
+    const fixed=engineBuild(chosenMastery.levels,combatEffects,
+      chosenStigma.levels,stigmas);
+    const key=JSON.stringify([state.class,a.context,a.pveObjective,
+      chosenMastery.levels,chosenStigma.levels,combatEffects,
+      fixed.gearSkills,fixed.gearStats,a.customSpecialties,stigmas]);
+    try{
+      specialtyOptimization=jointSpecialtyCache.key===key?
+        jointSpecialtyCache.result:JointProgression.optimizeSpecialties({
+          skillNames:names,specData:SPECS[state.class],
+          manual:a.customSpecialties||{},
+          effectiveLevel:name=>Math.min(40,
+            (chosenMastery.levels[name]||1)+
+            (combatEffects.skills[name]||0)+
+            (fixed.gearSkills[name]||0)),
+          score:picks=>ClassCombatModels.evaluate({
+            classId:state.class,context:a.context,
+            objective:a.pveObjective||'performance',
+            build:fixed,selectedSpecs:picks
+          }).score
+        });
+      jointSpecialtyCache={key,result:specialtyOptimization};
+    }catch(error){
+      console.warn('Specialty local search fallback',error);
+    }
+  }
+  latestSpecialtyPlan={classId:state.class,
+    picks:specialtyOptimization?.picks||null};
+  return {mastery:chosenMastery,stigma:chosenStigma,boards,ariel,azphel,
     effects:plannedEffects,acquiredEffects,combat:lastOptimizedCombat,
-    arielEffects:effects(ariel.owned),azphelEffects:effects(azphel.owned)};
+    joint,specialtyOptimization,arielEffects,azphelEffects};
 }
 function skillLevelBreakdown(name,m){
   const mastery=m.mastery.levels[name]||1,
@@ -759,6 +932,10 @@ function renderOverview(m){
     `<b>Mastery:</b> ${top.map(n=>`${esc(n)} Lv ${m.mastery.levels[n]||1}`).join(' · ')}. Check specialty unlocks using gear and board bonuses.`,
     `<b>Stigmas:</b> ${activeStigmas().map(n=>`${esc(n)} Lv ${m.stigma.levels[n]||0}`).join(' · ')}. ${esc(p.swap)}`,
     `<b>${mode==='healing'?'Healing':'Fight'} priority:</b> ${esc(p.rule)}`];
+  if(m.joint&&!m.joint.error){
+    const updates=m.joint.trace?.reduce((sum,step)=>sum+(step.changes||0),0)||0;
+    steps.push(`<b>Combined combat search:</b> Evaluated your recorded gear, effective skills, equipped Stigmas and all six boards together. ${updates} legal rank adjustments after the initial progression allocation. Combat-score comparisons are uncalibrated and are not measured DPS or guaranteed optimal builds.`);
+  }
   if(a.context==='solo')steps.push(`<b>Solo route:</b> Mastery, Stigmas and the board order favor personal damage and self-sustain. The board route differs from Group PvE.`);
   if(appIsPvpContext(a.context))steps.push(`<b>PvP route:</b> Mastery, Stigmas and PvE crystal clicks prioritize control, escape and survival. Azphel uses a separate ${a.azphel||0}-crystal budget; it has no skill-level nodes.`);
   $('now-steps').innerHTML=steps.map((v,i)=>`<li><span class="step-num">${i+1}</span><span>${v}</span></li>`).join('');
@@ -805,6 +982,11 @@ function renderGoal(m){
   $('goal-status').innerHTML=`<b>${percent}% of target</b> · ${gap?`${gap.toLocaleString()} to go`:'target reached'}<div class="progress"><span style="width:${percent}%"></span></div>`;
 }
 function recommendedSpecPicks(name,eff){const spec=SPECS[state.class]?.[name];if(!spec)return [];
+  const researched=latestSpecialtyPlan.classId===state.class?
+    latestSpecialtyPlan.picks?.[name]:null;
+  if(Array.isArray(researched))
+    return researched.filter(id=>spec.options?.[id]&&
+      eff>=(id<=3?8:id===4?12:16)).slice(0,specialtySlots(eff));
   if(sorcererCombatEligible()&&lastOptimizedCombat?.mastery&&
      Array.isArray(lastOptimizedCombat.specialties?.[name]))
     return lastOptimizedCombat.specialties[name].filter(id=>spec.options?.[id]&&
@@ -914,6 +1096,24 @@ function renderRotation(m){
   const chanterReset=state.class==='chanter'&&specPicks('Dark Crush',skillLevelBreakdown('Dark Crush',m).withOwned).includes(5);
   // Before cooldown removal, avoid spending two Dark Crush triggers in one window.
   if(state.class==='chanter'&&!chanterReset)stacks=stacks.map(s=>s.key==='E'?{...s,skills:s.skills.filter(name=>name!=='Impactful Crush')}:s).filter(s=>s.skills.length);
+  const macroAdvice=typeof JointProgression!=='undefined'?
+    JointProgression.adviseMacro({
+      classId:state.class,context:a.context,objective:a.pveObjective,
+      profile:{stacks,hotbar:p.hotbar},available:[...unlockedClass],
+      stigma:equippedStigmas,
+      levels:Object.fromEntries([...unlockedClass].map(name=>
+        [name,skillLevelBreakdown(name,m).withOwned])),
+      specialties:Object.fromEntries([...unlockedClass].map(name=>
+        [name,specPicks(name,skillLevelBreakdown(name,m).withOwned)]))
+    }):null;
+  if(macroAdvice&&!levelingMode){
+    const allowed=new Map(macroAdvice.stacks.map(stack=>[stack.key,stack.skills]));
+    // Only prune unsafe automatic casts. Keep vetted conditional trigger order
+    // and all manually controlled buffs, charges and defensive Stigmas intact.
+    stacks=stacks.map(stack=>stack.manual?stack:{
+      ...stack,skills:allowed.get(stack.key)||[]
+    }).filter(stack=>stack.skills.length);
+  }
   const macroSteps=p.macro.filter(key=>stacks.some(s=>s.key===key&&!s.manual));
   const displayedMacroSteps=macroSteps.map(physicalHotkey);
   let hotbar=p.hotbar.map(([skills,cue,tone])=>[[...skills],cue,tone]);
@@ -939,7 +1139,9 @@ function renderRotation(m){
   }else for(const stack of stacks)if(stack.manual&&/^[1-8]$/.test(stack.key))stack.skills=[...hotbar[Number(stack.key)-1][0]];
   $('rotation-gate').textContent=levelingMode?`Level ${level}: Macro uses only ${macroSteps.length?displayedMacroSteps.join(' then '):'the weave skill for now'}. ${slots?`${equippedStigmas.length} equipped Stigma skill${equippedStigmas.length===1?'':'s'} currently usable.`:'Stigmas open at level 22.'} ${level<16?'Defiance opens at level 16; reserve Space for it.':'Defiance is available on Space.'} Keep healing, charged attacks and defensive timing manual.`:state.class==='templar'?`Judgment is Lv ${skillLevelBreakdown('Judgment',m).withOwned} with obtained boards. ${specPicks('Judgment',skillLevelBreakdown('Judgment',m).withOwned).includes(5)?'The cooldown-removal Specialty is selected, so the E stack can spend repeated Judgment casts during trigger windows.':'The cooldown-removal Specialty is not selected yet; expect a single Judgment cast for each available proc.'} The macro tries Judgment first within E. Fully charge Punishment manually, then use Doom Shield when that interaction is available; pause the held macro if it clips the charge or trigger.`:p.kind==='healer'?'Heals, toggles and emergency buttons remain manual. Use the macro only while the group is stable.':`Current first priority: ${main} Lv ${skillLevelBreakdown(main,m).withOwned} with obtained boards. Keep charged and movement skills on their own keys.`;
   const macroRanks=stacks.filter(stack=>!stack.manual).flatMap(stack=>stack.skills).map(name=>name in m.mastery.levels?`${name} Lv ${skillLevelBreakdown(name,m).withOwned} with obtained boards`:name in m.stigma.levels?`${name} Stigma Lv ${m.stigma.levels[name]}`:name);
-  $('macro-rank-summary').textContent=`Macro skill levels at your current point and gear totals: ${macroRanks.join(' · ')}. Change crystals, Mastery, Stigma or gear to update these ranks.`;
+  const cooldownSummary=(macroAdvice?.coverage||[]).filter(x=>x.seconds!==null)
+    .slice(0,8).map(x=>`${x.name}: ${x.seconds===0?'no listed CD':x.seconds+'s base CD'}`);
+  $('macro-rank-summary').textContent=`Macro skill levels at your current point and gear totals: ${macroRanks.join(' · ')}. ${cooldownSummary.length?'Global base cooldowns: '+cooldownSummary.join(' · ')+'. ':''}Cooldown-reducing Specialties, buffs and triggered resets change effective availability; this is not a fixed casting schedule. Change gear, boards, ranks or Stigmas to recalculate.`;
   $('rotation-opener-title').textContent=appIsPvpContext(a.context)?'PvP engage':{party:'Group opener',solo:'Solo opener'}[a.context];
   const manualNow=hotbar.flatMap(([skills])=>skills),buffNow=hotbar.filter(([, ,tone])=>tone==='buff').flatMap(([skills])=>skills),healNow=hotbar.filter(([, ,tone])=>tone==='heal').flatMap(([skills])=>skills);
   const opener=levelingMode?[buffNow.length?`Use ${buffNow.slice(0,2).join(' and ')} before the pull when ready.`:'Approach a manageable target and watch its first attack.',`Hold ${weaveKey} (${p.weave}) with ${macroKey} to cycle ${displayedMacroSteps.join(' then ')||'your unlocked damage key'} while safe.`,healNow.length?`Keep ${healNow.slice(0,2).join(' and ')} available for recovery.`:manualNow.length?`Use ${manualNow.slice(0,2).join(' and ')} manually when their timing helps.`:'Add manual skills to 1–8 as they unlock.']:appIsPvpContext(a.context)?['Approach with cover and keep your escape or control break available.','Open with a manual control or gap close after the opponent commits.','Use the damage macro only while your target is in range and you can safely finish the cast.']:p.opener.map(displayKeyCopy);
@@ -1268,7 +1470,7 @@ $('board-mode-recommended').addEventListener('click',()=>{
   render();
 });
 $('board-mode-custom').addEventListener('click',()=>{account().boardMode='custom';boardEditNotice='Select a connected tile on any unlocked board, or copy the current recommendation.';render()});
-$('copy-recommended-board').addEventListener('click',()=>{const nodes=nodeMap();account().customNodes=routeSteps(activeRoute(),nodes).filter(x=>x.total<=budget('crystals')).map(x=>x.id);account().customAzphelNodes=routeSteps(ROUTES[state.class].azphel,nodes).filter(x=>x.total<=(account().azphel||0)).map(x=>x.id);account().customArielNodes=routeSteps(arielRoute(),nodes).filter(x=>x.total<=(account().ariel||0)).map(x=>x.id);boardEditNotice='Copied the funded recommended route. Click tiles to customize it.';render()});
+$('copy-recommended-board').addEventListener('click',()=>{const nodes=nodeMap();account().customNodes=routeSteps(activeRoute(),nodes).filter(x=>x.total<=budget('crystals')).map(x=>x.id);account().customAzphelNodes=routeSteps(azphelRoute(),nodes).filter(x=>x.total<=(account().azphel||0)).map(x=>x.id);account().customArielNodes=routeSteps(arielRoute(),nodes).filter(x=>x.total<=(account().ariel||0)).map(x=>x.id);boardEditNotice='Copied the funded recommended route. Click tiles to customize it.';render()});
 $('clear-custom-board').addEventListener('click',()=>{account().customNodes=[];account().customAzphelNodes=[];account().customArielNodes=[];boardEditNotice='Custom plan cleared. Obtained marks are kept separately.';state.node=null;render()});
 $('global-board-allocation').addEventListener('click',e=>{const b=e.target.closest('[data-board-jump]');if(!b||!boardOpen(b.dataset.boardJump))return;state.board=b.dataset.boardJump;state.preview=budget('crystals');state.node=null;renderBoards(model())});
 $('global-route-next').addEventListener('click',e=>{const b=e.target.closest('[data-route-node]');if(!b)return;state.board=b.dataset.routeBoard;state.preview=budget('crystals');state.node=Number(b.dataset.routeNode);renderBoards(model());document.querySelector('.node.selected')?.scrollIntoView({behavior:'smooth',block:'center',inline:'center'})});
