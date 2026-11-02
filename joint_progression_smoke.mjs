@@ -64,6 +64,22 @@ try{
         checked++;
       }
     }
+    // Separate Ariel/Azphel purchases must not enter the connected optimizer
+    // for Nezekan/Zikel/Vaizel/Triniel (different graph and currencies).
+    state.class='templar';
+    const specialAccount=account();
+    specialAccount.context='party';
+    specialAccount.customStigmas=null;
+    specialAccount.manualMastery=null;
+    specialAccount.manualStigma=null;
+    specialAccount.obtainedNodes=[arielRoute()[0].id,azphelRoute()[0].id];
+    specialAccount.recommendedRouteSnapshot=null;
+    const specialModel=model();
+    if(specialAccount.lastObjectiveAnalysis?.error)
+      problems.push('Obtained Ariel/Azphel nodes broke the four-board search: '+
+        specialAccount.lastObjectiveAnalysis.error);
+    if(specialModel.boards.spent>specialAccount.crystals)
+      problems.push('Four-board optimizer exceeded its own independent budget');
     state.class='templar';const a=account();
     a.context='party';a.manualMastery={...model().mastery.levels};
     a.manualStigma={...model().stigma.levels};
