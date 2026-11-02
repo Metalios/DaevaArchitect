@@ -36,7 +36,8 @@
         <option value="pvp">General PvP</option><option value="pvp-arena">Arena PvP (1v1 Solitude)</option>
         <option value="pvp-abyss-solo">Solo PvP (Abyss)</option><option value="pvp-abyss-group">Group PvP (Abyss)</option>
       </select><small>Arena preset targets 1v1; group arena and equalized battlefield are different engagements.</small></div>
-      <div class="control" id="ariel-control"><label class="label" for="ariel-input">Ariel crystals</label><input id="ariel-input" type="number" min="0" max="232" value="0"><small>Separate PvE board currency</small></div>
+      <div class="control" id="gear-rating-control"><label class="label" for="gear-rating-input">Current Gear Rating (GR)</label><input id="gear-rating-input" type="number" min="0" max="10000" step="1" inputmode="numeric" placeholder="In-game GR"><small>For Hard Conquest access · not estimated CR</small></div>
+      <div class="control" id="ariel-control"><label class="label" for="ariel-input">Ariel crystals</label><input id="ariel-input" type="number" min="0" max="232" value="0"><small id="ariel-access-hint" role="status" aria-live="polite">Hard Conquest: 2,600+ GR required to earn Ariel crystals.</small></div>
       <div class="control" id="azphel-control"><label class="label" for="azphel-input">Azphel crystals</label><input id="azphel-input" type="number" min="0" max="232" value="0"><small>Separate PvP board currency</small></div>
     </div>
     <div class="presets" id="fresh-preset"><div><b>Start from your point totals</b><span>Global level 45 from leveling alone: 203 Mastery · 29 Stigma · 136 crystals. Quest and dungeon rewards add more.</span></div><button id="fresh-45-button" type="button">Fresh Global 45</button></div>
@@ -156,6 +157,7 @@
   <script defer src="./js/profiles.js"></script>
   <script defer src="./js/titles.js"></script>
   <script defer src="./js/ariel_data.js"></script>
+  <script defer src="./js/ariel_progression.js"></script>
   <script defer src="./js/arcana_rules.js"></script>
   <script defer src="./js/gear.js"></script>
   <script defer src="./js/cp.js"></script>
