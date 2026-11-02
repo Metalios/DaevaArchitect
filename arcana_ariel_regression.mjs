@@ -4,8 +4,8 @@ import vm from 'node:vm';
 
 const read=p=>fs.readFileSync(new URL(p,import.meta.url),'utf8');
 const ctx=vm.createContext({});
-vm.runInContext(read('js/arcana_rules.js')+'\n'+read('js/ariel_data.js')+'\nglobalThis.check={ARCANA_GRADES,ARCANA_SKILL_POOLS,arcanaLineCapacity,arcanaMaxEnhancement,arcanaValidBonuses,arcanaSkillPool,ARIEL};',ctx);
-const {ARCANA_GRADES,ARCANA_SKILL_POOLS,arcanaLineCapacity,arcanaMaxEnhancement,arcanaValidBonuses,arcanaSkillPool,ARIEL}=ctx.check;
+vm.runInContext(read('js/arcana_rules.js')+'\n'+read('js/ariel_data.js')+'\n'+read('js/ariel_progression.js')+'\nglobalThis.check={ARCANA_GRADES,ARCANA_SKILL_POOLS,arcanaLineCapacity,arcanaMaxEnhancement,arcanaValidBonuses,arcanaSkillPool,ARIEL,arielAccess,ARIEL_HARD_CONQUESTS};',ctx);
+const {ARCANA_GRADES,ARCANA_SKILL_POOLS,arcanaLineCapacity,arcanaMaxEnhancement,arcanaValidBonuses,arcanaSkillPool,ARIEL,arielAccess,ARIEL_HARD_CONQUESTS}=ctx.check;
 const classes=JSON.parse(read('classes_data.json'));
 const expected={Common:[1,2,3],Rare:[2,3,4,4],Epic:[3,4,4,4,4],Unique:[4,4,4,4,4,4]};
 for(const [grade,capacities] of Object.entries(expected)){
@@ -38,6 +38,27 @@ for(const [cls,skills] of Object.entries(classes)){
   assert.equal(new Set(board.nodes.map(n=>n[0])).size,153);
   assert.equal(new Set(board.nodes.map(n=>n[1]+':'+n[2])).size,153);
 }
+// The latest Global client data uses +1.5% for Ariel's unique corners,
+ // +3/+30 for flat attack/defense and four of each Critical and boss unique.
+const globalTotals={PvEAmplifyDamage:600,PvEDecreaseDamage:600,
+  PvEAddDamage:72,BossNpcAddDamage:72,PvEDamageDefense:720,BossNpcDefense:720,
+  PvEAccuracy:120,PvEEvasion:120,Critical:40,CriticalResist:40,
+  BossNpcAmplifyDamage:400,BossNpcDecreaseDamage:400,HPMax:400,MPMax:200};
+for(const [cls,board] of Object.entries(ARIEL)){
+  const totals={};
+  for(const node of board.nodes)for(const [key,value] of node[6])totals[key]=(totals[key]||0)+value;
+  assert.equal(JSON.stringify(Object.entries(totals).sort()),JSON.stringify(Object.entries(globalTotals).sort()),
+    cls+': mismatched Global Ariel node effect magnitudes or distribution');
+}
+assert.equal(ARIEL_HARD_CONQUESTS.length,4);
+assert.equal(arielAccess(2599,0,45).eligible,false);
+assert.equal(arielAccess(2600,0,45).eligible,true);
+assert.equal(arielAccess(2600,0,45).availableDungeons.length,2);
+assert.equal(arielAccess(2700,0,45).availableDungeons.length,4);
+assert.equal(arielAccess(2700,0,44).eligible,false);
+assert.equal(arielAccess(0,12,45).owned,12,'Previously earned Ariel crystals must not disappear when GR is unknown');
+assert.equal(arielAccess(2450,12,45).owned,12,'Lower GR must not erase historical Ariel purchases');
+assert.equal(arielAccess('',0,45).known,false,'Unknown GR is not 0 or an invented eligibility claim');
 // The board-tabs widget already renders the Ariel tab from allBoards().
 // Never append a second disabled Ariel placeholder from the V2 overlay.
 assert(!read('js/v2.js').includes('v2-ariel-pending'),
