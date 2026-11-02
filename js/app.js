@@ -533,6 +533,8 @@ let lastOptimizedCombat=null;
 let combatResultCache={key:null,result:null};
 let jointResultCache={key:null,result:null};
 let stigmaLoadoutCache={key:null,names:null};
+let jointSpecialtyCache={key:null,result:null};
+let latestSpecialtyPlan={classId:null,picks:null};
 function engineBuild(masteryLevels,boardEffects,stigmaLevels,equipped){
   const equippedRanks={...gearSkillLevels()};
   for(const [name,n] of Object.entries(account().gear||{}))
@@ -815,9 +817,40 @@ function model(){
       joint={error:String(error),evidence:'baseline recommendation retained'};
     }
   }
+  let specialtyOptimization=null;
+  if(typeof JointProgression!=='undefined'&&
+     typeof ClassCombatModels!=='undefined'&&
+     ClassCombatModels.profile(state.class)){
+    const fixed=engineBuild(chosenMastery.levels,combatEffects,
+      chosenStigma.levels,stigmas);
+    const key=JSON.stringify([state.class,a.context,a.pveObjective,
+      chosenMastery.levels,chosenStigma.levels,combatEffects,
+      fixed.gearSkills,fixed.gearStats,a.customSpecialties,stigmas]);
+    try{
+      specialtyOptimization=jointSpecialtyCache.key===key?
+        jointSpecialtyCache.result:JointProgression.optimizeSpecialties({
+          skillNames:names,specData:SPECS[state.class],
+          manual:a.customSpecialties||{},
+          effectiveLevel:name=>Math.min(40,
+            (chosenMastery.levels[name]||1)+
+            (combatEffects.skills[name]||0)+
+            (fixed.gearSkills[name]||0)),
+          score:picks=>ClassCombatModels.evaluate({
+            classId:state.class,context:a.context,
+            objective:a.pveObjective||'performance',
+            build:fixed,selectedSpecs:picks
+          }).score
+        });
+      jointSpecialtyCache={key,result:specialtyOptimization};
+    }catch(error){
+      console.warn('Specialty local search fallback',error);
+    }
+  }
+  latestSpecialtyPlan={classId:state.class,
+    picks:specialtyOptimization?.picks||null};
   return {mastery:chosenMastery,stigma:chosenStigma,boards,ariel,azphel,
     effects:plannedEffects,acquiredEffects,combat:lastOptimizedCombat,
-    joint,arielEffects,azphelEffects};
+    joint,specialtyOptimization,arielEffects,azphelEffects};
 }
 function skillLevelBreakdown(name,m){
   const mastery=m.mastery.levels[name]||1,
@@ -944,6 +977,11 @@ function renderGoal(m){
   $('goal-status').innerHTML=`<b>${percent}% of target</b> · ${gap?`${gap.toLocaleString()} to go`:'target reached'}<div class="progress"><span style="width:${percent}%"></span></div>`;
 }
 function recommendedSpecPicks(name,eff){const spec=SPECS[state.class]?.[name];if(!spec)return [];
+  const researched=latestSpecialtyPlan.classId===state.class?
+    latestSpecialtyPlan.picks?.[name]:null;
+  if(Array.isArray(researched))
+    return researched.filter(id=>spec.options?.[id]&&
+      eff>=(id<=3?8:id===4?12:16)).slice(0,specialtySlots(eff));
   if(sorcererCombatEligible()&&lastOptimizedCombat?.mastery&&
      Array.isArray(lastOptimizedCombat.specialties?.[name]))
     return lastOptimizedCombat.specialties[name].filter(id=>spec.options?.[id]&&
