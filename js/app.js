@@ -736,7 +736,7 @@ function model(){
            };
            computed=PveBuildOptimizer.optimize({classData:boardData,classId:state.class,context:a.context,
              objective,baseWeights,mastery:mastery.levels,gear:gearRanks,
-             locked:[...actual].filter(id=>nodeMap().get(id)?.board!=='Azphel'),
+             locked:[...actual].filter(id=>BOARD_NAMES.includes(nodeMap().get(id)?.board)),
              crystalBudget,characterLevel:currentLevel(),
              skillTargets:typeof progressionBoardTargets==='function'?progressionBoardTargets(state.class,a.context):{},
              scoreFinal});
