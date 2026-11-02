@@ -104,5 +104,25 @@ for(const [cls,datum] of Object.entries(DATA)){
   assert.equal(pinned.levels.A,5);
   assert(pinned.levels.B>=2);
 }
+{
+  const strong=joint.chooseStigmaLoadout({
+    baseline:['A','B','C','D'],
+    candidates:[['A','B','C','E'],['A','B','C','D'],['A','A','B','C']],
+    isKnown:x=>['A','B','C','D','E'].includes(x),
+    rankPlan:names=>({levels:Object.fromEntries(names.map(n=>[n,5]))}),
+    score:names=>names.includes('E')?140:100
+  });
+  assert.equal(strong.changed,true);
+  assert(strong.names.includes('E'));
+  const weak=joint.chooseStigmaLoadout({
+    baseline:['A','B','C','D'],candidates:[['A','B','C','E']],
+    isKnown:x=>['A','B','C','D','E'].includes(x),
+    rankPlan:names=>({levels:Object.fromEntries(names.map(n=>[n,5]))}),
+    score:names=>names.includes('E')?105:100
+  });
+  assert.equal(weak.changed,false,
+    'A noisy five-percent proxy improvement must not replace a known loadout');
+  assert.equal(weak.compared,2);
+}
 console.log('Checked '+builds+' all-class context builds and '+boards+
   ' full connected Ariel/Azphel routes with legal Mastery, Stigma and macro constraints.');
