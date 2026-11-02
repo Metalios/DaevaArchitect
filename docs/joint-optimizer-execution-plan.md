@@ -7,9 +7,9 @@
 ## Implemented in PR #34
 
 1. **Unified input:** Class and role, Global level and active unlocks; entered Mastery/Stigma/base/Ariel/Azphel crystal budgets; currently obtained/locked board nodes; actual equipped gear, sockets, enhancement, Arcana levels, additional manual levels and selected Specialties. Missing gear is never generated.
-2. **Legal joint Mastery/Stigma rank refinement:** Iterative bounded full-build comparisons on the actual character, including all six board bonuses, using class-specific combat models for seven classes. The Sorcerer retains the separate event simulator and Specialty/Macro tuning. Hard constraints: earned points, per-rank cost, unlock caps, four selected Stigmas, manual pins. Show source uncertainty. Make outputs deterministic and cache by every relevant build input.
+2. **Legal joint Mastery/Stigma rank refinement:** Iterative bounded full-build comparisons on the actual character, including all six board bonuses, using class-specific combat models for seven classes. The Sorcerer retains its dedicated event simulator and Specialty/Macro tuning. A conservative four-slot Stigma loadout comparison considers class PvE/PvP alternatives but only replaces the original preset for a meaningful modeled improvement; Templar group protections remain anchored to its verified four-Stigma policy. Hard constraints: earned points, per-rank cost, unlock caps, four equipped Stigmas, manual pins. Show source uncertainty and cache by actual character input.
 3. **Ariel/Azphel connected priority:** Choose the next funded node from a legal connected frontier, weighting marginal stats against gear already recorded and the selected role, PvE/PvP context and objective. Separate currencies are never exchanged. Old legal path remains a fallback. Keep obtained tiles and custom selections intact.
-4. **Macro safety and cooldown context:** Filter currently unavailable/unequipped/charged/manual abilities out of automatic stacks while preserving known trigger ordering; label Global base cooldowns and require manual buff, heal, defensive and charged casts where appropriate. Existing researched Sorcerer Macro optimizer remains active.
+4. **Specialty and Macro adaptation:** Bound legal 8/12/16/20 effective-level Specialty combinations to the actual bought Mastery, gear/Arcana, and six-board skill bonuses, retaining every explicitly selected manual Specialty. For seven classes, compare class-model scores across legal combinations; Sorcerer retains its dedicated optimizer. Filter unavailable/unequipped/charged/manual abilities out of automatic stacks while preserving known trigger ordering, and label Global base cooldowns. Require manual buff, healing, defense and charge where appropriate.
 5. **Tests:** Full eight-class × context pure tests, 153-node board legal-connection checks, individual point-budget legality, pinned changes, browser integration and CI gates.
 
 These are **comparison improvements**, not the final calibrated all-class simulator. A class cannot be truthfully called fully optimized using only a list of high-CR characters and unmeasured relative skill coefficients.
@@ -44,7 +44,7 @@ Before replacing the per-class comparative scores, validate:
 
 The browser-side legal optimizer needs:
 
-- Multiple candidate Stigma loadouts, not just the four currently recommended; conditionally equipping/exchanging them within four Global slots, with rank costs.
+- Expand the implemented conservative four-slot Stigma candidate comparison into broad, joint equipped-Stigma **and** rank optimization, including unusual but legal class options and matchup-specific PvP measurements.
 - Joint optimization of all Mastery ranks, Stigma names/ranks, Specialty choices, connected nodes on Nezekan/Zikel/Vaizel/Triniel, and independent Ariel/Azphel crystals.
 - Pareto search across PvE DPS, effective survivability, PvP utility, threat/healing and player-input complexity. Keep protected purchases as hard constraints.
 - A bounded search that returns a reproducible best candidate under a known data snapshot and an explicit measure of search coverage; local coordinate improvements are **not proof** of a global optimum.
@@ -72,5 +72,5 @@ The optimizer remains deterministic and free in the browser; it does not require
 ## Release status
 
 - **Implemented in this PR:** Local joint improvement for non-Sorcerer Mastery/Stigma ranks; Sorcerer-specific simulator retained; contextual independent-board routes; safe Macro alignment and tests.
-- **Not completed in this PR:** Complete, calibrated motion/damage dataset; all-class simulated rotation choice; multi-Stigma-loadout search; globally optimal six-board joint search; measured-DPS superiority certification.
+- **Not completed in this PR:** Complete calibrated motion/damage dataset; all-class simulated rotation choice; exhaustive Stigma/Stigma-rank and board search; globally optimal six-board joint search; measured-DPS superiority certification.
 - **Blocked on evidence:** Client-specific action locks, cancel parity and comprehensive combat-event logs. These are empirical requirements, not code-only tasks.
