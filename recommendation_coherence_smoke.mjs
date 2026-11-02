@@ -17,7 +17,7 @@ try{
   for(const cls of classes)for(const mode of ['solo','party','pvp'])for(const crystals of [136,327]){
    state.class=cls;
    const a=account();
-   a.journey='endgame';a.context=mode;a.mastery=203;a.stigma=29;a.crystals=crystals;
+   a.journey='endgame';a.context=mode;a.mastery=203;a.stigma=30;a.crystals=crystals;
    a.manualStigma=null;a.manualMastery=null;a.customStigmas=null;a.customSpecialties={};
    a.boardMode='recommended';a.obtainedNodes=[];a.gear={};a.equipment={};
    const m=model();renderRotation(m);
