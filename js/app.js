@@ -1001,6 +1001,24 @@ function renderRotation(m){
   const chanterReset=state.class==='chanter'&&specPicks('Dark Crush',skillLevelBreakdown('Dark Crush',m).withOwned).includes(5);
   // Before cooldown removal, avoid spending two Dark Crush triggers in one window.
   if(state.class==='chanter'&&!chanterReset)stacks=stacks.map(s=>s.key==='E'?{...s,skills:s.skills.filter(name=>name!=='Impactful Crush')}:s).filter(s=>s.skills.length);
+  const macroAdvice=typeof JointProgression!=='undefined'?
+    JointProgression.adviseMacro({
+      classId:state.class,context:a.context,objective:a.pveObjective,
+      profile:{stacks,hotbar:p.hotbar},available:[...unlockedClass],
+      stigma:equippedStigmas,
+      levels:Object.fromEntries([...unlockedClass].map(name=>
+        [name,skillLevelBreakdown(name,m).withOwned])),
+      specialties:Object.fromEntries([...unlockedClass].map(name=>
+        [name,specPicks(name,skillLevelBreakdown(name,m).withOwned)]))
+    }):null;
+  if(macroAdvice&&!levelingMode){
+    const allowed=new Map(macroAdvice.stacks.map(stack=>[stack.key,stack.skills]));
+    // Only prune unsafe automatic casts. Keep vetted conditional trigger order
+    // and all manually controlled buffs, charges and defensive Stigmas intact.
+    stacks=stacks.map(stack=>stack.manual?stack:{
+      ...stack,skills:allowed.get(stack.key)||[]
+    }).filter(stack=>stack.skills.length);
+  }
   const macroSteps=p.macro.filter(key=>stacks.some(s=>s.key===key&&!s.manual));
   const displayedMacroSteps=macroSteps.map(physicalHotkey);
   let hotbar=p.hotbar.map(([skills,cue,tone])=>[[...skills],cue,tone]);
@@ -1026,7 +1044,9 @@ function renderRotation(m){
   }else for(const stack of stacks)if(stack.manual&&/^[1-8]$/.test(stack.key))stack.skills=[...hotbar[Number(stack.key)-1][0]];
   $('rotation-gate').textContent=levelingMode?`Level ${level}: Macro uses only ${macroSteps.length?displayedMacroSteps.join(' then '):'the weave skill for now'}. ${slots?`${equippedStigmas.length} equipped Stigma skill${equippedStigmas.length===1?'':'s'} currently usable.`:'Stigmas open at level 22.'} ${level<16?'Defiance opens at level 16; reserve Space for it.':'Defiance is available on Space.'} Keep healing, charged attacks and defensive timing manual.`:state.class==='templar'?`Judgment is Lv ${skillLevelBreakdown('Judgment',m).withOwned} with obtained boards. ${specPicks('Judgment',skillLevelBreakdown('Judgment',m).withOwned).includes(5)?'The cooldown-removal Specialty is selected, so the E stack can spend repeated Judgment casts during trigger windows.':'The cooldown-removal Specialty is not selected yet; expect a single Judgment cast for each available proc.'} The macro tries Judgment first within E. Fully charge Punishment manually, then use Doom Shield when that interaction is available; pause the held macro if it clips the charge or trigger.`:p.kind==='healer'?'Heals, toggles and emergency buttons remain manual. Use the macro only while the group is stable.':`Current first priority: ${main} Lv ${skillLevelBreakdown(main,m).withOwned} with obtained boards. Keep charged and movement skills on their own keys.`;
   const macroRanks=stacks.filter(stack=>!stack.manual).flatMap(stack=>stack.skills).map(name=>name in m.mastery.levels?`${name} Lv ${skillLevelBreakdown(name,m).withOwned} with obtained boards`:name in m.stigma.levels?`${name} Stigma Lv ${m.stigma.levels[name]}`:name);
-  $('macro-rank-summary').textContent=`Macro skill levels at your current point and gear totals: ${macroRanks.join(' · ')}. Change crystals, Mastery, Stigma or gear to update these ranks.`;
+  const cooldownSummary=(macroAdvice?.coverage||[]).filter(x=>x.seconds!==null)
+    .slice(0,8).map(x=>`${x.name}: ${x.seconds===0?'no listed CD':x.seconds+'s base CD'}`);
+  $('macro-rank-summary').textContent=`Macro skill levels at your current point and gear totals: ${macroRanks.join(' · ')}. ${cooldownSummary.length?'Global base cooldowns: '+cooldownSummary.join(' · ')+'. ':''}Cooldown-reducing Specialties, buffs and triggered resets change effective availability; this is not a fixed casting schedule. Change gear, boards, ranks or Stigmas to recalculate.`;
   $('rotation-opener-title').textContent=appIsPvpContext(a.context)?'PvP engage':{party:'Group opener',solo:'Solo opener'}[a.context];
   const manualNow=hotbar.flatMap(([skills])=>skills),buffNow=hotbar.filter(([, ,tone])=>tone==='buff').flatMap(([skills])=>skills),healNow=hotbar.filter(([, ,tone])=>tone==='heal').flatMap(([skills])=>skills);
   const opener=levelingMode?[buffNow.length?`Use ${buffNow.slice(0,2).join(' and ')} before the pull when ready.`:'Approach a manageable target and watch its first attack.',`Hold ${weaveKey} (${p.weave}) with ${macroKey} to cycle ${displayedMacroSteps.join(' then ')||'your unlocked damage key'} while safe.`,healNow.length?`Keep ${healNow.slice(0,2).join(' and ')} available for recovery.`:manualNow.length?`Use ${manualNow.slice(0,2).join(' and ')} manually when their timing helps.`:'Add manual skills to 1–8 as they unlock.']:appIsPvpContext(a.context)?['Approach with cover and keep your escape or control break available.','Open with a manual control or gap close after the opponent commits.','Use the damage macro only while your target is in range and you can safely finish the cast.']:p.opener.map(displayKeyCopy);
