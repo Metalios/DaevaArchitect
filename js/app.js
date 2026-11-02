@@ -137,7 +137,8 @@ function specialBoardRoute(name){
   const a=account(),context=name==='Azphel'&&
     !appIsPvpContext(a.context)?'pvp':name==='Ariel'&&
     appIsPvpContext(a.context)?'party':a.context;
-  const objective=a.pveObjective||'performance';
+  const objective=name==='Azphel'||appIsPvpContext(a.context)?
+    'performance':a.pveObjective||'performance';
   const equipment=gearEquipment();
   const fingerprint=JSON.stringify([state.class,name,context,objective,
     equipment,a.gear,a.titlesOwned,
@@ -1206,7 +1207,8 @@ function renderRotation(m){
       ` on ${rule.event}`:rule.type==='remove'?' (conditional use only)':'';
     return `${rule.skill}: ${action}${when}${rule.probability!==null&&rule.probability!==undefined?' · '+Math.round(rule.probability*100)+'% proc':''}`;
   });
-  const roleInstructions=RoleBuildGoals.info(state.class,a.pveObjective)?.manual;
+  const roleInstructions=!appIsPvpContext(a.context)?
+    RoleBuildGoals.info(state.class,a.pveObjective)?.manual:null;
   $('macro-rank-summary').textContent=`${roleInstructions?'Selected class role: '+roleInstructions+' ':''}Macro skill levels: ${macroRanks.join(' · ')}. ${cooldownSummary.length?'Global base cooldowns: '+cooldownSummary.join(' · ')+'. ':''}${effectsSummary.length?'Your selected cooldown interactions: '+effectsSummary.join(' · ')+'. ':''}Conditional resets and chances are not guaranteed. Cast, animation and macro timing still require valid Global or patch-compatible measurements.`;
   $('rotation-opener-title').textContent=appIsPvpContext(a.context)?'PvP engage':{party:'Group opener',solo:'Solo opener'}[a.context];
   const manualNow=hotbar.flatMap(([skills])=>skills),buffNow=hotbar.filter(([, ,tone])=>tone==='buff').flatMap(([skills])=>skills),healNow=hotbar.filter(([, ,tone])=>tone==='heal').flatMap(([skills])=>skills);
