@@ -855,6 +855,10 @@ function renderOverview(m){
     `<b>Mastery:</b> ${top.map(n=>`${esc(n)} Lv ${m.mastery.levels[n]||1}`).join(' · ')}. Check specialty unlocks using gear and board bonuses.`,
     `<b>Stigmas:</b> ${activeStigmas().map(n=>`${esc(n)} Lv ${m.stigma.levels[n]||0}`).join(' · ')}. ${esc(p.swap)}`,
     `<b>${mode==='healing'?'Healing':'Fight'} priority:</b> ${esc(p.rule)}`];
+  if(m.joint&&!m.joint.error){
+    const updates=m.joint.trace?.reduce((sum,step)=>sum+(step.changes||0),0)||0;
+    steps.push(`<b>Combined combat search:</b> Evaluated your recorded gear, effective skills, equipped Stigmas and all six boards together. ${updates} legal rank adjustments after the initial progression allocation. Combat-score comparisons are uncalibrated and are not measured DPS or guaranteed optimal builds.`);
+  }
   if(a.context==='solo')steps.push(`<b>Solo route:</b> Mastery, Stigmas and the board order favor personal damage and self-sustain. The board route differs from Group PvE.`);
   if(appIsPvpContext(a.context))steps.push(`<b>PvP route:</b> Mastery, Stigmas and PvE crystal clicks prioritize control, escape and survival. Azphel uses a separate ${a.azphel||0}-crystal budget; it has no skill-level nodes.`);
   $('now-steps').innerHTML=steps.map((v,i)=>`<li><span class="step-num">${i+1}</span><span>${v}</span></li>`).join('');
