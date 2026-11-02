@@ -577,7 +577,7 @@ function bind(){
  if(!boardOpen(entry.board)){message='This board is not unlocked.';sync(model());return}
  const a=account();if(!customMode()){
  const map=nodeMap();a.customNodes=routeSteps(activeRoute(),map).filter(x=>x.total<=budget('crystals')).map(x=>x.id);
- a.customAzphelNodes=routeSteps(ROUTES[state.class].azphel,map).filter(x=>x.total<=(a.azphel||0)).map(x=>x.id);a.customArielNodes=routeSteps(arielRoute(),map).filter(x=>x.total<=(a.ariel||0)).map(x=>x.id);
+ a.customAzphelNodes=routeSteps(azphelRoute(),map).filter(x=>x.total<=(a.azphel||0)).map(x=>x.id);a.customArielNodes=routeSteps(arielRoute(),map).filter(x=>x.total<=(a.ariel||0)).map(x=>x.id);
  a.boardMode='custom';}
  setCustomNode(entry.node[0]);message=boardEditNotice;render();
  });
