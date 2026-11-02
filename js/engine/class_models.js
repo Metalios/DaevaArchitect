@@ -169,8 +169,31 @@ const ClassCombatModels=(()=>{
    // Short encounters still benefit from completing casts before the window
    // closes; cooldown reductions may permit a second use but are weaker in
    // short windows. Both are comparative hypotheses, not measured DPS.
-   let sustained=active*(1+boost)*(1+.65*crit)*Math.pow(castThroughput,.70)*(1+.45*haste),
-       burst=active*(1+boost)*(1+.75*crit)*Math.pow(castThroughput,.85)*(1+.12*haste),
+   // Global-client base cooldowns permit an exact ceiling on readiness windows
+   // for a given time horizon. Actual casts remain unknowable without measured
+   // animation locks, movement, priority, target range and reset probabilities.
+   // A zero-cooldown filler gains no fictitious cooldown benefit from haste.
+   const globalCooldowns=typeof GlobalActionData!=='undefined'?GlobalActionData:null;
+   const opportunity=(seconds)=>{
+     if(!globalCooldowns)return {ratio:1,observed:0};
+     let sum=0,total=0,observed=0;
+     for(const {name,weight} of speedSamples){
+       const cd=globalCooldowns.lookup(classId,name);
+       if(cd===null)continue;
+       observed++;
+       // Set ranks from actual gear + Daevanion + purchased Mastery.
+       const base=globalCooldowns.cooldownWithSpecialties(classId,name,
+         rank(name),selectedSpecs,typeof SPECS!=='undefined'?SPECS:{});
+       const unmodified=globalCooldowns.readyWindows(base,seconds,0);
+       const reduced=globalCooldowns.readyWindows(base,seconds,haste);
+       const relative=unmodified===null||unmodified===0?1:reduced/unmodified;
+       sum+=weight*relative;total+=weight;
+     }
+     return {ratio:total?sum/total:1,observed};
+   };
+   const sustainedOpportunity=opportunity(180),burstOpportunity=opportunity(30);
+   let sustained=active*(1+boost)*(1+.65*crit)*Math.pow(castThroughput,.70)*Math.pow(sustainedOpportunity.ratio,.45),
+       burst=active*(1+boost)*(1+.75*crit)*Math.pow(castThroughput,.85)*Math.pow(burstOpportunity.ratio,.20),
        survival=(1+.15*survivalRanks)*(1+defense)*(1+Math.min(1,stat('HPMax')/6000))*
          (1+Math.min(.4,stat('Defense')/12000)),
        party=0,uptime=1;
@@ -271,8 +294,9 @@ const ClassCombatModels=(()=>{
       performance;
    return {score:objectiveScore,sustained,burst,survival,party,uptime,mobility,mechanics,
       castThroughput,normalizedActionTime,combatSpeed:speed,cooldownReduction:haste,
+      cooldownOpportunity:{sustained:sustainedOpportunity,burst:burstOpportunity},
       skillSpeedBonuses:speedSamples.filter(x=>x.skill>0).map(x=>({name:x.name,speed:x.skill})),
-      classification:'comparative execution-time sensitivity; not measured Global DPS or HPS',
+      classification:'Global-client base-cooldown readiness ceilings plus uncalibrated execution-time sensitivity; not measured DPS or HPS',
       provenance:{version:VERSION,source:p.evidence,assumptions:'rank slopes, encounter uptime and relative utility are uncalibrated'}};
  }
  return Object.freeze({VERSION,profile,advice,evaluate,profiles});
