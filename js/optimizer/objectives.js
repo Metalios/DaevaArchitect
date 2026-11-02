@@ -60,7 +60,7 @@ const PveBuildOptimizer=(()=>{
     if(classId==='sorcerer'){
       const focus=[null,'Robe of Flame','Fire Mark','Hellfire','Firestorm'][variant]||null;
       if(focus)skills[focus]=max(skills[focus],38)*2;
-      for(const name of ['Robe of Flame','Fire Mark'])skills[name]=max(skills[name],goal==='survivability'?12:36);
+      for(const name of ['Robe of Flame','Fire Mark'])skills[name]=max(skills[name],['survivability','control'].includes(goal)?12:36);
     }
     for(const [name,w] of Object.entries(base.stats||{})){
       if(/^PvP/i.test(name)){stats[name]=0;continue}
@@ -134,7 +134,7 @@ const PveBuildOptimizer=(()=>{
       value+=amount*(weights.stats[name]??1.5);
     // These are transparent structural synergy hypotheses for candidate search.
     // Final Sorcerer damage candidates are also evaluated by the combat model.
-    if(classId==='sorcerer'&&goal!=='survivability'){
+    if(classId==='sorcerer'&&!['survivability','control'].includes(goal)){
       const eff=name=>(ranks[name]||1)+(gear[name]||0)+(levels[name]||0);
       value+=(eff('Hellfire')-1)*Math.sqrt(max(eff('Firestorm')-1))*2.8;
       value+=(eff('Robe of Flame')-1)*(eff('Hellfire')+eff('Blaze')+eff('Firestorm'))*.65;
