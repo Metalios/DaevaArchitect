@@ -112,6 +112,7 @@ shutil.copy2(root / 'js' / 'engine' / 'animation_evidence.js', out_dir / 'js' / 
 shutil.copy2(root / 'js' / 'engine' / 'combat_timeline.js', out_dir / 'js' / 'engine' / 'combat_timeline.js')
 shutil.copy2(root / 'js' / 'engine' / 'combat_evidence.js', out_dir / 'js' / 'engine' / 'combat_evidence.js')
 shutil.copy2(root / 'js' / 'engine' / 'cohort_analysis.js', out_dir / 'js' / 'engine' / 'cohort_analysis.js')
+shutil.copy2(root / 'js' / 'engine' / 'matched_calibration.js', out_dir / 'js' / 'engine' / 'matched_calibration.js')
 shutil.copy2(root / 'js' / 'engine' / 'combat.js', out_dir / 'js' / 'engine' / 'combat.js')
 shutil.copy2(root / 'js' / 'engine' / 'class_models.js', out_dir / 'js' / 'engine' / 'class_models.js')
 shutil.copy2(root / 'css' / 'styles.css', out_dir / 'css' / 'styles.css')
