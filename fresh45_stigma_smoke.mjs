@@ -35,7 +35,8 @@ try{
   assert.match(await page.locator('#stigma-hint').innerText(),/Saved 29 points/);
   assert.equal(await page.locator('#stigma-input').inputValue(),'29',
     'An old recorded 29-point account must not be silently changed');
-  await page.locator('#fresh-45-button').click();
+  // The original preset strip is hidden in the v2 workspace; use its visible reset action.
+  await page.locator('#reset-button').click();
   assert.equal(await page.locator('#stigma-input').inputValue(),'30');
   await page.evaluate(()=>{
     const a=account();
@@ -44,9 +45,13 @@ try{
   });
   assert.equal(await page.locator('#stigma-input').inputValue(),'30');
   assert.match(await page.locator('#leveling-summary').innerText(),/29|Ascension Shard/);
-  await page.locator('#handoff-button').click();
-  assert.equal(await page.locator('#stigma-input').inputValue(),'30',
-    'Handoff from level 45 must preserve the quest-inclusive total');
+  // The visible v2 stage switch must transfer earned totals, not only the baseline.
+  await page.locator('#stigma-input').fill('34');
+  await page.locator('#stigma-input').dispatchEvent('change');
+  assert.equal(await page.locator('#stigma-input').inputValue(),'34');
+  await page.locator('#v2-stage').selectOption('endgame');
+  assert.equal(await page.locator('#stigma-input').inputValue(),'34',
+    'Visible v2 handoff must preserve the level-45 baseline plus four earned shards');
   assert.deepEqual(errors,[]);
   console.log('Fresh-45 Global: eight class defaults, preserved legacy 29, corrected preset and quest-inclusive leveling handoff.');
 }finally{await browser.close()}
