@@ -98,6 +98,15 @@
         <p id="rotation-control-status" role="status"></p>
       </section>
       <div class="rotation-hero panel"><div class="rotation-mark">01 / THE RULE</div><h3 id="rotation-rule-title"></h3><p id="rotation-rule-text"></p><div id="rotation-gate" class="notice"></div><div id="macro-rank-summary" class="macro-rank-summary"></div></div>
+      <details class="rotation-advanced" id="combat-evidence-panel"><summary>Optional · compare real Global combat evidence</summary>
+        <div class="panel">
+          <h3>Global combat recording</h3>
+          <p>Import a normalized JSON fight timeline to compare actual casts, damage, and buff uptime. The recording is read locally, never uploaded or shared in your build link. Server event gaps do not establish minimum animation or cancel times.</p>
+          <label for="combat-evidence-file">Choose Global fight JSON (maximum 5 MB)</label>
+          <input type="file" id="combat-evidence-file" accept=".json,application/json" />
+          <p id="combat-evidence-status" class="notice" role="status" aria-live="polite">No combat recording loaded. Recommendations remain research-based estimates until validated against real encounters.</p>
+        </div>
+      </details>
       <div class="two-col rotation-columns"><div class="panel"><h3 id="rotation-opener-title">Group opener</h3><ol id="rotation-opener" class="rotation-list"></ol></div><div class="panel"><h3>During the fight</h3><ol id="rotation-loop" class="rotation-list"></ol></div></div>
       <div class="section-title macro-title"><div><h2>Set up the in-game macro</h2><p>Macro steps press hotbar keys, not typed skill commands. Keep the basic attack or filler held separately to weave it between skills.</p></div><span class="tag gold">10 ms start</span></div>
       <div id="rotation-quick-guide" class="rotation-quick-guide panel" role="region" aria-label="Simple in-game macro setup"></div>
