@@ -110,9 +110,14 @@ const GlobalAnimationEvidence=(()=>{
    */
   function enrich(abilities,context,records=[],options={}){
     return abilities.map(a=>{
-      if(Number.isFinite(a.lockSeconds)&&a.lockSeconds>0)return {...a};
+      // An existing *Global-measured* lock should not be replaced.
+      // Otherwise a compatible sourced observation must take precedence over
+      // an older unmeasured lockSeconds scenario in the class simulator.
+      if(Number.isFinite(a.lockSeconds)&&a.lockSeconds>0&&
+         a.timingSource==='global-measured')return {...a};
       const matched=resolve({...context,skill:a.id},records,options);
-      if(!matched.available)return {...a,timingMissing:true};
+      if(!matched.available)return Number.isFinite(a.lockSeconds)&&a.lockSeconds>0
+        ?{...a}:{...a,timingMissing:true};
       return {...a,lockSeconds:matched.seconds,timingSource:matched.provenance,
         timingProvenance:{region:matched.region,clientVersion:matched.clientVersion,
           source:matched.source,samples:matched.samples,
