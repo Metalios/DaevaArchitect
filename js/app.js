@@ -1577,7 +1577,7 @@ $('combat-evidence-file').addEventListener('change',async e=>{
       .sort((a,b)=>b[1].damage-a[1].damage).slice(0,5)
       .map(([name,detail])=>name+': '+detail.casts+' casts, '+
         Math.round(detail.damage).toLocaleString()+' damage');
-    target.textContent='Global client '+report.clientVersion+
+    target.textContent='User-declared Global client '+report.clientVersion+
       ' · '+report.durationSeconds+'s · '+report.casts+' observed casts · '+
       Math.round(report.observedDps).toLocaleString()+' observed DPS · '+
       Math.round(report.observedHps).toLocaleString()+' observed HPS. '+
