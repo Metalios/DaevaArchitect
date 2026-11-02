@@ -154,7 +154,7 @@ function specialBoardRoute(name){
           sum+(Number(row.value)||0)*(row.unit==='%'?100:1),0);
       const weights=activeWeights().stats;
       route=JointProgression.rankConnectedBoard({
-        board,context,objective,role:profile().kind,stats:totals,
+        board,context,objective,classId:state.class,role:profile().kind,stats:totals,
         budget:name==='Ariel'?(a.ariel||0):(a.azphel||0),
         weights,meta:data().stats
       });
