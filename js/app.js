@@ -1141,7 +1141,27 @@ function renderRotation(m){
   const macroRanks=stacks.filter(stack=>!stack.manual).flatMap(stack=>stack.skills).map(name=>name in m.mastery.levels?`${name} Lv ${skillLevelBreakdown(name,m).withOwned} with obtained boards`:name in m.stigma.levels?`${name} Stigma Lv ${m.stigma.levels[name]}`:name);
   const cooldownSummary=(macroAdvice?.coverage||[]).filter(x=>x.seconds!==null)
     .slice(0,8).map(x=>`${x.name}: ${x.seconds===0?'no listed CD':x.seconds+'s base CD'}`);
-  $('macro-rank-summary').textContent=`Macro skill levels at your current point and gear totals: ${macroRanks.join(' · ')}. ${cooldownSummary.length?'Global base cooldowns: '+cooldownSummary.join(' · ')+'. ':''}Cooldown-reducing Specialties, buffs and triggered resets change effective availability; this is not a fixed casting schedule. Change gear, boards, ranks or Stigmas to recalculate.`;
+  const cooldownEffects=typeof GlobalCooldownRules!=='undefined'?
+    GlobalCooldownRules.fromBuild({
+      classId:state.class,
+      effectiveLevels:Object.fromEntries(skillNames().map(name=>
+        [name,skillLevelBreakdown(name,m).withOwned])),
+      specialties:Object.fromEntries(skillNames().map(name=>
+        [name,specPicks(name,skillLevelBreakdown(name,m).withOwned)])),
+      stigmaLevels:m.stigma.levels,equippedStigmas,
+      specData:SPECS[state.class],stigmaData:STIGMAS[state.class]
+    }):null;
+  const effectsSummary=(cooldownEffects?.effects||[]).slice(0,8).map(rule=>{
+    const action=rule.type==='base-reduction'?`reduces listed cooldown ${rule.seconds}s`:
+      rule.type==='reduce'?`cuts ${rule.target} by ${rule.seconds}s`:
+      rule.type==='reset'?`resets ${rule.target}`:
+      rule.type==='remove'?`removes conditional skill cooldown`:
+      `adjusts ${rule.target} cooldown`;
+    const when=rule.event&&rule.event!=='conditional-use'?
+      ` on ${rule.event}`:rule.type==='remove'?' (conditional use only)':'';
+    return `${rule.skill}: ${action}${when}${rule.probability!==null&&rule.probability!==undefined?' · '+Math.round(rule.probability*100)+'% proc':''}`;
+  });
+  $('macro-rank-summary').textContent=`Macro skill levels: ${macroRanks.join(' · ')}. ${cooldownSummary.length?'Global base cooldowns: '+cooldownSummary.join(' · ')+'. ':''}${effectsSummary.length?'Your selected cooldown interactions: '+effectsSummary.join(' · ')+'. ':''}Conditional resets and chances are not guaranteed. Cast, animation and macro timing still require valid Global or patch-compatible measurements.`;
   $('rotation-opener-title').textContent=appIsPvpContext(a.context)?'PvP engage':{party:'Group opener',solo:'Solo opener'}[a.context];
   const manualNow=hotbar.flatMap(([skills])=>skills),buffNow=hotbar.filter(([, ,tone])=>tone==='buff').flatMap(([skills])=>skills),healNow=hotbar.filter(([, ,tone])=>tone==='heal').flatMap(([skills])=>skills);
   const opener=levelingMode?[buffNow.length?`Use ${buffNow.slice(0,2).join(' and ')} before the pull when ready.`:'Approach a manageable target and watch its first attack.',`Hold ${weaveKey} (${p.weave}) with ${macroKey} to cycle ${displayedMacroSteps.join(' then ')||'your unlocked damage key'} while safe.`,healNow.length?`Keep ${healNow.slice(0,2).join(' and ')} available for recovery.`:manualNow.length?`Use ${manualNow.slice(0,2).join(' and ')} manually when their timing helps.`:'Add manual skills to 1–8 as they unlock.']:appIsPvpContext(a.context)?['Approach with cover and keep your escape or control break available.','Open with a manual control or gap close after the opponent commits.','Use the damage macro only while your target is in range and you can safely finish the cast.']:p.opener.map(displayKeyCopy);
