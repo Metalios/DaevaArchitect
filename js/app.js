@@ -1084,6 +1084,39 @@ function renderRotation(m){
     $('leveling-rotation').innerHTML=renderLevelingCombatMarkup(plan,macroKey,quickUse2Bind);
     return;
   }
+  if(typeof GlobalCohortBenchmarks!=='undefined'){
+    const ranks=Object.fromEntries(skillNames().map(name=>
+      [name,skillLevelBreakdown(name,m).withOwned]));
+    const specs=Object.fromEntries(skillNames().map(name=>
+      [name,specPicks(name,ranks[name])]));
+    const observed=GlobalCohortBenchmarks.examine({
+      classId:state.class,effectiveSkills:ranks,
+      selectedSpecialties:specs,characterGearRating:a.gearRating
+    });
+    const target=$('global-cohort-summary');
+    if(observed.available){
+      const top=observed.skillOverlaps.slice()
+        .sort((x,y)=>y.observedUsedByPercent-x.observedUsedByPercent)
+        .slice(0,6).map(x=>
+          x.skill+' '+x.observedUsedByPercent+'% used'+
+          (x.typicalSpecialties.length?
+            ' (often '+x.typicalSpecialties.join('+')+')':''));
+      target.textContent='A2Tools Global snapshot '+observed.snapshotDate+
+        ' · '+observed.samples.toLocaleString()+' '+state.class+
+        ' player samples · Median observed DPS '+
+        Math.round(observed.medianDps).toLocaleString()+
+        ' (middle half '+observed.middleHalfDps.map(v=>
+          Math.round(v).toLocaleString()).join('–')+')'+
+        ' · Cohort median CP '+observed.medianCombatPower.toLocaleString()+
+        ' / GR '+observed.medianGearRating.toLocaleString()+
+        '. Commonly observed skills: '+top.join(' · ')+
+        '. Your chosen Specialty options exactly match the most common '+
+        'observed combination on '+observed.matchesCommonSpecialties+
+        ' of '+observed.skillOverlaps.length+' comparable skills. '+
+        'These are cross-encounter OBSERVATIONS, not normalized DPS, '+
+        'cast speed, action lock, or proof of optimization.';
+    }else target.textContent=observed.reason;
+  }
   const classActive=new Set(Object.values(data().skills).slice(0,12).map(s=>s.name));
   const unlockedClass=new Set([...classActive].filter(name=>!levelingMode||(SKILL_UNLOCKS[state.class][name]||1)<=level));
   const slots=levelingMode?levelReward().slots:4;
