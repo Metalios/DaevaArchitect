@@ -235,11 +235,14 @@ function recommendedStigmas(){
     advised?.stigmas].filter(Array.isArray);
   const key=JSON.stringify([state.class,a.context,a.pveObjective,
     budget('stigma'),budget('mastery'),a.equipment,a.gear,
-    a.obtainedNodes,a.customSpecialties,baseline,candidates]);
+    a.obtainedNodes,a.manualMastery,a.customSpecialties,baseline,candidates]);
   if(stigmaLoadoutCache.key===key)return stigmaLoadoutCache.names;
   try{
-    const initial=allocate(masteryStages(),budget('mastery'),
-      masteryCost,skillNames(),1,masteryRankCap);
+    const initial=a.manualMastery?
+      manualAllocation(a.manualMastery,skillNames(),budget('mastery'),
+        masteryCost,1,masteryRankCap):
+      allocate(masteryStages(),budget('mastery'),masteryCost,
+        skillNames(),1,masteryRankCap);
     const obtained=effects(obtainedNodes());
     const base=engineBuild(initial.levels,obtained,{},[]);
     const selected=JointProgression.chooseStigmaLoadout({
