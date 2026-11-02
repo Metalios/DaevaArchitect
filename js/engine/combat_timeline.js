@@ -76,15 +76,22 @@ const GlobalTimelineEngine=(()=>{
    * Damage is comparative only until the inputs are measured and checked.
    */
   function simulate({abilities,priority,duration,attack,extraHaste=0,
-    outcomes={},resource=null,initialConditions=[]}={}){
-    const errors=validate(abilities,priority,duration,attack);
+    outcomes={},resource=null,initialConditions=[],
+    timingRecords=[],timingContext=null,timingOptions={}}={}){
+    // A regional measurement may supply the action lock ONLY when explicitly
+    // requested, sourced and labelled. Unknown motion stays invalid.
+    const prepared=timingContext&&typeof GlobalAnimationEvidence!=='undefined'
+      &&Array.isArray(abilities)
+      ?GlobalAnimationEvidence.enrich(abilities,timingContext,timingRecords,timingOptions)
+      :abilities;
+    const errors=validate(prepared,priority,duration,attack);
     if(errors.length)return {ok:false,errors,events:[]};
-    const actions=new Map(abilities.map(x=>[x.id,x]));
+    const actions=new Map(prepared.map(x=>[x.id,x]));
     const nowConditions=new Map(initialConditions.filter(x=>x&&x.id&&finite(x.duration)&&x.duration>0)
       .map(x=>[x.id,{...x,until:x.duration}]));
     const snapshots=[];
-    const cooldowns=new Map(abilities.map(x=>[x.id,0]));
-    const casts=new Map(abilities.map(x=>[x.id,0]));
+    const cooldowns=new Map(prepared.map(x=>[x.id,0]));
+    const casts=new Map(prepared.map(x=>[x.id,0]));
     const metrics={totalDamage:0,casts:0,completed:0,idleSeconds:0,
       resets:0,reductions:0,misses:0,criticalEvents:0};
     const rp=resource||{initial:Infinity,max:Infinity,regenPerSecond:0};
@@ -177,8 +184,10 @@ const GlobalTimelineEngine=(()=>{
     }
     if(events.length>=MAX_EVENTS)limitations.push('Simulation event cap reached.');
     if(missingCritData.size)limitations.push('No observed critical/proc outcomes for: '+[...missingCritData].join(', '));
-    if(!abilities.every(a=>a.timingSource==='global-measured'&&a.damageSource==='global-measured'))
+    if(!prepared.every(a=>a.timingSource==='global-measured'&&a.damageSource==='global-measured'))
       limitations.push('Some action locks or damage coefficients are uncalibrated scenarios. DPS is NOT an observed Global result.');
+    const regional=prepared.filter(a=>a.timingSource?.startsWith('regional-'));
+    if(regional.length)limitations.push('Regional timing transfers are subject to Global patch parity and input latency; check '+regional.map(a=>a.id).join(', ')+'.');
     const bySkill={};
     for(const e of events)if(e.type==='cast'){
       bySkill[e.id]||={casts:0,damage:0};
@@ -186,6 +195,7 @@ const GlobalTimelineEngine=(()=>{
     }
     return {ok:true,totalDamage:metrics.totalDamage,dps:metrics.totalDamage/duration,
       duration,metrics,bySkill,events,limitations,
+      timingProvenance:Object.fromEntries(prepared.filter(a=>a.timingProvenance).map(a=>[a.id,a.timingProvenance])),
       assumptions:{cooldownCap:percentCap,cooldownStart:'cast-completion',
         actionLock:'caller-provided',criticalEvents:'deterministic explicit outcomes',
         animationCancel:'only if represented in caller-provided measured lockSeconds'}};
