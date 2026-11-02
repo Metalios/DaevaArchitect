@@ -59,7 +59,7 @@ function applyTheme(){document.body.dataset.theme=theme;document.querySelectorAl
 function account(){
   if(!state.accounts[state.class])state.accounts[state.class]=DEFAULT_ACCOUNT(state.class);
   const a=state.accounts[state.class];
-  if(!appIsPvpContext(a.context))
+  if(typeof RoleBuildGoals!=='undefined'&&!appIsPvpContext(a.context))
     a.pveObjective=RoleBuildGoals.normalize(state.class,a.context,a.pveObjective);
   delete a.gearCombatPower; // Legacy manually entered CP is no longer a build input.
   if(PROFILES[state.class]?.kind!=='healer')delete a.goalObserved;
