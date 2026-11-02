@@ -9,6 +9,7 @@ const context = {
   DATA: read('classes_data.json'),
   ROUTES: read('context_routes.json'),
   AZPHEL: read('azphel_data.json'),
+  ARIEL: vm.runInNewContext(fs.readFileSync(new URL('js/ariel_data.js', root), 'utf8')+'\nARIEL'),
   SKILL_UNLOCKS: read('skill_unlocks.json'),
   LEVEL_REWARDS: read('level_rewards.json'),
   STIGMAS: read('stigmas.json'),
