@@ -9,7 +9,7 @@ const lib=scripts('js/recommendations.js');
 const app=scripts('js/app.js');
 const DATA=read('classes_data.json'),STIGMAS=read('stigmas.json');
 const ctx={DATA,STIGMAS,SKILL_UNLOCKS:read('skill_unlocks.json'),LEVEL_REWARDS:read('level_rewards.json'),
- SPECS:read('specialties.json'),ROUTES:read('context_routes.json'),AZPHEL:read('azphel_data.json'),
+ SPECS:read('specialties.json'),ROUTES:read('context_routes.json'),AZPHEL:read('azphel_data.json'),ARIEL:vm.runInNewContext(scripts('js/ariel_data.js')+'\nARIEL'),
  PROFILES:vm.runInNewContext(scripts('js/profiles.js')+'\nPROFILES'),
  gearSkillLevels:()=>({}),localStorage:{getItem:()=>null},console};
 vm.createContext(ctx);
