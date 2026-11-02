@@ -35,7 +35,7 @@ for(const cls of Object.keys(classes)){
     stigmas:profile?.damageStigmas||[...knownStigmas].slice(0,4),why:'PvE'};
   const advised=models.advice(cls,'party',name,baseline);
   assert.equal(advised.stigmas.length,4);
-  assert.deepEqual(Array.from(advised.stigmas),goal.stigma);
+  assert.deepEqual(Array.from(advised.stigmas),Array.from(goal.stigma));
   assert.equal(advised.core[0],goal.focus[0]);
   assert(advised.why.includes('not measured HPS')||advised.why.includes('not measured'));
   const a=Object.fromEntries([...knownSkills].map(n=>[n,1]));
