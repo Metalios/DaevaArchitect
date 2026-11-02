@@ -55,7 +55,8 @@ const GlobalCohortBenchmarks=(()=>{
         'Used-by percentages show which skills appeared in logs, NOT their damage contribution.',
         'Common specialties indicate adoption, NOT proof of damage optimality.',
         'Class-specific support, tanking and healing cannot be valued from personal DPS medians.',
-        'No animation-lock or cancel-frame measurements are supplied by this cohort.'
+        'No animation-lock or cancel-frame measurements are supplied by this cohort.',
+        'All cohort fights are PvE bosses and CANNOT validate PvP damage, Arena, Abyss or match win rates.'
       ],
       confidence:'observed-aggregate-no-causal-calibration'
     };
