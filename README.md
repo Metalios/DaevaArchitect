@@ -154,10 +154,10 @@ and item catalog records. The connected route is still a documented
 greedy *recommendation*, not measured optimal combat output. Combat
 Power is an empirical estimate, not the server formula. Generic
 stat-tile glyphs remain where independently verified original icon
-assets are unavailable. The new Ariel endgame board/currency has not
-yet been imported into this repository's source dataset. Do not label
-any of these elements "100% game-accurate" until checked against the
-latest installed Global client.
+assets are unavailable. Ariel is implemented as a separate level-45
+PvE board with its own crystal budget and a source-mapped node layout.
+Its node effects and CR weighting still require validation against the
+latest installed Global client; do not label the result "100% game-accurate".
 
 ## Board planning and sharing
 
@@ -204,8 +204,8 @@ It still uses weighted heuristics, not measured rotation DPS, and a route may
 change when the character gains access to another board. Mark already purchased
 nodes obtained to keep them protected during rerouting.
 
-**Not yet covered by this change:** the Ariel endgame board/currency introduced
-in the October Global update; full source-based rank acquisition metadata
+**Not yet covered by this change:** independent in-game validation of the Ariel
+node effect mapping and CR formula; full source-based rank acquisition metadata
 for future classes or patches; validated optimized rotations for every
 skill/specialty combination; and in-game DPS verification for all eight classes.
 These recommendations must not be labeled proven optimal.
