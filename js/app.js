@@ -609,7 +609,12 @@ function chooseCombatBoardRoute(provisional,stigma,gearRanks,target,baseCp,actua
     route:fitConnectedBoardBudget(data(),original.route,maxCrystals).route};
 }
 function enhanceSorcererCombat(master,boardEffects,stigmas){
-  if(!sorcererCombatEligible()){lastOptimizedCombat=null;return master}
+  // The Sorcerer event simulator models damage, not crowd-control uptime.
+  // Control goals use researched rank/board priorities and the safe default
+  // macro, rather than presenting damage-tuned Specialties as CC-optimal.
+  if(RoleBuildGoals.info(state.class,account().pveObjective)||!sorcererCombatEligible()){
+    lastOptimizedCombat=null;return master;
+  }
   const a=account(),prepared=engineBuild(master.levels,boardEffects,stigmas.levels,activeStigmas());
   const objective=PVE_OBJECTIVES[a.pveObjective]?a.pveObjective:'performance';
   const scenarios=objective==='burst'?[GlobalCombatEngine.ENCOUNTERS[2]]:
