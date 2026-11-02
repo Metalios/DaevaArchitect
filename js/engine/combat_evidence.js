@@ -77,8 +77,34 @@ const GlobalCombatEvidence=(()=>{
     const observedCastGaps=Object.fromEntries(
       Object.entries(gaps).map(([skill,values])=>
         [skill,{samples:values.length,medianSeconds:median(values)}]));
+    // Optional matched-fight metadata. The importer never infers these from
+    // damage output, character names or source file paths.
+    const test=raw.benchmark;
+    let benchmark=null;
+    if(test!==undefined){
+      if(!test||typeof test!=='object'||Array.isArray(test))
+        return invalid('benchmark must be a structured object');
+      const strings=['buildLabel','bossId','difficulty','targetScope','gearFingerprint'];
+      if(strings.some(key=>typeof test[key]!=='string'||
+         test[key].length<1||test[key].length>128))
+        return invalid('Complete boss, difficulty, scope, build and gear metadata required for matched calibration');
+      if(!['baseline','candidate'].includes(test.buildLabel)||
+         test.targetScope!=='boss')
+        return invalid('Only baseline/candidate boss-scope matched recordings are supported');
+      const cp=Number(test.combatPower),gr=Number(test.gearRating),
+        ping=Number(test.pingMs);
+      if(!Number.isFinite(cp)||cp<1||cp>1e9||
+         !Number.isFinite(gr)||gr<1||gr>100000||
+         !Number.isFinite(ping)||ping<0||ping>500)
+        return invalid('Measured CP, GR and ping required for matched calibration');
+      benchmark={buildLabel:test.buildLabel,bossId:test.bossId,
+        difficulty:test.difficulty,targetScope:test.targetScope,
+        gearFingerprint:test.gearFingerprint,combatPower:cp,gearRating:gr,
+        pingMs:ping};
+    }
     return {ok:true,region:'Global',classId:raw.classId,
       clientVersion:raw.clientVersion,durationSeconds:duration,
+      benchmark,
       totalDamage:damage,totalHealing:healing,
       observedDps:damage/duration,observedHps:healing/duration,
       casts:castEvents,hits:hitEvents,unsupportedEvents:unsupported,
