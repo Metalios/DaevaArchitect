@@ -1,0 +1,388 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-30",
+  "scope": "AION 2 Global only",
+  "purpose": "Evidence collection for PvP recommendations; not approved presets or measured results",
+  "notes": [
+    "Secondary articles attribute builds to named Global players or aggregated Global public builds; Questlog original build links and results still require manual primary verification.",
+    "Repeated copies, high Combat Power, likes, and character representation do not prove PvP win-rate advantage.",
+    "Only four equipped Global stigma slots; KR/TW six-slot setups excluded. PvP contexts may require conditional swaps per enemy matchup and team composition.",
+    "No automatic deployment: research inputs only. Skills and mechanics must be rechecked against latest official Global tooltip and patch.",
+    "Observed gear-score ranks must be rescaled to the user's actual available total stigma points and class/goal, not copied regardless of budget."
+  ],
+  "officialPatch": "https://aion2.plaync.com/en-us/board/update/view?articleId=6ae19668577e8c01355e0210",
+  "rankingContext": {
+    "arenaSolitude": "https://aion2.gaming.tools/tier-list?activity=arena-single",
+    "arenaCooperation": "https://aion2.gaming.tools/tier-list?activity=arena-team",
+    "abyss": "https://aion2.gaming.tools/tier-list",
+    "limitation": "Population-adjusted top-5% representation indices do not link a named public build to an actual player victory."
+  },
+  "observations": [
+    {
+      "id": "gladiator-sen-arena-or-small-pvp",
+      "region": "Global",
+      "classId": "gladiator",
+      "creator": "Sen",
+      "mode": "arena-or-small-pvp",
+      "stigmas": [
+        "Lunge Stance",
+        "Zikel's Blessing",
+        "Blade Toss",
+        "Focused Block"
+      ],
+      "source": "https://aion2vault.com/builds/gladiator/pvp/",
+      "sourceType": "secondary_summary_of_named_public_build",
+      "performanceValidated": false,
+      "independentPerformanceEvidence": false,
+      "notes": "Core buffs stay; Blade Toss anti-heal, knockdown setup; Focused Block a defense choice. Tenaciousness can replace Focused Block; Forced Restraint can replace Blade Toss.",
+      "variants": [
+        "Blade Toss -> Forced Restraint",
+        "Focused Block -> Tenaciousness"
+      ],
+      "observed": "2026-10-18"
+    },
+    {
+      "id": "gladiator-public-pvp-sample-general-pvp",
+      "region": "Global",
+      "classId": "gladiator",
+      "creator": "Public PvP sample",
+      "mode": "general-pvp",
+      "stigmas": [
+        "Lunge Stance",
+        "Zikel's Blessing",
+        "Rage Burst",
+        "Tenaciousness"
+      ],
+      "source": "https://aion2vault.com/builds/gladiator/pvp/",
+      "sourceType": "secondary_summary_of_named_public_build",
+      "performanceValidated": false,
+      "independentPerformanceEvidence": false,
+      "notes": "One observed alternate family, not a top-ranked verified player; Rage Burst retained in some PvP builds.",
+      "observed": "2026-10-18",
+      "sampleType": "aggregated_pattern_not_specific_player",
+      "confidence": "low"
+    },
+    {
+      "id": "templar-nobs-arena-1v1",
+      "region": "Global",
+      "classId": "templar",
+      "creator": "NoBS",
+      "mode": "arena-1v1",
+      "stigmas": [
+        "Shield of Protection",
+        "Nezekan's Shield",
+        "Battlefield Banner",
+        "Doom Shield"
+      ],
+      "source": "https://aion2vault.com/builds/templar/pvp/",
+      "sourceType": "secondary_summary_of_named_public_build",
+      "performanceValidated": false,
+      "independentPerformanceEvidence": false,
+      "notes": "Duel bar: layered shields, block and counter-burst. Manual Poach into stun after enemy Defiance ends; Debilitating Smash healing reduction Specialty.",
+      "observed": "2026-10-18"
+    },
+    {
+      "id": "templar-xia-group-pvp-5v5",
+      "region": "Global",
+      "classId": "templar",
+      "creator": "Xia",
+      "mode": "group-pvp-5v5",
+      "stigmas": [
+        "Grapple",
+        "Empyrean Lord's Punishment",
+        "Comrade in Arms",
+        "Doom Shield"
+      ],
+      "source": "https://aion2vault.com/builds/templar/pvp/",
+      "sourceType": "secondary_summary_of_named_public_build",
+      "performanceValidated": false,
+      "independentPerformanceEvidence": false,
+      "notes": "Area control, pulls and ally damage redirection; group arena evidence is only a proxy for open-world Abyss team fights.",
+      "observed": "2026-10-18",
+      "extrapolationWarning": "5v5 arena != flying group Abyss siege"
+    },
+    {
+      "id": "assassin-j0ei-general-and-small-pvp",
+      "region": "Global",
+      "classId": "assassin",
+      "creator": "J0EI",
+      "mode": "general-and-small-pvp",
+      "stigmas": [
+        "Illusive Clone",
+        "Triniel's Dagger",
+        "Shadowstep",
+        "Spiral Slice"
+      ],
+      "source": "https://aion2vault.com/builds/assassin/pvp/",
+      "sourceType": "secondary_summary_of_named_public_build",
+      "performanceValidated": false,
+      "independentPerformanceEvidence": false,
+      "notes": "J0EI's public Global PvP bar; repeated by Keyba. Clone burst plus Shadowstep reset and Spiral Slice gap close/strip. Many copies of this bar are not independent validation.",
+      "observed": "2026-10-28",
+      "originalBuild": "https://questlog.gg/aion-2/en/skill-builder/pIFIE7w5yuf4?build-id=11500",
+      "patchWarning": "Illusive Clone cooldown changed to 60s on Oct 28"
+    },
+    {
+      "id": "assassin-kaiwel-arena-1v1",
+      "region": "Global",
+      "classId": "assassin",
+      "creator": "kaiwel",
+      "mode": "arena-1v1",
+      "stigmas": [
+        "Illusive Clone",
+        "Triniel's Dagger",
+        "Evasion Contract",
+        "Aerial Bind"
+      ],
+      "source": "https://aion2vault.com/builds/assassin/pvp/",
+      "sourceType": "secondary_summary_of_named_public_build",
+      "performanceValidated": false,
+      "independentPerformanceEvidence": false,
+      "notes": "Mode-specific arena control/mitigation alternative described by Global creator with Korean player comparisons.",
+      "observed": "2026-10-18",
+      "confidence": "mixed-region-provenance"
+    },
+    {
+      "id": "ranger-whelps-small-pvp",
+      "region": "Global",
+      "classId": "ranger",
+      "creator": "whelps",
+      "mode": "small-pvp",
+      "stigmas": [
+        "Vaizel's Authority",
+        "Mother Nature's Breath",
+        "Sealing Arrow",
+        "Ambush Kick"
+      ],
+      "source": "https://aion2vault.com/builds/ranger/pvp/",
+      "sourceType": "secondary_summary_of_named_public_build",
+      "performanceValidated": false,
+      "independentPerformanceEvidence": false,
+      "notes": "Ranged damage buff preserved with targeted silence/seal, kiting and survival. For solo Abyss Stealth is a conditional swap; Ensnaring Trap is an arena swap.",
+      "observed": "2026-10-18",
+      "variants": [
+        "Ambush Kick -> Stealth (solo Abyss scouting)",
+        "Ambush Kick -> Ensnaring Trap (arena)"
+      ]
+    },
+    {
+      "id": "ranger-public-pvp-damage-bar-sample-general-or-group-pvp",
+      "region": "Global",
+      "classId": "ranger",
+      "creator": "Public PvP damage-bar sample",
+      "mode": "general-or-group-pvp",
+      "stigmas": [
+        "Vaizel's Authority",
+        "Bow of Blessing",
+        "Supporting Fire",
+        "Griffon Arrow"
+      ],
+      "source": "https://aion2vault.com/builds/ranger/pvp/",
+      "sourceType": "secondary_summary_of_named_public_build",
+      "performanceValidated": false,
+      "independentPerformanceEvidence": false,
+      "notes": "Common public PvP bar preserves full PvE burst buffs; usage is not evidence of stronger PvP win rate.",
+      "observed": "2026-10-18",
+      "sampleType": "aggregated_pattern_not_specific_player",
+      "confidence": "medium"
+    },
+    {
+      "id": "sorcerer-shr1kn-all-pvp-gear-brackets",
+      "region": "Global",
+      "classId": "sorcerer",
+      "creator": "shr1kn",
+      "mode": "all-pvp-gear-brackets",
+      "stigmas": [
+        "Element Enhancement",
+        "Arctic Armor",
+        "Hibernation",
+        "Soul Freeze"
+      ],
+      "source": "https://aion2vault.com/builds/sorcerer/pvp/",
+      "sourceType": "secondary_summary_of_named_public_build",
+      "performanceValidated": false,
+      "independentPerformanceEvidence": false,
+      "notes": "Four public gear-bracket variants with same four slots: Element Enhancement damage; Arctic protection; Hibernation invulnerability; Soul Freeze Seal. Hellfire only manually cast in hard-CC window.",
+      "observed": "2026-10-18",
+      "stigmaRankExamples": {
+        "1200-1800": [
+          15,
+          10,
+          10,
+          10
+        ],
+        "1800-2600": [
+          20,
+          15,
+          15,
+          15
+        ],
+        "2600-3400": [
+          20,
+          15,
+          20,
+          20
+        ]
+      },
+      "rankCaution": "The rank arrays use the listed Stigma order and require greater budgets than fresh 45."
+    },
+    {
+      "id": "spiritmaster-public-global-pvp-sample-general-pvp",
+      "region": "Global",
+      "classId": "spiritmaster",
+      "creator": "Public Global PvP sample",
+      "mode": "general-pvp",
+      "stigmas": [
+        "Enhance: Spirit's Benediction",
+        "Summon: Ancient Spirit",
+        "Seize Magic",
+        "Command: Proxy"
+      ],
+      "source": "https://aion2vault.com/builds/spiritmaster/pvp/",
+      "sourceType": "secondary_summary_of_named_public_build",
+      "performanceValidated": false,
+      "independentPerformanceEvidence": false,
+      "notes": "Common four-slot Global bar keeps both spirit-enhancement and Ancient Spirit, adds enemy buff removal and defensive damage-share.",
+      "observed": "2026-10-21",
+      "sampleType": "aggregated_pattern_not_specific_player"
+    },
+    {
+      "id": "spiritmaster-carneiro-mmo-arena-against-casters",
+      "region": "Global",
+      "classId": "spiritmaster",
+      "creator": "Carneiro MMO",
+      "mode": "arena-against-casters",
+      "stigmas": [
+        "Enhance: Spirit's Benediction",
+        "Summon: Ancient Spirit",
+        "Seize Magic",
+        "Magic Block"
+      ],
+      "source": "https://aion2vault.com/builds/spiritmaster/pvp/",
+      "sourceType": "secondary_summary_of_named_public_build",
+      "performanceValidated": false,
+      "independentPerformanceEvidence": false,
+      "notes": "Creator-reported strong arena performance; Magic Block Seal replaces Command: Proxy against casters. Not independently verified ladder rank.",
+      "observed": "2026-10-21",
+      "rankClaim": "reported first place arena; independent ladder validation unavailable"
+    },
+    {
+      "id": "cleric-th3ruthless-arena-1v1",
+      "region": "Global",
+      "classId": "cleric",
+      "creator": "Th3Ruthless",
+      "mode": "arena-1v1",
+      "stigmas": [
+        "Earth Punishment",
+        "Noble Aura",
+        "Light of Protection",
+        "Salvation"
+      ],
+      "source": "https://aion2vault.com/builds/cleric/pvp/",
+      "sourceType": "secondary_summary_of_named_public_build",
+      "performanceValidated": false,
+      "independentPerformanceEvidence": false,
+      "notes": "Attrition damage with Earth Punishment's Condemnation crit and Noble Aura, protected by Salvation. BoredAF reports using comparable bar on Global.",
+      "observed": "2026-10-20",
+      "caveat": "Th3Ruthless recorded original guide before Global launch; build references Global four-slot adaptation."
+    },
+    {
+      "id": "cleric-mrrosapony-open-world-pvp",
+      "region": "Global",
+      "classId": "cleric",
+      "creator": "MrRosaPony",
+      "mode": "open-world-pvp",
+      "stigmas": [
+        "Earth Punishment",
+        "Light of Protection",
+        "Salvation",
+        "Voice of Doom"
+      ],
+      "source": "https://aion2vault.com/builds/cleric/pvp/",
+      "sourceType": "secondary_summary_of_named_public_build",
+      "performanceValidated": false,
+      "independentPerformanceEvidence": false,
+      "notes": "Against healing, bait cleanse then land Voice of Doom -60% incoming heal and potion recovery. 58 copied builds by name are not 58 independent observations.",
+      "observed": "2026-10-20"
+    },
+    {
+      "id": "cleric-th3ruthless-group-pvp-5v5",
+      "region": "Global",
+      "classId": "cleric",
+      "creator": "Th3Ruthless",
+      "mode": "group-pvp-5v5",
+      "stigmas": [
+        "Salvation",
+        "Absolution",
+        "Light of Protection",
+        "Yustiel's Power"
+      ],
+      "source": "https://aion2vault.com/builds/cleric/pvp/",
+      "sourceType": "secondary_summary_of_named_public_build",
+      "performanceValidated": false,
+      "independentPerformanceEvidence": false,
+      "notes": "Support bar for cleansing group; Light of Protection buff can conflict with Chanter Undefeated Mantra, with Benevolence as alternate.",
+      "observed": "2026-10-20",
+      "variants": [
+        "Light of Protection -> Benevolence when party already has Undefeated Mantra"
+      ]
+    },
+    {
+      "id": "chanter-notxeon-solo-abyss",
+      "region": "Global",
+      "classId": "chanter",
+      "creator": "notXeon",
+      "mode": "solo-abyss",
+      "stigmas": [
+        "Undefeated Mantra",
+        "Marchutan's Wrath",
+        "Fracturing Blow",
+        "Guardian Blessing"
+      ],
+      "source": "https://aion2vault.com/builds/chanter/pvp/",
+      "sourceType": "secondary_summary_of_named_public_build",
+      "performanceValidated": false,
+      "independentPerformanceEvidence": false,
+      "notes": "Manual stun/control windows and damage; do not replace main damage mantra just to collect generic defensive Stigmas. Marchutan Lv15 applies anti-heal.",
+      "observed": "2026-10-21"
+    },
+    {
+      "id": "chanter-notxeon-arena-on-ground",
+      "region": "Global",
+      "classId": "chanter",
+      "creator": "notXeon",
+      "mode": "arena-on-ground",
+      "stigmas": [
+        "Undefeated Mantra",
+        "Marchutan's Wrath",
+        "Sprint Mantra",
+        "Guardian Blessing"
+      ],
+      "source": "https://aion2vault.com/builds/chanter/pvp/",
+      "sourceType": "secondary_summary_of_named_public_build",
+      "performanceValidated": false,
+      "independentPerformanceEvidence": false,
+      "notes": "Ground arena kiting swaps Fracturing Blow for Sprint Mantra; explicitly not the recommended aerial Abyss bar.",
+      "observed": "2026-10-21"
+    },
+    {
+      "id": "chanter-notxeon-group-pvp",
+      "region": "Global",
+      "classId": "chanter",
+      "creator": "notXeon",
+      "mode": "group-pvp",
+      "stigmas": [
+        "Undefeated Mantra",
+        "Healing Touch",
+        "Impeding Authority",
+        "Power of the Storm"
+      ],
+      "source": "https://aion2vault.com/builds/chanter/pvp/",
+      "sourceType": "secondary_summary_of_named_public_build",
+      "performanceValidated": false,
+      "independentPerformanceEvidence": false,
+      "notes": "Group buffs, sustain and enemy pressure. Undefeated Mantra does not stack its same-type buff with Cleric Light of Protection.",
+      "observed": "2026-10-21"
+    }
+  ]
+}
