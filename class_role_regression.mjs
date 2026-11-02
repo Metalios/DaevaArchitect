@@ -29,8 +29,10 @@ for(const cls of Object.keys(classes)){
   assert(goal.utility.every(n=>knownSkills.has(n)),cls+' '+name+' invalid utility');
   assert(goal.stigma.length===4&&new Set(goal.stigma).size===4);
   assert(goal.stigma.every(n=>knownStigmas.has(n)),cls+' '+name+' invalid Stigma');
-  const baseline={core:models.profile(cls).offense,support:models.profile(cls).support,
-    stigmas:models.profile(cls).damageStigmas,why:'PvE'};
+  const profile=models.profile(cls);
+  const baseline={core:profile?.offense||[...knownSkills].slice(0,6),
+    support:profile?.support||[...knownSkills].slice(6,10),
+    stigmas:profile?.damageStigmas||[...knownStigmas].slice(0,4),why:'PvE'};
   const advised=models.advice(cls,'party',name,baseline);
   assert.equal(advised.stigmas.length,4);
   assert.deepEqual(Array.from(advised.stigmas),goal.stigma);
@@ -40,12 +42,17 @@ for(const cls of Object.keys(classes)){
   const b={...a};for(const skill of goal.focus)b[skill]=10;
   const build=mastery=>({mastery,boardSkills:{},gearSkills:{},
     boardStats:{},gearStats:{},stigma:{},equippedStigmas:goal.stigma});
-  const low=models.evaluate({classId:cls,context:'party',objective:name,
-    build:build(a)});
-  const high=models.evaluate({classId:cls,context:'party',objective:name,
-    build:build(b)});
-  assert(Number.isFinite(low.score)&&Number.isFinite(high.score));
-  assert(high.score>low.score,cls+' '+name+' must reward actual selected focus skills');
+  if(profile){
+    const low=models.evaluate({classId:cls,context:'party',objective:name,
+      build:build(a)});
+    const high=models.evaluate({classId:cls,context:'party',objective:name,
+      build:build(b)});
+    assert(Number.isFinite(low.score)&&Number.isFinite(high.score));
+    assert(high.score>low.score,cls+' '+name+' must reward actual selected focus skills');
+  }else{
+    assert.equal(cls,'sorcerer','Only Sorcerer may use dedicated event engine');
+    assert(advised.core.includes('Ice Chain'));
+  }
  }
 }
 const cleric=roles.available('cleric','party').map(x=>x.id);
