@@ -276,7 +276,8 @@ try{
   await page.locator('#v2-level').fill('32');
   await page.locator('#v2-level').press('Tab');
   assert.equal(await page.locator('#mastery-input').inputValue(),'123');
-  assert.equal(await page.locator('#stigma-input').inputValue(),'10');
+  // Level 32 has 10 level-up Stigma points plus the required Ascension quest Shard.
+  assert.equal(await page.locator('#stigma-input').inputValue(),'11');
   assert.equal(await page.locator('#crystal-input').inputValue(),'84');
   assert.match(await page.locator('#v2-stigma-status').innerText(),/3\/4 slots/);
   assert.equal(await page.locator('#board-tabs [data-board="Triniel"]').isDisabled(),true);
