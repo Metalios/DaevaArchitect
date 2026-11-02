@@ -63,6 +63,8 @@ function applyTheme(){document.body.dataset.theme=theme;document.querySelectorAl
 function account(){
   if(!state.accounts[state.class])state.accounts[state.class]=DEFAULT_ACCOUNT(state.class);
   const a=state.accounts[state.class];
+  if(typeof RoleBuildGoals!=='undefined'&&!appIsPvpContext(a.context))
+    a.pveObjective=RoleBuildGoals.normalize(state.class,a.context,a.pveObjective);
   delete a.gearCombatPower; // Legacy manually entered CP is no longer a build input.
   if(PROFILES[state.class]?.kind!=='healer')delete a.goalObserved;
   return a;
@@ -159,7 +161,8 @@ function specialBoardRoute(name){
   const a=account(),context=name==='Azphel'&&
     !appIsPvpContext(a.context)?'pvp':name==='Ariel'&&
     appIsPvpContext(a.context)?'party':a.context;
-  const objective=a.pveObjective||'performance';
+  const objective=name==='Azphel'||appIsPvpContext(a.context)?
+    'performance':a.pveObjective||'performance';
   const equipment=gearEquipment();
   const fingerprint=JSON.stringify([state.class,name,context,objective,
     equipment,a.gear,a.titlesOwned,
@@ -176,7 +179,7 @@ function specialBoardRoute(name){
           sum+(Number(row.value)||0)*(row.unit==='%'?100:1),0);
       const weights=activeWeights().stats;
       route=JointProgression.rankConnectedBoard({
-        board,context,objective,role:profile().kind,stats:totals,
+        board,context,objective,classId:state.class,role:profile().kind,stats:totals,
         budget:name==='Ariel'?(a.ariel||0):(a.azphel||0),
         weights,meta:data().stats
       });
@@ -255,6 +258,9 @@ function recommendedStigmas(){
   // be displaced by a generic uncalibrated personal-DPS proxy.
   if(!combat||typeof JointProgression==='undefined'||isLeveling()||
      a.customStigmas||a.manualStigma||budget('stigma')<30||
+     // A simple personal-DPS proxy must not displace a manually researched
+     // healing, tanking, CC or group-support Stigma set.
+     RoleBuildGoals.info(state.class,a.pveObjective)||
      (state.class==='templar'&&a.context==='party'))return baseline;
   const candidates=[standard,combat.damageStigmas,combat.survivalStigmas,
     variants[state.class]?.pvp,variants[state.class]?.solo,
@@ -627,7 +633,12 @@ function chooseCombatBoardRoute(provisional,stigma,gearRanks,target,baseCp,actua
     route:fitConnectedBoardBudget(data(),original.route,maxCrystals).route};
 }
 function enhanceSorcererCombat(master,boardEffects,stigmas){
-  if(!sorcererCombatEligible()){lastOptimizedCombat=null;return master}
+  // The Sorcerer event simulator models damage, not crowd-control uptime.
+  // Control goals use researched rank/board priorities and the safe default
+  // macro, rather than presenting damage-tuned Specialties as CC-optimal.
+  if(RoleBuildGoals.info(state.class,account().pveObjective)||!sorcererCombatEligible()){
+    lastOptimizedCombat=null;return master;
+  }
   const a=account(),prepared=engineBuild(master.levels,boardEffects,stigmas.levels,activeStigmas());
   const objective=PVE_OBJECTIVES[a.pveObjective]?a.pveObjective:'performance';
   const scenarios=objective==='burst'?[GlobalCombatEngine.ENCOUNTERS[2]]:
@@ -638,7 +649,7 @@ function enhanceSorcererCombat(master,boardEffects,stigmas){
   let result=combatResultCache.key===key?combatResultCache.result:null;
   if(!result){
     let final=master,improvement=null;
-    if(!a.manualMastery){
+    if(!a.manualMastery&&!RoleBuildGoals.info(state.class,objective)){
       const revised=GlobalCombatEngine.refineMastery({
         initial:master.levels,budget:budget('mastery'),cost:masteryCost,
         cap:masteryRankCap,build:prepared,specData:SPECS.sorcerer,
@@ -745,7 +756,8 @@ function model(){
                budget('mastery'),masteryCost,names,1,isLeveling()?masteryRankCap:null);
              const build=engineBuild(proposed.levels,boardEffects,stigma.levels,activeStigmas());
              const structuralTie=candidate.score*.0000005;
-             if(state.class==='sorcerer'&&sorcererCombatEligible()&&objective!=='survivability'){
+             if(state.class==='sorcerer'&&sorcererCombatEligible()&&objective!=='survivability'&&
+                 !RoleBuildGoals.info(state.class,objective)){
                // Tune specialties for the selected goal's encounter window.
                const scenarios=objective==='burst'?[GlobalCombatEngine.ENCOUNTERS[2]]:
                  objective==='sustained'?GlobalCombatEngine.ENCOUNTERS.slice(0,2):
@@ -1226,7 +1238,9 @@ function renderRotation(m){
       ` on ${rule.event}`:rule.type==='remove'?' (conditional use only)':'';
     return `${rule.skill}: ${action}${when}${rule.probability!==null&&rule.probability!==undefined?' · '+Math.round(rule.probability*100)+'% proc':''}`;
   });
-  $('macro-rank-summary').textContent=`Macro skill levels: ${macroRanks.join(' · ')}. ${cooldownSummary.length?'Global base cooldowns: '+cooldownSummary.join(' · ')+'. ':''}${effectsSummary.length?'Your selected cooldown interactions: '+effectsSummary.join(' · ')+'. ':''}Conditional resets and chances are not guaranteed. Cast, animation and macro timing still require valid Global or patch-compatible measurements.`;
+  const roleInstructions=!appIsPvpContext(a.context)?
+    RoleBuildGoals.info(state.class,a.pveObjective)?.manual:null;
+  $('macro-rank-summary').textContent=`${roleInstructions?'Selected class role: '+roleInstructions+' ':''}Macro skill levels: ${macroRanks.join(' · ')}. ${cooldownSummary.length?'Global base cooldowns: '+cooldownSummary.join(' · ')+'. ':''}${effectsSummary.length?'Your selected cooldown interactions: '+effectsSummary.join(' · ')+'. ':''}Conditional resets and chances are not guaranteed. Cast, animation and macro timing still require valid Global or patch-compatible measurements.`;
   $('rotation-opener-title').textContent=appIsPvpContext(a.context)?'PvP engage':{party:'Group opener',solo:'Solo opener'}[a.context];
   const manualNow=hotbar.flatMap(([skills])=>skills),buffNow=hotbar.filter(([, ,tone])=>tone==='buff').flatMap(([skills])=>skills),healNow=hotbar.filter(([, ,tone])=>tone==='heal').flatMap(([skills])=>skills);
   const opener=levelingMode?[buffNow.length?`Use ${buffNow.slice(0,2).join(' and ')} before the pull when ready.`:'Approach a manageable target and watch its first attack.',`Hold ${weaveKey} (${p.weave}) with ${macroKey} to cycle ${displayedMacroSteps.join(' then ')||'your unlocked damage key'} while safe.`,healNow.length?`Keep ${healNow.slice(0,2).join(' and ')} available for recovery.`:manualNow.length?`Use ${manualNow.slice(0,2).join(' and ')} manually when their timing helps.`:'Add manual skills to 1–8 as they unlock.']:appIsPvpContext(a.context)?['Approach with cover and keep your escape or control break available.','Open with a manual control or gap close after the opponent commits.','Use the damage macro only while your target is in range and you can safely finish the cast.']:p.opener.map(displayKeyCopy);
@@ -1458,6 +1472,8 @@ $('azphel-input').addEventListener('change',e=>{account().azphel=clamp(e.target.
 function setContext(ctx){
  if(!['party','solo',...Object.keys(PVP_CONTEXT_LABELS)].includes(ctx)||isLeveling()&&appIsPvpContext(ctx))return;
  account().context=ctx;account()[isLeveling()?'levelingContext':'endgameContext']=ctx;
+ if(!appIsPvpContext(ctx))
+   account().pveObjective=RoleBuildGoals.normalize(state.class,ctx,account().pveObjective);
  // Azphel remains visible in every build context.
  state.preview=['Azphel','Ariel'].includes(state.board)?(account()[state.board.toLowerCase()]||0):budget('crystals');
  render();

@@ -34,8 +34,8 @@
     for(const [key,max] of [['mastery',462],['stigma',300],['crystals',570],['azphel',232],['ariel',232],['gearRating',10000],['goalTarget',1000000000],['gearCpTarget',1000000000]])if(raw[key]!==undefined)result[key]=numeric(raw[key],max);
     if(PROFILES[cls].kind==='healer'&&raw.goalObserved!==undefined)result.goalObserved=numeric(raw.goalObserved,1000000000);
     result.context=['party','solo','pvp','pvp-arena','pvp-abyss-solo','pvp-abyss-group'].includes(raw.context)?raw.context:'party';
-    result.pveObjective=['performance','survivability','sustained','burst'].includes(raw.pveObjective)
-      ?raw.pveObjective:'performance';
+    result.pveObjective=RoleBuildGoals.normalize(cls,
+      ['party','solo'].includes(result.context)?result.context:'party',raw.pveObjective);
     result.endgameContext=['party','solo','pvp','pvp-arena','pvp-abyss-solo','pvp-abyss-group'].includes(raw.endgameContext)?raw.endgameContext:result.context;
     result.levelingContext=['party','solo'].includes(raw.levelingContext)?raw.levelingContext:'solo';
     result.journey=raw.journey==='leveling'?'leveling':'endgame';

@@ -16,12 +16,7 @@ const quick=make('div','v2-quickbar',`
  <label>Stage<select id="v2-stage"><option value="leveling">Leveling</option><option value="endgame">Fresh 45 / Endgame</option></select></label>
  <label>Content<select id="v2-context"><option value="solo">Solo PvE</option><option value="party">Group PvE</option><option value="pvp">General PvP</option><option value="pvp-arena">Arena PvP (1v1)</option>
  <option value="pvp-abyss-solo">Solo PvP (Abyss)</option><option value="pvp-abyss-group">Group PvP (Abyss)</option></select></label>
- <label id="v2-objective-label">Build goal<select id="v2-objective">
-  <option value="performance">Maximum PvE performance</option>
-  <option value="survivability">Maximum survivability</option>
-  <option value="sustained">Maximum sustained DPS</option>
-  <option value="burst">Maximum burst DPS</option>
- </select></label>
+ <label id="v2-objective-label">Build role<select id="v2-objective"></select></label>
  <div id="v2-status" role="status"></div>
  <button id="v2-save" type="button">Save</button><button id="v2-share" type="button" class="v2-gold">Share build</button>`);
 // Compact mobile header keeps Save/Share visible without imposing the full
@@ -440,7 +435,21 @@ function sync(m){
  const a=account();
  $('v2-class').value=state.class;$('v2-level').value=currentLevel();$('v2-level').disabled=!isLeveling();
  $('v2-stage').value=a.journey;$('v2-context').value=a.context;
- $('v2-objective').value=PVE_OBJECTIVES[a.pveObjective]?a.pveObjective:'performance';
+ const roleChoices=RoleBuildGoals.available(state.class,a.context);
+ const roleSelect=$('v2-objective'),roleGoal=RoleBuildGoals.normalize(state.class,a.context,a.pveObjective);
+ const signature=roleChoices.map(g=>g.id).join('|');
+ if(roleSelect.dataset.catalog!==signature){
+   roleSelect.replaceChildren(...roleChoices.map(g=>{
+     const option=document.createElement('option');
+     option.value=g.id;option.textContent=g.label;return option;
+   }));
+   roleSelect.dataset.catalog=signature;
+ }
+ roleSelect.value=roleGoal;
+ const roleDescription=roleChoices.find(g=>g.id===roleGoal)?.description||
+   'Choose your class role.';
+ roleSelect.title=roleDescription;
+ roleSelect.setAttribute('aria-label','Build role: '+roleDescription);
  $('v2-objective-label').hidden=isPvpContext(a.context);
  const evidence=$('v2-optimizer-evidence'),result=a.lastObjectiveAnalysis;
  evidence.hidden=isPvpContext(a.context);
@@ -448,11 +457,11 @@ function sync(m){
    if(result?.error) evidence.textContent='Research-based route search was unavailable; the previous legal recommendation was retained.';
    else if(result){
      const source=typeof ClassCombatModels!=='undefined'?ClassCombatModels.profile(state.class)?.evidence||null:null;
-     evidence.textContent=`Goal: ${PVE_OBJECTIVES[a.pveObjective||'performance']?.label||'PvE performance'}.
+     evidence.textContent=`Goal: ${roleChoices.find(g=>g.id===roleGoal)?.label||'PvE performance'} · ${roleDescription}.
        ${result.candidates||0} funded candidate routes evaluated using
        ${state.class==='sorcerer'?'a comparative Sorcerer rotation model':'class-specific mechanics projections'}.
        ${source?'Research: '+source+'.':''} Scores are not validated DPS/HPS or proofs of optimality.`;
-   }else evidence.textContent='Choose a PvE goal to evaluate connected Daevanion paths.';
+   }else evidence.textContent='Choose a class-aware PvE role to evaluate Mastery, Stigmas and connected Daevanion paths. '+roleDescription;
  }
  archetype.textContent=PROFILES[state.class].role+' · '+ARCHETYPE_WEAPONS[state.class];
  archetype.setAttribute('aria-label',PROFILES[state.class].name+' class and weapon');
@@ -515,7 +524,7 @@ function bind(){
    }
   });
  $('v2-objective').addEventListener('change',e=>{
-   account().pveObjective=PVE_OBJECTIVES[e.target.value]?e.target.value:'performance';
+   account().pveObjective=RoleBuildGoals.normalize(state.class,account().context,e.target.value);
    account().recommendedRouteSnapshot=null;
    render();
  });

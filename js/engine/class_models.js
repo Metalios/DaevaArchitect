@@ -95,7 +95,19 @@ const ClassCombatModels=(()=>{
  function profile(cls){return profiles[cls]||null}
  function advice(cls,context,objective,base){
    const p=profile(cls);
-   if(!p||!base||context==='pvp'||!objective||objective==='performance')return base;
+   if(!base||context==='pvp'||!objective||objective==='performance')return base;
+   const role=RoleBuildGoals.info(cls,objective);
+   if(role){
+     // A role selection must modify legal Mastery and Stigma recommendations.
+     const priority=uniq([...role.focus,...role.utility,...(p?.offense||base.core||[])]);
+     const support=uniq([...role.utility,...(p?.defense||[]),...(p?.support||base.support||[])]).slice(0,8);
+     const stigmas=uniq(role.stigma).slice(0,4);
+     return {...base,buildObjective:objective,core:priority.slice(0,10),
+       support,stigmas,stigmaPriority:[...stigmas],
+       stigmaMilestones:undefined,
+       why:`${base.why} ${RoleBuildGoals.available(cls,context).find(x=>x.id===objective)?.label||objective}: ${role.description}. ${role.manual} Comparative score is not measured HPS, DPS or threat.`};
+   }
+   if(!p)return base;
    const survival=objective==='survivability';
    const core=survival?uniq([...p.defense.slice(0,3),...p.offense.slice(0,4)]):
      objective==='burst'?uniq([...p.offense.slice(0,3),...p.offense.slice(3,6)]):
@@ -296,10 +308,15 @@ const ClassCombatModels=(()=>{
    const performance=context==='party'
       ? .44*sustained+.25*burst+.19*survival+.12*(1+party)
       : .40*sustained+.24*burst+.27*survival+.09*uptime;
-   const objectiveScore=objective==='burst'?burst:
+   // Existing PvP encounter modes have separate build logic; never reuse a
+   // hidden Solo/Group PvE role (e.g. group healer) for Arena scoring.
+   const selectedGoal=String(context).startsWith('pvp')?'performance':objective;
+   const specialized=RoleBuildGoals.mix(classId,selectedGoal,
+     {sustained,burst,survival,party:1+party},rank,stigma);
+   const objectiveScore=specialized??(objective==='burst'?burst:
       objective==='sustained'?sustained:
       objective==='survivability'?survival+.08*sustained:
-      performance;
+      performance);
    return {score:objectiveScore,sustained,burst,survival,party,uptime,mobility,mechanics,
       castThroughput,normalizedActionTime,combatSpeed:speed,cooldownReduction:haste,
       cooldownOpportunity:{sustained:sustainedOpportunity,burst:burstOpportunity},

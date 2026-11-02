@@ -7,7 +7,7 @@ const load=name=>fs.readFileSync(new URL(name,import.meta.url),'utf8');
 const classes=JSON.parse(load('classes_data.json'));
 const stigmas=JSON.parse(load('stigmas.json'));
 const ctx={SPECS:JSON.parse(load('specialties.json'))};vm.createContext(ctx);
-vm.runInContext(load('js/engine/global_actions.js')+'\n'+load('js/engine/class_models.js')+'\nthis.models=ClassCombatModels;',ctx);
+vm.runInContext(load('js/optimizer/roles.js')+'\n'+load('js/engine/global_actions.js')+'\n'+load('js/engine/class_models.js')+'\nthis.models=ClassCombatModels;',ctx);
 const model=ctx.models;
 const goals=['performance','survivability','sustained','burst'];
 const contexts=['solo','party'];

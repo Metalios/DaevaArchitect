@@ -8,7 +8,9 @@ const PVE_OBJECTIVES=Object.freeze({
   performance:{label:'Maximum PvE performance',description:'Damage, reliable burst, mobility and sufficient defense'},
   survivability:{label:'Maximum survivability',description:'Mitigation, effective health and reliable damage'},
   sustained:{label:'Maximum sustained DPS',description:'Long-fight damage, passives and cooldown uptime'},
-  burst:{label:'Maximum burst DPS',description:'Highest modeled damage in short buff windows'}
+  burst:{label:'Maximum burst DPS',description:'Highest modeled damage in short buff windows'},
+  ...Object.fromEntries(Object.entries(RoleBuildGoals.roles).map(([id,goal])=>
+    [id,{label:goal.label,description:goal.description}]))
 });
 const PVE_RESEARCH_PRIORS=Object.freeze({
   sorcerer:{
@@ -26,7 +28,10 @@ const PveBuildOptimizer=(()=>{
   const distinct=arr=>[...new Set(arr)];
   const SURVIVAL=/Defense|Resist|HPMax|Evasion|Block|DecreaseDamage|Guard|Shield/i;
   const SPEED=/CombatSpeed|CoolTimeDecrease/i;
-  function parameters(goal){
+  function parameters(goal,classId){
+    const role=RoleBuildGoals.multipliers(classId,goal);
+    if(role)return {attack:role.attack,defense:role.defense,
+      speed:role.speed,passive:role.passive};
     switch(goal){
       case 'survivability':return {attack:.55,defense:3.2,speed:.70,passive:.8};
       case 'sustained':return {attack:1.15,defense:.65,speed:1.4,passive:1.55};
@@ -35,7 +40,10 @@ const PveBuildOptimizer=(()=>{
     }
   }
   function weightsFor(base,classId,context,goal,variant=0){
-    const p=parameters(goal),skills={},stats={};
+    const p=parameters(goal,classId),skills={},stats={};
+    const focus=RoleBuildGoals.info(classId,goal);
+    const targetSkills=new Set(focus?.focus||[]);
+    const utilitySkills=new Set(focus?.utility||[]);
     const research=PVE_RESEARCH_PRIORS[classId];
     const classProfile=typeof ClassCombatModels==='undefined'?null:ClassCombatModels.profile(classId);
     for(const [name,w] of Object.entries(base.skills||{})){
@@ -46,16 +54,18 @@ const PveBuildOptimizer=(()=>{
         Math.max(0,Math.min(1,RESEARCH_PRIORS[classId]?.skills[name]||0)):0;
       // Dated guide summaries only suggest promising paths. Their influence
       // is capped to 8% and cannot override verified mechanics or constraints.
-      skills[name]=max(w)*(defensive?p.defense:passive?p.passive:p.attack)*boost*(1+.08*adoption);
+      skills[name]=max(w)*(defensive?p.defense:passive?p.passive:p.attack)*
+        boost*(1+.08*adoption)*(targetSkills.has(name)?2.0:utilitySkills.has(name)?1.5:1);
     }
     if(classId==='sorcerer'){
       const focus=[null,'Robe of Flame','Fire Mark','Hellfire','Firestorm'][variant]||null;
       if(focus)skills[focus]=max(skills[focus],38)*2;
-      for(const name of ['Robe of Flame','Fire Mark'])skills[name]=max(skills[name],goal==='survivability'?12:36);
+      for(const name of ['Robe of Flame','Fire Mark'])skills[name]=max(skills[name],['survivability','control'].includes(goal)?12:36);
     }
     for(const [name,w] of Object.entries(base.stats||{})){
       if(/^PvP/i.test(name)){stats[name]=0;continue}
-      stats[name]=max(w)*(SURVIVAL.test(name)?p.defense:SPEED.test(name)?p.speed:p.attack);
+      stats[name]=max(w)*(SURVIVAL.test(name)?p.defense:SPEED.test(name)?p.speed:p.attack)*
+        RoleBuildGoals.roleStatBoost(name,classId,goal);
     }
     if(context==='solo')for(const name of Object.keys(stats))if(SURVIVAL.test(name))stats[name]*=1.25;
     return {skills,stats};
@@ -124,7 +134,7 @@ const PveBuildOptimizer=(()=>{
       value+=amount*(weights.stats[name]??1.5);
     // These are transparent structural synergy hypotheses for candidate search.
     // Final Sorcerer damage candidates are also evaluated by the combat model.
-    if(classId==='sorcerer'&&goal!=='survivability'){
+    if(classId==='sorcerer'&&!['survivability','control'].includes(goal)){
       const eff=name=>(ranks[name]||1)+(gear[name]||0)+(levels[name]||0);
       value+=(eff('Hellfire')-1)*Math.sqrt(max(eff('Firestorm')-1))*2.8;
       value+=(eff('Robe of Flame')-1)*(eff('Hellfire')+eff('Blaze')+eff('Firestorm'))*.65;
@@ -219,6 +229,8 @@ const PveBuildOptimizer=(()=>{
     crystalBudget=136,characterLevel=45,skillTargets={},scoreFinal=null}){
     if(!['party','solo'].includes(context))throw Error('PvE optimizer requires solo or party context');
     if(!PVE_OBJECTIVES[objective])throw Error('Unknown PvE objective');
+    if(!RoleBuildGoals.available(classId,context).some(goal=>goal.id===objective))
+      throw Error('Unsupported role for class and PvE context');
     const graphs=buildGraph(classData,characterLevel),budget=max(crystalBudget);
     const roots=new Set(graphs.flatMap(g=>[...g.roots]));
     const mandatory=distinct([...locked].map(Number)).filter(id=>graphs.some(g=>g.nodes.has(id)&&!roots.has(id)));
