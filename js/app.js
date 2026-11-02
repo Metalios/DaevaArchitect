@@ -1590,6 +1590,50 @@ $('clear-obtained-button').addEventListener('click',()=>{
 });
 $('purchase-list').addEventListener('click',e=>{const b=e.target.closest('[data-purchase]');if(b){state.node=Number(b.dataset.purchase);renderBoards(model())}});
 $('route-slider').addEventListener('input',e=>{state.preview=clamp(e.target.value,0,['Azphel','Ariel'].includes(state.board)?(account()[state.board.toLowerCase()]||0):budget('crystals'));renderBoards(model())});
+$('matched-calibration-files').addEventListener('change',async e=>{
+  const files=Array.from(e.target.files||[]),
+    status=$('matched-calibration-status');
+  if(!files.length){status.textContent='No before/after recordings selected.';return}
+  if(files.length<10||files.length>100||files.some(f=>f.size>5*1024*1024)){
+    status.textContent='Select 10–100 Global fight JSON files (each ≤5 MB), with at least five baseline and five candidate encounters.';
+    return;
+  }
+  status.textContent='Validating locally selected fight measurements…';
+  try{
+    const allowed=[...skillNames(),...Object.keys(STIGMAS[state.class]||{})];
+    const reports=[];
+    for(const file of files){
+      const parsed=JSON.parse(await file.text());
+      const report=GlobalCombatEvidence.analyze(parsed,{
+        classId:state.class,allowedSkills:allowed
+      });
+      if(!report.ok){
+        status.textContent='Recording rejected ('+file.name+'): '+report.error;
+        return;
+      }
+      reports.push(report);
+    }
+    const result=GlobalMatchedCalibration.compare(reports);
+    if(!result.comparable){
+      status.textContent='Cannot calibrate these fights: '+result.reason+
+        '. No recommendation changes have been made.';
+      return;
+    }
+    status.textContent='User-declared Global '+result.classId+' fights · '+
+      result.bossId+' ('+result.difficulty+') · '+result.baselineFights+
+      ' baseline and '+result.candidateFights+' candidate · observed median DPS '+
+      Math.round(result.baselineMedianDps).toLocaleString()+' → '+
+      Math.round(result.candidateMedianDps).toLocaleString()+' ('+
+      (result.measuredDifferencePercent>=0?'+':'')+
+      result.measuredDifferencePercent.toFixed(1)+'%). '+
+      '90% resampled interval: '+result.bootstrap90PercentRange.map(v=>
+        (v>=0?'+':'')+v.toFixed(1)+'%').join(' to ')+
+      '. Direction: '+result.direction+'. '+
+      result.warnings.join(' ')+' No build was automatically changed.';
+  }catch(error){
+    status.textContent='Could not parse the matched fight files. Check normalized JSON structure and numeric combat events.';
+  }
+});
 $('combat-evidence-file').addEventListener('change',async e=>{
   const file=e.target.files?.[0],target=$('combat-evidence-status');
   currentCombatEvidence=null;
