@@ -84,8 +84,27 @@ const JointProgression = (()=>{
       spent=winner.spent;bestScore=winner.score;changes++;
       if(evaluations>=maxEvaluations)break;
     }
+    const remaining=limit-spent;
+    let next=null;
+    for(const name of names){
+      if(set.has(name))continue;
+      const rank=values[name]??minimum,
+        maximum=typeof cap==='function'?cap(name):cap;
+      if(rank>=maximum)continue;
+      const costNext=cost(rank+1);
+      if(costNext<=remaining)continue;
+      const candidate={...values,[name]:rank+1};
+      const gain=cache.get(names.map(key=>candidate[key]??minimum).join(','))-
+        bestScore;
+      const benefit=Number.isFinite(gain)?gain:0;
+      const need=costNext-remaining;
+      if(!next||benefit/need>next.benefit/next.need+EPS||
+         Math.abs(benefit/need-next.benefit/next.need)<EPS&&need<next.need)
+        next={name,rank:rank+1,cost:costNext,need,benefit};
+    }
     return {levels:values,spent,score:bestScore,evaluations,changes,
-      unspent:limit-spent,method:'Legal combat-score rank exchanges (bounded coordinate search)'};
+      next,unspent:remaining,
+      method:'Legal combat-score rank exchanges (bounded coordinate search)'};
   }
   function optimizeCombined({classId,context,objective,
       mastery,stigma,masteryNames,stigmaNames,masteryBudget,stigmaBudget,
@@ -104,7 +123,7 @@ const JointProgression = (()=>{
           score:r=>score(r,s.levels),minimum:1,maxEvaluations:500,
           maxPasses:6});
         m={...m,levels:result.levels,spent:result.spent,
-          unspent:result.unspent};
+          unspent:result.unspent,next:result.next};
         trace.push({area:'mastery',pass:i+1,evaluations:result.evaluations,
           changes:result.changes});
       }
@@ -114,7 +133,7 @@ const JointProgression = (()=>{
           score:r=>score(m.levels,r),minimum:0,maxEvaluations:350,
           maxPasses:6});
         s={...s,levels:result.levels,spent:result.spent,
-          unspent:result.unspent};
+          unspent:result.unspent,next:result.next};
         trace.push({area:'stigma',pass:i+1,evaluations:result.evaluations,
           changes:result.changes});
       }
