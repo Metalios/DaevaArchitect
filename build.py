@@ -86,6 +86,8 @@ shutil.copy2(root / 'js' / 'board_budget.js', out_dir / 'js' / 'board_budget.js'
 shutil.copy2(root / 'js' / 'optimizer' / 'objectives.js', out_dir / 'js' / 'optimizer' / 'objectives.js')
 shutil.copy2(root / 'js' / 'mastery_budget.js', out_dir / 'js' / 'mastery_budget.js')
 (out_dir / 'js' / 'engine').mkdir(parents=True, exist_ok=True)
+shutil.copy2(root / 'js' / 'engine' / 'global_actions.js', out_dir / 'js' / 'engine' / 'global_actions.js')
+shutil.copy2(root / 'js' / 'engine' / 'combat_timeline.js', out_dir / 'js' / 'engine' / 'combat_timeline.js')
 shutil.copy2(root / 'js' / 'engine' / 'combat.js', out_dir / 'js' / 'engine' / 'combat.js')
 shutil.copy2(root / 'js' / 'engine' / 'class_models.js', out_dir / 'js' / 'engine' / 'class_models.js')
 shutil.copy2(root / 'css' / 'styles.css', out_dir / 'css' / 'styles.css')

@@ -1,0 +1,321 @@
+{
+  "source": "https://aion2tierlist.com/builds",
+  "reviewed": "2026-11-01",
+  "sample": "Global top-100 per-class aggregates; Gladiator page reported 99",
+  "status": "secondary observational summaries, NOT individual raw profiles or validated rotation logs",
+  "warning": "Stigma percentages can add up to >400% despite a four-equipped-Stigma cap; do not interpret percentages as simultaneous equipment. Active 'use' rates may include learned skills, not cast frequency.",
+  "classes": {
+    "gladiator": {
+      "n": 99,
+      "actives": [
+        "Overhead Slam",
+        "Rending Blow",
+        "Ruinous Blow",
+        "Rush Strike",
+        "Leaping Slam",
+        "Keen Strike"
+      ],
+      "passives": [
+        "Attack Preparation",
+        "Impact Hit",
+        "Experienced Counterstrike"
+      ],
+      "stigmas": [
+        [
+          "Lunge Stance",
+          100
+        ],
+        [
+          "Rage Burst",
+          100
+        ],
+        [
+          "Zikel's Blessing",
+          100
+        ],
+        [
+          "Tenaciousness",
+          80
+        ],
+        [
+          "Focused Block",
+          76
+        ]
+      ],
+      "source": "https://aion2tierlist.com/builds/gladiator"
+    },
+    "templar": {
+      "n": 100,
+      "actives": [
+        "Judgment",
+        "Pummel",
+        "Punishment",
+        "Vicious Strike",
+        "Warding Strike",
+        "Annihilate"
+      ],
+      "passives": [
+        "Fury",
+        "Impact Hit",
+        "Insulting Roar"
+      ],
+      "stigmas": [
+        [
+          "Doom Shield",
+          100
+        ],
+        [
+          "Battlefield Banner",
+          99
+        ],
+        [
+          "Noble Armor",
+          96
+        ],
+        [
+          "Taunt",
+          82
+        ],
+        [
+          "Shield of Protection",
+          61
+        ]
+      ],
+      "source": "https://aion2tierlist.com/builds/templar"
+    },
+    "assassin": {
+      "n": 100,
+      "actives": [
+        "Heart Gore",
+        "Quick Slice",
+        "Insignia Explosion",
+        "Shadowstrike",
+        "Flash Slice",
+        "Infiltrate"
+      ],
+      "passives": [
+        "Rear Smite",
+        "Assault Stance",
+        "Exploit Weakness"
+      ],
+      "stigmas": [
+        [
+          "Illusive Clone",
+          100
+        ],
+        [
+          "Swift Contract",
+          100
+        ],
+        [
+          "Throw Shadowblade",
+          97
+        ],
+        [
+          "Triniel's Dagger",
+          95
+        ],
+        [
+          "Savage Fang",
+          94
+        ]
+      ],
+      "source": "https://aion2tierlist.com/builds/assassin"
+    },
+    "ranger": {
+      "n": 100,
+      "actives": [
+        "Deadshot",
+        "Tempest Shot",
+        "Drill Dart",
+        "Gale Arrow",
+        "Snipe",
+        "Burst Arrow"
+      ],
+      "passives": [
+        "Focused Eye",
+        "Hunter's Resolve",
+        "Hunter's Soul"
+      ],
+      "stigmas": [
+        [
+          "Vaizel's Authority",
+          100
+        ],
+        [
+          "Bow of Blessing",
+          100
+        ],
+        [
+          "Supporting Fire",
+          98
+        ],
+        [
+          "Griffon Arrow",
+          96
+        ],
+        [
+          "Mother Nature's Breath",
+          61
+        ]
+      ],
+      "source": "https://aion2tierlist.com/builds/ranger"
+    },
+    "sorcerer": {
+      "n": 100,
+      "actives": [
+        "Hellfire",
+        "Wish of Concentration",
+        "Bittercold Wind",
+        "Blaze",
+        "Firestorm",
+        "Flame Arrow"
+      ],
+      "passives": [
+        "Robe of Flame",
+        "Fire Mark",
+        "Robe of Earth"
+      ],
+      "stigmas": [
+        [
+          "Element Enhancement",
+          100
+        ],
+        [
+          "Delayed Explosion",
+          100
+        ],
+        [
+          "Fire Wall",
+          97
+        ],
+        [
+          "Cold Storm",
+          95
+        ],
+        [
+          "Steel Barrier",
+          88
+        ]
+      ],
+      "source": "https://aion2tierlist.com/builds/sorcerer"
+    },
+    "spiritmaster": {
+      "n": 100,
+      "actives": [
+        "Elemental Fusion",
+        "Combustion",
+        "Summon: Water Spirit",
+        "Cold Shock",
+        "Dimensional Control",
+        "Jointstrike: Curse"
+      ],
+      "passives": [
+        "Spirit Strike",
+        "Mental Focus",
+        "Element Unification"
+      ],
+      "stigmas": [
+        [
+          "Summon: Ancient Spirit",
+          100
+        ],
+        [
+          "Enhance: Spirit's Benediction",
+          99
+        ],
+        [
+          "Jointstrike: Corrode",
+          99
+        ],
+        [
+          "Flame Blessing",
+          93
+        ],
+        [
+          "Command: Proxy",
+          69
+        ]
+      ],
+      "source": "https://aion2tierlist.com/builds/spiritmaster"
+    },
+    "cleric": {
+      "n": 100,
+      "actives": [
+        "Condemnation",
+        "Judgment Thunder",
+        "Radiant Recovery",
+        "Divine Aura",
+        "Light of Regeneration",
+        "Healing Light"
+      ],
+      "passives": [
+        "Empyrean Lord's Grace",
+        "Earth's Grace",
+        "Healing Enhancement"
+      ],
+      "stigmas": [
+        [
+          "Light of Protection",
+          100
+        ],
+        [
+          "Earth Punishment",
+          99
+        ],
+        [
+          "Noble Aura",
+          99
+        ],
+        [
+          "Prayer of Amplification",
+          97
+        ],
+        [
+          "Salvation",
+          81
+        ]
+      ],
+      "source": "https://aion2tierlist.com/builds/cleric"
+    },
+    "chanter": {
+      "n": 100,
+      "actives": [
+        "Dark Crush",
+        "Onslaught",
+        "Spinning Strike",
+        "Incandescent Blow",
+        "Recuperation",
+        "Impactful Crush"
+      ],
+      "passives": [
+        "Wind's Promise",
+        "Attack Preparation",
+        "Impact Hit"
+      ],
+      "stigmas": [
+        [
+          "Undefeated Mantra",
+          100
+        ],
+        [
+          "Power of the Storm",
+          100
+        ],
+        [
+          "Marchutan's Wrath",
+          91
+        ],
+        [
+          "Guardian Blessing",
+          86
+        ],
+        [
+          "Sprint Mantra",
+          79
+        ]
+      ],
+      "source": "https://aion2tierlist.com/builds/chanter"
+    }
+  }
+}
