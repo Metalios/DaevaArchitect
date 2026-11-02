@@ -1,0 +1,723 @@
+{
+  "schema": "daeva-global-combat-cohort/v1",
+  "snapshotDate": "2026-11-02",
+  "region": "Global (NA/EU/SA/Asia combined)",
+  "source": "https://a2tools.app/stats?inline=1&lang=en&region=global",
+  "method": "A2Tools public class-damage-by-boss view; reported aggregate medians across one balance period, default unfiltered boss and settings, 3,031 deduplicated encounter logs and 13,441 sampled player performances",
+  "sourceTotalLogs": 3031,
+  "sourceTotalPlayerSamples": 13441,
+  "sourceLimitations": [
+    "Median DPS and middle-half DPS span encounters and combat-power variation, not matched same-boss same-gear conditions",
+    "Skills are ordered by reported damage share but displayed percentages are USED BY rates, not damage share percentages",
+    "Most-common Specialty IDs describe presence among skill users; they do not establish DPS causality or maximum-per-rank optimality",
+    "Source includes class abilities, triggered effects and skill IDs absent from active Mastery names; retain such names without guessing aliases",
+    "No minimum animation frames, cast-start timestamp, latency correction or full raw individual log downloads were accessible",
+    "No individual player sample identifiers, therefore cannot cross-validate duplicates, source patch version or confidence intervals"
+  ],
+  "classes": {
+    "chanter": {
+      "medianDps": 20520,
+      "medianCombatPower": 106781,
+      "medianGearRating": 2212,
+      "samples": 2653,
+      "middleHalfDps": [
+        8510,
+        29520
+      ],
+      "bestObservedDps": 142970,
+      "skillObservations": [
+        {
+          "name": "Bursting Blow",
+          "usedByPct": 92,
+          "mostCommonSpecialties": [
+            1,
+            3
+          ]
+        },
+        {
+          "name": "Incandescent Blow",
+          "usedByPct": 95,
+          "mostCommonSpecialties": [
+            1,
+            3
+          ]
+        },
+        {
+          "name": "Spinning Strike",
+          "usedByPct": 83,
+          "mostCommonSpecialties": [
+            1,
+            3
+          ]
+        },
+        {
+          "name": "Dark Crush",
+          "usedByPct": 69,
+          "mostCommonSpecialties": [
+            4,
+            5
+          ]
+        },
+        {
+          "name": "Piercing Strike",
+          "usedByPct": 46,
+          "mostCommonSpecialties": [
+            4,
+            5
+          ]
+        },
+        {
+          "name": "Bolt Crush",
+          "usedByPct": 83,
+          "mostCommonSpecialties": [
+            3,
+            4
+          ]
+        },
+        {
+          "name": "Wind's Promise",
+          "usedByPct": 76,
+          "mostCommonSpecialties": []
+        },
+        {
+          "name": "Resonance Crush",
+          "usedByPct": 87,
+          "mostCommonSpecialties": [
+            3,
+            4
+          ]
+        },
+        {
+          "name": "Onslaught",
+          "usedByPct": 89,
+          "mostCommonSpecialties": [
+            3,
+            4
+          ]
+        },
+        {
+          "name": "Impactful Crush",
+          "usedByPct": 70,
+          "mostCommonSpecialties": [
+            3,
+            4
+          ]
+        }
+      ]
+    },
+    "spiritmaster": {
+      "medianDps": 19440,
+      "medianCombatPower": 110022,
+      "medianGearRating": 2243,
+      "samples": 1148,
+      "middleHalfDps": [
+        7470,
+        28910
+      ],
+      "bestObservedDps": 77140,
+      "skillObservations": [
+        {
+          "name": "Combustion",
+          "usedByPct": 98,
+          "mostCommonSpecialties": [
+            2,
+            4
+          ]
+        },
+        {
+          "name": "Elemental Fusion",
+          "usedByPct": 67,
+          "mostCommonSpecialties": [
+            2,
+            3
+          ]
+        },
+        {
+          "name": "Dimensional Control",
+          "usedByPct": 95,
+          "mostCommonSpecialties": [
+            2,
+            3
+          ]
+        },
+        {
+          "name": "Summon: Fire Spirit",
+          "usedByPct": 91,
+          "mostCommonSpecialties": []
+        },
+        {
+          "name": "#16000000",
+          "usedByPct": 88,
+          "mostCommonSpecialties": [
+            1
+          ]
+        },
+        {
+          "name": "Summon: Ancient Spirit",
+          "usedByPct": 83,
+          "mostCommonSpecialties": []
+        },
+        {
+          "name": "Ashy Call",
+          "usedByPct": 40,
+          "mostCommonSpecialties": [
+            4,
+            5
+          ]
+        },
+        {
+          "name": "Corrode",
+          "usedByPct": 67,
+          "mostCommonSpecialties": []
+        },
+        {
+          "name": "Summon: Water Spirit",
+          "usedByPct": 62,
+          "mostCommonSpecialties": []
+        },
+        {
+          "name": "Spirit's Descent",
+          "usedByPct": 62,
+          "mostCommonSpecialties": []
+        }
+      ]
+    },
+    "sorcerer": {
+      "medianDps": 19440,
+      "medianCombatPower": 112720,
+      "medianGearRating": 2282,
+      "samples": 1206,
+      "middleHalfDps": [
+        7160,
+        29080
+      ],
+      "bestObservedDps": 93420,
+      "skillObservations": [
+        {
+          "name": "Hellfire",
+          "usedByPct": 84,
+          "mostCommonSpecialties": [
+            1,
+            5
+          ]
+        },
+        {
+          "name": "Bittercold Wind",
+          "usedByPct": 90,
+          "mostCommonSpecialties": [
+            1,
+            4
+          ]
+        },
+        {
+          "name": "Blaze",
+          "usedByPct": 72,
+          "mostCommonSpecialties": [
+            3,
+            4
+          ]
+        },
+        {
+          "name": "Firestorm",
+          "usedByPct": 71,
+          "mostCommonSpecialties": [
+            2,
+            4
+          ]
+        },
+        {
+          "name": "Fire Wall",
+          "usedByPct": 61,
+          "mostCommonSpecialties": [
+            2,
+            4
+          ]
+        },
+        {
+          "name": "Cold Wave",
+          "usedByPct": 41,
+          "mostCommonSpecialties": [
+            2,
+            4
+          ]
+        },
+        {
+          "name": "Ice Chain",
+          "usedByPct": 44,
+          "mostCommonSpecialties": [
+            2,
+            4
+          ]
+        },
+        {
+          "name": "Frost Burst",
+          "usedByPct": 57,
+          "mostCommonSpecialties": [
+            2,
+            4
+          ]
+        },
+        {
+          "name": "Cold Storm",
+          "usedByPct": 42,
+          "mostCommonSpecialties": [
+            1,
+            4
+          ]
+        },
+        {
+          "name": "Flame Arrow",
+          "usedByPct": 71,
+          "mostCommonSpecialties": [
+            3,
+            4
+          ]
+        }
+      ]
+    },
+    "templar": {
+      "medianDps": 18820,
+      "medianCombatPower": 108651,
+      "medianGearRating": 2252,
+      "samples": 1633,
+      "middleHalfDps": [
+        9720,
+        27190
+      ],
+      "bestObservedDps": 146890,
+      "skillObservations": [
+        {
+          "name": "Judgment",
+          "usedByPct": 74,
+          "mostCommonSpecialties": [
+            4,
+            5
+          ]
+        },
+        {
+          "name": "Punishment",
+          "usedByPct": 76,
+          "mostCommonSpecialties": [
+            2,
+            3
+          ]
+        },
+        {
+          "name": "Punishing Strike",
+          "usedByPct": 92,
+          "mostCommonSpecialties": [
+            3,
+            4
+          ]
+        },
+        {
+          "name": "Pummel",
+          "usedByPct": 94,
+          "mostCommonSpecialties": [
+            3,
+            4
+          ]
+        },
+        {
+          "name": "Desperate Strike",
+          "usedByPct": 87,
+          "mostCommonSpecialties": [
+            3,
+            4
+          ]
+        },
+        {
+          "name": "Decisive Strike",
+          "usedByPct": 91,
+          "mostCommonSpecialties": [
+            3,
+            4
+          ]
+        },
+        {
+          "name": "Annihilate",
+          "usedByPct": 62,
+          "mostCommonSpecialties": [
+            3,
+            4
+          ]
+        },
+        {
+          "name": "Vicious Strike",
+          "usedByPct": 92,
+          "mostCommonSpecialties": [
+            3,
+            4
+          ]
+        },
+        {
+          "name": "Shield Smite",
+          "usedByPct": 88,
+          "mostCommonSpecialties": [
+            3,
+            4
+          ]
+        },
+        {
+          "name": "Warding Strike",
+          "usedByPct": 84,
+          "mostCommonSpecialties": [
+            1,
+            3
+          ]
+        }
+      ]
+    },
+    "gladiator": {
+      "medianDps": 17510,
+      "medianCombatPower": 112432,
+      "medianGearRating": 2271,
+      "samples": 1888,
+      "middleHalfDps": [
+        6030,
+        27130
+      ],
+      "bestObservedDps": 116040,
+      "skillObservations": [
+        {
+          "name": "Overhead Slam",
+          "usedByPct": 70,
+          "mostCommonSpecialties": [
+            4,
+            5
+          ]
+        },
+        {
+          "name": "Smashing Blow",
+          "usedByPct": 96,
+          "mostCommonSpecialties": [
+            3,
+            4
+          ]
+        },
+        {
+          "name": "Rending Blow",
+          "usedByPct": 97,
+          "mostCommonSpecialties": [
+            3,
+            4
+          ]
+        },
+        {
+          "name": "Ruinous Blow",
+          "usedByPct": 72,
+          "mostCommonSpecialties": [
+            3,
+            4,
+            5
+          ]
+        },
+        {
+          "name": "Murderous Burst",
+          "usedByPct": 99,
+          "mostCommonSpecialties": []
+        },
+        {
+          "name": "Upward Strike",
+          "usedByPct": 36,
+          "mostCommonSpecialties": [
+            3,
+            5
+          ]
+        },
+        {
+          "name": "Wrathful Strike",
+          "usedByPct": 58,
+          "mostCommonSpecialties": [
+            1,
+            4
+          ]
+        },
+        {
+          "name": "Keen Strike",
+          "usedByPct": 74,
+          "mostCommonSpecialties": [
+            1,
+            4
+          ]
+        },
+        {
+          "name": "Rupture Strike",
+          "usedByPct": 65,
+          "mostCommonSpecialties": [
+            1,
+            4
+          ]
+        },
+        {
+          "name": "Sword Aura Rampage",
+          "usedByPct": 46,
+          "mostCommonSpecialties": [
+            2,
+            4
+          ]
+        }
+      ]
+    },
+    "ranger": {
+      "medianDps": 17370,
+      "medianCombatPower": 113676,
+      "medianGearRating": 2254,
+      "samples": 1740,
+      "middleHalfDps": [
+        6000,
+        27190
+      ],
+      "bestObservedDps": 124080,
+      "skillObservations": [
+        {
+          "name": "Tempest Shot",
+          "usedByPct": 100,
+          "mostCommonSpecialties": [
+            2,
+            3
+          ]
+        },
+        {
+          "name": "Drill Dart",
+          "usedByPct": 97,
+          "mostCommonSpecialties": [
+            3,
+            4
+          ]
+        },
+        {
+          "name": "Deadshot",
+          "usedByPct": 64,
+          "mostCommonSpecialties": [
+            2,
+            3
+          ]
+        },
+        {
+          "name": "Gale Arrow",
+          "usedByPct": 81,
+          "mostCommonSpecialties": [
+            4,
+            5
+          ]
+        },
+        {
+          "name": "Burst Arrow",
+          "usedByPct": 72,
+          "mostCommonSpecialties": [
+            3,
+            4
+          ]
+        },
+        {
+          "name": "Hunter's Soul",
+          "usedByPct": 70,
+          "mostCommonSpecialties": []
+        },
+        {
+          "name": "Supporting Fire",
+          "usedByPct": 53,
+          "mostCommonSpecialties": []
+        },
+        {
+          "name": "Snare Shot",
+          "usedByPct": 62,
+          "mostCommonSpecialties": [
+            2,
+            3
+          ]
+        },
+        {
+          "name": "Concentrated Fire",
+          "usedByPct": 70,
+          "mostCommonSpecialties": []
+        },
+        {
+          "name": "Marking Shot",
+          "usedByPct": 56,
+          "mostCommonSpecialties": [
+            1,
+            3
+          ]
+        }
+      ]
+    },
+    "assassin": {
+      "medianDps": 16960,
+      "medianCombatPower": 112825,
+      "medianGearRating": 2281,
+      "samples": 765,
+      "middleHalfDps": [
+        5060,
+        26460
+      ],
+      "bestObservedDps": 115980,
+      "skillObservations": [
+        {
+          "name": "Heart Gore",
+          "usedByPct": 92,
+          "mostCommonSpecialties": [
+            4,
+            5
+          ]
+        },
+        {
+          "name": "Insignia Explosion",
+          "usedByPct": 94,
+          "mostCommonSpecialties": [
+            2,
+            3
+          ]
+        },
+        {
+          "name": "Swift Slice",
+          "usedByPct": 87,
+          "mostCommonSpecialties": [
+            3,
+            4
+          ]
+        },
+        {
+          "name": "Quick Slice",
+          "usedByPct": 90,
+          "mostCommonSpecialties": [
+            3,
+            4
+          ]
+        },
+        {
+          "name": "Breaking Slice",
+          "usedByPct": 88,
+          "mostCommonSpecialties": [
+            3,
+            4
+          ]
+        },
+        {
+          "name": "Savage Smash",
+          "usedByPct": 75,
+          "mostCommonSpecialties": [
+            2,
+            4
+          ]
+        },
+        {
+          "name": "Savage Back Kick",
+          "usedByPct": 79,
+          "mostCommonSpecialties": [
+            2,
+            4
+          ]
+        },
+        {
+          "name": "Savage Roar",
+          "usedByPct": 79,
+          "mostCommonSpecialties": [
+            2,
+            4
+          ]
+        },
+        {
+          "name": "Ambush Stance",
+          "usedByPct": 72,
+          "mostCommonSpecialties": []
+        },
+        {
+          "name": "Determination",
+          "usedByPct": 74,
+          "mostCommonSpecialties": []
+        }
+      ]
+    },
+    "cleric": {
+      "medianDps": 10800,
+      "medianCombatPower": 104525,
+      "medianGearRating": 2235,
+      "samples": 2408,
+      "middleHalfDps": [
+        4980,
+        17070
+      ],
+      "bestObservedDps": 94620,
+      "skillObservations": [
+        {
+          "name": "Condemnation",
+          "usedByPct": 92,
+          "mostCommonSpecialties": [
+            2,
+            4
+          ]
+        },
+        {
+          "name": "Judgment Thunder",
+          "usedByPct": 90,
+          "mostCommonSpecialties": [
+            1,
+            2
+          ]
+        },
+        {
+          "name": "Divine Punishment",
+          "usedByPct": 89,
+          "mostCommonSpecialties": [
+            1,
+            2
+          ]
+        },
+        {
+          "name": "Bolt",
+          "usedByPct": 61,
+          "mostCommonSpecialties": [
+            3,
+            4
+          ]
+        },
+        {
+          "name": "Divine Aura",
+          "usedByPct": 69,
+          "mostCommonSpecialties": [
+            3,
+            4
+          ]
+        },
+        {
+          "name": "Empyrean Lord's Grace",
+          "usedByPct": 77,
+          "mostCommonSpecialties": []
+        },
+        {
+          "name": "Noble Aura",
+          "usedByPct": 39,
+          "mostCommonSpecialties": [
+            2
+          ]
+        },
+        {
+          "name": "Debilitating Mark",
+          "usedByPct": 84,
+          "mostCommonSpecialties": [
+            2,
+            4
+          ]
+        },
+        {
+          "name": "Chain of Torment",
+          "usedByPct": 76,
+          "mostCommonSpecialties": [
+            2,
+            4
+          ]
+        },
+        {
+          "name": "Discharge",
+          "usedByPct": 51,
+          "mostCommonSpecialties": [
+            2,
+            4
+          ]
+        }
+      ]
+    }
+  }
+}
