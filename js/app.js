@@ -129,10 +129,64 @@ function appIsPvpContext(mode){return typeof mode==='string'&&/^pvp(?:-|$)/.test
 function activeRoute(){const ctx=account().context;const route=liveRoute||ROUTES[state.class][appIsPvpContext(ctx)?'pvp':ctx];return isLeveling()?route.filter(x=>boardOpen(x.board)):route}
 function customMode(){return account().boardMode==='custom'}
 function customIds(group='crystals'){if(typeof group==='boolean')group=group?'azphel':'crystals';const valid=nodeMap(),key=group==='azphel'?'customAzphelNodes':group==='ariel'?'customArielNodes':'customNodes';return (account()[key]||[]).filter(id=>valid.has(id)&&(valid.get(id).board==='Azphel'?'azphel':valid.get(id).board==='Ariel'?'ariel':'crystals')===group&&(!isLeveling()||boardOpen(valid.get(id).board)))}
-function plannedRoute(group='crystals'){if(typeof group==='boolean')group=group?'azphel':'crystals';return customMode()?customIds(group).map(id=>({board:nodeMap().get(id).board,id})):group==='azphel'?ROUTES[state.class].azphel:group==='ariel'?arielRoute():activeRoute()}
-const ARIEL_ROUTE_CACHE=new Map();
-function arielRoute(){const cacheKey=state.class+'|'+account().pveObjective;if(ARIEL_ROUTE_CACHE.has(cacheKey))return ARIEL_ROUTE_CACHE.get(cacheKey);const b=ARIEL[state.class],visited=new Set(b.nodes.filter(n=>n[5]===0).map(n=>n[0])),route=[];while(visited.size<b.nodes.length){const frontier=b.nodes.filter(n=>!visited.has(n[0])&&b.nodes.some(v=>visited.has(v[0])&&Math.abs(v[1]-n[1])+Math.abs(v[2]-n[2])===1));if(!frontier.length)break;frontier.sort((x,y)=>arielNodeScore(y)-arielNodeScore(x)||x[0]-y[0]);const n=frontier[0];visited.add(n[0]);route.push({board:'Ariel',id:n[0]})}ARIEL_ROUTE_CACHE.set(cacheKey,route);return route}
-function arielNodeScore(n){const defens=account().pveObjective==='survivability',weights={PvEAmplifyDamage:defens?3:15,BossNpcAmplifyDamage:defens?3:13,BossNpcAddDamage:9,PvEAddDamage:9,PvEAccuracy:7,PvEDecreaseDamage:defens?15:5,BossNpcDecreaseDamage:defens?14:6,HPMax:5,PvEDamageDefense:5};return n[6].reduce((a,[k])=>a+(weights[k]||2),0)/Math.max(1,n[5])}
+function plannedRoute(group='crystals'){if(typeof group==='boolean')group=group?'azphel':'crystals';return customMode()?customIds(group).map(id=>({board:nodeMap().get(id).board,id})):group==='azphel'?azphelRoute():group==='ariel'?arielRoute():activeRoute()}
+const SPECIAL_BOARD_ROUTE_CACHE=new Map();
+function specialBoardRoute(name){
+  const a=account(),context=name==='Azphel'&&
+    !appIsPvpContext(a.context)?'pvp':name==='Ariel'&&
+    appIsPvpContext(a.context)?'party':a.context;
+  const objective=a.pveObjective||'performance';
+  const equipment=gearEquipment();
+  const fingerprint=JSON.stringify([state.class,name,context,objective,
+    equipment,a.gear,a.titlesOwned]);
+  if(SPECIAL_BOARD_ROUTE_CACHE.has(fingerprint))
+    return SPECIAL_BOARD_ROUTE_CACHE.get(fingerprint);
+  const board=name==='Ariel'?ARIEL[state.class]:AZPHEL[state.class];
+  let route;
+  if(typeof JointProgression!=='undefined'){
+    try{
+      const totals={},fixed=[...gearFixedTotals().stats,...gearSocketTotals().stats];
+      for(const [key,meta] of Object.entries(data().stats))
+        totals[key]=fixed.filter(row=>row.name===meta.name).reduce((sum,row)=>
+          sum+(Number(row.value)||0)*(row.unit==='%'?100:1),0);
+      const weights=activeWeights().stats;
+      route=JointProgression.rankConnectedBoard({
+        board,context,objective,role:profile().kind,stats:totals,
+        weights,meta:data().stats
+      });
+    }catch(error){
+      console.warn(name+' contextual board route fallback',error);
+    }
+  }
+  route ||= name==='Azphel'?ROUTES[state.class].azphel:legacyArielRoute();
+  if(SPECIAL_BOARD_ROUTE_CACHE.size>16)
+    SPECIAL_BOARD_ROUTE_CACHE.delete(SPECIAL_BOARD_ROUTE_CACHE.keys().next().value);
+  SPECIAL_BOARD_ROUTE_CACHE.set(fingerprint,route);
+  return route;
+}
+function arielRoute(){return specialBoardRoute('Ariel')}
+function azphelRoute(){return specialBoardRoute('Azphel')}
+function legacyArielRoute(){
+  const b=ARIEL[state.class],visited=new Set(
+    b.nodes.filter(n=>n[5]===0).map(n=>n[0])),route=[];
+  while(visited.size<b.nodes.length){
+    const frontier=b.nodes.filter(n=>!visited.has(n[0])&&
+      b.nodes.some(v=>visited.has(v[0])&&
+        Math.abs(v[1]-n[1])+Math.abs(v[2]-n[2])===1));
+    if(!frontier.length)break;
+    frontier.sort((x,y)=>arielNodeScore(y)-arielNodeScore(x)||x[0]-y[0]);
+    const n=frontier[0];visited.add(n[0]);route.push({board:'Ariel',id:n[0]});
+  }
+  return route;
+}
+function arielNodeScore(n){
+  const defens=account().pveObjective==='survivability',
+    weights={PvEAmplifyDamage:defens?3:15,BossNpcAmplifyDamage:defens?3:13,
+      BossNpcAddDamage:9,PvEAddDamage:9,PvEAccuracy:7,
+      PvEDecreaseDamage:defens?15:5,
+      BossNpcDecreaseDamage:defens?14:6,HPMax:5,PvEDamageDefense:5};
+  return n[6].reduce((a,[k])=>a+(weights[k]||2),0)/Math.max(1,n[5]);
+}
 function connectedToEarlier(ids){const nodes=nodeMap(),seen=new Set();for(const id of ids){const entry=nodes.get(id);if(!entry)return false;const n=entry.node,board=entry.board,neighbors=allBoards().find(b=>b.name===board).nodes.filter(x=>Math.abs(x[1]-n[1])+Math.abs(x[2]-n[2])===1);if(!neighbors.some(x=>x[5]===0||seen.has(x[0])))return false;seen.add(id)}return true}
 function setCustomNode(id){
   const entry=nodeMap().get(id);if(!entry||entry.node[5]===0)return;
@@ -1301,7 +1355,7 @@ $('board-mode-recommended').addEventListener('click',()=>{
   render();
 });
 $('board-mode-custom').addEventListener('click',()=>{account().boardMode='custom';boardEditNotice='Select a connected tile on any unlocked board, or copy the current recommendation.';render()});
-$('copy-recommended-board').addEventListener('click',()=>{const nodes=nodeMap();account().customNodes=routeSteps(activeRoute(),nodes).filter(x=>x.total<=budget('crystals')).map(x=>x.id);account().customAzphelNodes=routeSteps(ROUTES[state.class].azphel,nodes).filter(x=>x.total<=(account().azphel||0)).map(x=>x.id);account().customArielNodes=routeSteps(arielRoute(),nodes).filter(x=>x.total<=(account().ariel||0)).map(x=>x.id);boardEditNotice='Copied the funded recommended route. Click tiles to customize it.';render()});
+$('copy-recommended-board').addEventListener('click',()=>{const nodes=nodeMap();account().customNodes=routeSteps(activeRoute(),nodes).filter(x=>x.total<=budget('crystals')).map(x=>x.id);account().customAzphelNodes=routeSteps(azphelRoute(),nodes).filter(x=>x.total<=(account().azphel||0)).map(x=>x.id);account().customArielNodes=routeSteps(arielRoute(),nodes).filter(x=>x.total<=(account().ariel||0)).map(x=>x.id);boardEditNotice='Copied the funded recommended route. Click tiles to customize it.';render()});
 $('clear-custom-board').addEventListener('click',()=>{account().customNodes=[];account().customAzphelNodes=[];account().customArielNodes=[];boardEditNotice='Custom plan cleared. Obtained marks are kept separately.';state.node=null;render()});
 $('global-board-allocation').addEventListener('click',e=>{const b=e.target.closest('[data-board-jump]');if(!b||!boardOpen(b.dataset.boardJump))return;state.board=b.dataset.boardJump;state.preview=budget('crystals');state.node=null;renderBoards(model())});
 $('global-route-next').addEventListener('click',e=>{const b=e.target.closest('[data-route-node]');if(!b)return;state.board=b.dataset.routeBoard;state.preview=budget('crystals');state.node=Number(b.dataset.routeNode);renderBoards(model());document.querySelector('.node.selected')?.scrollIntoView({behavior:'smooth',block:'center',inline:'center'})});
