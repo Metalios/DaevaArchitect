@@ -43,6 +43,16 @@ assert.equal(missing[0].timingMissing,true);
 const populated=evidence.enrich([{id:'Judgment',cooldown:5}],target,[global]);
 assert.equal(populated[0].lockSeconds,.75);
 assert.equal(populated[0].timingSource,'global-measured');
+const refreshed=evidence.enrich([{
+  id:'Judgment',lockSeconds:1.4,timingSource:'scenario',cooldown:5
+}],target,[global]);
+assert.equal(refreshed[0].lockSeconds,.75,
+  'Sourced Global motion time must replace historical uncalibrated timing');
+const retained=evidence.enrich([{
+  id:'Judgment',lockSeconds:.69,timingSource:'global-measured',cooldown:5
+}],target,[kr],{allowRegionalTransfer:true,allowUnverifiedScenario:true});
+assert.equal(retained[0].lockSeconds,.69,
+  'Regional timing must not overwrite an already measured Global lock');
 assert.equal(evidence.REFERENCE_CHARGES.sorcerer.Hellfire.stageSeconds[2],1.5);
 assert.equal(evidence.resolve({classId:'sorcerer',skill:'Hellfire',mode:'normal'},[])
   .available,false,'Charge timing does not describe full action lock');
