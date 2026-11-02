@@ -12,6 +12,7 @@ const ARIEL_HARD_CONQUESTS=Object.freeze([
 const ARIEL_FRAGMENTS_PER_CRYSTAL=100;
 // Each dungeon has its own morph limit; not a total cap of 30 crystals.
 const ARIEL_MORPH_LIMIT_PER_DUNGEON=30;
+const ARIEL_DOCUMENTED_MAX_CURRENT_CRYSTALS=ARIEL_HARD_CONQUESTS.length*ARIEL_MORPH_LIMIT_PER_DUNGEON;
 function arielAccess(gearRating,earnedCrystals=0,characterLevel=45) {
   const input=Number(gearRating);
   const known=gearRating!==null&&gearRating!==undefined&&gearRating!==''&&Number.isFinite(input)&&input>0;
@@ -27,6 +28,7 @@ function arielAccess(gearRating,earnedCrystals=0,characterLevel=45) {
   else if(current<2700)message='Eligible for Krao Cave and Draupnir Hard (2,600 GR). Urugugu Canyon and Vakron Sky Island require 2,700 GR.';
   else message='GR meets the published entry minimum for all four Ariel-fragment Hard Conquests. Other entry restrictions may still apply.';
   if(owned&&!eligible)message+=' Previously earned or future-planned Ariel crystals remain recorded.';
+  if(owned>ARIEL_DOCUMENTED_MAX_CURRENT_CRYSTALS)message+=' The entered total exceeds the 120 crystals available from the four currently documented dungeon morph limits; treat additional crystals as future planning unless another Global source is verified.';
   return Object.freeze({unlocked,gearRating:current,known,eligible,
     availableDungeons:options,owned,message});
 }
