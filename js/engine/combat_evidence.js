@@ -33,7 +33,8 @@ const GlobalCombatEvidence=(()=>{
        raw.events.length>MAX_EVENTS)
       return invalid('Between 3 and 50,000 fight events are required');
     const known=new Set(allowedSkills),counts={},buffWindows=new Map();
-    const uptime={},gaps={},lastCast=new Map(),lastEvent=-1;
+    const uptime={},gaps={},lastCast=new Map();
+    let lastEvent=-1;
     let hitEvents=0,castEvents=0,damage=0,healing=0,unsupported=0;
     for(const e of raw.events){
       if(!e||typeof e!=='object')return invalid('Malformed combat event');
