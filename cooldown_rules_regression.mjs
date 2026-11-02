@@ -25,7 +25,7 @@ for(const [cls,powers] of Object.entries(specs)){
     }
   }
 }
-assert(analyzed>=60&&recognized>=40,
+assert(analyzed>=55&&recognized>=50,
   'Unexpected drop in source-based cooldown rule extraction');
 const selected={
   classId:'templar',
