@@ -582,7 +582,7 @@ function bind(){
  if(!boardOpen(entry.board)){message='This board is not unlocked.';sync(model());return}
  const a=account();if(!customMode()){
  const map=nodeMap();a.customNodes=routeSteps(activeRoute(),map).filter(x=>x.total<=budget('crystals')).map(x=>x.id);
- a.customAzphelNodes=routeSteps(ROUTES[state.class].azphel,map).filter(x=>x.total<=(a.azphel||0)).map(x=>x.id);
+ a.customAzphelNodes=routeSteps(ROUTES[state.class].azphel,map).filter(x=>x.total<=(a.azphel||0)).map(x=>x.id);a.customArielNodes=routeSteps(arielRoute(),map).filter(x=>x.total<=(a.ariel||0)).map(x=>x.id);
  a.boardMode='custom';}
  setCustomNode(entry.node[0]);message=boardEditNotice;render();
  });
@@ -593,10 +593,10 @@ function bind(){
  });
  $('v2-board-reset-selections').addEventListener('click',()=>{
    const a=account(),gold=obtainedNodes().size,
-     custom=(a.customNodes||[]).length+(a.customAzphelNodes||[]).length;
-   if(!window.confirm(`Reset every Daevanion selection on Nezekan, Zikel, Vaizel, Triniel and Azphel? This clears ${gold} gold obtained mark${gold===1?'':'s'} and ${custom} custom planned tile${custom===1?'':'s'}. Your earned crystals, level, gear, Mastery and Stigmas stay unchanged.`))return;
+     custom=(a.customNodes||[]).length+(a.customAzphelNodes||[]).length+(a.customArielNodes||[]).length;
+   if(!window.confirm(`Reset every Daevanion selection on Nezekan, Zikel, Vaizel, Triniel, Ariel and Azphel? This clears ${gold} gold obtained mark${gold===1?'':'s'} and ${custom} custom planned tile${custom===1?'':'s'}. Your earned crystals, level, gear, Mastery and Stigmas stay unchanged.`))return;
    storeObtained(new Set());
-   a.customNodes=[];a.customAzphelNodes=[];
+   a.customNodes=[];a.customAzphelNodes=[];a.customArielNodes=[];
    a.boardMode='recommended';
    a.recommendedRouteSnapshot=null;
    lastBoardRecalculation=null;
@@ -612,7 +612,7 @@ function bind(){
    if(!count){message='No obtained PvE tiles are marked; nothing to clear.';render();return}
    if(!window.confirm(`Clear ${count} obtained PvE Daevanion tile${count===1?'':'s'}? This removes your gold purchase marks, but keeps earned crystals, equipment and Mastery. Azphel is unaffected.`))return;
    const valid=nodeMap();
-   storeObtained(new Set([...obtainedNodes()].filter(id=>valid.get(id)?.board==='Azphel')));
+   storeObtained(new Set([...obtainedNodes()].filter(id=>['Azphel','Ariel'].includes(valid.get(id)?.board))));
    account().recommendedRouteSnapshot=null;
    lastBoardRecalculation=null;
    boardRecalculationNotice='';

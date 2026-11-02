@@ -31,7 +31,7 @@
   }
   function safeAccount(raw,cls){
     const result=DEFAULT_ACCOUNT(cls),validSkills=new Set(Object.values(DATA[cls].skills).map(skill=>skill.name));
-    for(const [key,max] of [['mastery',462],['stigma',300],['crystals',570],['azphel',232],['goalTarget',1000000000],['gearCpTarget',1000000000]])if(raw[key]!==undefined)result[key]=numeric(raw[key],max);
+    for(const [key,max] of [['mastery',462],['stigma',300],['crystals',570],['azphel',232],['ariel',232],['goalTarget',1000000000],['gearCpTarget',1000000000]])if(raw[key]!==undefined)result[key]=numeric(raw[key],max);
     if(PROFILES[cls].kind==='healer'&&raw.goalObserved!==undefined)result.goalObserved=numeric(raw.goalObserved,1000000000);
     result.context=['party','solo','pvp','pvp-arena','pvp-abyss-solo','pvp-abyss-group'].includes(raw.context)?raw.context:'party';
     result.pveObjective=['performance','survivability','sustained','burst'].includes(raw.pveObjective)
@@ -44,16 +44,16 @@
     result.boardMode=raw.boardMode==='custom'?'custom':'recommended';
     result.leveling={level:clamp(raw.leveling?.level??1,1,45),extraByLevel:{}};
     for(const [level,extra] of Object.entries(raw.leveling?.extraByLevel||{}))if(/^\d{1,2}$/.test(level)&&Number(level)>=1&&Number(level)<=45&&extra&&typeof extra==='object')result.leveling.extraByLevel[level]={mastery:numeric(extra.mastery,462),stigma:numeric(extra.stigma,300),crystals:numeric(extra.crystals,570)};
-    const entries=[...DATA[cls].boards,AZPHEL[cls]].flatMap(board=>board.nodes.map(node=>({id:node[0],board:board.name,node}))),byId=new Map(entries.map(entry=>[entry.id,entry]));
+    const entries=[...DATA[cls].boards,ARIEL[cls],AZPHEL[cls]].flatMap(board=>board.nodes.map(node=>({id:node[0],board:board.name,node}))),byId=new Map(entries.map(entry=>[entry.id,entry]));
     result.obtainedNodes=[...new Set((Array.isArray(raw.obtainedNodes)?raw.obtainedNodes:[]).map(Number).filter(id=>byId.has(id)))].slice(0,500);
     const safeRoute=(values,azphel)=>{
       const sequence=[],seen=new Set();for(const rawId of (Array.isArray(values)?values:[]).slice(0,500)){
-        const id=Number(rawId),entry=byId.get(id);if(!entry||seen.has(id)||entry.node[5]===0||(entry.board==='Azphel')!==azphel)continue;
+        const id=Number(rawId),entry=byId.get(id);if(!entry||seen.has(id)||entry.node[5]===0||(entry.board==='Azphel'?'azphel':entry.board==='Ariel'?'ariel':'crystals')!==azphel)continue;
         const near=entries.some(other=>other.board===entry.board&&(other.node[5]===0||seen.has(other.id))&&Math.abs(other.node[1]-entry.node[1])+Math.abs(other.node[2]-entry.node[2])===1);
         if(near){sequence.push(id);seen.add(id)}
       }return sequence;
     };
-    result.customNodes=safeRoute(raw.customNodes,false);result.customAzphelNodes=safeRoute(raw.customAzphelNodes,true);
+    result.customNodes=safeRoute(raw.customNodes,'crystals');result.customAzphelNodes=safeRoute(raw.customAzphelNodes,'azphel');result.customArielNodes=safeRoute(raw.customArielNodes,'ariel');
     for(const [key,max] of [['gear',30],['currentRanks',10]]){result[key]={};for(const [name,value] of Object.entries(raw[key]||{}))if(validSkills.has(name))result[key][name]=clamp(value,key==='gear'?0:1,max)}
     // v2 shared builds preserve real manual allocations, Stigma loadout and
     // Specialty selections. Each field is validated against this class's
@@ -78,10 +78,11 @@
     result.equipment={};
     for(const slot of GEAR_SLOTS){const item=raw.equipment?.[slot.id];if(!item||typeof item!=='object')continue;
       const type=slot.type==='weapon'?GEAR_WEAPONS[cls]:slot.type,catalog=GEAR_CATALOG_BY_HREF.get(item.href),source=catalog?.type===type?catalog:null,name=short(source?.name||item.name,140).trim();if(!name)continue;
-      const grade=source?.grade||'',stoneFamily=gearStoneFamily(slot),socketCount=stoneFamily?clamp(item.manastoneSlots??STONE_SLOTS_BY_GRADE[grade]??0,0,4):0;
+      const grade=source?.grade||item.grade||'',stoneFamily=gearStoneFamily(slot),socketCount=stoneFamily?clamp(item.manastoneSlots??STONE_SLOTS_BY_GRADE[grade]??0,0,4):0;
       const theostoneAllowed=['weapon','guard'].includes(slot.id)&&(['Epic','Unique'].includes(grade)||!source);
       const legacyType=(Array.isArray(item.stones)?item.stones:[]).find(stone=>STONE_KINDS.includes(stone?.kind))?.kind||'';
-      result.equipment[slot.id]={name,type,href:source?.href||'',icon:source?.icon||'',grade,faction:source?.faction||'',fixedStats:source?.fixedStats||[],baseStats:(Array.isArray(item.baseStats)?item.baseStats:[]).slice(0,12).map(line=>short(line,140)),requiredLevel:source?.requiredLevel||clamp(item.requiredLevel||0,0,45)||null,itemLevel:source?.itemLevel||clamp(item.itemLevel||0,0,999)||null,enhancement:numeric(item.enhancement,30),manastoneSlots:socketCount,theostoneSlots:theostoneAllowed?1:0,theostone:theostoneAllowed?short(item.theostone,100):'',stoneType:STONE_KINDS.includes(item.stoneType)?item.stoneType:legacyType,stones:(Array.isArray(item.stones)?item.stones:[]).slice(0,socketCount).map(stone=>({stat:short(stone?.stat,80),value:stone?.value===null||stone?.value===undefined?null:clamp(stone.value,-1000000,1000000),unit:stone?.unit==='%'?'%':'',grade:STONE_LINE_GRADES.some(([name])=>name===stone?.grade)?stone.grade:''})),statNotes:short(item.statNotes,500),notes:short(item.notes,500),skillBonuses:(Array.isArray(item.skillBonuses)?item.skillBonuses:[]).slice(0,3).filter(bonus=>validSkills.has(bonus?.skill)).map(bonus=>({skill:bonus.skill,levels:clamp(bonus.levels,0,30)}))};
+      result.equipment[slot.id]={name,type,href:source?.href||'',icon:source?.icon||'',grade,faction:source?.faction||'',fixedStats:source?.fixedStats||[],baseStats:(Array.isArray(item.baseStats)?item.baseStats:[]).slice(0,12).map(line=>short(line,140)),requiredLevel:source?.requiredLevel||clamp(item.requiredLevel||0,0,45)||null,itemLevel:source?.itemLevel||clamp(item.itemLevel||0,0,999)||null,enhancement:numeric(item.enhancement,slot.area==='arcana'?arcanaMaxEnhancement(grade):30),manastoneSlots:socketCount,theostoneSlots:theostoneAllowed?1:0,theostone:theostoneAllowed?short(item.theostone,100):'',stoneType:STONE_KINDS.includes(item.stoneType)?item.stoneType:legacyType,stones:(Array.isArray(item.stones)?item.stones:[]).slice(0,socketCount).map(stone=>({stat:short(stone?.stat,80),value:stone?.value===null||stone?.value===undefined?null:clamp(stone.value,-1000000,1000000),unit:stone?.unit==='%'?'%':'',grade:STONE_LINE_GRADES.some(([name])=>name===stone?.grade)?stone.grade:''})),statNotes:short(item.statNotes,500),notes:short(item.notes,500),skillBonuses:(Array.isArray(item.skillBonuses)?item.skillBonuses:[]).slice(0,slot.area==='arcana'?4:3).filter(bonus=>validSkills.has(bonus?.skill)&&(slot.area!=='arcana'||arcanaSkillPool(cls,slot.id).includes(bonus?.skill))).map(bonus=>({skill:bonus.skill,levels:clamp(bonus.levels,1,slot.area==='arcana'?4:30)}))};
+      if(slot.area==='arcana'&&!arcanaValidBonuses(cls,slot.id,grade,result.equipment[slot.id].enhancement,result.equipment[slot.id].skillBonuses))result.equipment[slot.id].skillBonuses=[];
     }
     return result;
   }
@@ -100,7 +101,7 @@
   });
   $('share-dialog-close').addEventListener('click',()=>$('share-dialog').close());
   $('share-copy-button').addEventListener('click',async()=>{try{await navigator.clipboard.writeText($('share-url').value);$('share-status').textContent='Build link copied.'}catch(_){$('share-url').select();$('share-status').textContent='Select and copy the link from the field.'}});
-  $('shared-build-load').addEventListener('click',()=>{if(!incoming)return;const cls=incoming.cls;state.class=cls;state.accounts[cls]=safeAccount(incoming.account,cls);state.gearView=['inventory','inspect'].includes(incoming.gearView)?incoming.gearView:null;state.tab=['overview','gear','boards','mastery','stigma','rotation','titles','sources'].includes(incoming.tab)?incoming.tab:'overview';state.board=ALL_BOARD_NAMES.includes(incoming.board)?incoming.board:'Nezekan';theme=['aether','sanctum','abyss'].includes(incoming.theme)?incoming.theme:'aether';try{localStorage.setItem('daeva-architect-theme',theme)}catch(_){}if(!boardOpen(state.board))state.board='Nezekan';state.preview=state.board==='Azphel'?account().azphel||0:budget('crystals');state.node=null;$('shared-build-banner').hidden=true;incoming=null;clearSharedFragment();render();document.querySelector('.tabs')?.scrollIntoView({behavior:'smooth',block:'start'})});
+  $('shared-build-load').addEventListener('click',()=>{if(!incoming)return;const cls=incoming.cls;state.class=cls;state.accounts[cls]=safeAccount(incoming.account,cls);state.gearView=['inventory','inspect'].includes(incoming.gearView)?incoming.gearView:null;state.tab=['overview','gear','boards','mastery','stigma','rotation','titles','sources'].includes(incoming.tab)?incoming.tab:'overview';state.board=ALL_BOARD_NAMES.includes(incoming.board)?incoming.board:'Nezekan';theme=['aether','sanctum','abyss'].includes(incoming.theme)?incoming.theme:'aether';try{localStorage.setItem('daeva-architect-theme',theme)}catch(_){}if(!boardOpen(state.board))state.board='Nezekan';state.preview=['Azphel','Ariel'].includes(state.board)?(account()[state.board.toLowerCase()]||0):budget('crystals');state.node=null;$('shared-build-banner').hidden=true;incoming=null;clearSharedFragment();render();document.querySelector('.tabs')?.scrollIntoView({behavior:'smooth',block:'start'})});
   $('shared-build-dismiss').addEventListener('click',()=>{incoming=null;$('shared-build-banner').hidden=true;clearSharedFragment()});
   window.addEventListener('hashchange',inspectSharedFragment);
   inspectSharedFragment();

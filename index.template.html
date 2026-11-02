@@ -36,6 +36,7 @@
         <option value="pvp">General PvP</option><option value="pvp-arena">Arena PvP (1v1 Solitude)</option>
         <option value="pvp-abyss-solo">Solo PvP (Abyss)</option><option value="pvp-abyss-group">Group PvP (Abyss)</option>
       </select><small>Arena preset targets 1v1; group arena and equalized battlefield are different engagements.</small></div>
+      <div class="control" id="ariel-control"><label class="label" for="ariel-input">Ariel crystals</label><input id="ariel-input" type="number" min="0" max="232" value="0"><small>Separate PvE board currency</small></div>
       <div class="control" id="azphel-control"><label class="label" for="azphel-input">Azphel crystals</label><input id="azphel-input" type="number" min="0" max="232" value="0"><small>Separate PvP board currency</small></div>
     </div>
     <div class="presets" id="fresh-preset"><div><b>Start from your point totals</b><span>Global level 45 from leveling alone: 203 Mastery · 29 Stigma · 136 crystals. Quest and dungeon rewards add more.</span></div><button id="fresh-45-button" type="button">Fresh Global 45</button></div>
@@ -112,7 +113,7 @@
       </details>
     </section>
     <section id="boards" class="tab-panel" aria-label="Daevanion boards">
-      <div class="section-title"><div><h2>Daevanion route</h2><p id="board-section-description">One connected purchase order spans Nezekan, Zikel, Vaizel and Triniel. The board tabs below show each part of that route. Azphel appears in PvP and uses its own currency.</p></div><span id="board-spent" class="tag gold"></span></div>
+      <div class="section-title"><div><h2>Daevanion route</h2><p id="board-section-description">One connected purchase order spans Nezekan, Zikel, Vaizel and Triniel. The board tabs below show each part of that route. Ariel and Azphel use their own currencies and remain available in both PvE and PvP.</p></div><span id="board-spent" class="tag gold"></span></div>
       <div class="board-mode-panel panel"><div><h3>Choose how to plan your boards</h3><p>Recommended follows the class route. Custom lets you select connected tiles with your own crystal budget.</p></div><div class="board-mode-buttons" role="group" aria-label="Daevanion planning mode"><button id="board-mode-recommended" type="button" title="Recalculate the recommended path using your current points and equipment. Keeps obtained tiles.">Recalculate recommended</button><button id="board-mode-custom" type="button">Custom</button></div></div>
       <div id="custom-board-tools" class="custom-board-tools panel" hidden><p>Click a connected tile to add or remove it from your custom plan. Use the selected tile control to mark what you have obtained in game. Board bonuses in Mastery follow this custom plan.</p><div><button id="copy-recommended-board" type="button">Copy current recommendation</button><button id="clear-custom-board" type="button">Clear custom plan</button></div><span id="custom-board-status" role="status"></span></div>
       <div class="panel global-route"><div class="global-route-heading"><div><h3 id="global-route-heading">All four PvE boards · what to buy next</h3><p id="global-route-caption" role="status" aria-live="polite"></p></div><span id="global-route-budget" class="tag gold"></span></div><div class="obtained-controls"><span id="obtained-status"></span><button id="mark-planned-button" type="button">Mark planned nodes obtained</button><button id="clear-obtained-button" type="button">Clear PvE obtained marks</button></div><div id="global-board-allocation" class="global-board-allocation"></div><div id="global-route-next" class="global-route-next"></div></div>
@@ -154,6 +155,8 @@
   <script defer src="./js/icon_catalog.js"></script>
   <script defer src="./js/profiles.js"></script>
   <script defer src="./js/titles.js"></script>
+  <script defer src="./js/ariel_data.js"></script>
+  <script defer src="./js/arcana_rules.js"></script>
   <script defer src="./js/gear.js"></script>
   <script defer src="./js/cp.js"></script>
   <script defer src="./js/board_optimizer.js"></script>
