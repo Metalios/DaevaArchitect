@@ -18,7 +18,7 @@ const GlobalTimelineEngine=(()=>{
   const clamp=(n,lo,hi)=>Math.max(lo,Math.min(hi,Number(n)||0));
   const finite=n=>typeof n==='number'&&Number.isFinite(n);
   const percentCap=.60;
-  const allowedTriggerEvents=new Set(['cast','hit','crit','status']);
+  const allowedTriggerEvents=new Set(['cast','hit','crit','status','kill','block','evasion']);
   const ruleCondition=(rule,event,active,hitCrit)=>{
     if(rule.event!==event)return false;
     if(rule.requiresCritical&&!hitCrit)return false;
@@ -77,21 +77,29 @@ const GlobalTimelineEngine=(()=>{
    */
   function simulate({abilities,priority,duration,attack,extraHaste=0,
     outcomes={},resource=null,initialConditions=[],
-    timingRecords=[],timingContext=null,timingOptions={}}={}){
+    timingRecords=[],timingContext=null,timingOptions={},cooldownRules=[],
+    cooldownStart='complete'}={}){
     // A regional measurement may supply the action lock ONLY when explicitly
     // requested, sourced and labelled. Unknown motion stays invalid.
     const prepared=timingContext&&typeof GlobalAnimationEvidence!=='undefined'
       &&Array.isArray(abilities)
       ?GlobalAnimationEvidence.enrich(abilities,timingContext,timingRecords,timingOptions)
       :abilities;
-    const errors=validate(prepared,priority,duration,attack);
+    const resolved=typeof GlobalCooldownRules!=='undefined'&&Array.isArray(prepared)?
+      prepared.map(a=>({
+        ...a,
+        cooldown:GlobalCooldownRules.effectiveCooldown(a.cooldown,a.id,cooldownRules),
+        triggers:[...(a.triggers||[]),...GlobalCooldownRules.eventRules(a.id,cooldownRules)]
+      })):prepared;
+    const errors=validate(resolved,priority,duration,attack);
+    if(!['start','complete'].includes(cooldownStart))errors.push('Invalid cooldownStart policy');
     if(errors.length)return {ok:false,errors,events:[]};
-    const actions=new Map(prepared.map(x=>[x.id,x]));
+    const actions=new Map(resolved.map(x=>[x.id,x]));
     const nowConditions=new Map(initialConditions.filter(x=>x&&x.id&&finite(x.duration)&&x.duration>0)
       .map(x=>[x.id,{...x,until:x.duration}]));
     const snapshots=[];
-    const cooldowns=new Map(prepared.map(x=>[x.id,0]));
-    const casts=new Map(prepared.map(x=>[x.id,0]));
+    const cooldowns=new Map(resolved.map(x=>[x.id,0]));
+    const casts=new Map(resolved.map(x=>[x.id,0]));
     const metrics={totalDamage:0,casts:0,completed:0,idleSeconds:0,
       resets:0,reductions:0,misses:0,criticalEvents:0};
     const rp=resource||{initial:Infinity,max:Infinity,regenPerSecond:0};
@@ -99,7 +107,7 @@ const GlobalTimelineEngine=(()=>{
     let mana=finite(rp.initial)?clamp(rp.initial,0,maxResource):Infinity;
     const regen=finite(rp.regenPerSecond)?Math.max(0,rp.regenPerSecond):0;
     const events=[],limitations=[];
-    const missingCritData=new Set();
+    const missingCritData=new Set(),missingProcData=new Set();
     let now=0;
     const live=()=>new Map([...nowConditions.entries()].filter(([,b])=>b.until>now+EPS));
     function advance(until) {
@@ -113,19 +121,36 @@ const GlobalTimelineEngine=(()=>{
       const extras=[...live().values()].reduce((s,b)=>s+(finite(b.cooldownReduction)?b.cooldownReduction:0),0);
       return clamp(extraHaste+extras,0,percentCap);
     }
-    function executeTrigger(rule,event,critical,source){
+    function executeTrigger(rule,event,critical,source,outcome=null,hits=1){
       const active=live();
       if(!ruleCondition(rule,event,active,critical))return;
+      // A stochastic proc is deterministic ONLY when the supplied encounter
+      // outcome marks this effect as successful. We do not invent random
+      // outcomes from the tooltip probability.
+      if(rule.probability!==null&&rule.probability!==undefined){
+        const proven=Array.isArray(outcome?.procs)&&
+          (outcome.procs.includes(rule.source)||outcome.procs.includes(rule.target));
+        if(!proven){
+          if(!outcome)missingProcData.add(source);
+          return;
+        }
+      }
       if(rule.effect==='cooldown'){
-        const before=cooldowns.get(rule.target);
-        if(before===undefined)return;
-        let after=before;
-        if(rule.operation==='reset')after=now;
-        if(rule.operation==='reduce')after=Math.max(now,before-rule.seconds);
-        if(after<before-EPS){
-          cooldowns.set(rule.target,after);
-          metrics[rule.operation==='reset'?'resets':'reductions']++;
-          events.push({at:now,type:rule.operation,source,target:rule.target,seconds:Math.max(0,before-after)});
+        const targets=rule.target==='*'?
+          [...cooldowns.keys()].filter(id=>id!==source):[rule.target];
+        for(const target of targets){
+          const before=cooldowns.get(target);
+          if(before===undefined)continue;
+          let after=before;
+          if(rule.operation==='reset')after=now;
+          if(rule.operation==='reduce')after=Math.max(now,before-
+            rule.seconds*(rule.perHit?hits:1));
+          if(after<before-EPS){
+            cooldowns.set(target,after);
+            metrics[rule.operation==='reset'?'resets':'reductions']++;
+            events.push({at:now,type:rule.operation,source,target,
+              seconds:Math.max(0,before-after)});
+          }
         }
       }else{
         const prev=nowConditions.get(rule.id);
@@ -165,13 +190,16 @@ const GlobalTimelineEngine=(()=>{
       if(Number.isFinite(mana))mana-=a.resourceCost||0;
       const buffed=[...active.values()].reduce((p,b)=>p*
         (finite(b.damageMultiplier)?b.damageMultiplier:1),1);
-      for(const rule of a.triggers||[])executeTrigger(rule,'cast',critical,a.id);
+      if(cooldownStart==='start')cooldowns.set(a.id,
+        tStart+a.cooldown*(1-getHaste()));
+      for(const rule of a.triggers||[])executeTrigger(rule,'cast',critical,a.id,outcome,a.hits);
       // A measured lock controls both whether an ability completes and when
       // the next action can begin. No post-cast damage is invented after fight end.
       advance(tStart+a.lockSeconds);
       if(now<tStart+a.lockSeconds-EPS)break;
       // Cooldown starts on completion in this conservative scenario.
-      cooldowns.set(a.id,now+a.cooldown*(1-getHaste()));
+      if(cooldownStart==='complete')cooldowns.set(a.id,
+        now+a.cooldown*(1-getHaste()));
       const base=(a.flatDamage+a.attackCoefficient*attack)*a.hits;
       const damage=hit?base*buffed*(critical?(finite(a.criticalMultiplier)?a.criticalMultiplier:1):1):0;
       metrics.totalDamage+=damage;metrics.casts++;metrics.completed++;
@@ -179,14 +207,20 @@ const GlobalTimelineEngine=(()=>{
       if(critical)metrics.criticalEvents++;
       casts.set(a.id,index+1);
       events.push({at:now,start:tStart,type:'cast',id:a.id,damage,critical,hit,resource:mana});
-      if(hit)for(const rule of a.triggers||[])executeTrigger(rule,'hit',critical,a.id);
-      if(critical&&hit)for(const rule of a.triggers||[])executeTrigger(rule,'crit',critical,a.id);
+      if(hit)for(const rule of a.triggers||[])
+        executeTrigger(rule,'hit',critical,a.id,outcome,a.hits);
+      if(critical&&hit)for(const rule of a.triggers||[])
+        executeTrigger(rule,'crit',critical,a.id,outcome,a.hits);
+      for(const event of ['kill','block','evasion'])
+        if(outcome?.[event])for(const rule of a.triggers||[])
+          executeTrigger(rule,event,critical,a.id,outcome,a.hits);
     }
     if(events.length>=MAX_EVENTS)limitations.push('Simulation event cap reached.');
     if(missingCritData.size)limitations.push('No observed critical/proc outcomes for: '+[...missingCritData].join(', '));
-    if(!prepared.every(a=>a.timingSource==='global-measured'&&a.damageSource==='global-measured'))
+    if(missingProcData.size)limitations.push('No measured chance-proc outcomes for: '+[...missingProcData].join(', '));
+    if(!resolved.every(a=>a.timingSource==='global-measured'&&a.damageSource==='global-measured'))
       limitations.push('Some action locks or damage coefficients are uncalibrated scenarios. DPS is NOT an observed Global result.');
-    const regional=prepared.filter(a=>a.timingSource?.startsWith('regional-'));
+    const regional=resolved.filter(a=>a.timingSource?.startsWith('regional-'));
     if(regional.length)limitations.push('Regional timing transfers are subject to Global patch parity and input latency; check '+regional.map(a=>a.id).join(', ')+'.');
     const bySkill={};
     for(const e of events)if(e.type==='cast'){
@@ -195,8 +229,8 @@ const GlobalTimelineEngine=(()=>{
     }
     return {ok:true,totalDamage:metrics.totalDamage,dps:metrics.totalDamage/duration,
       duration,metrics,bySkill,events,limitations,
-      timingProvenance:Object.fromEntries(prepared.filter(a=>a.timingProvenance).map(a=>[a.id,a.timingProvenance])),
-      assumptions:{cooldownCap:percentCap,cooldownStart:'cast-completion',
+      timingProvenance:Object.fromEntries(resolved.filter(a=>a.timingProvenance).map(a=>[a.id,a.timingProvenance])),
+      assumptions:{cooldownCap:percentCap,cooldownStart:cooldownStart==='start'?'cast-start':'cast-completion',
         actionLock:'caller-provided',criticalEvents:'deterministic explicit outcomes',
         animationCancel:'only if represented in caller-provided measured lockSeconds'}};
   }
