@@ -1,34 +1,34 @@
 'use strict';
-// AION 2 Global build evaluation. Mechanics are from Global 2.0.8.0.
-// Animation baselines can be transferred from KR/TW; unmeasured actions are
-// *scenarios*, not measured Global timings. Scores are comparative units.
+// Global-only candidate evaluation. Base skill cooldowns are cross-checked
+// against the Global client skill index. Occupied action durations and cancels
+// are unmeasured sensitivity scenarios, NOT data transferred from KR/TW.
 // This engine deliberately never claims to produce measured in-game DPS.
 const GlobalCombatEngine=(()=>{
   const SOURCE=Object.freeze({
-    version:'Global 2.0.8.0 / 2026-10-21',
+    version:'Global client data 0.0.4387.0 / reviewed 2026-11-01',
     skills:'https://aion2.gaming.tools/skills/15040000',
     coefficients:'https://aion2data.com/best/sorcerer-skills',
     animations:'https://aion2.grimvane.app/companion/wiki/sorcerer-primer/',
-    timings:'KR/TW transferable hypothesis; Global cancel limits unverified'
+    timings:'Unmeasured Global action-time/cancel scenario; not valid for absolute DPS'
   });
-  // Event damage units are calibrated to the proportions seen in historical
-  // Global Sorcerer combat records, NOT a substitute for server damage.
+  // Event damage values are relative scenario units, not independently
+  // calibrated to measured Global damage logs or the server combat formula.
   // Durations other than Hellfire charge are explicit uncertain scenario inputs.
   const ACTIONS=Object.freeze({
     'Flame Arrow':{cd:0,occupied:.64,power:.054,mp:-100,mode:'filler',speed:'combat'},
     'Firestorm':{cd:5,occupied:.76,power:.28,mp:250,mode:'macro',speed:'skill'},
-    'Bittercold Wind':{cd:15,occupied:.82,power:.84,mp:220,mode:'macro',speed:'combat',ground:true},
+    'Bittercold Wind':{cd:15,occupied:.82,power:.84,mp:150,mode:'macro',speed:'combat',ground:true},
     'Blaze':{cd:5,occupied:.65,power:.41,mp:-60,mode:'macro',requires:'fireMark',speed:'combat'},
-    'Frost':{cd:30,occupied:.72,power:.15,mp:120,mode:'macro',speed:'combat'},
+    'Frost':{cd:30,occupied:.72,power:.15,mp:100,mode:'macro',speed:'combat'},
     'Frost Burst':{cd:10,occupied:.68,power:.30,mp:160,mode:'macro',requires:'frost',speed:'combat'},
     "Winter's Shackles":{cd:45,occupied:.76,power:.23,mp:180,mode:'macro',speed:'combat'},
     'Flame Scattershot':{cd:0,occupied:.60,power:.28,mp:70,mode:'conditional',requires:'stagger',speed:'combat'},
-    'Hellfire':{cd:45,occupied:1.85,charge:1.50,recovery:.35,power:4.00,mp:300,mode:'manual-charge',speed:'skill'},
-    'Wish of Concentration':{cd:60,occupied:.60,power:0,mp:0,mode:'manual-buff',speed:'combat'},
+    'Hellfire':{cd:45,occupied:1.85,charge:1.50,recovery:.35,power:4.00,mp:200,mode:'manual-charge',speed:'skill'},
+    'Wish of Concentration':{cd:60,occupied:.60,power:0,mp:100,mode:'manual-buff',speed:'combat'},
     'Element Enhancement':{cd:60,occupied:.60,power:0,mp:0,mode:'manual-buff',speed:'combat'},
-    'Delayed Explosion':{cd:25,occupied:.65,power:.60,mp:150,mode:'manual-debuff',speed:'combat'},
-    'Fire Wall':{cd:30,occupied:.72,power:1.15,mp:200,mode:'macro',speed:'combat',ground:true},
-    'Cold Storm':{cd:30,occupied:.75,power:.78,mp:200,mode:'macro',speed:'combat',ground:true}
+    'Delayed Explosion':{cd:30,occupied:.65,power:.60,mp:200,mode:'manual-debuff',speed:'combat'},
+    'Fire Wall':{cd:60,occupied:.72,power:1.15,mp:200,mode:'macro',speed:'combat',ground:true},
+    'Cold Storm':{cd:60,occupied:.75,power:.78,mp:200,mode:'macro',speed:'combat',ground:true}
   });
   const ENCOUNTERS=[
     {id:'stationary',duration:180,movement:0,weight:.5,animation:1},
