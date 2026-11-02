@@ -91,12 +91,10 @@ const boardControls=make('div','v2-board-controls',`
  <details class="v2-board-method">
    <summary>What does the recommendation consider?</summary>
    <p>The planner uses your class, level, PvE/PvP context, earned crystals, connected tiles, marked purchases, Mastery, Stigmas, recorded equipment skill-level bonuses and an approximate Combat Power baseline where gear is sufficiently recorded. PvE uses a bounded multi-candidate connected-route search. Sorcerer evaluates damage finalists with a comparative simulator; other classes use structural synergy estimates, not measured DPS.</p>
-   <p><strong>Not a guaranteed strongest build:</strong> this is not an exhaustive combat search; the seven other classes use source-linked, mechanics-informed comparative projections, not measured DPS/HPS or proven global optima. Full equipment stat rolls, resistance/crit thresholds, every effect interaction, Ariel, and the game's undisclosed Combat Power calculation are not jointly optimized. Estimated Combat Power differs from actual in-game CP and from item level.</p>
+   <p><strong>Not a guaranteed strongest build:</strong> this is not an exhaustive combat search; the seven other classes use source-linked, mechanics-informed comparative projections, not measured DPS/HPS or proven global optima. Full equipment stat rolls, resistance/crit thresholds, every effect interaction, and the game's undisclosed Combat Power calculation are not jointly optimized. Ariel and Azphel bonuses are included in approximate CP projections but have not been calibrated to the live Global client. Estimated Combat Power differs from actual in-game CP and from item level.</p>
  </details>
  <p id="v2-optimizer-evidence" class="v2-optimizer-evidence" aria-live="polite"></p>
  <p id="v2-board-notice" role="status" aria-live="polite"></p>`);
-const ariel=make('button','v2-ariel-pending','Ariel · pending');
-ariel.type='button';ariel.disabled=true;ariel.title='Ariel arrived in the October 21 Global update. Client-verified node positions, effects and separate currency data must be imported before this board is editable.';
 const modal=make('dialog','v2-comparison',`<div class="v2-compare-head"><h2>Your build vs. recommended</h2><button type="button" id="v2-comparison-close">✕</button></div><p>Compared at the same class, level, play context, and point totals. Recorded equipment skill-level bonuses and the estimated CP baseline can influence the Daevanion route; full gear stat optimization is not implemented.</p><div id="v2-comparison-body"></div><button type="button" id="v2-comparison-reset">Restore recommended allocations (keep gear)</button>`);modal.id='v2-comparison';
 const archetype=make('p','v2-archetype');
 const slim=make('div','v2-slim-heading',`<span id="v2-master-status"></span><button type="button" id="v2-master-restore">Restore ranks</button>`);
@@ -461,9 +459,6 @@ function sync(m){
  for(const option of $('v2-context').options)if(isPvpContext(option.value))option.disabled=isLeveling();
  $('board-grid').style.setProperty('--v2-node',zoom+'px');$('v2-zoom-label').textContent=zoom+'px';
  queueBoardFit();
- // Ariel is a newly added separate PvE board. Show that it exists, but do
- // not invent nodes, costs, or claim support without verified Global data.
- if(!$('board-tabs').querySelector('.v2-ariel-pending'))$('board-tabs').append(ariel);
  m ||= model();skillsView(m);stigmasView(m);actionsView(m);
  const activeSteps=routeSteps(activeRoute(),nodeMap()).filter(x=>x.board===state.board);
  const acquired=obtainedNodes(),owned=activeSteps.filter(x=>acquired.has(x.id)).length;
