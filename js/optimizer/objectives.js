@@ -229,6 +229,8 @@ const PveBuildOptimizer=(()=>{
     crystalBudget=136,characterLevel=45,skillTargets={},scoreFinal=null}){
     if(!['party','solo'].includes(context))throw Error('PvE optimizer requires solo or party context');
     if(!PVE_OBJECTIVES[objective])throw Error('Unknown PvE objective');
+    if(!RoleBuildGoals.available(classId,context).some(goal=>goal.id===objective))
+      throw Error('Unsupported role for class and PvE context');
     const graphs=buildGraph(classData,characterLevel),budget=max(crystalBudget);
     const roots=new Set(graphs.flatMap(g=>[...g.roots]));
     const mandatory=distinct([...locked].map(Number)).filter(id=>graphs.some(g=>g.nodes.has(id)&&!roots.has(id)));
