@@ -308,7 +308,10 @@ const ClassCombatModels=(()=>{
    const performance=context==='party'
       ? .44*sustained+.25*burst+.19*survival+.12*(1+party)
       : .40*sustained+.24*burst+.27*survival+.09*uptime;
-   const specialized=RoleBuildGoals.mix(classId,objective,
+   // Existing PvP encounter modes have separate build logic; never reuse a
+   // hidden Solo/Group PvE role (e.g. group healer) for Arena scoring.
+   const selectedGoal=String(context).startsWith('pvp')?'performance':objective;
+   const specialized=RoleBuildGoals.mix(classId,selectedGoal,
      {sustained,burst,survival,party:1+party},rank,stigma);
    const objectiveScore=specialized??(objective==='burst'?burst:
       objective==='sustained'?sustained:
