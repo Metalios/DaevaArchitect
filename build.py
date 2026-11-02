@@ -91,6 +91,7 @@ shutil.copy2(root / 'js' / 'engine' / 'cooldown_rules.js', out_dir / 'js' / 'eng
 shutil.copy2(root / 'js' / 'engine' / 'global_actions.js', out_dir / 'js' / 'engine' / 'global_actions.js')
 shutil.copy2(root / 'js' / 'engine' / 'animation_evidence.js', out_dir / 'js' / 'engine' / 'animation_evidence.js')
 shutil.copy2(root / 'js' / 'engine' / 'combat_timeline.js', out_dir / 'js' / 'engine' / 'combat_timeline.js')
+shutil.copy2(root / 'js' / 'engine' / 'combat_evidence.js', out_dir / 'js' / 'engine' / 'combat_evidence.js')
 shutil.copy2(root / 'js' / 'engine' / 'combat.js', out_dir / 'js' / 'engine' / 'combat.js')
 shutil.copy2(root / 'js' / 'engine' / 'class_models.js', out_dir / 'js' / 'engine' / 'class_models.js')
 shutil.copy2(root / 'css' / 'styles.css', out_dir / 'css' / 'styles.css')
