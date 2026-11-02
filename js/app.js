@@ -138,7 +138,8 @@ function specialBoardRoute(name){
   const objective=a.pveObjective||'performance';
   const equipment=gearEquipment();
   const fingerprint=JSON.stringify([state.class,name,context,objective,
-    equipment,a.gear,a.titlesOwned]);
+    equipment,a.gear,a.titlesOwned,
+    name==='Ariel'?a.ariel:a.azphel]);
   if(SPECIAL_BOARD_ROUTE_CACHE.has(fingerprint))
     return SPECIAL_BOARD_ROUTE_CACHE.get(fingerprint);
   const board=name==='Ariel'?ARIEL[state.class]:AZPHEL[state.class];
@@ -152,6 +153,7 @@ function specialBoardRoute(name){
       const weights=activeWeights().stats;
       route=JointProgression.rankConnectedBoard({
         board,context,objective,role:profile().kind,stats:totals,
+        budget:name==='Ariel'?(a.ariel||0):(a.azphel||0),
         weights,meta:data().stats
       });
     }catch(error){
