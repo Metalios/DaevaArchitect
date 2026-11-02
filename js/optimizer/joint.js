@@ -180,7 +180,7 @@ const JointProgression = (()=>{
   // and point-type boundary. Its order is driven by marginal contextual
   // utility, not by cosmetic tab order or the next unconnected high stat.
   function rankConnectedBoard({board,context='party',objective='performance',
-      role='damage',stats={},weights={},meta={},budget=Infinity}){
+      classId=null,role='damage',stats={},weights={},meta={},budget=Infinity}){
     if(!board?.nodes?.length)throw Error('Board nodes required');
     const nodes=board.nodes;
     const grid=new Map(nodes.map(n=>[n[1]+':'+n[2],n]));
@@ -212,7 +212,8 @@ const JointProgression = (()=>{
         const before=Math.max(0,Number(totals[key])||0)/divisor;
         const gain=numeric/divisor;
         const cap=1+before/scale;
-        value+=weight*emphasis(key,context,objective,role)*gain/
+        value+=weight*emphasis(key,context,objective,role)*
+          (classId?RoleBuildGoals.roleStatBoost(key,classId,objective):1)*gain/
           Math.max(1,scale/20)/cap;
       }
       // Lower cost wins if two tiles provide similar marginal utility.
