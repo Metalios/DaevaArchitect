@@ -43,6 +43,7 @@ jobs:
           node pvp_context_regression.mjs
           node pvp_matchup_regression.mjs
           node leveling_rotation_audit.mjs
+          node ranger_rotation_regression.mjs
           node recommendations_audit.mjs
           node audit_leveling.mjs
           node verify.mjs
