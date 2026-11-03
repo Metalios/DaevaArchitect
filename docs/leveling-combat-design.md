@@ -5,7 +5,7 @@ Reviewed 2026-10-22; uses October 21 Global client skill and macro data. This is
 
 AION 2's macro is not a deterministic skill-by-skill script. Each step presses a hotbar key; a key can own a stack of up to four skills. The **bottom slot (row 0)** has highest priority, then rows 1, 2, 3 moving upward. A no-cooldown attack below an on-cooldown skill can starve that skill. The client warns that macro step order is not guaranteed, manual input overrides it, and macro hotkeys tied to mouse actions are unsupported in AION 1 Control Mode.
 
-The Skills menu and presets open at **character level 4**. Levels 1–3 therefore display only attacks the player can press, with no fictitious macro setup. Levels 4–44 (and level 45 while explicitly in *Leveling* mode) start with **one hotbar stack and one macro step**. **Sorcerer switches at level 10 to two purposeful stacks**: an elemental setup/cooldown column and a conditional Fire Mark/Frost spender column, each represented by one macro step. The "Fresh 45 / Endgame" mode keeps the existing advanced rotation builder and macro customization.
+The Skills menu and presets open at **character level 4**. Levels 1–3 therefore display only attacks the player can press, with no fictitious macro setup. Levels 4–44 (and level 45 while explicitly in *Leveling* mode) start with **one hotbar stack and one macro step**. **Ranger adds a second Slow/condition stack at level 10**. **Sorcerer switches at level 10 to two purposeful stacks**: an elemental setup/cooldown column and a conditional Fire Mark/Frost spender column, each represented by one macro step. The "Fresh 45 / Endgame" mode keeps the existing advanced rotation builder and macro customization.
 
 ## Implementation
 
@@ -16,7 +16,7 @@ The Skills menu and presets open at **character level 4**. Levels 1–3 therefor
 - **Templar:** Judgment goes in bottom Row 0; the repeatable Pummel stays in the *top* fallback row. Group PvE keeps Warding Strike manual for defensive timing.
 - **Spiritmaster:** summons and Elemental Fusion stay manual, rather than placing pets and cooldown-free fusion in an automatic loop.
 - **Sorcerer:** At Lv10+, E uses Winter's Shackles → Bittercold Wind → Frost → Firestorm (row 0 first); Q uses Blaze → Frost Burst (row 0 first). These represent setup and condition-dependent payoffs, rather than a single filler stack. Hellfire, Wish of Concentration, Flame Scattershot and Ice Chain remain manual; equipped Stigmas require earned points and can be positioned to the player's preference. At Lv31 only two Stigma slots are open, so do not show the four-Stigma level-45 macro. The user's screenshot also demonstrates a valid manual-fire/Q/E organization, but icon-only evidence is insufficient to claim these are the user's exact assignments.
-- **Ranger:** charged attacks remain manual; repeat attacks stay outside the macro.
+- **Ranger:** E has Gale Arrow → conditional Drill Dart → cooldown-free Tempest Shot (last priority), starting at level 4 with only unlocked skills. At level 10, Q adds Snare Shot → Burst Arrow; if Explosive Arrow is equipped, it sits between Snare and Burst. Snipe stays on LMB, Marking Shot manually supplies Precision on key 2, and Deadshot's full charge stays manual on key 1. Stigma attack buffs remain manual. AION 2 macro steps are attempts, not guaranteed skill-by-skill execution.
 - **Cleric:** heals never join the damage stack.
 
 ## Sources and confidence
@@ -29,7 +29,7 @@ The Skills menu and presets open at **character level 4**. Levels 1–3 therefor
 
 ## Regression acceptance
 
-`node leveling_rotation_audit.mjs` tests **720** policy states (8 classes × 2 contexts × 45 levels). `node leveling_macro_smoke.mjs` covers 240 representative browser layouts, class-dependent one or two macro steps, no locked moves, visual Row 0 at the bottom, early-level absence of a macro, class exceptions and horizontal overflow. Other v2 and level-45 regression suites still run in CI.
+`node leveling_rotation_audit.mjs` tests **720** policy states plus Ranger level-gate, cooldown-free-filler, manual-key and Slow-before-Burst assertions. `node ranger_rotation_regression.mjs` tests eight endgame contexts and Stigma combinations (8 classes × 2 contexts × 45 levels). `node leveling_macro_smoke.mjs` covers 240 representative browser layouts, class-dependent one or two macro steps, no locked moves, visual Row 0 at the bottom, early-level absence of a macro, class exceptions and horizontal overflow. Other v2 and level-45 regression suites still run in CI.
 
 Neither test simulates the game server's animation cancels, ping, PvP timing or DPS, and no macro is guaranteed "best". Trial runs on actual Global characters are still recommended.
 
