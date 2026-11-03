@@ -26,9 +26,19 @@ const LEVELING_COMBAT={
  },
  ranger:{
   weave:'Snipe',key:'E',
-  stack:['Drill Dart','Burst Arrow','Gale Arrow'],noCooldown:[],
-  manual:['Deadshot','Marking Shot','Arrow Scattershot','Snare Shot','Explosion Trap'],
-  focus:'Keep Snipe going for MP and Precision. Charge Deadshot fully by hand; use Marking Shot only when you intend to move.'
+  // Ranger has two different jobs: E spends damage cooldowns before its
+  // cooldown-free Tempest fallback; Q establishes Slow for Burst/Explosive.
+  // Row 0 fires first. Never place Tempest below a cooldown skill.
+  stack:['Gale Arrow','Drill Dart','Tempest Shot'],noCooldown:['Tempest Shot'],
+  upgradedAt:10,
+  upgradedStacks:[
+    {key:'E',label:'Gale, crit follow-up and Tempest filler',macro:true,
+      stack:['Gale Arrow','Drill Dart','Tempest Shot']},
+    {key:'Q',label:'Slow setup and conditioned damage',macro:true,
+      stack:['Snare Shot','Explosive Arrow','Burst Arrow']}
+  ],
+  manual:['Deadshot','Marking Shot','Arrow Scattershot','Explosion Trap','Suppressing Arrow'],
+  focus:'Hold Snipe + Macro for normal damage. Marking Shot grants Precision; fully charge Deadshot manually for tougher targets. E handles Gale/Drill/Tempest, while Q applies Slow before Burst and any equipped Explosive Arrow.'
  },
  sorcerer:{
   weave:'Flame Arrow',weaveKey:'LMB',key:'Q',
@@ -106,10 +116,21 @@ function buildLevelingCombat(cls,level,context,unlocks,stigmaNames,stigmaLevels,
   ? ['Hellfire','Wish of Concentration','Element Enhancement',
      'Delayed Explosion','Steel Barrier','Arctic Armor','Ice Chain']
       .filter(name=>available(name)&&!stacked.has(name))
-  : [...manual,...stigma].filter((name,i,list)=>list.indexOf(name)===i);
- const directKeys=manualChoices.slice(0,cls==='sorcerer'?8:4).map((name,i)=>({
-   key:String(i+1),name,
-   tip:name==='Hellfire'?'Hold to fully charge':
+  : cls==='ranger'
+    ? ['Deadshot','Marking Shot','Arrow Scattershot',
+       "Vaizel's Authority",'Bow of Blessing','Supporting Fire',
+       'Explosion Trap','Suppressing Arrow','Griffon Arrow',...manual,...stigma]
+        .filter((name,i,list)=>list.indexOf(name)===i&&available(name)&&!stacked.has(name))
+    : [...manual,...stigma].filter((name,i,list)=>list.indexOf(name)===i);
+ const rangerKeys={'Deadshot':'1','Marking Shot':'2','Arrow Scattershot':'3',
+   "Vaizel's Authority":'4','Bow of Blessing':'5','Supporting Fire':'6',
+   'Explosion Trap':'7','Suppressing Arrow':'8','Griffon Arrow':'8'};
+ const directKeys=manualChoices.slice(0,cls==='sorcerer'||cls==='ranger'?8:4).map((name,i)=>({
+   key:cls==='ranger'?(rangerKeys[name]||String(i+1)):String(i+1),name,
+   tip:name==='Deadshot'?'Fully charge under Precision':
+     name==='Marking Shot'?'Apply Precision; use to reposition':
+     name==='Arrow Scattershot'?'Use on Stagger':
+     name==='Hellfire'?'Hold to fully charge':
      name==='Wish of Concentration'?'Buff: after major cooldowns with reset Specialty':
      name==='Element Enhancement'?'Damage buff: use for elites/bosses':
      name==='Delayed Explosion'?'Manual burst debuff':
