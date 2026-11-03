@@ -12,7 +12,7 @@ function gearAmplificationInferredCap(slot,item){
   const level=Number(item.itemLevel);
   if(!Number.isFinite(level)||level<54)return 0;
   // Global Oct 28 improved Dragon Lord craft caps, including iLv78 -> five.
-  if(/\\b(?:True|Star|White|Dark|Wise|Ebony) Dragon Lord\\b/i.test(item.name||''))
+  if(/\b(?:True|Star|White|Dark|Wise|Ebony) Dragon Lord\b/i.test(item.name||''))
     return level>=78?5:level>=62?3:1;
   return level>=86?5:level>=70?3:1;
 }
@@ -45,8 +45,8 @@ function gearAmplificationVerifiedStats(slot,item,rank){
 }
 function gearParseAmplificationBonuses(lines){
   const stats=[],seen=new Set();
-  for(const line of String(lines||'').split(/\\r?\\n/).slice(0,8)){
-    const found=line.trim().match(/^([A-Za-z][A-Za-z -]{1,49}?)\\s*:?\\s*\\+?(\\d+(?:\\.\\d+)?)\\s*(%)?$/);
+  for(const line of String(lines||'').split(/\r?\n/).slice(0,8)){
+    const found=line.trim().match(/^([A-Za-z][A-Za-z -]{1,49}?)\s*:?\s*\+?(\d+(?:\.\d+)?)\s*(%)?$/);
     if(!found)continue;
     const stat=found[1].trim(),value=Number(found[2]),unit=found[3]||'';
     if(!GEAR_AMP_STAT_NAMES.has(stat)||seen.has(stat)||!Number.isFinite(value)||value>1000000)continue;
@@ -86,7 +86,7 @@ function gearAmplificationEditor(slot,item){
   const cap=gearAmplificationCap(slot,item),rank=gearAmplificationLevel(slot,item),at15=Number(item.enhancement)>=15;
   const exact=GEAR_AMP_EXACT_CAP[gearItemId(item)]!==undefined,active=at15&&cap>0;
   const stats=gearAmplificationStats(slot,item);
-  const lines=stats.map(b=>`${b.stat} ${b.value}${b.unit||''}`).join('\\n');
+  const lines=stats.map(b=>`${b.stat} ${b.value}${b.unit||''}`).join('\n');
   const options=Array.from({length:6},(_,n)=>`<option value="${n}" ${n===cap?'selected':''}>${n}</option>`).join('');
   return `<section class="gear-amplification-editor" data-rank="${rank}">
     <b>Amplified Enhancement</b>
