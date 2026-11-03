@@ -77,14 +77,15 @@ function gearDraftFromCatalog(item,previous={}){
     grade:item.grade||'',faction:item.faction||'',
     fixedStats:item.fixedStats||[],baseStats:[],
     requiredLevel:item.requiredLevel||null,itemLevel:item.itemLevel||null,
-    enhancement:0,statNotes:'',notes:'',skillBonuses:[],
+    enhancement:0,amplification:0,amplificationCap:null,amplificationBonuses:{},statNotes:'',notes:'',skillBonuses:[],
     manastoneSlots:null,theostoneSlots:null,stoneType:'',stones:[],theostone:''
   };
 }
 const gearSlot=id=>GEAR_SLOTS.find(slot=>slot.id===id);
 const gearEquipment=()=>{
   const equipment=account().equipment ||= {};
-  for(const item of Object.values(equipment)){
+  for(const [slotId,item] of Object.entries(equipment)){
+    if(!item||typeof item!=='object')continue;
     if(item&&!item.stoneType&&Array.isArray(item.stones))item.stoneType=item.stones.find(stone=>STONE_KINDS.includes(stone?.kind))?.kind||'';
     const catalog=GEAR_CATALOG_BY_HREF.get(item?.href);if(!catalog)continue;
     item.grade ||= catalog.grade||'';
@@ -92,6 +93,12 @@ const gearEquipment=()=>{
     item.requiredLevel ??= catalog.requiredLevel||null;
     item.faction ??= catalog.faction||'';
     item.fixedStats ||= catalog.fixedStats||[];
+    const slot=gearSlot(slotId);
+    if(slot){
+      const cap=gearAmplificationCap(slot,item);
+      if(item.amplification===undefined&&item.grade==='Unique'&&Number(item.enhancement)>15&&cap){item.amplification=clamp(Number(item.enhancement)-15,0,cap);item.enhancement=15}
+      item.amplification=gearAmplificationLevel(slot,item);
+    }
   }
   return equipment;
 };
@@ -122,11 +129,11 @@ function gearIcon(item){return item?.icon?.startsWith('/game/')?`<img src="https
 function gearSlotHTML(slot){
   const item=gearEquipment()[slot.id],active=gearIsActive(slot,item),locked=slot.area==='arcana'&&currentLevel()<45;
   const grade=gearGrade(item);
-  return `<button type="button" class="gear-slot ${item?'filled':''} grade-${grade} ${locked?'locked':''} ${item&&!active?'inactive':''}" data-gear-slot="${slot.id}" aria-label="${esc(slot.name)}: ${item?esc(item.name):'empty'}"><span class="gear-slot-icon">${gearIcon(item)}</span><span class="gear-slot-copy"><small>${esc(slot.name)}${locked?' · Lv 45':''}</small><b>${item?esc(item.name):'Empty slot'}</b><em>${item?`${item.enhancement?`+${item.enhancement} · `:''}${esc(item.grade||item.type||gearAllowedType(slot))}${!active?' · inactive':''}`:esc(gearAllowedType(slot))}</em></span></button>`;
+  return `<button type="button" class="gear-slot ${item?'filled':''} grade-${grade} ${locked?'locked':''} ${item&&!active?'inactive':''}" data-gear-slot="${slot.id}" aria-label="${esc(slot.name)}: ${item?esc(item.name):'empty'}"><span class="gear-slot-icon">${gearIcon(item)}</span><span class="gear-slot-copy"><small>${esc(slot.name)}${locked?' · Lv 45':''}</small><b>${item?esc(item.name):'Empty slot'}</b><em>${item?`${item.enhancement?`+${item.enhancement} · `:''}${esc(item.grade||item.type||gearAllowedType(slot))}${!active?' · inactive':''}`:esc(gearAllowedType(slot))}</em>${item?gearAmplificationDiamonds(slot,item):''}</span></button>`;
 }
 function gearTileHTML(id){
   const slot=gearSlot(id),item=gearEquipment()[id],active=gearIsActive(slot,item),grade=gearGrade(item);
-  return `<button type="button" class="gear-tile ${item?'filled':''} grade-${grade} ${item&&!active?'inactive':''}" data-gear-slot="${id}" title="${esc(slot.name)}${item?`: ${esc(item.name)}`:' · empty'}" aria-label="${esc(slot.name)}: ${item?esc(item.name):'empty; select to search Global gear'}"><span class="gear-tile-art">${gearIcon(item)}</span>${item?.enhancement?`<strong class="gear-tile-enhancement">+${clamp(item.enhancement,0,30)}</strong>`:''}<span class="gear-tile-slot-label">${esc(GEAR_TILE_LABELS[id]||slot.name)}</span></button>`;
+  return `<button type="button" class="gear-tile ${item?'filled':''} grade-${grade} ${item&&!active?'inactive':''}" data-gear-slot="${id}" title="${esc(slot.name)}${item?`: ${esc(item.name)}`:' · empty'}" aria-label="${esc(slot.name)}: ${item?esc(item.name):'empty; select to search Global gear'}"><span class="gear-tile-art">${gearIcon(item)}</span>${item?.enhancement?`<strong class="gear-tile-enhancement">+${clamp(item.enhancement,0,30)}</strong>`:''}${item?gearAmplificationDiamonds(slot,item):''}<span class="gear-tile-slot-label">${esc(GEAR_TILE_LABELS[id]||slot.name)}</span></button>`;
 }
 function gearTileGroup(ids){return ids.map(gearTileHTML).join('')}
 function gearFixedTotals(){
@@ -178,6 +185,8 @@ function renderGear(m=model()){
   $('gear-skill-summary').innerHTML=bonuses.length?bonuses.map(([name,levels])=>`<div class="gear-bonus"><span>${esc(name)}</span><b>+${levels}</b></div>`).join(''):'<p>No item skill levels recorded yet. Edit a slot and add the roll shown on your item.</p>';
   const fixed=gearFixedTotals();
   $('gear-fixed-stats').innerHTML=fixed.stats.length?`<p>Base stats from ${fixed.pieces} active piece${fixed.pieces===1?'':'s'}; personal rolls and upgrades excluded.</p>${fixed.stats.slice(0,9).map(stat=>`<div class="gear-bonus"><span>${esc(stat.name)}</span><b>+${Number(stat.value.toFixed(1)).toLocaleString()}${stat.unit}</b></div>`).join('')}`:'<p>Equip catalog items to see their known fixed stats here.</p>';
+  const amplifier=gearAmplificationTotals();
+  if(amplifier.pieces)$('gear-fixed-stats').insertAdjacentHTML('beforeend',`<section class="gear-amplification-summary"><b>Amplification · ${amplifier.pieces} items / ${amplifier.levels} stars</b><p>+${amplifier.gearRating} gear-rating levels. ${amplifier.missing?`${amplifier.missing} item(s) need their exact bonus stats recorded.`:''}</p>${amplifier.stats.map(stat=>`<div class="gear-bonus"><span>${esc(stat.stat)}</span><b>+${Number(stat.value.toFixed(2)).toLocaleString()}${stat.unit}</b></div>`).join('')}</section>`);
   const sockets=gearSocketTotals(),duplicate=sockets.theostones.length>1&&sockets.theostones[0].name===sockets.theostones[1].name;
   $('gear-socket-summary').innerHTML=`<p>${sockets.filled} / ${sockets.available} stone sockets recorded on active gear. Enter the actual rolled stats in each item.</p>${sockets.stats.length?sockets.stats.map(stat=>`<div class="gear-bonus"><span>${esc(stat.name)}</span><b>+${Number(stat.value.toFixed(2)).toLocaleString()}${stat.unit}</b></div>`).join(''):'<p>No socketed stat values recorded yet.</p>'}${sockets.theostones.map(stone=>`<div class="gear-bonus"><span>${esc(stone.slot)} Theostone</span><b>${esc(stone.name)}</b></div>`).join('')}${duplicate?'<p class="gear-stone-warning">Identical Theostone effects do not stack.</p>':''}`;
   const a=account(),healer=profile().kind==='healer',target=Number(healer?a.gearCpTarget:a.goalTarget)||0,estimate=estimateCombatPower(m);
@@ -200,7 +209,7 @@ function renderGear(m=model()){
   $('gear-cp-calibrate').disabled=!estimate.ready;
   $('gear-cp-clear-calibration').hidden=!estimate.calibrated;
   $('gear-cp-calibration-status').textContent=estimate.calibrated?`Baseline saved for this class. The uncalibrated model currently predicts ${estimate.rawValue.toLocaleString()} CP; changes are projected from your ${estimate.baseline.toLocaleString()} CP baseline. This baseline is excluded from shared build links.`:'Optional: enter the CP shown in game after you have equipped and purchased the plan above. Future changes use the model’s estimated difference from that baseline. The baseline stays in this browser and is not shared.';
-  $('gear-cp-method').innerHTML=estimate.ready?`Based on ${estimate.regular} regular gear slots, ${estimate.gearBase.toLocaleString()} total base item levels, +${estimate.enhance} enhancement levels, ${m.boards.owned.size} planned PvE nodes, ${estimate.mastery} effective Mastery levels above rank 1, ${estimate.stigma} equipped Stigma levels, ${estimate.titles} recorded stat-bearing titles and ${estimate.stones} modeled stone rolls. A five-fold test of 109 public NA East level 45 profiles missed by about 4,000 CP on average and about 8,000 CP at the 90th percentile. Missing pets, wings, Soul Binding, unrecorded titles and other character systems can push the real score outside the displayed range. Stone rolls use a partial weight because the profile fit already includes typical stones. <a href="https://aion2data.com/get-stronger" target="_blank" rel="noopener noreferrer">Global stat sources</a> · <a href="https://aion2index.com/c/nae/nezekan/Bobdesu/upgrades" target="_blank" rel="noopener noreferrer">Community CP weights</a>.`:'The estimate uses a model checked against public Global level 45 profiles. It needs a reasonably complete level 45 gear set; otherwise a number would be misleading. The game calculates exact Combat Power on its server.';
+  $('gear-cp-method').innerHTML=estimate.ready?`Based on ${estimate.regular} regular gear slots, ${estimate.gearBase.toLocaleString()} total base item levels, +${estimate.enhance} normal enhancement levels, ${estimate.amplification||0} Amplification stars (+${(estimate.amplification||0)*5} gear-rating levels), ${m.boards.owned.size} planned PvE nodes, ${estimate.mastery} effective Mastery levels above rank 1, ${estimate.stigma} equipped Stigma levels, ${estimate.titles} recorded stat-bearing titles and ${estimate.stones} modeled stone rolls. A five-fold test of 109 public NA East level 45 profiles missed by about 4,000 CP on average and about 8,000 CP at the 90th percentile. Missing pets, wings, Soul Binding, unrecorded Amplification bonus stats, unrecorded titles and other character systems can push the real score outside the displayed range. Amplification contributes only known or recorded bonuses with conservative empirical weights; exact server CP is unavailable. Stone rolls use a partial weight because the profile fit already includes typical stones. <a href="https://aion2data.com/get-stronger" target="_blank" rel="noopener noreferrer">Global stat sources</a> · <a href="https://aion2index.com/c/nae/nezekan/Bobdesu/upgrades" target="_blank" rel="noopener noreferrer">Community CP weights</a>.`:'The estimate uses a model checked against public Global level 45 profiles. It needs a reasonably complete level 45 gear set; otherwise a number would be misleading. The game calculates exact Combat Power on its server.';
 }
 function gearResults(){
   const slot=gearSlot(gearSlotId),type=gearAllowedType(slot),query=gearQuery.trim().toLocaleLowerCase();
@@ -233,10 +242,12 @@ function updateGearStoneRows(){
   $('gear-editor').querySelectorAll('[data-stone-row]').forEach(row=>{const active=Number(row.dataset.stoneRow)<count;row.hidden=!active;row.querySelectorAll('input,select').forEach(input=>input.disabled=!active)});
 }
 function gearEditor(){
-  const item=gearDraft||{},slot=gearSlot(gearSlotId),type=gearAllowedType(slot),isArcana=slot.area==='arcana',skills=isArcana?arcanaSkillPool(state.class,slot.id):skillNames(),lineCount=isArcana?arcanaLineCapacity(item.grade,item.enhancement):3,enhancementMax=isArcana?arcanaMaxEnhancement(item.grade):30;
+  const item=gearDraft||{},slot=gearSlot(gearSlotId),type=gearAllowedType(slot),isArcana=slot.area==='arcana',skills=isArcana?arcanaSkillPool(state.class,slot.id):skillNames(),lineCount=isArcana?arcanaLineCapacity(item.grade,item.enhancement):3,enhancementMax=isArcana?arcanaMaxEnhancement(item.grade):(item.grade==='Unique'?15:30);
   const source=item.href?.startsWith('/')?`<a href="https://aion2data.com${esc(item.href)}" target="_blank" rel="noopener noreferrer">Open Global item data ↗</a>`:'<span>Manual entry</span>';
   const base=(item.baseStats?.length?item.baseStats:(item.fixedStats||[]).map(stat=>`${stat.name} ${stat.value}`)).slice(0,9).map(line=>`<span>${esc(line)}</span>`).join('');
   $('gear-editor').innerHTML=`<div class="gear-selected grade-${gearGrade(item)}"><span class="gear-selected-icon">${gearIcon(item)}</span><div><b>${esc(item.name||'Choose an item or enter one below')}</b><small>${esc(item.grade||type)}${item.requiredLevel?` · Required Lv ${item.requiredLevel}`:''}</small>${source}</div></div>${base?`<div class="gear-base-stats"><b>Base tooltip</b><div>${base}</div></div>`:''}<div class="gear-fields"><label>Item name<input name="name" value="${esc(item.name||'')}" required placeholder="Choose from search or type a name"></label><div class="gear-field-row"><label>Enhancement +<input name="enhancement" type="number" min="0" max="${enhancementMax}" value="${clamp(item.enhancement||0,0,enhancementMax)}"></label><label>Required level<input name="requiredLevel" type="number" min="1" max="45" value="${item.requiredLevel||''}" placeholder="—"></label></div><label>Item level <small>From tooltip; separate from Combat Power</small><input name="itemLevel" type="number" min="0" value="${item.itemLevel||''}" placeholder="—"></label><label>Potential / Soul Binding stats <small>Write your actual rolls</small><textarea name="statNotes" rows="3" placeholder="e.g. Attack +15, Critical Hit +20">${esc(item.statNotes||'')}</textarea></label><div class="gear-skill-fields"><b>${isArcana?`Arcana skill effects · ${lineCount} / 4 slots`:"Rolled skill levels"}</b><p>${isArcana?"Enhancement unlocks new ability lines, then upgrades existing lines. Record only actual rolls; rerolls are not predicted.":"Only add the +levels actually shown on this item."} These update effective Mastery levels.</p>${Array.from({length:lineCount},(_,i)=>i).map(i=>{const bonus=item.skillBonuses?.[i]||{};return `<div class="gear-skill-row"><select name="skill${i}" aria-label="Skill bonus ${i+1}"><option value="">No skill</option>${skills.map(skill=>`<option value="${esc(skill)}" ${bonus.skill===skill?'selected':''}>${esc(skill)}</option>`).join('')}</select><input name="levels${i}" type="number" min="0" max="${isArcana?4:30}" value="${bonus.levels||''}" placeholder="+" aria-label="Bonus levels ${i+1}"></div>`}).join('')}</div><label>Other equipment notes<textarea name="notes" rows="2" placeholder="Set piece, source, or future replacement">${esc(item.notes||'')}</textarea></label></div>`;
+  const ampRow=$('gear-editor').querySelector('.gear-field-row');
+  if(ampRow)ampRow.insertAdjacentHTML('afterend',gearAmplificationEditor(slot,item));
   gearStonesEditor(gearSlot(gearSlotId),item);
 }
 function openGearSlot(id){
@@ -288,15 +299,22 @@ function initGear(){
   $('gear-cp-clear-calibration').addEventListener('click',()=>{delete account().cpAnchor;render()});
   $('gear-results').addEventListener('click',e=>{const result=e.target.closest('[data-gear-result]');if(result)selectGearResult(result.dataset.gearResult)});
   $('gear-editor').addEventListener('input',e=>{gearEditorDirty=true;if(e.target.name==='stoneSlots')updateGearStoneRows();if(['enhancement'].includes(e.target.name)&&gearSlot(gearSlotId).area==='arcana'){const form=e.target.closest('form');if(form){const values=new FormData(form);gearDraft.enhancement=clamp(values.get('enhancement'),0,arcanaMaxEnhancement(gearDraft.grade));gearDraft.skillBonuses=Array.from({length:4},(_,i)=>({skill:String(values.get(`skill${i}`)||''),levels:clamp(values.get(`levels${i}`),0,4)})).filter(x=>x.skill&&x.levels);gearEditor()}}if(e.target.name==='theostone'){const stone=THEOSTONES.find(entry=>entry.name.toLowerCase()===e.target.value.trim().toLowerCase()),hint=$('gear-editor').querySelector('.gear-theostone-editor small');if(hint)hint.textContent=stone?`${stone.grade} · ${stone.effect} effect`:'Choose a Global Theostone or enter its exact in-game name.'}});
-  $('gear-editor').addEventListener('change',e=>{gearEditorDirty=true;if(e.target.name?.startsWith('stoneGrade'))e.target.closest('.gear-stone-row').dataset.grade=e.target.value});
+  $('gear-editor').addEventListener('change',e=>{gearEditorDirty=true;if(['enhancement','amplification','amplificationCap'].includes(e.target.name))gearRefreshAmplificationEditor();if(e.target.name?.startsWith('stoneGrade'))e.target.closest('.gear-stone-row').dataset.grade=e.target.value});
   $('gear-remove').addEventListener('click',()=>{delete gearEquipment()[gearSlotId];$('gear-dialog').close();render()});
   $('gear-form').addEventListener('submit',e=>{
     e.preventDefault();const values=new FormData(e.currentTarget),name=String(values.get('name')||'').trim();if(!name)return;
     const slot=gearSlot(gearSlotId),socketCount=gearStoneFamily(slot)?clamp(values.get('stoneSlots'),0,4):0;
     const stoneType=STONE_KINDS.includes(values.get('stoneType'))?String(values.get('stoneType')):'';
     const stones=Array.from({length:socketCount},(_,i)=>({stat:String(values.get(`stoneStat${i}`)||'').trim().slice(0,80),value:values.get(`stoneValue${i}`)===''?null:clamp(values.get(`stoneValue${i}`),-1000000,1000000),unit:values.get(`stoneUnit${i}`)==='%'?'%':'',grade:STONE_LINE_GRADES.some(([name])=>name===values.get(`stoneGrade${i}`))?String(values.get(`stoneGrade${i}`)):''}));
+    const ampSection=$('gear-editor').querySelector('.gear-amplification-editor');
+    gearStashAmplification(ampSection);
+    const actualEnhancement=clamp(values.get('enhancement'),0,slot.area==='arcana'?arcanaMaxEnhancement(gearDraft.grade):gearDraft.grade==='Unique'?15:30);
+    const ampSelector=ampSection?.querySelector('[name="amplificationCap"]');
+    const userAmpCap=ampSelector&&!ampSelector.disabled?clamp(values.get('amplificationCap'),0,5):null;
+    const ampCandidate={...gearDraft,enhancement:actualEnhancement,amplificationCap:userAmpCap};
+    const ampRank=actualEnhancement>=15?clamp(values.get('amplification'),0,gearAmplificationCap(slot,ampCandidate)):0;
     const theostone=gearTheostoneEligible(slot,gearDraft)?String(values.get('theostone')||'').trim().slice(0,100):'';
-    gearDraft={...(gearDraft||{}),name,type:gearAllowedType(slot),enhancement:clamp(values.get('enhancement'),0,30),requiredLevel:values.get('requiredLevel')?clamp(values.get('requiredLevel'),1,45):null,itemLevel:values.get('itemLevel')?clamp(values.get('itemLevel'),0,999):null,manastoneSlots:gearStoneFamily(slot)?socketCount:null,stoneType,stones,theostone,statNotes:String(values.get('statNotes')||''),notes:String(values.get('notes')||''),skillBonuses:Array.from({length:slot.area==='arcana'?4:3},(_,i)=>({skill:String(values.get(`skill${i}`)||''),levels:clamp(values.get(`levels${i}`),0,slot.area==='arcana'?4:30)})).filter(x=>x.skill&&x.levels)};
+    gearDraft={...(gearDraft||{}),name,type:gearAllowedType(slot),enhancement:actualEnhancement,amplification:ampRank,amplificationCap:userAmpCap,amplificationBonuses:gearDraft.amplificationBonuses||{},requiredLevel:values.get('requiredLevel')?clamp(values.get('requiredLevel'),1,45):null,itemLevel:values.get('itemLevel')?clamp(values.get('itemLevel'),0,999):null,manastoneSlots:gearStoneFamily(slot)?socketCount:null,stoneType,stones,theostone,statNotes:String(values.get('statNotes')||''),notes:String(values.get('notes')||''),skillBonuses:Array.from({length:slot.area==='arcana'?4:3},(_,i)=>({skill:String(values.get(`skill${i}`)||''),levels:clamp(values.get(`levels${i}`),0,slot.area==='arcana'?4:30)})).filter(x=>x.skill&&x.levels)};
     if(slot.area==='arcana'){gearDraft.enhancement=clamp(gearDraft.enhancement,0,arcanaMaxEnhancement(gearDraft.grade));if(!arcanaValidBonuses(state.class,slot.id,gearDraft.grade,gearDraft.enhancement,gearDraft.skillBonuses)){$('gear-dialog-title').textContent='Invalid Arcana rolls: check upgrade tier, skill pool, duplicates and skill levels';return}}gearEquipment()[gearSlotId]=gearDraft;$('gear-dialog').close();render();
   });
 }

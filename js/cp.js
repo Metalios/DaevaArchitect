@@ -68,8 +68,20 @@ function estimateCombatPower(m){
     }
   }
   stoneBonus=Math.min(10000,stoneBonus);
+  // This empirical model was fitted on profiles that already contain some
+  // amplified equipment. Apply a conservative partial stat delta to avoid
+  // pretending the per-star server CP coefficient is known.
+  const amp=gearAmplificationTotals();
+  let ampBonus=0;
+  for(const stat of amp.stats){
+    const weight=CP_STAT_WEIGHTS[stat.stat]||0;
+    const percentUnit=['Damage Boost','Damage Tolerance','HP Increase','PvE Damage Boost','PvP Damage Boost'].includes(stat.stat);
+    if((stat.unit==='%')!==percentUnit)continue;
+    ampBonus+=Math.max(0,weight*Number(stat.value)*0.5);
+  }
+  ampBonus=Math.min(12000,ampBonus);
   const raw=CP_MODEL.intercept+CP_MODEL.gearBase*gearBase+CP_MODEL.enhance*enhance+
-    boardScore+CP_MODEL.titles*titles+CP_MODEL.stigma*stigma+CP_MODEL.mastery*mastery+stoneBonus;
+    boardScore+CP_MODEL.titles*titles+CP_MODEL.stigma*stigma+CP_MODEL.mastery*mastery+stoneBonus+ampBonus;
   const rawValue=Math.max(0,Math.round(raw/10)*10);
   const anchor=account().cpAnchor;
   const calibrated=Number.isFinite(Number(anchor?.raw))&&Number.isFinite(Number(anchor?.observed))&&Number(anchor.observed)>0;
@@ -83,5 +95,5 @@ function estimateCombatPower(m){
     Math.max(10000,Math.ceil(value*0.15/100)*100)+(titles<25?3000:0);
   return {ready:true,value,low:Math.max(0,value-margin),high:value+margin,
     rawValue,calibrated,exactBaseline,change,baseline:calibrated?Number(anchor.observed):null,
-    regular,gearBase,enhance,boardScore,mastery,stigma,titles,stones};
+    regular,gearBase,enhance,amplification:amp.levels,amplificationBonus:ampBonus,boardScore,mastery,stigma,titles,stones};
 }
