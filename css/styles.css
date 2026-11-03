@@ -467,3 +467,19 @@ body[data-theme=sanctum] #mastery{--m-card:#fffdfa;--m-card-feature:#f7faf4;--m-
 .gear-slot.filled .gear-slot-icon,.gear-selected[class*="grade-"] .gear-selected-icon{border-color:var(--equipment-grade,#567282)}
 .gear-tile.filled.grade-common{background:#202c33}
 .gear-selected[class*="grade-"]{border-color:var(--equipment-grade,#476775)}
+
+/* Global Amplification stars are independent of the +15 enhancement badge. */
+.gear-amp-diamonds{display:inline-flex;align-items:center;gap:1px;white-space:nowrap;font:800 11px/1 sans-serif;letter-spacing:-1px}
+.gear-amp-diamonds .filled{color:#61dafa;text-shadow:0 0 5px #33b9fb}
+.gear-amp-diamonds .empty{color:#6b7784}
+.gear-slot-copy>.gear-amp-diamonds{margin-top:2px}
+.gear-tile>.gear-amp-diamonds{position:absolute;bottom:18px;left:3px;z-index:2;padding:2px 3px;border-radius:4px;background:#061521db;font-size:9px}
+.gear-amplification-editor,.gear-amplification-summary{padding:12px;border:1px solid #477a92;border-radius:9px;background:#0d2a38}
+.gear-amplification-editor>b,.gear-amplification-summary>b{color:#8bdaef;font:normal 18px Georgia,serif}
+.gear-amplification-editor p,.gear-amplification-editor small,.gear-amplification-summary p{display:block;margin:6px 0;color:#bed3df;font-size:11px;line-height:1.5}
+.gear-amplification-controls{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:9px 0}
+.gear-amplification-editor select{display:block;width:100%;margin-top:5px;border:1px solid #537789;border-radius:7px;background:#071521;color:#fff;padding:8px}
+.gear-amplification-editor textarea{display:block;width:100%;min-height:65px;margin-top:6px;background:#071521;color:#fff;border:1px solid #537789;border-radius:7px;padding:9px}
+.gear-amplification-editor .gear-amp-editor-stars{min-height:22px;display:flex;align-items:center}
+.gear-amp-editor-stars .gear-amp-diamonds{font-size:18px;gap:4px;letter-spacing:0}
+@media(max-width:390px){.gear-amplification-controls{grid-template-columns:1fr}}
