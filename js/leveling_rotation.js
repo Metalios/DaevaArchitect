@@ -37,7 +37,7 @@ const LEVELING_COMBAT={
     {key:'Q',label:'Slow setup and conditioned damage',macro:true,
       stack:['Snare Shot','Explosive Arrow','Burst Arrow']}
   ],
-  manual:['Deadshot','Marking Shot','Arrow Scattershot','Explosion Trap','Suppressing Arrow'],
+  manual:['Deadshot','Marking Shot','Arrow Scattershot','Snare Shot','Explosion Trap','Suppressing Arrow'],
   focus:'Hold Snipe + Macro for normal damage. Marking Shot grants Precision; fully charge Deadshot manually for tougher targets. E handles Gale/Drill/Tempest, while Q applies Slow before Burst and any equipped Explosive Arrow.'
  },
  sorcerer:{
@@ -116,18 +116,37 @@ function buildLevelingCombat(cls,level,context,unlocks,stigmaNames,stigmaLevels,
   ? ['Hellfire','Wish of Concentration','Element Enhancement',
      'Delayed Explosion','Steel Barrier','Arctic Armor','Ice Chain']
       .filter(name=>available(name)&&!stacked.has(name))
-  : cls==='ranger'
-    ? ['Deadshot','Marking Shot','Arrow Scattershot',
-       "Vaizel's Authority",'Bow of Blessing','Supporting Fire',
-       'Explosion Trap','Suppressing Arrow','Griffon Arrow',...manual,...stigma]
-        .filter((name,i,list)=>list.indexOf(name)===i&&available(name)&&!stacked.has(name))
-    : [...manual,...stigma].filter((name,i,list)=>list.indexOf(name)===i);
- const rangerKeys={'Deadshot':'1','Marking Shot':'2','Arrow Scattershot':'3',
-   "Vaizel's Authority":'4','Bow of Blessing':'5','Supporting Fire':'6',
-   'Explosion Trap':'7','Suppressing Arrow':'8','Griffon Arrow':'8'};
- const directKeys=manualChoices.slice(0,cls==='sorcerer'||cls==='ranger'?8:4).map((name,i)=>({
-   key:cls==='ranger'?(rangerKeys[name]||String(i+1)):String(i+1),name,
-   tip:name==='Deadshot'?'Fully charge under Precision':
+  : [...manual,...stigma].filter((name,i,list)=>list.indexOf(name)===i);
+ // Preserve key 1-3 as fixed Ranger action slots; render reserved slots
+ // before their skills unlock, rather than renumbering live abilities.
+ const rangerSlots=cls==='ranger'?(()=>{
+  const slots=[
+   {key:'1',name:available('Deadshot')?'Deadshot':null,reserved:'Deadshot at level 14'},
+   {key:'2',name:available('Marking Shot')?'Marking Shot':null,reserved:'Marking Shot at level 3'},
+   {key:'3',name:available('Arrow Scattershot')?'Arrow Scattershot':null,reserved:'Arrow Scattershot at level 5'}
+  ];
+  const used=new Set(slots.map(slot=>slot.name).filter(Boolean));
+  const choices=[
+   ['4',["Vaizel's Authority",...(level<10?['Snare Shot']:[]),'Explosion Trap','Suppressing Arrow']],
+   ['5',['Bow of Blessing','Suppressing Arrow']],
+   ['6',['Supporting Fire','Suppressing Arrow']],
+   ['7',['Explosion Trap','Griffon Arrow','Suppressing Arrow']],
+   ['8',['Griffon Arrow','Suppressing Arrow','Explosion Trap',...stigma]]
+  ];
+  for(const [key,priority] of choices){
+   const name=priority.find(value=>available(value)&&!stacked.has(value)&&!used.has(value));
+   if(name)used.add(name);
+   if(name||key==='4')slots.push({key,name:name||null,reserved:'Optional manual skill'});
+  }
+  return slots;
+ })():[];
+ const directKeys=(cls==='ranger'
+  ? rangerSlots
+  : manualChoices.slice(0,cls==='sorcerer'?8:4).map((name,i)=>({
+     key:String(i+1),name
+    }))).map(({key,name,reserved})=>({
+    key,name,reserved,
+    tip:name==='Deadshot'?'Fully charge under Precision':
      name==='Marking Shot'?'Apply Precision; use to reposition':
      name==='Arrow Scattershot'?'Use on Stagger':
      name==='Hellfire'?'Hold to fully charge':
@@ -166,7 +185,9 @@ function renderLevelingCombatMarkup(plan,macroKey,quickUse2Bind='R'){
    '<p class="leveling-stack-role">'+(group.macro?macroKey+' automatically tries this stack':'You press this stack yourself when needed')+'</p>'+
    '<div '+(group.key===plan.key?'id="leveling-stack" ':'')+'class="leveling-stack-rows">'+rows+'</div></section>';
  }).join('');
- const manualItem=({key,name,tip})=>'<li data-manual-key="'+esc(key)+'"><kbd>'+esc(key)+'</kbd>'+skill(name)+'<small>'+esc(tip)+'</small></li>';
+ const manualItem=({key,name,reserved,tip})=>'<li data-manual-key="'+esc(key)+'"><kbd>'+esc(key)+'</kbd>'+
+   (name?skill(name):'<span class="leveling-skill leveling-reserved">Reserved · '+esc(reserved||'future skill')+'</span>')+
+   (name?'<small>'+esc(tip)+'</small>':'')+'</li>';
  const coreManual=(plan.manualKeys||[]).slice(0,4).map(manualItem).join('');
  const extraManual=(plan.manualKeys||[]).slice(4).map(manualItem).join('');
  const manual=coreManual;
