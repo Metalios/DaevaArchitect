@@ -262,7 +262,13 @@ function progressionRotationProfile(base,cls,mode,effectiveLevel,equippedStigmas
    ?'Judgment cooldown-removal Specialty is selected: prioritize it in the trigger stack; keep charged Punishment manual.'
    :'Until Judgment Lv 16, trigger one Judgment per shield-skill window; keep charged Punishment manual.';
  }else if(cls==='ranger'){
-  p.rule='Charge Deadshot and apply Marking Shot manually. Keep ranged filler on the macro; never cut short the charged shot.';
+  // Only attach the optional Slow-sensitive Stigma if the build has learned
+  // and equipped it. Keep Snare in Row 0, before either damage spender.
+  const explosive=equippedStigmas.includes('Explosive Arrow');
+  p.stacks=p.stacks.map(stack=>stack.key==='Q'
+   ?{...stack,skills:['Snare Shot',...(explosive?['Explosive Arrow']:[]),'Burst Arrow']}
+   :stack);
+  p.rule='Marking Shot supplies Precision. E prioritizes Gale and Drill before Tempest; Q applies Snare before Burst and equipped Explosive Arrow. Charge Deadshot manually.';
  }else if(cls==='sorcerer'){
   p.rule='Keep Hellfire fully charged on a manual key; place persistent ground effects only where targets remain.';
  }else if(cls==='chanter'){
