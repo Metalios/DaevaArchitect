@@ -722,7 +722,7 @@ function model(){
     const recordedEquipment=gearEquipment();
     const gearBasis=GEAR_SLOTS.map(slot=>{
       const item=recordedEquipment[slot.id];
-      return item?[slot.id,item.href,item.itemLevel,item.enhancement,
+      return item?[slot.id,item.href,item.itemLevel,item.enhancement,item.amplification,item.amplificationCap,item.amplificationBonuses,
         item.fixedStats,item.skillBonuses,item.stones,item.theostone,item.statNotes]:null;
     });
     const basisKey=JSON.stringify([target,mastery.levels,stigma.levels,gearRanks,
