@@ -41,6 +41,7 @@ jobs:
           node recommendation_regression.mjs
           node class_role_regression.mjs
           node pvp_context_regression.mjs
+          node pvp_matchup_regression.mjs
           node leveling_rotation_audit.mjs
           node recommendations_audit.mjs
           node audit_leveling.mjs

@@ -121,6 +121,9 @@ const ClassCombatModels=(()=>{
      why:`${base.why} Research-informed ${objective} objective: ${p.mechanics}. The solver uses comparative mechanics and does not establish measured optimum.`};
  }
  function evaluate({classId,context,objective,build,selectedSpecs={}}){
+   // PvP is evaluated against opponent archetypes, not PvE damage goals.
+   if(typeof PvpCombatModels!=='undefined'&&PvpCombatModels.isPvp(context))
+     return PvpCombatModels.evaluate({classId,context,build,selectedSpecs});
    const p=profile(classId);if(!p)throw Error('Unsupported class combat model: '+classId);
    const ranks=build.mastery||{},board=build.boardSkills||{},gear=build.gearSkills||{},
      stamina=build.boardStats||{},equipStats=build.gearStats||{};

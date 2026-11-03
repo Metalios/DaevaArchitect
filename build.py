@@ -92,6 +92,23 @@ js_data += 'const GLOBAL_COMBAT_COHORT=' + json.dumps(
     global_cohort, separators=(',',':'), ensure_ascii=False).replace('</','<\\/') + ';'
 
 
+# Dated Global public PvP loadouts are unverified comparison candidates.
+pvp_data = json.loads((root / 'research' / 'pvp-observations.json').read_text(encoding='utf8'))
+assert pvp_data['schemaVersion'] == 1
+for row in pvp_data['observations']:
+    cls = row['classId']
+    if cls not in data or row.get('region') != 'Global':
+        raise ValueError('Invalid PvP observation class/region')
+    if row.get('performanceValidated') is not False:
+        raise ValueError('Unverified PvP sample must not be marked measured')
+    names = row['stigmas']
+    if len(names) != 4 or len(set(names)) != 4 or not all(n in stigmas[cls] for n in names):
+        raise ValueError('Invalid four-slot Global PvP observation')
+js_data += 'const PVP_OBSERVATIONS=' + json.dumps([
+    {'classId': row['classId'], 'mode': row['mode'],
+     'stigmas': row['stigmas'], 'source': row['source'], 'validated': False}
+    for row in pvp_data['observations']
+], separators=(',',':'), ensure_ascii=False).replace('</','<\\/') + ';'
 
 
 out_dir = root / 'dist'
@@ -115,6 +132,7 @@ shutil.copy2(root / 'js' / 'engine' / 'combat_evidence.js', out_dir / 'js' / 'en
 shutil.copy2(root / 'js' / 'engine' / 'cohort_analysis.js', out_dir / 'js' / 'engine' / 'cohort_analysis.js')
 shutil.copy2(root / 'js' / 'engine' / 'matched_calibration.js', out_dir / 'js' / 'engine' / 'matched_calibration.js')
 shutil.copy2(root / 'js' / 'engine' / 'combat.js', out_dir / 'js' / 'engine' / 'combat.js')
+shutil.copy2(root / 'js' / 'engine' / 'pvp_models.js', out_dir / 'js' / 'engine' / 'pvp_models.js')
 shutil.copy2(root / 'js' / 'engine' / 'class_models.js', out_dir / 'js' / 'engine' / 'class_models.js')
 shutil.copy2(root / 'css' / 'styles.css', out_dir / 'css' / 'styles.css')
 shutil.copy2(root / 'css' / 'v2.css', out_dir / 'css' / 'v2.css')
