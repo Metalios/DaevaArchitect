@@ -23,7 +23,7 @@ for(const [cls,u] of Object.entries(unlocks)){
   const plan=buildLevelingCombat(cls,level,context,u,equipped,earned,()=>false);
   assert.equal(plan.macroUnlocked,level>=4);
   const groundEquipped=cls==='sorcerer'&&equipped.some(name=>['Fire Wall','Cold Storm'].includes(name)&&earned[name]>0);
-  const expectedSteps=level<4?0:cls==='sorcerer'&&level>=10?(groundEquipped?3:2):1;
+  const expectedSteps=level<4?0:cls==='sorcerer'&&level>=10?(groundEquipped?3:2):cls==='ranger'&&level>=10?2:1;
   assert.equal(plan.steps.length,expectedSteps,cls+' Lv'+level+': expected '+expectedSteps+' macro step(s)');
   for(const group of plan.stacks){
     assert(group.stack.length>=1&&group.stack.length<=4,cls+' '+level+': invalid stack size');
@@ -33,7 +33,31 @@ for(const [cls,u] of Object.entries(unlocks)){
   assert.equal(new Set(plan.steps).size,plan.steps.length,'duplicate macro hotbar key');
   for(const group of plan.stacks)
     assert.equal(plan.steps.includes(group.key),group.macro,cls+' '+level+' wrong manual/automatic stack classification');
-  assert(plan.manualKeys.length<=(cls==='sorcerer'?8:4)&&plan.manualKeys.every(x=>(u[x.name]!==undefined&&u[x.name]<=level)||(stigmas[cls][x.name]&&earned[x.name]>0)),cls+' '+level+': unlearned manual ability');
+  assert(plan.manualKeys.length<=(cls==='sorcerer'||cls==='ranger'?8:4)&&plan.manualKeys.every(x=>(u[x.name]!==undefined&&u[x.name]<=level)||(stigmas[cls][x.name]&&earned[x.name]>0)),cls+' '+level+': unlearned manual ability');
+  if(cls==='ranger'){
+    const e=plan.stacks.find(group=>group.key==='E');
+    const q=plan.stacks.find(group=>group.key==='Q');
+    if(level>=4){
+      assert(e,'Ranger must have an automatic E damage column at Lv'+level);
+      assert.deepEqual(Array.from(e.stack),
+        ['Gale Arrow','Drill Dart','Tempest Shot'].filter(name=>u[name]<=level),
+        'Ranger E must preserve priority with repeatable Tempest last');
+      assert.equal(e.stack.at(-1),'Tempest Shot','Ranger must never starve cooldown attacks with Tempest');
+    }
+    if(level>=10){
+      assert(q,'Ranger must add Slow/condition stack at level 10');
+      assert.deepEqual(Array.from(q.stack),['Snare Shot','Burst Arrow']);
+      assert.equal(q.stack[0],'Snare Shot','Ranger slow must be attempted before Burst');
+      assert(!q.stack.includes('Explosive Arrow'),'Unequipped Explosive Arrow must not be automated');
+    }
+    for(const name of ['Deadshot','Marking Shot','Arrow Scattershot'])
+      assert(!plan.stacks.some(group=>group.stack.includes(name)),
+        'Ranger manual charge/precision/stagger action automated: '+name);
+    const binds={'Deadshot':'1','Marking Shot':'2','Arrow Scattershot':'3'};
+    for(const [name,key] of Object.entries(binds))if(u[name]<=level)
+      assert.equal(plan.manualKeys.find(entry=>entry.name===name)?.key,key,
+        'Ranger '+name+' must retain its manual key as levels change');
+  }
   if(cls==='sorcerer'){
    const automated=new Set(plan.stacks.filter(group=>group.macro).flatMap(group=>group.stack));
    for(const buff of ['Wish of Concentration','Element Enhancement','Delayed Explosion','Hellfire'])
@@ -81,6 +105,19 @@ const sorcReset=buildLevelingCombat('sorcerer',45,'solo',unlocks.sorcerer,[],{},
 assert.deepEqual(Array.from(sorcReset.steps),['Q','E']);
 assert(!sorcReset.stacks.some(g=>g.stack.includes('Wish of Concentration')),
  'Actual cooldown-reset Specialty never auto-casts Wish');
+const rangerStigma=buildLevelingCombat('ranger',30,'solo',unlocks.ranger,
+ ['Explosive Arrow',"Vaizel's Authority",'Bow of Blessing'],
+ {'Explosive Arrow':5,"Vaizel's Authority":5,'Bow of Blessing':5});
+assert.deepEqual(Array.from(rangerStigma.steps),['E','Q']);
+assert.deepEqual(Array.from(rangerStigma.stacks[1].stack),
+ ['Snare Shot','Explosive Arrow','Burst Arrow']);
+assert(!rangerStigma.stacks.flatMap(group=>group.stack).includes('Deadshot'));
+assert(rangerStigma.manualKeys.some(entry=>entry.name==="Vaizel's Authority"&&entry.key==='4'));
+const rangerEarly=buildLevelingCombat('ranger',4,'solo',unlocks.ranger,[],{});
+assert.deepEqual(Array.from(rangerEarly.steps),['E']);
+assert.deepEqual(Array.from(rangerEarly.stack),['Drill Dart','Tempest Shot']);
+const rangerTen=buildLevelingCombat('ranger',10,'solo',unlocks.ranger,[],{});
+assert.deepEqual(Array.from(rangerTen.steps),['E','Q']);
 const chanter=buildLevelingCombat('chanter',14,'solo',unlocks.chanter,[],{});
 assert(!chanter.stack.includes('Spinning Strike'),'pre-reset Chanter must not waste trigger');
 const chanterReset=buildLevelingCombat('chanter',44,'solo',unlocks.chanter,[],{},(name,opt)=>name==='Dark Crush'&&opt===5);
