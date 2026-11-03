@@ -33,7 +33,16 @@ for(const [cls,u] of Object.entries(unlocks)){
   assert.equal(new Set(plan.steps).size,plan.steps.length,'duplicate macro hotbar key');
   for(const group of plan.stacks)
     assert.equal(plan.steps.includes(group.key),group.macro,cls+' '+level+' wrong manual/automatic stack classification');
-  assert(plan.manualKeys.length<=(cls==='sorcerer'||cls==='ranger'?8:4)&&plan.manualKeys.every(x=>(u[x.name]!==undefined&&u[x.name]<=level)||(stigmas[cls][x.name]&&earned[x.name]>0)),cls+' '+level+': unlearned manual ability');
+  assert(plan.manualKeys.length<=(cls==='sorcerer'||cls==='ranger'?8:4)&&
+    plan.manualKeys.every(x=>x.name===null&&cls==='ranger'||
+      (u[x.name]!==undefined&&u[x.name]<=level)||
+      (stigmas[cls][x.name]&&earned[x.name]>0)),
+    cls+' '+level+': unlearned manual ability');
+  assert.equal(new Set(plan.manualKeys.map(x=>x.key)).size,plan.manualKeys.length,
+    cls+' '+level+': duplicate manual key assignment');
+  if(cls==='ranger')assert.deepEqual(
+    Array.from(plan.manualKeys.slice(0,4).map(x=>x.key)),['1','2','3','4'],
+    'Ranger must show reserved manual slots 1-4 without shifting learned actions');
   if(cls==='ranger'){
     const e=plan.stacks.find(group=>group.key==='E');
     const q=plan.stacks.find(group=>group.key==='Q');
