@@ -26,6 +26,7 @@ jobs:
           node --check budget_exhaustion_smoke.mjs
       - name: Audit progression model
         run: |
+          node amplification_regression.mjs
           node budget_exhaustion_regression.mjs
           node arcana_ariel_regression.mjs
           node global_action_evidence_audit.mjs
