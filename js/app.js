@@ -645,7 +645,10 @@ function chooseCombatBoardRoute(provisional,stigma,gearRanks,target,baseCp,actua
       masteryStages(boardEffects.skills),budget('mastery'),masteryCost,names,1,
       isLeveling()?masteryRankCap:null);
     const build=engineBuild(funded.levels,boardEffects,stigma.levels,activeStigmas());
-    if(!isLeveling()&&account().context==='solo')build.macroLayout='mobile';
+    if(!isLeveling()){
+      build.macroLayout='flow';
+      build.objective=account().pveObjective;
+    }
     const performance=GlobalCombatEngine.tuneSpecialties(build,SPECS.sorcerer,
       account().customSpecialties||{});
     if(!best||performance.robustScore>best.score+1e-8)
@@ -666,7 +669,10 @@ function enhanceSorcererCombat(master,boardEffects,stigmas){
   // Solo level-45 / endgame rewards attacks that continue through movement.
   // Leveling remains a separate, forgiving sequence instead of being
   // scored as if its level-6 mobs were Nightmare bosses.
-  if(!isLeveling()&&a.context==='solo')prepared.macroLayout='mobile';
+  if(!isLeveling()){
+    prepared.macroLayout='flow';
+    prepared.objective=a.pveObjective;
+  }
   const objective=PVE_OBJECTIVES[a.pveObjective]?a.pveObjective:'performance';
   const scenarios=isLeveling()?GlobalCombatEngine.ENCOUNTERS:
     GlobalCombatEngine.scenariosFor(a.context,objective);
@@ -787,8 +793,8 @@ function model(){
                // Tune specialties for the selected goal's encounter window.
                const scenarios=isLeveling()?GlobalCombatEngine.ENCOUNTERS:
                  GlobalCombatEngine.scenariosFor(a.context,objective);
-               const mobileBuild=!isLeveling()&&a.context==='solo'
-                 ?{...build,macroLayout:'mobile'}:build;
+               const mobileBuild=!isLeveling()
+                 ?{...build,macroLayout:'flow',objective}:build;
                const evaluated=GlobalCombatEngine.tuneSpecialties(
                  mobileBuild,SPECS.sorcerer,a.customSpecialties||{},null,scenarios);
                return evaluated.robustScore+structuralTie;
@@ -1121,7 +1127,7 @@ function renderStigma(m){
 }
 function numbered(items){return items.map((v,i)=>`<li><span class="rotation-num">${String(i+1).padStart(2,'0')}</span><span>${esc(v)}</span></li>`).join('')}
 function renderRotation(m){
-  const a=account(),p=typeof progressionRotationProfile==='function' ? progressionRotationProfile(profile(),state.class,a.context,name=>skillLevelBreakdown(name,m).withOwned,activeStigmas().filter(name=>(m.stigma.levels[name]||0)>0),(name,option)=>specPicks(name,skillLevelBreakdown(name,m).withOwned).includes(option)) : profile(),level=currentLevel(),levelingMode=isLeveling(),main=masteryStages()[0]?.[0]||skillNames()[0],macroKey=['RMB','Mouse 4','MMB','M'].includes(a.macroBind)?a.macroBind:'RMB',weaveKey=p.weaveKey||'LMB';
+  const a=account(),p=typeof progressionRotationProfile==='function' ? progressionRotationProfile(profile(),state.class,a.context,name=>skillLevelBreakdown(name,m).withOwned,activeStigmas().filter(name=>(m.stigma.levels[name]||0)>0),(name,option)=>specPicks(name,skillLevelBreakdown(name,m).withOwned).includes(option),a.pveObjective) : profile(),level=currentLevel(),levelingMode=isLeveling(),main=masteryStages()[0]?.[0]||skillNames()[0],macroKey=['RMB','Mouse 4','MMB','M'].includes(a.macroBind)?a.macroBind:'RMB',weaveKey=p.weaveKey||'LMB';
   const quickUse2Bind=a.quickUse2Bind==='T'?'T':'R';
   if(m.combat?.macro?.stacks&&sorcererCombatEligible()){
     const chosen=m.combat.macro;
@@ -1129,15 +1135,17 @@ function renderRotation(m){
     // The optimizer scores FUNDED FUTURE board effects. The live macro must
     // use only Specialties actually available from purchased Mastery +
     // obtained board tiles + recorded gear, never a projected future pick.
-    const actualSpecs=mobileSolo
-      ?Object.fromEntries(['Hellfire','Bittercold Wind',"Winter's Shackles"]
-        .map(name=>[name,specPicks(name,skillLevelBreakdown(name,m).withOwned)]))
-      :{};
+    const actualSpecs=Object.fromEntries(
+      ['Hellfire','Bittercold Wind',"Winter's Shackles",'Frost Burst','Frost']
+        .map(name=>[name,specPicks(name,skillLevelBreakdown(name,m).withOwned)]));
+    // The visible macro may NOT cast an attack using a planned but
+    // unpurchased mobility Specialty, even if the optimizer modeled it.
+    const movingFlow=chosen.mode==='flow'||mobileSolo;
     p.stacks=chosen.stacks.map(stack=>({...stack,
-      skills:mobileSolo?stack.skills.filter(name=>
+      skills:movingFlow?stack.skills.filter(name=>
         GlobalCombatEngine.isMobile(name,actualSpecs)):stack.skills}))
       .filter(stack=>stack.skills.length);
-    p.macro=mobileSolo?p.stacks.map(stack=>stack.key):[...chosen.steps];
+    p.macro=p.stacks.map(stack=>stack.key);
     if(mobileSolo){
       const automatic=new Set(p.stacks.flatMap(stack=>stack.skills));
       for(const [index,name] of [[4,'Bittercold Wind'],[5,"Winter's Shackles"]]){
@@ -1148,11 +1156,11 @@ function renderRotation(m){
       }
     }
     p.rule=mobileSolo
-      ?'Nightmare mobile DPS: '+chosen.label+'. Flame Arrow on LMB, fire cooldowns on RMB Macro, full-charge Hellfire and buffs manual. Mobile Specialties permit casting specific attacks during movement; unavailable mobile perks never count as equipped.'
-      :'Easy Global Sorcerer: '+chosen.label+' (modeled selection). Keep LMB basic attacks and RMB Macro held, charge Hellfire and use offensive buffs manually.';
+      ?'Two-button Nightmare PvE: hold Flame Arrow (LMB) + the complete RMB macro. It repeats ready Blaze/Firestorm, mobile Frost follow-ups and equipped safe offensive Stigmas. Press charged Hellfire and Wish manually; keep defense and ground positioning reactive.'
+      :'Two-button PvE: hold LMB + RMB for conditional fire/Frost and safe offensive Stigmas. Charge Hellfire manually; only tactical buffs, defense and ground positioning need additional presses.';
     p.hotbarNote=(mobileSolo?'Nightmare movement-weighted setup: ':'Recommended ')+
       chosen.label+'. Available automatic steps: '+p.macro.join(' + ')+
-      '. Mobile skills that require future Daevanion levels are NOT auto-equipped early. Hellfire, Wish and offensive/defensive Stigmas remain manual. Occupied action time and stop/positioning costs are explicitly unmeasured sensitivity inputs.';
+      '. Missing mobile Specialties stay locked until actually obtained. Hellfire, Wish, emergency defenses and stationary ground placement stay manual; Element Enhancement and (except Burst goal) Delayed Explosion can cycle automatically when equipped. Macro attempts are not deterministic cast guarantees.';
   }
   const physicalHotkey=key=>key==='R'?quickUse2Bind:key;
   const displayKeyCopy=value=>quickUse2Bind==='T'?String(value).replace(/\bR\b/g,'T'):String(value);
@@ -1172,19 +1180,9 @@ function renderRotation(m){
     const plan=buildLevelingCombat(state.class,level,a.context,SKILL_UNLOCKS[state.class],
       activeStigmas().slice(0,levelReward().slots),m.stigma.levels,
       (name,option)=>specPicks(name,skillLevelBreakdown(name,m).withOwned).includes(option));
-    if(m.combat?.macro?.stacks&&sorcererCombatEligible()){
-      const available=new Set(plan.stacks.flatMap(stack=>stack.stack));
-      plan.stacks=m.combat.macro.stacks.map(stack=>{
-        const rows=stack.skills.filter(name=>available.has(name))
-          .map((name,row)=>({name,row}));
-        return {key:stack.key,label:stack.title,macro:true,
-          stack:rows.map(row=>row.name),rows};
-      }).filter(stack=>stack.stack.length);
-      plan.steps=plan.stacks.map(stack=>stack.key);
-      plan.key=plan.steps[0]||plan.key;
-      plan.stack=plan.stacks[0]?.stack||[];
-      plan.rows=plan.stacks[0]?.rows||[];
-    }
+    // Do not overwrite the current-level, unlock-gated Sorcerer macro
+    // with the endgame damage simulator's speculative Q/E/R layout. The
+    // actual skills, Stigmas and mobile Specialties above are authoritative.
     $('rotation').classList.add('leveling-view');
     $('rotation-level').textContent='Lv '+level+' · starter combat';
     $('leveling-rotation').hidden=false;

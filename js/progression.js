@@ -337,7 +337,7 @@ function sorcererPveManualHotbar(equippedStigmas=[],automaticSkills=[],available
    skills,skills.length?(i+1)+': '+cue:cue,tone
  ]);
 }
-function progressionRotationProfile(base,cls,mode,effectiveLevel,equippedStigmas=[],specialtyEnabled=()=>false){
+function progressionRotationProfile(base,cls,mode,effectiveLevel,equippedStigmas=[],specialtyEnabled=()=>false,objective='performance'){
  const p={...base,stacks:base.stacks.map(s=>({...s,skills:[...s.skills]})),
   hotbar:base.hotbar.map(([skills,cue,tone])=>[[...skills],cue,tone])};
  // One canonical class profile supplies the main combat engine. Context
@@ -391,32 +391,31 @@ function progressionRotationProfile(base,cls,mode,effectiveLevel,equippedStigmas
    p.loop=['Maintain Flame Arrow with Q fire pressure only during safe stationary attack windows.',
     'Manually time Soul Freeze or other CC around the enemy Defiance, immunity and escapes.',
     'Save Arctic Armor, Steel Barrier or Hibernation for the actual incoming burst; disengage instead of greedily channeling.'];
-  }else if(mode==='solo'){
-   // Fresh-45 Solo PvE is a mobile Nightmare/Ascension boss encounter.
-   // Firestorm and Blaze are natively usable while moving. Bittercold
-   // Wind / Winter's Shackles only join the automatic stack after their
-   // actual Global mobile Specialties are selected; otherwise the user
-   // decides when to briefly stop and land them.
-   const mobileFollowUps=[
+  }else if(mode==='solo'||mode==='party'){
+   // Stable, low-input PvE: hold LMB Flame Arrow + the RMB macro. The
+   // optional third Stigma column is safe only for repeatable offensive
+   // effects. Never charge Hellfire, toggle protection, activate CC or
+   // cast a ground-targeted zone automatically during moving encounters.
+   const e=[
+     ...(specialtyEnabled('Frost Burst',2)?['Frost Burst']:[]),
+     'Frost',
      ...(specialtyEnabled('Bittercold Wind',2)?['Bittercold Wind']:[]),
-     ...(specialtyEnabled("Winter's Shackles",1)?["Winter's Shackles"]:[])
+     ...(objective!=='burst'&&specialtyEnabled("Winter's Shackles",1)?["Winter's Shackles"]:[])
    ];
-   p.stacks=[{key:'Q',title:'Conditional Blaze → mobile Firestorm',
-     skills:['Blaze','Firestorm']},
-     ...(mobileFollowUps.length?[{key:'E',title:'Equipped mobile follow-up attacks',
-       skills:mobileFollowUps}]:[])];
+   const r=['Element Enhancement',...(objective==='burst'?[]:['Delayed Explosion'])]
+     .filter(name=>equippedStigmas.includes(name));
+   p.stacks=[
+     {key:'Q',title:'Blaze first — Firestorm fallback',
+       skills:['Blaze','Firestorm']},
+     {key:'E',title:'Frost application / mobile conditional follow-ups',
+       skills:e},
+     ...(r.length?[{key:'R',title:'Safe offensive Stigma upkeep',skills:r}]:[])
+   ];
    p.macro=p.stacks.map(stack=>stack.key);
-   p.rule='Nightmare solo: prioritize ready Fire-Marked Blaze over Firestorm on Q; hold Flame Arrow on LMB. Hellfire needs a manual full charge; take +30% Skill Speed (option 1) with its first rank-8 Specialty, then optionally add mobile (option 3) once rank 12 gives a second slot. Never automatically sacrifice a dodge for a ground spell.';
-   p.summary='Short mobile cooldown damage: conditional Blaze first, then Firestorm to refresh Fire Mark, with Flame Arrow as MP-restoring LMB weave. Charged Hellfire and timed damage buffs stay manual.';
-   p.hotbar[4]=[['Bittercold Wind'],
-     mobileFollowUps.includes('Bittercold Wind')
-       ?'Bittercold Wind has mobile Specialty; automated in E'
-       :'5: Briefly stop to cast only if boss positioning allows','attack'];
-   p.hotbar[5]=[["Winter's Shackles"],
-     mobileFollowUps.includes("Winter's Shackles")
-       ?"Winter's Shackles is mobile; automated in E"
-       :'6: Manual 5-second PvE buff setup in a safe window','attack'];
-   p.hotbarNote='Nightmare/mobile Solo PvE: Q row 0 Blaze, row 1 Firestorm; conditional Blaze is skipped without Fire Mark. LMB Flame Arrow maintains MP. Additional E attacks require their purchased mobile Specialties; manually time charged Hellfire and ground spells.';
+   p.stigmas=[...equippedStigmas];
+   p.rule='Hold Flame Arrow (LMB) + Macro (RMB). Q automatically spends Fire Mark with Blaze, then Firestorm; E handles Frost and earned mobile follow-ups. R refreshes equipped offensive Stigmas (except Delayed Explosion on Burst builds). Fully charge Hellfire by hand; do not macro emergency, ground or charged abilities.';
+   p.summary='Continuous two-button fire/Frost damage with automatic safe Stigmas. Manual actions are limited to charged Hellfire, well-timed Wish, and encounter-specific defenses or ground placement.';
+   p.hotbarNote='Keep both mouse buttons held between dodges. Defensive Stigmas, charged Hellfire and ground placement remain manual. Wish resets cooldowns at high Specialty levels and should not be spent automatically; the macro never puts it on R.';
   }else{
    p.rule='Keep Hellfire fully charged on a manual key; place persistent ground effects only where targets remain.';
   }
@@ -427,16 +426,18 @@ function progressionRotationProfile(base,cls,mode,effectiveLevel,equippedStigmas
  }
  if(mode==='solo'){
   p.opener=cls==='sorcerer'
-   ?['Maintain movement while applying Flame Arrow to keep Fire Mark active.',
-     'Use Q Blaze (when Fire Mark is active) then Firestorm; keep Flame Arrow on LMB for MP and mark refresh. Time Element Enhancement / Delayed Explosion and Wish manually.',
-     'Fully charge Hellfire in a safe boss window. Rank-8 Hellfire +30% Skill Speed comes first; add the mobile option at rank 12 if the build can afford both.']
+   ?['Hold LMB (Flame Arrow) + RMB (macro) continuously during safe damage: conditional Blaze, Firestorm, Frost follow-ups and the selected safe offensive Stigmas run automatically.',
+     objective==='burst'
+       ?'Manually apply Delayed Explosion shortly before fully charged Hellfire. Wish remains on its manual key.'
+       :'Element Enhancement and equipped Delayed Explosion are attempted automatically; weave Wish manually when its cooldown reduction will help.',
+     'Fully charge Hellfire in a safe boss window. Rank-8 +30% Skill Speed comes first, then add mobile at rank 12 when those two options are available.']
    :['Enter with the available damage buffs; save a defensive skill if the target can punish the pull.',
      'Start the main damage engine; do not automate movement or charged casts.',
      'Use self-healing or mitigation when needed instead of blindly maintaining macro uptime.'];
   p.loop=cls==='sorcerer'
-   ?['Keep Flame Arrow and conditional Blaze-first Q / Firestorm flowing on the move.',
-     'Use Bittercold Wind and Winter\'s Shackles automatically ONLY when their mobile Specialties are equipped; otherwise manually when safe.',
-     'Cast equipped Fire Wall / Cold Storm on their own manual hotbar keys only when the boss will remain in the field; never sacrifice a dodge for a ground spell.']
+   ?['Keep Flame Arrow + RMB held: the macro rotates Firestorm/Blaze and mobile Frost skills between your basic attacks.',
+     'Use full-charge Hellfire on your manual key after damage is committed, not as an automatic macro action; add Wish when useful.',
+     'Press defensive or ground-targeting skills only when the encounter calls for them. Do not sacrifice damage to force an unsafe cast.']
    :['Prioritize short time-to-kill without losing core cooldown windows.',
      'Release held attacks for dodge, charge, recovery or repositioning.',
      'Recheck your Specialties after reaching an effective-level breakpoint.'];

@@ -103,24 +103,75 @@ the chosen risk tolerance.
   moving-damage macro. They remain deliberate casts in safe stationary
   windows; their ground fields lose value on relocating bosses.
 
+## Two-button continuous-flow macro (updated)
+
+**Hands-free goal:** hold **LMB = Flame Arrow** and **RMB = in-game Macro**
+together. LMB supplies MP and cancels compatible recovery animations;
+the RMB macro repeatedly attempts these **whole hotbar columns**, not
+a guaranteed fixed action sequence. This is the fast, low-input route for
+leveling and fresh45/endgame PvE, including moving Nightmare bosses:
+
+1. **Q** bottom (row 0) **Blaze**, then **Firestorm**. Blaze is attempted
+   only while Fire Mark is active; Firestorm or held Flame Arrow supplies
+   the mark. Neither skill is charged, and both have five-second base CDs.
+2. **E** bottom **Frost Burst** only if its mobile Specialty is actually
+   equipped; then **Frost**; then **Bittercold Wind** and **Winter's
+   Shackles** only when their respective mobile Specialties are equipped.
+   These are cooldown and conditional actions; do not add no-cooldown
+   Ice Chain or Flame Scattershot here and starve your fire engine.
+3. **R** (Quick Use 2, optionally mapped from T) repeats equipped
+   **Element Enhancement**, then **Delayed Explosion** when present.
+   **Burst objective** keeps Delayed Explosion manual to align its four-
+   second damage bonus with the fully charged Hellfire hit. These are
+   offensive Stigmas with defined cooldowns, not emergency abilities.
+   A missing or unlearned offensive Stigma does not occupy an empty
+   macro step.
+
+**Manually press only when necessary:** Hellfire on 1 (hold to a complete
+charge before releasing), Wish of Concentration on 2 for its Attack buff
+and timing-sensitive cooldown reset, defensive Stigmas, and ground skills
+(Fire Wall/Cold Storm) during real stationary boss windows. A control or
+stagger utility remains on a situational key. All other equipped Stigmas
+are represented in one place: either the held macro or the manual bar,
+never quietly omitted.
+
+**Animation cancellation is not damage cancellation.** Holding the
+basic attack and in-game macro is intended to cut compatible recovery
+animation tails and can improve the density of landed attacks. It must
+not interrupt Hellfire's full charge, incomplete projectiles or a
+ground-targeted cast. The Global client states that its macro keeps
+attempting steps and does NOT guarantee exact order; no planner can
+guarantee absolute fastest cast rate or zero clipped attacks without
+same-patch client frame and damage-event recordings. Skill Queue should
+be enabled in client combat settings, and the 10 ms macro delay is
+an *input attempt interval*, not the cast time.
+
+**Performance tradeoff:** independently published Global Sorcerer guide
+measurements report higher damage when manually coordinating cooldowns
+than from a one-key macro (sample values 21.1k vs 19.2k vs 17.4k on
+one character). The two-button layout minimizes manual burden, which
+is the user's goal, but cannot be described as mathematically superior
+to attentive manual execution. The Burst objective preserves one
+manual amplification window for this reason.
+
+Sources: [Global Sorcerer macro usage and manual Hellfire data](https://aion2vault.com/builds/sorcerer/macro/),
+[Global Sorcerer specialist EUTOPIA build](https://mobalytics.gg/gamebase/guides/aion-2-sorcerer-hellfire-pve-build),
+[Global macro control and delays](https://aion2data.com/macros),
+[Global Sorcerer measured manual/automatic comparisons](https://aion2-guides.info/en/sorcerer/).
+
 The planner scores **positioning/stop opportunity cost** in movement-heavy
 Nightmare scenarios rather than assuming all casts can be continuously used
-while moving. Its **Q stack now tries conditional Blaze first
-(bottom row 0), then Firestorm (row 1)**; LMB Flame Arrow provides
-repeatable Fire Mark and MP recovery when the cooldown skills are unavailable.
-A possible **E** stack contains Bittercold Wind and/or Winter's Shackles
-**only if the matching mobile Specialty is actually earned and selected**.
-The visible macro checks obtained-board skill levels (not just future blue
-planned nodes), preserving the real unlock gate.
+while moving. The full sustained macro and Burst exception are
+documented above. Its visible Q/E/R hotbar checks obtained-board skill levels
+(not just future blue planned nodes), preserving the real unlock gate.
 
 The 1–8 hotbar is rebuilt from the **actual four equipped Stigmas**:
 1 = manual full-charge Hellfire, 2 = manual Wish of Concentration;
-then all equipped Stigmas not already in the automatic macro get their own
-manual keys, with unused slots assigned to deliberate follow-up attacks.
-For example, Solo Sustained DPS now displays Element Enhancement,
-Delayed Explosion, Fire Wall and Cold Storm on the manual bar. Ground spells
-remain manually timed for stationary windows, not cast automatically on
-moving bosses. No equipped but unautomated Stigma is silently omitted.
+only equipped Stigmas **not already automated** get additional manual keys.
+For example, the Solo Sustained DPS bar no longer asks for manual Element
+Enhancement/Delayed Explosion on every cooldown; it still has direct manual
+Fire Wall and Cold Storm for stable target windows. No equipped Stigma is
+silently omitted or duplicated.
 
 To reduce perceived lag, enable **Skill Queue** in the game's
 **Settings > Combat > Controls** (when available in the Global client).

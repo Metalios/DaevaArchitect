@@ -67,7 +67,7 @@ try{
     '#macro-stacks .macro-stack-auto[data-macro-key]')].map(row=>row.dataset.macroKey)
   };
   const actualMobileSpecs=Object.fromEntries(
-   ['Hellfire','Bittercold Wind',"Winter's Shackles"].map(name=>
+   ['Hellfire','Bittercold Wind',"Winter's Shackles",'Frost Burst','Frost'].map(name=>
     [name,specPicks(name,skillLevelBreakdown(name,model()).withOwned)]));
   visible.macroMobileSafe=visible.macroSkills.every(name=>
    GlobalCombatEngine.isMobile(name,actualMobileSpecs));
@@ -100,7 +100,7 @@ try{
  for(const goal of ['performance','sustained','burst']){
    const result=results.cases[goal];
    assert(result.macro,'Offensive Nightmare goal must produce a mobile combat macro '+goal);
-   assert(['mobile','mobile-extended'].includes(result.macro.mode),
+   assert.equal(result.macro.mode,'flow',
     'Nightmare macro must exclude stationary ground actions for '+goal);
    assert(!result.macro.skills.includes('Fire Wall')&&
      !result.macro.skills.includes('Cold Storm'),
@@ -121,8 +121,18 @@ try{
  assert.deepEqual(results.visible.qRowPriority.slice(0,2),['Blaze','Firestorm'],
   'The moving Q stack must use ready conditional Blaze before Firestorm');
  for(const name of results.visible.equippedStigmas)
-   assert(results.visible.hotbarNames.includes(name),
-    'Equipped Solo Nightmare Stigma missing from the manual 1–8 bar: '+name);
+   assert(results.visible.hotbarNames.includes(name)||
+          results.visible.macroSkills.includes(name),
+    'Equipped Solo Nightmare Stigma missing from manual bar AND macro: '+name);
+ assert(results.visible.macroSkills.includes('Element Enhancement'),
+  'Balanced Nightmare macro must automatically refresh Element Enhancement');
+ assert(results.visible.macroSkills.includes('Delayed Explosion'),
+  'Balanced Nightmare macro must automatically apply Delayed Explosion');
+ assert(!results.visible.hotbarNames.includes('Element Enhancement')&&
+        !results.visible.hotbarNames.includes('Delayed Explosion'),
+  'Automated offensive Stigmas should not waste additional manual hotkeys');
+ assert(results.visible.macroKeys.includes('E'),
+  'The macro must cover Frost and available follow-ups without extra manual presses');
  assert(new Set(results.visible.hotbarNames.filter(name=>name!=='Flex slot')).size===
    results.visible.hotbarNames.filter(name=>name!=='Flex slot').length,
    'Duplicate skills waste manual hotkeys');

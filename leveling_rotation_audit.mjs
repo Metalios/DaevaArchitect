@@ -22,8 +22,9 @@ for(const [cls,u] of Object.entries(unlocks)){
   const equipped=Object.keys(stigmas[cls]).slice(0,slots);
   const plan=buildLevelingCombat(cls,level,context,u,equipped,earned,()=>false);
   assert.equal(plan.macroUnlocked,level>=4);
-  const groundEquipped=cls==='sorcerer'&&equipped.some(name=>['Fire Wall','Cold Storm'].includes(name)&&earned[name]>0);
-  const expectedSteps=level<4?0:cls==='sorcerer'&&level>=10?(groundEquipped?3:2):cls==='ranger'&&level>=10?2:1;
+  const autoOffense=cls==='sorcerer'&&equipped.some(name=>
+    ['Element Enhancement','Delayed Explosion'].includes(name)&&earned[name]>0);
+  const expectedSteps=level<4?0:cls==='sorcerer'&&level>=10?(autoOffense?3:2):cls==='ranger'&&level>=10?2:1;
   assert.equal(plan.steps.length,expectedSteps,cls+' Lv'+level+': expected '+expectedSteps+' macro step(s)');
   for(const group of plan.stacks){
     assert(group.stack.length>=1&&group.stack.length<=4,cls+' '+level+': invalid stack size');
@@ -69,10 +70,19 @@ for(const [cls,u] of Object.entries(unlocks)){
   }
   if(cls==='sorcerer'){
    const automated=new Set(plan.stacks.filter(group=>group.macro).flatMap(group=>group.stack));
-   for(const buff of ['Wish of Concentration','Element Enhancement','Delayed Explosion','Hellfire'])
-    assert(!automated.has(buff),'Sorcerer Lv'+level+': buff or charged attack automated: '+buff);
-   if(level>=8&&level>=10)assert(automated.has("Winter's Shackles"),'Shackles should cast automatically');
-   if(level>=10)assert(automated.has('Flame Scattershot'),'Stagger finisher should cast automatically');
+   for(const manualOnly of ['Wish of Concentration','Hellfire','Fire Wall','Cold Storm','Steel Barrier'])
+    assert(!automated.has(manualOnly),
+     'Sorcerer Lv'+level+': charged, reset, protection or ground power automated: '+manualOnly);
+   if(level>=10){
+    assert(automated.has('Frost'),'Frost should drive automatic conditional follow-ups');
+    assert(automated.has('Blaze')&&automated.has('Firestorm'),
+      'Both fire cooldown skills must be automated');
+    for(const name of ['Frost Burst','Bittercold Wind',"Winter's Shackles"])
+      assert(!automated.has(name),'Specialty-locked mobility automated without chosen perk: '+name);
+   }
+   for(const name of ['Element Enhancement','Delayed Explosion'])
+    if(equipped.includes(name)&&earned[name]>0&&level>=10)
+      assert(automated.has(name),'Learned automatic offensive Stigma missing: '+name);
    if(level>=14)assert.equal(plan.manualKeys[0]?.name,'Hellfire','Sorcerer Hellfire should be key 1');
    if(level>=12)assert(plan.manualKeys.some(x=>x.name==='Wish of Concentration'),'Sorcerer Wish buff not manual');
   }
@@ -91,8 +101,8 @@ assert.deepEqual(Array.from(templar.stack),['Judgment','Shield Smite','Warding S
 assert.deepEqual(Array.from(buildLevelingCombat('templar',8,'party',unlocks.templar,[],{}).stack),['Judgment','Shield Smite','Pummel']);
 const sorc31=buildLevelingCombat('sorcerer',31,'solo',unlocks.sorcerer,[],{});
 assert.deepEqual(Array.from(sorc31.steps),['Q','E']);
-assert.deepEqual(Array.from(sorc31.stacks[0].stack),["Winter's Shackles",'Bittercold Wind','Frost','Firestorm']);
-assert.deepEqual(Array.from(sorc31.stacks[1].stack),['Blaze','Frost Burst','Flame Scattershot']);
+assert.deepEqual(Array.from(sorc31.stacks[0].stack),['Blaze','Firestorm']);
+assert.deepEqual(Array.from(sorc31.stacks[1].stack),['Frost']);
 assert(sorc31.stacks.every(group=>group.macro));
 assert.deepEqual(Array.from(sorc31.manualKeys.slice(0,2).map(x=>x.name)),['Hellfire','Wish of Concentration']);
 assert(!sorc31.stacks.flatMap(x=>x.stack).includes('Hellfire'));
@@ -100,15 +110,21 @@ const sorcWithStigmas=buildLevelingCombat('sorcerer',34,'solo',unlocks.sorcerer,
  ['Element Enhancement','Delayed Explosion','Fire Wall'],
  {'Element Enhancement':1,'Delayed Explosion':1,'Fire Wall':1});
 assert.deepEqual(Array.from(sorcWithStigmas.steps),['Q','E','R']);
-assert(sorcWithStigmas.stacks[2].stack.includes('Fire Wall'));
-assert(sorcWithStigmas.manualKeys.some(x=>x.name==='Element Enhancement'));
-assert(sorcWithStigmas.manualKeys.some(x=>x.name==='Delayed Explosion'));
-assert(!sorcWithStigmas.manualKeys.some(x=>x.name==='Fire Wall'));
-assert(!sorcWithStigmas.stacks.flatMap(g=>g.stack).includes('Delayed Explosion'));
+assert.deepEqual(Array.from(sorcWithStigmas.stacks[2].stack),
+ ['Element Enhancement','Delayed Explosion']);
+assert(!sorcWithStigmas.manualKeys.some(x=>['Element Enhancement','Delayed Explosion'].includes(x.name)));
+assert(sorcWithStigmas.manualKeys.some(x=>x.name==='Fire Wall'));
+assert(!sorcWithStigmas.stacks.flatMap(g=>g.stack).includes('Fire Wall'));
 const sorcNoFields=buildLevelingCombat('sorcerer',36,'solo',unlocks.sorcerer,
  ['Element Enhancement','Delayed Explosion','Steel Barrier'],
  {'Element Enhancement':1,'Delayed Explosion':1,'Steel Barrier':1});
-assert.deepEqual(Array.from(sorcNoFields.steps),['Q','E'],'No ground attacks equipped: no phantom R step');
+assert.deepEqual(Array.from(sorcNoFields.steps),['Q','E','R'],
+ 'Equipped offensive Stigmas require upkeep even without ground effects');
+const sorcMobile=buildLevelingCombat('sorcerer',45,'solo',unlocks.sorcerer,[],{},
+ (name,opt)=>({'Frost Burst':2,'Bittercold Wind':2,"Winter's Shackles":1}[name]===opt));
+assert.deepEqual(Array.from(sorcMobile.stacks[1].stack),
+ ['Frost Burst','Frost','Bittercold Wind',"Winter's Shackles"]);
+assert(!sorcMobile.stacks.flatMap(group=>group.stack).includes('Hellfire'));
 const sorcReset=buildLevelingCombat('sorcerer',45,'solo',unlocks.sorcerer,[],{},
  (name,option)=>name==='Wish of Concentration'&&option===5);
 assert.deepEqual(Array.from(sorcReset.steps),['Q','E']);

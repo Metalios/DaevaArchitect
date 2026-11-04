@@ -73,7 +73,7 @@ const GlobalCombatEngine=(()=>{
         {key:'R',title:'Equipped damage Stigmas',skills:['Fire Wall','Cold Storm']}]}
   });
   const CORE=['Firestorm','Blaze','Hellfire','Wish of Concentration','Bittercold Wind',"Winter's Shackles",'Flame Arrow'];
-  const SPEC_KEYS=['Firestorm','Hellfire','Blaze','Wish of Concentration',"Winter's Shackles",'Flame Arrow','Bittercold Wind'];
+  const SPEC_KEYS=['Firestorm','Hellfire','Blaze','Wish of Concentration',"Winter's Shackles",'Flame Arrow','Bittercold Wind','Frost','Frost Burst'];
   // AION 2 Global mobile defaults and exact rank-8 mobile Specialty ids.
   // This answers whether the caster can keep moving while USING a skill.
   // It does not prove animation frames or real boss damage uptime.
@@ -94,6 +94,36 @@ const GlobalCombatEngine=(()=>{
       stacks:[{key:'Q',title:'Fire Mark spender then mobile setup',skills:['Blaze','Firestorm']},
         ...(extra.length?[{key:'E',title:'Only mobile-specialty follow-ups',skills:extra}]:[])]};
   };
+  // Low-input Global PvE layout: LMB basic attack is held separately,
+  // while RMB continually attempts three small safe skill columns. Manual
+  // charged/channel and defensive abilities never enter this macro.
+  // Only deterministic offensive Stigmas are auto-cast; burst builds retain
+  // Delayed Explosion by hand for a deliberately timed Hellfire window.
+  const CONTINUOUS_OFFENSE=Object.freeze(['Element Enhancement','Delayed Explosion']);
+  function flowLayout(build,spec){
+    const purpose=build.objective||'performance';
+    const isBurst=purpose==='burst';
+    const active=new Set(build.equippedStigmas||[]);
+    const capable=name=>(build.availableSkills||[]).includes(name);
+    const eligibleAutoStigma=name=>active.has(name)&&
+      (build.stigma?.[name]||0)>0&&!(isBurst&&name==='Delayed Explosion');
+    const q=['Blaze','Firestorm'].filter(capable);
+    const ice=[
+      ...(capable('Frost Burst')&&isMobile('Frost Burst',spec)?['Frost Burst']:[]),
+      ...(capable('Frost')?['Frost']:[]),
+      ...['Bittercold Wind',"Winter's Shackles"]
+        .filter(name=>capable(name)&&isMobile(name,spec)&&
+          !(isBurst&&name==="Winter's Shackles"))
+    ];
+    const buffs=CONTINUOUS_OFFENSE.filter(eligibleAutoStigma);
+    const stacks=[
+      ...(q.length?[{key:'Q',title:'Fire Mark spender / short fire cooldown',skills:q}]:[]),
+      ...(ice.length?[{key:'E',title:'Frost and mobile follow-up damage',skills:ice}]:[]),
+      ...(buffs.length?[{key:'R',title:'Automatic offensive Stigmas; no emergency skills',skills:buffs}]:[])
+    ];
+    return {label:'Hold LMB + RMB · conditional fire, Frost and safe offensive buffs',
+      steps:stacks.map(s=>s.key),stacks};
+  }
   // Global Firestorm has five projectile hits. The level-12 Specialty
   // reduces Hellfire by two seconds for EACH projectile that actually hits.
   // This helper accepts an observed landed count once combat logs supply it.
@@ -170,14 +200,17 @@ const GlobalCombatEngine=(()=>{
         record(next.name,next.amount,next.at);
       }
     };
-    const macro=['mobile','mobile-extended'].includes(build.macroLayout)
+    const macro=build.macroLayout==='flow'?flowLayout(build,spec)
+      :['mobile','mobile-extended'].includes(build.macroLayout)
       ?mobileLayout(spec,build.macroLayout==='mobile-extended')
       :(MACRO_LAYOUTS[build.macroLayout]||MACRO_LAYOUTS.ground);
     const macroStacks=macro.steps.map(key=>macro.stacks.find(stack=>stack.key===key))
       .filter(Boolean);
     let macroCursor=0;
     const macroStepOverhead=(macro.steps.length-1)*.012; // input sensitivity, not measured animation
-    const equippedGround=macro.steps.includes('R')?['Fire Wall','Cold Storm'].filter(name=>hasStigma(build,name)):[];
+    const equippedGround=['Fire Wall','Cold Storm'].filter(name=>
+      macro.stacks.some(stack=>stack.skills.includes(name))&&hasStigma(build,name));
+    const macroSkills=new Set(macro.stacks.flatMap(stack=>stack.skills));
     const maxSteps=2500;
     const eligible=name=>{
       const action=ACTIONS[name];
@@ -294,6 +327,7 @@ const GlobalCombatEngine=(()=>{
       if(Math.floor(now/40)>Math.floor((now-.5)/40))staggerUntil=now+3;
       let name=null;
       for(const manual of ['Element Enhancement','Wish of Concentration','Delayed Explosion','Divine Burst','Hellfire']){
+        if(macroSkills.has(manual))continue;
         if(manual==='Element Enhancement'||manual==='Delayed Explosion'||manual==='Divine Burst'){
           if(!hasStigma(build,manual))continue;
         }else if((build.mastery[manual]||1)===0)continue;
@@ -397,13 +431,15 @@ const GlobalCombatEngine=(()=>{
     // for deliberate safe windows; do not let their theoretical dummy damage
     // win the always-on macro choice.
     const nightmare=scenarios.some(s=>String(s.id||'').startsWith('nightmare-'));
-    const choices=nightmare?['mobile','mobile-extended']:
-      ['mobile','mobile-extended','compact','balanced','ground'];
+    const choices=build.macroLayout==='flow'||nightmare?['flow']:
+      ['flow','mobile','mobile-extended','compact','balanced','ground'];
     for(const mode of choices){
-      const layout=['mobile','mobile-extended'].includes(mode)
+      const layout=mode==='flow'?flowLayout(build,specialties):
+        ['mobile','mobile-extended'].includes(mode)
         ?mobileLayout(specialties,mode==='mobile-extended')
         :MACRO_LAYOUTS[mode];
       if(mode==='mobile-extended'&&layout.steps.length===1)continue;
+      if(!layout.steps.length)continue;
       if(mode==='ground'&&!['Fire Wall','Cold Storm'].some(name=>hasStigma(build,name)))continue;
       const data=evaluate({...build,macroLayout:mode},specialties,scenarios);
       // Complexity cost is only a tie-breaker for setup burden. Actual
@@ -475,6 +511,7 @@ const GlobalCombatEngine=(()=>{
   }
   return Object.freeze({SOURCE,ACTIONS,ENCOUNTERS,legalOptions,slots,effective,
     MACRO_LAYOUTS,NIGHTMARE_ENCOUNTERS,scenariosFor,isMobile,MOBILE_SPECIALTIES,
+    CONTINUOUS_OFFENSE,flowLayout,
     FIRESTORM_PROJECTILES,firestormHellfireCooldownReduction,
     chooseMacro,simulate,evaluate,tuneSpecialties,refineMastery,scoreMastery});
 })();
