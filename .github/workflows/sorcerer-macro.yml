@@ -29,7 +29,14 @@ jobs:
           node --check js/progression.js
           node --check js/optimizer/joint.js
       - name: Audit Nightmare and Conquest macro policy
-        run: node sorcerer_macro_audit.mjs
+        run: |
+          node sorcerer_macro_audit.mjs
+          node sorcerer_mobile_damage_regression.mjs
+          node sorcerer_two_button_flow_regression.mjs
+          node sorcerer_wish_priority_regression.mjs
+          node sorcerer_manual_hotbar_regression.mjs
+          node combat_engine_regression.mjs
+          node sorcerer_full_path_regression.mjs
       - name: Existing progression checks
         run: |
           node verify.mjs
