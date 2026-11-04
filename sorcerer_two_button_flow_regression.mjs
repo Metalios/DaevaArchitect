@@ -68,12 +68,13 @@ for(const [goal,equipped] of Object.entries(loadouts)){
    Array.from(trusted.stacks.flatMap(stack=>stack.skills)
     .filter(name=>equipped.includes(name))),
    expected,goal+': generic safety filter dropped safe offensive Stigmas');
-  if(mobility)assert(trusted.stacks.some(stack=>
-     stack.key==='E'&&stack.skills.includes("Winter's Shackles")),
-    goal+': generic fallback cue must not remove earned mobile Winter\'s Shackles');
-  else assert(!trusted.stacks.some(stack=>
-     stack.skills.includes("Winter's Shackles")),
-    goal+': missing mobile Specialty must keep Winter\'s Shackles manual');
+  // Burst holds Winter's Shackles for the timed Hellfire damage window,
+  // regardless of movement eligibility. All other goals may automate it
+  // once its actual mobile Specialty is earned.
+  const shackleAuto=mobility&&goal!=='burst';
+  assert.equal(trusted.stacks.some(stack=>
+    stack.key==='E'&&stack.skills.includes("Winter's Shackles")),shackleAuto,
+    goal+': Winter\'s Shackles must respect mobile eligibility AND manual burst alignment');
   const scenario={id:'nightmare-moving',duration:120,weight:1,
    movement:.6,animation:1.12};
   const sample=engine.simulate(build,picked,scenario);
