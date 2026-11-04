@@ -400,7 +400,7 @@ function progressionRotationProfile(base,cls,mode,effectiveLevel,equippedStigmas
      ...(specialtyEnabled('Frost Burst',2)?['Frost Burst']:[]),
      'Frost',
      ...(specialtyEnabled('Bittercold Wind',2)?['Bittercold Wind']:[]),
-     ...(specialtyEnabled("Winter's Shackles",1)?["Winter's Shackles"]:[])
+     ...(objective!=='burst'&&specialtyEnabled("Winter's Shackles",1)?["Winter's Shackles"]:[])
    ];
    const r=['Element Enhancement',...(objective==='burst'?[]:['Delayed Explosion'])]
      .filter(name=>equippedStigmas.includes(name));
