@@ -645,6 +645,7 @@ function chooseCombatBoardRoute(provisional,stigma,gearRanks,target,baseCp,actua
       masteryStages(boardEffects.skills),budget('mastery'),masteryCost,names,1,
       isLeveling()?masteryRankCap:null);
     const build=engineBuild(funded.levels,boardEffects,stigma.levels,activeStigmas());
+    if(!isLeveling()&&account().context==='solo')build.macroLayout='mobile';
     const performance=GlobalCombatEngine.tuneSpecialties(build,SPECS.sorcerer,
       account().customSpecialties||{});
     if(!best||performance.robustScore>best.score+1e-8)
@@ -662,8 +663,13 @@ function enhanceSorcererCombat(master,boardEffects,stigmas){
     lastOptimizedCombat=null;return master;
   }
   const a=account(),prepared=engineBuild(master.levels,boardEffects,stigmas.levels,activeStigmas());
+  // Solo level-45 / endgame rewards attacks that continue through movement.
+  // Leveling remains a separate, forgiving sequence instead of being
+  // scored as if its level-6 mobs were Nightmare bosses.
+  if(!isLeveling()&&a.context==='solo')prepared.macroLayout='mobile';
   const objective=PVE_OBJECTIVES[a.pveObjective]?a.pveObjective:'performance';
-  const scenarios=GlobalCombatEngine.scenariosFor(a.context,objective);
+  const scenarios=isLeveling()?GlobalCombatEngine.ENCOUNTERS:
+    GlobalCombatEngine.scenariosFor(a.context,objective);
   const key=JSON.stringify([state.class,a.context,objective,currentLevel(),prepared,
     a.manualMastery,a.customSpecialties,budget('mastery')]);
   let result=combatResultCache.key===key?combatResultCache.result:null;
@@ -779,9 +785,12 @@ function model(){
              if(state.class==='sorcerer'&&sorcererCombatEligible()&&objective!=='survivability'&&
                  !RoleBuildGoals.info(state.class,objective)){
                // Tune specialties for the selected goal's encounter window.
-               const scenarios=GlobalCombatEngine.scenariosFor(a.context,objective);
+               const scenarios=isLeveling()?GlobalCombatEngine.ENCOUNTERS:
+                 GlobalCombatEngine.scenariosFor(a.context,objective);
+               const mobileBuild=!isLeveling()&&a.context==='solo'
+                 ?{...build,macroLayout:'mobile'}:build;
                const evaluated=GlobalCombatEngine.tuneSpecialties(
-                 build,SPECS.sorcerer,a.customSpecialties||{},null,scenarios);
+                 mobileBuild,SPECS.sorcerer,a.customSpecialties||{},null,scenarios);
                return evaluated.robustScore+structuralTie;
              }
              if(typeof ClassCombatModels!=='undefined'&&ClassCombatModels.profile(state.class))
@@ -1118,8 +1127,13 @@ function renderRotation(m){
     const chosen=m.combat.macro;
     p.stacks=chosen.stacks.map(stack=>({...stack}));
     p.macro=[...chosen.steps];
-    p.rule='Easy Global Sorcerer: '+chosen.label+' (modeled selection). Keep LMB basic attacks and RMB Macro held, charge Hellfire and use offensive buffs manually.';
-    p.hotbarNote='Recommended '+chosen.label+'. Automatic steps: '+chosen.steps.join(' + ')+'. Hellfire, Wish of Concentration and learned offensive buffs remain manual; animation and macro timing are estimated.';
+    const mobileSolo=a.context==='solo'&&!levelingMode;
+    p.rule=mobileSolo
+      ?'Nightmare mobile DPS: '+chosen.label+'. Flame Arrow on LMB, fire cooldowns on RMB Macro, full-charge Hellfire and buffs manual. Mobile Specialties permit casting specific attacks during movement; unavailable mobile perks never count as equipped.'
+      :'Easy Global Sorcerer: '+chosen.label+' (modeled selection). Keep LMB basic attacks and RMB Macro held, charge Hellfire and use offensive buffs manually.';
+    p.hotbarNote=(mobileSolo?'Nightmare movement-weighted setup: ':'Recommended ')+
+      chosen.label+'. Automatic steps: '+chosen.steps.join(' + ')+
+      '. Hellfire, Wish and offensive/defensive Stigmas remain manual. Occupied action time and stop/positioning costs are explicitly unmeasured sensitivity inputs.';
   }
   const physicalHotkey=key=>key==='R'?quickUse2Bind:key;
   const displayKeyCopy=value=>quickUse2Bind==='T'?String(value).replace(/\bR\b/g,'T'):String(value);
