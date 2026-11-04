@@ -100,22 +100,22 @@ const PROFILES = {
   },
   sorcerer: {
     name:'Sorcerer', role:'Magic damage', kind:'dps',
-    summary:'Hold Flame Arrow (LMB) and RMB Macro for ongoing fire, Frost and safe offensive Stigmas. Only charged Hellfire, well-timed Wish, defenses and targeted ground spells require additional input.',
+    summary:'Hold Flame Arrow (LMB) and RMB Macro for ongoing fire, Frost and safe offensive Stigmas. Only charged Hellfire, timed Burst amplification, defenses and targeted ground spells require additional input.',
     stigmas:['Element Enhancement','Delayed Explosion','Fire Wall','Cold Storm'],
     swap:'Steel Barrier or Arctic Armor for difficult survival checks.',
-    rule:'Hold LMB + RMB in PvE. Q attempts ready Blaze before Firestorm; E attempts Frost / earned mobile follow-ups; R auto-refreshes equipped Element Enhancement and normal-damage Delayed Explosion. Fully charge Hellfire and manually time Wish, defenses and ground placement.',
-    opener:['Normal enemies: hold LMB + RMB; Q and E handle repeatable fire/Frost and the R stack maintains equipped offensive Stigmas.','For a boss, keep holding the loop while moving and manually activate only necessary positioning or defensive abilities.','Fully charge Hellfire on 1 when safe, then resume LMB + RMB. Use Wish after major cooldowns when its reset Specialty is selected.'],
-    loop:['Keep LMB + RMB held during safe damage. Q and E handle your regular rotation; R also places equipped ground Stigmas.','Charge Hellfire on 1 and activate offensive buffs on 2–4 only when useful.','Pause Macro for moving bosses, bad ground-targeting windows or danger; manual actions always take priority.'],
+    rule:'Hold LMB + RMB in PvE. Q compares conditional Blaze-first vs Firestorm-first; E attempts earned mobile Frost follow-ups; R refreshes offensive Stigmas then Wish for continuous DPS. Burst keeps Wish/Delayed manual. Charge Hellfire completely on its own key.',
+    opener:['Normal enemies: hold LMB + RMB; Q and E handle repeatable fire/Frost and the R stack maintains equipped offensive Stigmas.','For a boss, keep holding the loop while moving and manually activate only necessary positioning or defensive abilities.','Fully charge Hellfire on 1 when safe, then resume LMB + RMB. Continuous mode auto-attempts Wish on R; Burst mode keeps Wish manual for timed cooldown windows.'],
+    loop:['Keep LMB + RMB held for regular fire/Frost damage and safe offensive buffs.','Release RMB briefly to fully charge Hellfire; Burst users time Wish and Delayed Explosion manually.','Use emergency defenses or ground placement manually when the boss stops moving.'],
     weave:'Flame Arrow',weaveKey:'LMB',
     stacks:[
       {key:'Q',title:'Ready fire follow-up and setup',skills:['Blaze','Firestorm']},
       {key:'E',title:'Frost setup',skills:['Frost']},
-      {key:'R',title:'Safe offensive Stigma upkeep when equipped',skills:['Element Enhancement','Delayed Explosion']}
+      {key:'R',title:'Regular offensive buffs / Wish last',skills:['Element Enhancement','Delayed Explosion','Wish of Concentration']}
     ],
     macro:['Q','E','R'],
     hold:'Hold LMB (Flame Arrow) + RMB (in-game Macro). It tries Q/E and equipped safe R buffs while you move. Only fully charged Hellfire and tactical actions require manual input.',
     manual:['Hellfire — fully charge on 1',
-      'Wish of Concentration — buff on 2; after big cooldowns if reset Specialty chosen',
+      'Wish of Concentration — automatic in continuous PvE after R buffs; manual for Burst and PvP',
       'Element Enhancement — automatically cycled in the safe PvE macro R stack when equipped',
       'Delayed Explosion — automatically cycled in normal PvE; deliberately manual for Burst goal',
       'Steel Barrier / Arctic Armor — optional emergency defenses',
@@ -130,7 +130,7 @@ const PROFILES = {
       [[], '7: Available for personal preference','utility'],
       [[], '8: Available for personal preference','utility']
     ],
-    hotbarNote:'Easy PvE: hold LMB + RMB. Q is Blaze/Firestorm, E is Frost with earned mobile follow-ups; R automates safe offensive Stigmas when equipped. Hellfire (1) and Wish (2) remain manual; manually place ground spells and activate survival skills.',
+    hotbarNote:'Easy PvE: hold LMB + RMB. R auto-maintains safe offensive Stigmas and attempts Wish LAST for continuous damage. Burst keeps Wish and Delayed Explosion manual. Fully charge Hellfire; never automate defenses or ground placement.',
   },
   spiritmaster: {
     name:'Spiritmaster', role:'Summon damage', kind:'dps',
