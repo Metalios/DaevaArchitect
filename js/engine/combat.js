@@ -532,8 +532,11 @@ const GlobalCombatEngine=(()=>{
         incompleteActions:weightedMetric(sample.samples,'incompleteActions')
       };
     }
-    return {...result,selected:build.objective==='burst'?'timedManual':'automatic',
-      evidence:'Relative combat model, not observed cooldown logs. Automatic macro cannot test whether other skills are cooling down.'};
+    const reset=has(specialties,'Wish of Concentration',5);
+    const autoEligible=build.objective==='sustained'&&!reset&&
+      result.automatic.robustScore>=result.timedManual.robustScore*.985;
+    return {...result,selected:autoEligible?'automatic':'timedManual',
+      evidence:'Relative combat model, not observed cooldown logs. A cooldown-reset Wish requires manual timing.'};
   }
   function chooseMacro(build,specialties,scenarios=ENCOUNTERS){
     let winner=null;
@@ -547,10 +550,7 @@ const GlobalCombatEngine=(()=>{
     // Preserve the high-value -10s cooldown reset for human timing. With no
     // reset Specialty, sustained mode may auto-buff if it costs less than
     // 1.5% relative modeled throughput (convenience-sensitive threshold).
-    const autoWish=build.objective==='sustained'&&
-      !has(specialties,'Wish of Concentration',5)&&
-      wishComparison.automatic.robustScore>=
-      wishComparison.timedManual.robustScore*.985;
+    const autoWish=wishComparison.selected==='automatic';
     for(const mode of choices){
       const priority=mode==='flow'?fireComparison.selected:'blaze';
       const variantBuild={...build,macroLayout:mode,firePriority:priority,
