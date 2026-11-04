@@ -1180,19 +1180,9 @@ function renderRotation(m){
     const plan=buildLevelingCombat(state.class,level,a.context,SKILL_UNLOCKS[state.class],
       activeStigmas().slice(0,levelReward().slots),m.stigma.levels,
       (name,option)=>specPicks(name,skillLevelBreakdown(name,m).withOwned).includes(option));
-    if(m.combat?.macro?.stacks&&sorcererCombatEligible()){
-      const available=new Set(plan.stacks.flatMap(stack=>stack.stack));
-      plan.stacks=m.combat.macro.stacks.map(stack=>{
-        const rows=stack.skills.filter(name=>available.has(name))
-          .map((name,row)=>({name,row}));
-        return {key:stack.key,label:stack.title,macro:true,
-          stack:rows.map(row=>row.name),rows};
-      }).filter(stack=>stack.stack.length);
-      plan.steps=plan.stacks.map(stack=>stack.key);
-      plan.key=plan.steps[0]||plan.key;
-      plan.stack=plan.stacks[0]?.stack||[];
-      plan.rows=plan.stacks[0]?.rows||[];
-    }
+    // Do not overwrite the current-level, unlock-gated Sorcerer macro
+    // with the endgame damage simulator's speculative Q/E/R layout. The
+    // actual skills, Stigmas and mobile Specialties above are authoritative.
     $('rotation').classList.add('leveling-view');
     $('rotation-level').textContent='Lv '+level+' · starter combat';
     $('leveling-rotation').hidden=false;
