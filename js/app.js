@@ -1800,6 +1800,9 @@ function recalculateRecommendedBoards(){
   a.customAzphelNodes=[];
   a.customArielNodes=[];
   a.recommendedRouteSnapshot=null;
+  // Explicit Recalculate is NOT a cache hit: honor the user's request to
+  // perform a fresh route search even for an identical input fingerprint.
+  OBJECTIVE_ROUTE_CACHE.clear();
   liveRoute=null;
   liveRouteKey='';
   liveRouteBasis=null;
