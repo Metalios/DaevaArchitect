@@ -212,15 +212,25 @@ function progressionStigmaStages(cls,mode,equipped,advice){
 }
 // Keep all checkpoints. Object.fromEntries keyed only by skill incorrectly
 // overwrote intermediate Lv16 objectives with the eventual Lv20 objective.
-function progressionBreakpoints(cls,mode){
+function progressionBreakpoints(cls,mode,objective='performance'){
  const policy=PROGRESSION_PLANS[cls];if(!policy||isPvpContext(mode))return [];
+ if(cls==='sorcerer'){
+  // Survival paths do not disguise damage-specialty nodes as defenses.
+  if(objective==='survivability')return [];
+  if(objective==='control')return [
+   ["Winter's Shackles",8],['Frost',12],['Ice Chain',12]];
+  if(objective==='burst')return [
+   ['Hellfire',16],['Wish of Concentration',16],['Firestorm',12],['Hellfire',20]];
+  if(objective==='sustained')return [
+   ['Firestorm',12],['Firestorm',16],['Wish of Concentration',16],['Hellfire',16]];
+ }
  if(cls==='cleric'&&mode==='party')return [
   ['Light of Regeneration',16],['Radiant Recovery',16],['Healing Light',16]];
  return policy.breakpoints;
 }
-function progressionBoardTargets(cls,mode){
+function progressionBoardTargets(cls,mode,objective='performance'){
  const result={};
- progressionBreakpoints(cls,mode).forEach(([name,rank],index)=>{
+ progressionBreakpoints(cls,mode,objective).forEach(([name,rank],index)=>{
   const milestone={rank,weight:Math.max(1.1,2.3-index*0.28)};
   (result[name]??={milestones:[]}).milestones.push(milestone);
  });
