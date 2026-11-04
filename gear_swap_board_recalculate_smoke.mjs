@@ -10,6 +10,11 @@ try {
   const page=await browser.newPage({viewport:{width:1280,height:900}});
   const errors=[];
   page.on('pageerror',error=>errors.push(error.message));
+  // This regression validates SAVED LOCAL ROLLS, not remote tooltip data.
+  // Block asynchronous third-party tooltips so a late network response
+  // cannot replace an editor between typing the enhancement and saving it.
+  // Real tooltip fetching has separate behavior from saved-roll semantics.
+  await page.route('https://aion2data.com/tooltip**',route=>route.abort());
   await page.goto(pathToFileURL(path.resolve('dist/index.html')).href);
   await page.locator('#class-buttons [data-class="templar"]').click();
   // Medium desktop now uses a persistent editor rail; open Equipment first.
