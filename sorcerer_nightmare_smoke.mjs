@@ -35,6 +35,12 @@ try{
     mastery:effective,
     board:route.filter(row=>m.boards.owned.has(row.id)).map(row=>row.id),
     objective:a.pveObjective,
+    macro:m.combat?.macro?{
+      mode:m.combat.macro.mode,
+      steps:[...m.combat.macro.steps],
+      skills:m.combat.macro.stacks.flatMap(stack=>stack.skills),
+      mobileHellfire:m.combat.specialties?.Hellfire?.includes(3)||false
+    }:null,
     error:a.lastObjectiveAnalysis?.error||null
    };
   }
@@ -44,8 +50,17 @@ try{
   const visible={
    loadout:document.getElementById('loadout-text').textContent,
    title:document.getElementById('loadout-title').textContent,
-   steps:document.getElementById('now-steps').textContent
+   steps:document.getElementById('now-steps').textContent,
+   macroSkills:[...document.querySelectorAll(
+    '#macro-stacks .macro-stack-auto [data-skill]')].map(row=>row.dataset.skill),
+   macroKeys:[...document.querySelectorAll(
+    '#macro-stacks .macro-stack-auto [data-macro-key]')].map(row=>row.dataset.macroKey)
   };
+  const actualMobileSpecs=Object.fromEntries(
+   ['Hellfire','Bittercold Wind',"Winter's Shackles"].map(name=>
+    [name,specPicks(name,skillLevelBreakdown(name,model()).withOwned)]));
+  visible.macroMobileSafe=visible.macroSkills.every(name=>
+   GlobalCombatEngine.isMobile(name,actualMobileSpecs));
   a.customStigmas=['Element Enhancement','Delayed Explosion','Fire Wall','Cold Storm'];
   const manuallyEquipped=activeStigmas();
   a.customStigmas=null;
@@ -72,6 +87,21 @@ try{
  const boardVariety=new Set(goals.map(g=>str(results.cases[g].board.slice(0,70)))).size;
  assert(boardVariety>=2,
   'Every Solo endgame Daevanion funded route has the same leading nodes');
+ for(const goal of ['performance','sustained','burst']){
+   const result=results.cases[goal];
+   assert(result.macro,'Offensive Nightmare goal must produce a mobile combat macro '+goal);
+   assert(['mobile','mobile-extended'].includes(result.macro.mode),
+    'Nightmare macro must exclude stationary ground actions for '+goal);
+   assert(!result.macro.skills.includes('Fire Wall')&&
+     !result.macro.skills.includes('Cold Storm'),
+    'Moving boss macro cannot automatically place stationary ground fields');
+   assert(result.macro.mobileHellfire,
+    'Fresh45 offensive Sorcerer should prioritize earned mobile Hellfire at '+goal);
+ }
+ assert(results.visible.macroMobileSafe,
+  'Visible Nightmare macro attempted an unearned stationary attack');
+ assert(results.visible.macroKeys.includes('Q'),
+  'Visible moving fire stack Q must remain bound');
  assert(results.visible.title.includes('Nightmare'));
  assert(/Nightmare/.test(results.visible.loadout));
  assert(/Nightmare bosses/.test(results.visible.steps));
