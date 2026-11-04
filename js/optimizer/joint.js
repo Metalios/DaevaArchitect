@@ -433,6 +433,18 @@ const JointProgression = (()=>{
         .filter(stack=>!stack.manual).flatMap(stack=>stack.skills)
         .filter(name=>name==='Element Enhancement'||name==='Delayed Explosion'));
       for(const name of explicitlyAutomated)manual.delete(name);
+      // Some shared base profiles retain a *manual fallback* label for a
+      // mobile-specialty attack. When its real Global option is selected
+      // and the context profile deliberately placed it in E, the generic
+      // "manual" keyword must not silently delete that automatic action.
+      const mobileFollowups={
+        'Frost Burst':2,'Bittercold Wind':2,"Winter's Shackles":1
+      };
+      for(const [name,option] of Object.entries(mobileFollowups)){
+        if((specialties[name]||[]).includes(option)&&
+          (profile?.stacks||[]).some(stack=>!stack.manual&&stack.skills.includes(name)))
+          manual.delete(name);
+      }
     }
     for(const name of MANUAL_MOTION)manual.add(name);
     if(classId==='spiritmaster'&&(specialties['Elemental Fusion']||[]).includes(4))
