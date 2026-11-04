@@ -42,6 +42,7 @@ jobs:
           node sorcerer_nightmare_regression.mjs
           node sorcerer_mobile_damage_regression.mjs
           node sorcerer_two_button_flow_regression.mjs
+          node sorcerer_wish_priority_regression.mjs
           node sorcerer_manual_hotbar_regression.mjs
           node recommendation_regression.mjs
           node class_role_regression.mjs
