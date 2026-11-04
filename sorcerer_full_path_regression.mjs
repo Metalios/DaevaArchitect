@@ -11,9 +11,9 @@ const skills=json('skill_unlocks.json').sorcerer;
 const stigmaData=json('stigmas.json');
 const specs=json('specialties.json');
 const azphel=json('azphel_data.json').sorcerer;
-const ariel=json('ariel_data.json').sorcerer;
 const ctx=vm.createContext({SPECS:specs,STIGMAS:stigmaData,console});
 vm.runInContext([
+ 'js/ariel_data.js',
  'js/optimizer/roles.js',
  'js/engine/pvp_models.js',
  'js/engine/class_models.js',
@@ -25,9 +25,10 @@ vm.runInContext([
 ].map(read).join('\n')+`\n globalThis.sorc={
  RoleBuildGoals,ClassCombatModels,PvpCombatModels,
  adviceFor,progressionMasteryStages,progressionBoardTargets,
- progressionRotationProfile,JointProgression,GlobalCombatEngine,PROFILES
+ progressionRotationProfile,JointProgression,GlobalCombatEngine,PROFILES,ARIEL
  };`,ctx);
 const A=ctx.sorc;
+const ariel=A.ARIEL.sorcerer;
 assert(A.ClassCombatModels.profile('sorcerer'),
  'Sorcerer missing from shared Mastery/Stigma/Specialty combat model');
 assert.equal(A.PROFILES.sorcerer.weave,'Flame Arrow');
