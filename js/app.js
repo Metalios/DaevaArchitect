@@ -645,7 +645,10 @@ function chooseCombatBoardRoute(provisional,stigma,gearRanks,target,baseCp,actua
       masteryStages(boardEffects.skills),budget('mastery'),masteryCost,names,1,
       isLeveling()?masteryRankCap:null);
     const build=engineBuild(funded.levels,boardEffects,stigma.levels,activeStigmas());
-    if(!isLeveling()&&account().context==='solo')build.macroLayout='mobile';
+    if(!isLeveling()){
+      build.macroLayout='flow';
+      build.objective=account().pveObjective;
+    }
     const performance=GlobalCombatEngine.tuneSpecialties(build,SPECS.sorcerer,
       account().customSpecialties||{});
     if(!best||performance.robustScore>best.score+1e-8)
@@ -666,7 +669,10 @@ function enhanceSorcererCombat(master,boardEffects,stigmas){
   // Solo level-45 / endgame rewards attacks that continue through movement.
   // Leveling remains a separate, forgiving sequence instead of being
   // scored as if its level-6 mobs were Nightmare bosses.
-  if(!isLeveling()&&a.context==='solo')prepared.macroLayout='mobile';
+  if(!isLeveling()){
+    prepared.macroLayout='flow';
+    prepared.objective=a.pveObjective;
+  }
   const objective=PVE_OBJECTIVES[a.pveObjective]?a.pveObjective:'performance';
   const scenarios=isLeveling()?GlobalCombatEngine.ENCOUNTERS:
     GlobalCombatEngine.scenariosFor(a.context,objective);
@@ -787,8 +793,8 @@ function model(){
                // Tune specialties for the selected goal's encounter window.
                const scenarios=isLeveling()?GlobalCombatEngine.ENCOUNTERS:
                  GlobalCombatEngine.scenariosFor(a.context,objective);
-               const mobileBuild=!isLeveling()&&a.context==='solo'
-                 ?{...build,macroLayout:'mobile'}:build;
+               const mobileBuild=!isLeveling()
+                 ?{...build,macroLayout:'flow',objective}:build;
                const evaluated=GlobalCombatEngine.tuneSpecialties(
                  mobileBuild,SPECS.sorcerer,a.customSpecialties||{},null,scenarios);
                return evaluated.robustScore+structuralTie;
@@ -1130,7 +1136,7 @@ function renderRotation(m){
     // use only Specialties actually available from purchased Mastery +
     // obtained board tiles + recorded gear, never a projected future pick.
     const actualSpecs=mobileSolo
-      ?Object.fromEntries(['Hellfire','Bittercold Wind',"Winter's Shackles"]
+      ?Object.fromEntries(['Hellfire','Bittercold Wind',"Winter's Shackles",'Frost Burst','Frost']
         .map(name=>[name,specPicks(name,skillLevelBreakdown(name,m).withOwned)]))
       :{};
     p.stacks=chosen.stacks.map(stack=>({...stack,
@@ -1148,11 +1154,11 @@ function renderRotation(m){
       }
     }
     p.rule=mobileSolo
-      ?'Nightmare mobile DPS: '+chosen.label+'. Flame Arrow on LMB, fire cooldowns on RMB Macro, full-charge Hellfire and buffs manual. Mobile Specialties permit casting specific attacks during movement; unavailable mobile perks never count as equipped.'
-      :'Easy Global Sorcerer: '+chosen.label+' (modeled selection). Keep LMB basic attacks and RMB Macro held, charge Hellfire and use offensive buffs manually.';
+      ?'Two-button Nightmare PvE: hold Flame Arrow (LMB) + the complete RMB macro. It repeats ready Blaze/Firestorm, mobile Frost follow-ups and equipped safe offensive Stigmas. Press charged Hellfire and Wish manually; keep defense and ground positioning reactive.'
+      :'Two-button PvE: hold LMB + RMB for conditional fire/Frost and safe offensive Stigmas. Charge Hellfire manually; only tactical buffs, defense and ground positioning need additional presses.';
     p.hotbarNote=(mobileSolo?'Nightmare movement-weighted setup: ':'Recommended ')+
       chosen.label+'. Available automatic steps: '+p.macro.join(' + ')+
-      '. Mobile skills that require future Daevanion levels are NOT auto-equipped early. Hellfire, Wish and offensive/defensive Stigmas remain manual. Occupied action time and stop/positioning costs are explicitly unmeasured sensitivity inputs.';
+      '. Missing mobile Specialties stay locked until actually obtained. Hellfire, Wish, emergency defenses and stationary ground placement stay manual; Element Enhancement and (except Burst goal) Delayed Explosion can cycle automatically when equipped. Macro attempts are not deterministic cast guarantees.';
   }
   const physicalHotkey=key=>key==='R'?quickUse2Bind:key;
   const displayKeyCopy=value=>quickUse2Bind==='T'?String(value).replace(/\bR\b/g,'T'):String(value);
