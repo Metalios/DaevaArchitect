@@ -40,7 +40,7 @@ for(const [goal,equipped] of Object.entries(loadouts)){
   assert(layout.stacks[1].skills.includes('Frost'));
   if(mobility)assert(layout.stacks[1].skills.includes('Frost Burst'));
   else assert(!layout.stacks[1].skills.includes('Frost Burst'));
-  const names=layout.stacks.flatMap(stack=>Array.from(stack.skills));
+  const names=Array.from(layout.stacks.flatMap(stack=>Array.from(stack.skills)));
   assert.equal(new Set(names).size,names.length,goal+': duplicate automatic action');
   for(const action of names)
    assert(!forbidden.has(action),'Forbidden held-macro action: '+action);
