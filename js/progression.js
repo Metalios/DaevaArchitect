@@ -290,6 +290,53 @@ function progressionNextBreakpoint(cls,mode,effectiveLevel,ownedCrystals,objecti
   ' remaining through Mastery, connected Daevanion nodes and recorded equipment). '+
   (ownedCrystals>=327?'Recheck the remaining route with your 327+ crystal budget.':'Keep recording earned and purchased Daevanion nodes.');
 }
+// Generate real manual hotbar slots from the FOUR equipped Global Stigmas,
+// not the generic Sorcerer preset. Skills already cast by a macro stack are
+// shown there instead. This prevents a selected ground Stigma from silently
+// vanishing when the moving-boss macro intentionally excludes it.
+function sorcererPveManualHotbar(equippedStigmas=[],automaticSkills=[],available=null){
+ const auto=new Set(automaticSkills);
+ const known=available?new Set(available):null;
+ const usable=name=>!known||known.has(name);
+ const choices=[...new Set(equippedStigmas)].filter(name=>
+   usable(name)&&!auto.has(name)).slice(0,4);
+ const stigmaCue=name=>{
+   if(name==='Element Enhancement')return 'Damage buff — manual burst alignment';
+   if(name==='Delayed Explosion')return 'Manual 4-second damage-amplification window before charged Hellfire';
+   if(name==='Fire Wall'||name==='Cold Storm')
+     return 'Manual ground placement ONLY while the boss stays inside its area';
+   if(name==='Divine Burst'||name==='Glacial Smite')
+     return 'Manual stagger damage when the boss presents a safe attack window';
+   if(['Steel Barrier','Arctic Armor','Hibernation'].includes(name))
+     return 'Emergency defensive skill — never spend automatically';
+   return 'Situational Stigma — timing and target selection remain manual';
+ };
+ const tone=name=>['Element Enhancement','Delayed Explosion'].includes(name)?'buff':
+   ['Steel Barrier','Arctic Armor','Hibernation'].includes(name)?'defense':
+   ['Fire Wall','Cold Storm','Divine Burst','Glacial Smite'].includes(name)?'attack':'utility';
+ const rows=[
+  [['Hellfire'],'Full-charge Hellfire manually; Skill Speed option 1 is priority at rank 8','attack'],
+  [['Wish of Concentration'],'Manual Attack / Combat Speed buff and cooldown reset timing','buff'],
+  ...choices.map(name=>[[name],stigmaCue(name),tone(name)])
+ ];
+ const used=new Set(rows.flatMap(([skills])=>skills));
+ for(const [name,cue] of [
+  ["Winter's Shackles",'Manual PvE damage window: align with Delayed Explosion and Hellfire'],
+  ['Bittercold Wind','Use when the boss will remain inside the summon area'],
+  ['Frost Burst','Conditional Frost hit: manually use only when Frost is active'],
+  ['Frost','Manual Frost setup when target is susceptible'],
+  ['Ice Chain','Optional mobile MP-cost attack; choose only when it fits the fight']
+ ]){
+  if(rows.length>=8)break;
+  if(!usable(name)||auto.has(name)||used.has(name))continue;
+  rows.push([[name],cue,'attack']);
+  used.add(name);
+ }
+ while(rows.length<8)rows.push([[],'Free manual key','utility']);
+ return rows.map(([skills,cue,tone],i)=>[
+   skills,skills.length?(i+1)+': '+cue:cue,tone
+ ]);
+}
 function progressionRotationProfile(base,cls,mode,effectiveLevel,equippedStigmas=[],specialtyEnabled=()=>false){
  const p={...base,stacks:base.stacks.map(s=>({...s,skills:[...s.skills]})),
   hotbar:base.hotbar.map(([skills,cue,tone])=>[[...skills],cue,tone])};
