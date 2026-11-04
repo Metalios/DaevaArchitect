@@ -1201,7 +1201,8 @@ function renderRotation(m){
   if(levelingMode && typeof buildLevelingCombat==='function'){
     const plan=buildLevelingCombat(state.class,level,a.context,SKILL_UNLOCKS[state.class],
       activeStigmas().slice(0,levelReward().slots),m.stigma.levels,
-      (name,option)=>specPicks(name,skillLevelBreakdown(name,m).withOwned).includes(option));
+      (name,option)=>specPicks(name,skillLevelBreakdown(name,m).withOwned).includes(option),
+      a.pveObjective);
     // Do not overwrite the current-level, unlock-gated Sorcerer macro
     // with the endgame damage simulator's speculative Q/E/R layout. The
     // actual skills, Stigmas and mobile Specialties above are authoritative.
