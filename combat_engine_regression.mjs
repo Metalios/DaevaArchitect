@@ -38,7 +38,7 @@ const withSpeed=engine.simulate(elevated,speedSpec,scenario);
 assert(withSpeed.combatSpeed>fast.combatSpeed);
 assert(Number.isFinite(withSpeed.score));
 const auto=engine.chooseMacro(build,speedSpec);
-assert(['compact','balanced','ground'].includes(auto.mode));
+assert(['mobile','mobile-extended','compact','balanced','ground'].includes(auto.mode));
 assert(auto.steps.length>=1&&auto.steps.length<=3);
 assert.equal(auto.steps[0],'Q');
 assert(auto.stacks.every(stack=>stack.skills.length<=4));
