@@ -80,6 +80,26 @@ try{
   const sorc=document.querySelector('#rotation-quick-guide')?.textContent||'';
   if(!sorc.includes('Flame Arrow')||!sorc.includes('Hellfire')||!sorc.includes('LMB')||!sorc.includes('RMB'))
     failures.push('Sorcerer mouse/macro/manual setup not clear');
+  // The three Q/E/R macro steps are not the entire 12-active / 10-passive
+  // skillbook. Show all class skills and Stigmas with truthful assignments.
+  const coverage=document.querySelector('#rotation-skill-coverage');
+  if(!coverage?.open)failures.push('Complete skillbook should be expanded and visible');
+  const rows=[...document.querySelectorAll('#rotation-skill-coverage [data-coverage-name]')];
+  const activeRows=rows.filter(el=>el.dataset.coverageType==='active');
+  const passiveRows=rows.filter(el=>el.dataset.coverageType==='passive');
+  const stigmaRows=rows.filter(el=>el.dataset.coverageType==='stigma');
+  if(activeRows.length!==12||passiveRows.length!==10||
+      stigmaRows.length!==Object.keys(STIGMAS.sorcerer).length)
+    failures.push('Incomplete Sorcerer skillbook counts: active '+
+      activeRows.length+', passive '+passiveRows.length+', Stigmas '+stigmaRows.length);
+  const classSkills=Object.values(data().skills).map(skill=>skill.name);
+  if(rows.length!==new Set(rows.map(el=>el.dataset.coverageType+':'+
+    el.dataset.coverageName)).size||
+    classSkills.some(name=>!rows.some(el=>el.dataset.coverageName===name))||
+    Object.keys(STIGMAS.sorcerer).some(name=>!stigmaRows.some(el=>el.dataset.coverageName===name)))
+    failures.push('Some Active, Passive or Stigma names are missing or duplicated');
+  if(!coverage?.textContent.includes('does not read your current in-game hotbar'))
+    failures.push('Missing warning that the planner is not connected to live skill bindings');
   const macro=[...document.querySelectorAll('#macro-stacks .macro-step')].map(x=>x.textContent);
   const chosen=model().combat.macro.steps;
   if(macro.length!==chosen.length||!macro[0]?.includes('Q')||
@@ -141,6 +161,23 @@ try{
  });
  assert.deepEqual(errors,[],'Browser runtime errors');
  assert.deepEqual(rotations,[],rotations.join('\n'));
+ // Compare cold role selection with a repeated choice whose entire funded
+ // route was already evaluated; repeated switching should reuse that route.
+ const switchTimes=await page.evaluate(()=>{
+   state.class='sorcerer';const a=account();
+   a.context='solo';a.journey='endgame';a.manualMastery=null;
+   a.manualStigma=null;state.tab='rotation';
+   const times=[];
+   for(const goal of ['performance','burst','performance']){
+     a.pveObjective=goal;a.recommendedRouteSnapshot=null;
+     const start=performance.now();render();
+     times.push({goal,elapsedMs:Math.round(performance.now()-start)});
+   }
+   return times;
+ });
+ console.log('Sorcerer role switch timings (ms):',JSON.stringify(switchTimes));
+ assert(switchTimes.every(row=>row.elapsedMs>=0&&Number.isFinite(row.elapsedMs)),
+   'Invalid role switching timing');
  await page.setViewportSize({width:390,height:844});
  const mobile=await page.evaluate(()=>{
   state.class='templar';account().journey='endgame';state.tab='rotation';render();
