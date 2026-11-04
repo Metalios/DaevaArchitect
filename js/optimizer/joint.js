@@ -425,6 +425,15 @@ const JointProgression = (()=>{
       (tone==='buff'||tone==='heal'||tone==='defense'||
        /manual|charge|heal|block|control|escape|buff/i.test(description||''))
         ?names:[])||[]);
+    // Sorcerer PvE intentionally moves repeatable offensive Stigmas into
+    // its held macro (and NOT charge/defense/toggle skills). Generic hotbar
+    // "buff" labels must not silently delete those explicitly chosen rows.
+    if(classId==='sorcerer'&&context!=='pvp'&&!String(context).startsWith('pvp-')){
+      const explicitlyAutomated=new Set((profile?.stacks||[])
+        .filter(stack=>!stack.manual).flatMap(stack=>stack.skills)
+        .filter(name=>name==='Element Enhancement'||name==='Delayed Explosion'));
+      for(const name of explicitlyAutomated)manual.delete(name);
+    }
     for(const name of MANUAL_MOTION)manual.add(name);
     if(classId==='spiritmaster'&&(specialties['Elemental Fusion']||[]).includes(4))
       manual.add('Elemental Fusion');
