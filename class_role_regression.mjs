@@ -14,6 +14,8 @@ vm.runInContext(read('js/optimizer/roles.js')+'\n'+
  '\nglobalThis.api={RoleBuildGoals,ClassCombatModels,PVE_OBJECTIVES};',ctx);
 const {RoleBuildGoals:roles,ClassCombatModels:models,PVE_OBJECTIVES:objectives}=ctx.api;
 assert.equal(Object.keys(classes).length,8);
+assert(models.profile('sorcerer'),'Sorcerer must participate in common PvP/survival mechanics');
+assert(models.profile('sorcerer').defense.includes('Robe of Earth'));
 for(const cls of Object.keys(classes)){
  const knownSkills=new Set(Object.values(classes[cls].skills).map(x=>x.name));
  const knownStigmas=new Set(Object.keys(stigmas[cls]));
@@ -50,8 +52,7 @@ for(const cls of Object.keys(classes)){
     assert(Number.isFinite(low.score)&&Number.isFinite(high.score));
     assert(high.score>low.score,cls+' '+name+' must reward actual selected focus skills');
   }else{
-    assert.equal(cls,'sorcerer','Only Sorcerer may use dedicated event engine');
-    assert(advised.core.includes('Ice Chain'));
+    assert.fail(cls+' is missing a shared combat profile; this must never silently bypass joint class scoring');
   }
  }
 }
