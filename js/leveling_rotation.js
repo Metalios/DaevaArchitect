@@ -44,7 +44,8 @@ const LEVELING_COMBAT={
   weave:'Flame Arrow',weaveKey:'LMB',key:'Q',
   // Same hands-free fire/Frost pattern as fresh45: two held mouse buttons,
   // earned mobile specialties only, safe offensive Stigmas automatically.
-  // Buff resets, charged Hellfire, CC, defensives and ground targets manual.
+  // Fully charged Hellfire, emergency skills and ground placement stay manual.
+  // Wish joins safe offensive buffs after its level-12 unlock, except Burst.
   stack:['Blaze','Firestorm'],
   upgradedAt:10,
   upgradedStacks:[
@@ -52,12 +53,12 @@ const LEVELING_COMBAT={
       stack:['Blaze','Firestorm']},
     {key:'E',label:'Frost / actually earned mobile follow-ups',macro:true,
       stack:['Frost Burst','Frost','Bittercold Wind',"Winter's Shackles"]},
-    {key:'R',label:'Safe equipped Stigma buffs',macro:true,
-      stack:['Element Enhancement','Delayed Explosion']}
+    {key:'R',label:'Offensive Stigmas → Wish last (except timed Burst)',macro:true,
+      stack:['Element Enhancement','Delayed Explosion','Wish of Concentration']}
   ],
   noCooldown:[],
   manual:['Hellfire','Wish of Concentration','Frost Burst','Bittercold Wind',"Winter's Shackles",'Ice Chain'],
-  focus:'Hold Flame Arrow on LMB + Macro on RMB to keep fire damage, Frost and safe offensive Stigmas flowing. Fully charge Hellfire on a single manual key; time Wish and situational defense/ground skills only as needed.'
+  focus:'Hold Flame Arrow LMB + Macro RMB for fire, Frost and safe offensive buffs. Wish is automated after the other buffs once unlocked; Burst keeps Wish/Delayed Explosion manual. Full-charge Hellfire and defensive or ground skills stay manual.'
  },
  spiritmaster:{
   weave:'Cold Shock',key:'Q',
@@ -78,7 +79,7 @@ const LEVELING_COMBAT={
   focus:'Onslaught stays outside the macro. Dark Crush needs a trigger; before its cooldown-removal Specialty, use one trigger and time other triggers manually.'
  }
 };
-function buildLevelingCombat(cls,level,context,unlocks,stigmaNames,stigmaLevels,specialtyEnabled=()=>false){
+function buildLevelingCombat(cls,level,context,unlocks,stigmaNames,stigmaLevels,specialtyEnabled=()=>false,objective='performance'){
  const plan=LEVELING_COMBAT[cls];if(!plan)return null;
  const stigma=(stigmaNames||[]).filter(name=>(stigmaLevels||{})[name]>0);
  const available=name=>(typeof unlocks[name]==='number'&&unlocks[name]<=level)||stigma.includes(name);
@@ -88,8 +89,8 @@ function buildLevelingCombat(cls,level,context,unlocks,stigmaNames,stigmaLevels,
    ?(plan.upgradedStacks&&level>=plan.upgradedAt?plan.upgradedStacks:
       [{key:plan.key,label:'Automatic damage',macro:true,stack:plan.stack}])
    :[]).map(group=>({...group,stack:[...group.stack]}));
- // Wish of Concentration is an intentional manual buff. Its cooldown-reset
- // Specialty can alter WHEN the player presses it, but never auto-casts it.
+ // Wish enters the cooldown-based buff column at its actual unlock;
+ // the Burst objective deliberately reserves Wish/Delayed for manual timing.
  const stacks=candidates.map(group=>({
    key:group.key,label:group.label,macro:group.macro!==false,
    stack:group.stack.filter(name=>{
@@ -101,6 +102,9 @@ function buildLevelingCombat(cls,level,context,unlocks,stigmaNames,stigmaLevels,
      if(cls==='sorcerer'){
        const mobile={'Frost Burst':2,'Bittercold Wind':2,"Winter's Shackles":1};
        if(mobile[name]&&!specialtyEnabled(name,mobile[name]))return false;
+       if(objective==='burst'&&
+          (name==='Wish of Concentration'||name==='Delayed Explosion'))
+         return false;
      }
      return true;
    }).slice(0,4)
