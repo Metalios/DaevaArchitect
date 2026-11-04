@@ -1178,6 +1178,103 @@ function renderStigma(m){
     return `<article class="stigma-card"><div class="stigma-head">${gameSkillIconMarkup(state.class,name,'stigma-card-game-icon')}<div><h3>${esc(name)}</h3><div class="sub">Equipped · ${esc(info?.base||'Class stigma')}</div></div><div class="lv">Lv ${lv}</div></div><div class="spec-row">${Object.entries(perks).map(([rank,label])=>`<span class="spec ${lv>=+rank?'on':'future'}">Lv ${rank}: ${esc(label)}</span>`).join('')}</div><div class="milestone">${Object.keys(perks).length?lv<20?`Next perk at Lv ${[5,10,15,20].find(x=>x>lv)}`:'All four perks unlocked':'Compare the level perks in game; this planner has not verified their text.'}</div></article>`}).join('');
 }
 function numbered(items){return items.map((v,i)=>`<li><span class="rotation-num">${String(i+1).padStart(2,'0')}</span><span>${esc(v)}</span></li>`).join('')}
+// The recommended macro deliberately uses only a subset of the skillbook.
+// Always show where the remaining skills went; this is NOT a live game import.
+function renderRotationSkillCoverage(m,p,stacks,hotbar,physicalHotkey){
+  if(state.tab!=='rotation')return;
+  const anchor=$('macro-stacks');
+  if(!anchor)return;
+  let host=$('rotation-skill-coverage');
+  if(!host){
+    host=document.createElement('details');
+    host.id='rotation-skill-coverage';
+    host.className='rotation-skill-coverage';
+    host.open=true;
+    anchor.insertAdjacentElement('afterend',host);
+  }
+  const skills=Object.values(data().skills).map(entry=>entry.name);
+  const active=skills.slice(0,12),passive=skills.slice(12);
+  const stigmas=Object.keys(STIGMAS[state.class]||{});
+  const selected=new Set(activeStigmas());
+  const automatic=new Map(),manual=new Map();
+  for(const stack of stacks.filter(s=>!s.manual))
+    stack.skills.forEach((name,row)=>automatic.set(name,{
+      key:physicalHotkey(stack.key),row
+    }));
+  hotbar.forEach(([names],index)=>names.forEach(name=>manual.set(name,index+1)));
+  const equippedRank=name=>m.stigma.levels[name]||0;
+  const status=(name,type)=>{
+    if(type==='passive')return ['Passive · no macro slot','passive'];
+    if(type==='stigma'&&!selected.has(name))return ['Not equipped','unassigned'];
+    if(type==='stigma'&&!equippedRank(name))return ['Selected · rank 0','warning'];
+    if(type==='active'&&isLeveling()&&(SKILL_UNLOCKS[state.class]?.[name]||1)>currentLevel())
+      return ['Unlocks at Lv '+SKILL_UNLOCKS[state.class][name],'unassigned'];
+    if(name===p.weave)return [(p.weaveKey||'LMB')+' · basic attack','weave'];
+    if(automatic.has(name)){
+      const slot=automatic.get(name);
+      return ['RMB · '+slot.key+' stack, row '+slot.row,'automatic'];
+    }
+    if(manual.has(name))return ['Manual key '+manual.get(name),'manual'];
+    if(name==='Defiance')return ['Space · manual control break','manual'];
+    return type==='stigma'
+      ?['Equipped · needs manual/stack slot','warning']
+      :['Situational · not on recommended bar','unassigned'];
+  };
+  const specialNotes={
+    'Hellfire':'Full-charge manually; keep its release clear of RMB.',
+    'Blaze':'Requires Fire Mark.',
+    'Frost Burst':'Requires a Frost trigger.',
+    'Flame Scattershot':'Only usable on Stagger.',
+    "Winter's Shackles":'Time PvE amplification near Hellfire when available.',
+    'Delayed Explosion':'Short damage amplification; manual burst timing.',
+    'Fire Wall':'Area attack: reliable only when the boss stays in the effect.',
+    'Cold Storm':'Area attack: reliable only when the boss stays in the effect.'
+  };
+  const signature=JSON.stringify([state.class,currentLevel(),account().context,
+    account().pveObjective,m.mastery.levels,m.stigma.levels,
+    m.acquiredEffects?.skills,account().gear,account().customSpecialties,
+    [...selected],[...automatic.entries()],[...manual.entries()],
+    physicalHotkey('R')]);
+  if(host.dataset.signature===signature)return;
+  host.dataset.signature=signature;
+  const card=(name,type)=>{
+    const [label,tone]=status(name,type);
+    const rank=type==='stigma'?equippedRank(name):(m.mastery.levels[name]||1);
+    const owned=type==='stigma'?null:skillLevelBreakdown(name,m).withOwned;
+    const levelCopy=type==='stigma'
+      ?'Recommended Stigma Lv '+rank:
+       'Planned Mastery '+rank+' · with obtained bonuses Lv '+owned;
+    const specs=type==='active'?specPicks(name,owned):[];
+    return '<li class="rotation-coverage-skill" data-coverage-type="'+type+
+      '" data-coverage-name="'+esc(name)+'" data-coverage-tone="'+tone+'">'+
+      '<span class="rotation-coverage-icon">'+
+        gameSkillIconMarkup(state.class,name,'rotation-coverage-art')+'</span>'+
+      '<span class="rotation-coverage-copy"><strong>'+esc(name)+'</strong>'+
+        '<small>'+esc(levelCopy)+'</small>'+
+        (specialNotes[name]?'<small>'+esc(specialNotes[name])+'</small>':'')+
+        (specs.length?'<small>Specialty choices: '+specs.join(', ')+'</small>':'')+
+      '</span><span class="rotation-coverage-state">'+esc(label)+'</span></li>';
+  };
+  const groups=[
+    ['active','Active skills',active],
+    ['passive','Passive skills',passive],
+    ['stigma','All class Stigmas',stigmas]
+  ];
+  host.innerHTML='<summary>Complete '+esc(p.name)+' skillbook · '+
+    active.length+' active / '+passive.length+' passive / '+
+    stigmas.length+' Stigmas</summary>'+
+    '<p class="rotation-coverage-intro">This lists every skill, including those '+
+    'not used by the suggested RMB macro or eight manual keys. '+
+    '<strong>The planner does not read your current in-game hotbar.</strong> '+
+    'Compare the proposed Q/E/R stacks above with what you have actually bound. '+
+    'Skills omitted from the macro are not necessarily weak or unusable.</p>'+
+    '<div class="rotation-coverage-groups">'+groups.map(([type,label,names])=>
+      '<section class="rotation-coverage-group" aria-label="'+esc(label)+'">'+
+      '<h4>'+esc(label)+' <span>'+names.length+'</span></h4>'+
+      '<ul class="rotation-coverage-list">'+names.map(name=>card(name,type)).join('')+
+      '</ul></section>').join('')+'</div>';
+  host.open=true;
+}
 function renderRotation(m){
   const a=account(),p=typeof progressionRotationProfile==='function' ? progressionRotationProfile(profile(),state.class,a.context,name=>skillLevelBreakdown(name,m).withOwned,activeStigmas().filter(name=>(m.stigma.levels[name]||0)>0),(name,option)=>specPicks(name,skillLevelBreakdown(name,m).withOwned).includes(option),a.pveObjective) : profile(),level=currentLevel(),levelingMode=isLeveling(),main=masteryStages()[0]?.[0]||skillNames()[0],macroKey=['RMB','Mouse 4','MMB','M'].includes(a.macroBind)?a.macroBind:'RMB',weaveKey=p.weaveKey||'LMB';
   const quickUse2Bind=a.quickUse2Bind==='T'?'T':'R';
@@ -1463,6 +1560,7 @@ function renderRotation(m){
   $('manual-keys').innerHTML=levelingMode?hotbar.flatMap(([skills,cue],i)=>skills.length?[`<div class="manual-key"><b>${i+1} · ${esc(skills.join(' / '))}</b><small>${esc(cue)}</small></div>`]:[]).join('')+(level>=16?'<div class="manual-key"><b>Space · Defiance</b><small>Break control or answer danger manually.</small></div>':''):
     useActualManual?hotbar.flatMap(([skills,cue],i)=>skills.length?[`<div class="manual-key"><b>${i+1} · ${esc(skills.join(' / '))}</b><small>${esc(cue)}</small></div>`]:[]).join(''):
     p.manual.map(v=>`<div class="manual-key"><b>${esc(v.split(' — ')[0])}</b><small>${esc(v.split(' — ')[1]||'Manual timing')}</small></div>`).join('');
+  renderRotationSkillCoverage(m,p,stacks,hotbar,physicalHotkey);
 }
 function renderBoards(m){
   const a=account(),nodes=nodeMap(),actual=obtainedNodes(),isAz=state.board==='Azphel',isAriel=state.board==='Ariel',group=isAz?'azphel':isAriel?'ariel':'crystals',crystalBudget=isAz?(a.azphel||0):isAriel?(a.ariel||0):budget('crystals'),route=plannedRoute(group),plan=isAz?m.azphel:isAriel?m.ariel:m.boards,steps=routeSteps(route,nodes),pendingSteps=steps.filter(x=>!actual.has(x.id)),queue=new Map(pendingSteps.slice(0,16).map((x,i)=>[x.id,i+1])),boardNext=pendingSteps.find(x=>x.board===state.board);
