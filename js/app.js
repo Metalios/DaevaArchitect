@@ -608,7 +608,8 @@ function engineBuild(masteryLevels,boardEffects,stigmaLevels,equipped){
     mastery:masteryLevels,boardSkills:boardEffects.skills,
     boardStats:boardEffects.stats,gearSkills:equippedRanks,
     gearStats,
-    stigma:stigmaLevels,equippedStigmas:equipped,pvpOpponent:account().pvpOpponent||'all',
+    stigma:stigmaLevels,equippedStigmas:equipped,
+    context:account().context,pvpOpponent:account().pvpOpponent||'all',
     availableSkills:Object.entries(SKILL_UNLOCKS[state.class]||{})
       .filter(([,at])=>at<=currentLevel()).map(([name])=>name)
   };
@@ -1145,7 +1146,7 @@ function renderRotation(m){
         .map(name=>[name,specPicks(name,skillLevelBreakdown(name,m).withOwned)]));
     // The visible macro may NOT cast an attack using a planned but
     // unpurchased mobility Specialty, even if the optimizer modeled it.
-    const movingFlow=chosen.mode==='flow'||mobileSolo;
+    const movingFlow=mobileSolo; // Group Conquest can deliberately use ground or stationary attacks.
     p.stacks=chosen.stacks.map(stack=>({...stack,
       skills:movingFlow?stack.skills.filter(name=>
         GlobalCombatEngine.isMobile(name,actualSpecs)):stack.skills}))
@@ -1169,12 +1170,30 @@ function renderRotation(m){
     const fireDifference=fireComparison?
       Math.abs((fireComparison.firestorm.robustScore/
         Math.max(1e-9,fireComparison.blaze.robustScore)-1)*100):null;
-    p.rule='Two-button '+(mobileSolo?'Nightmare Solo':'Group')+
-      ' PvE: hold LMB Flame Arrow + RMB Macro. Q priority: '+fireOrder+
-      '. E runs eligible Frost follow-ups. R handles equipped offensive Stigmas'+
-      (wishAutomatic?' then Wish (lowest priority on that line).':
-        '. Wish stays manual for burst alignment.')+
-      ' Release RMB briefly while manually FULL-charging Hellfire; never clip the release.';
+    p.rule='Two-button '+(mobileSolo?'Nightmare Solo':'Conquest Group')+
+      ' PvE: hold LMB Flame Arrow + RMB Macro. Fire priority: '+fireOrder+
+      (mobileSolo?'. E handles owned mobile follow-ups only.':
+        '. Q also uses Bittercold Wind; E places equipped ground damage while the boss is stable.')+
+      (wishAutomatic?' R maintains eligible sustained buffs and Wish.':
+        '. Time Wish and Delayed Explosion manually for Hellfire; do not waste their short windows.')+
+      ' Release RMB to FULL-charge Hellfire without clipping its release.';
+    p.summary=mobileSolo?
+      'Nightmare: mobile fire attacks on held LMB + RMB, with full-charge Hellfire and brief burst buffs manual.':
+      'Conquest: held LMB + RMB handles short-cooldown fire and ground damage on stable bosses; burst windows and dangerous mechanics are manual.';
+    p.opener=mobileSolo?
+      ['Hold LMB + RMB for mobile fire damage while dodging.',
+       'Use Element Enhancement and Delayed Explosion manually for a safe Hellfire burst; land Winter\\'s Shackles immediately before fully charged Hellfire when its PvE boost is selected.',
+       'If Wish has cooldown reset, press it after important attacks enter cooldown; use barriers before dangerous mechanics.']:
+      ['Hold LMB + RMB while the boss stays in range and inside ground effects.',
+       'Apply Element Enhancement, then coordinate Delayed Explosion / Winter\\'s Shackles before a full Hellfire release within the short amplification window.',
+       'With Wish cooldown reset equipped, press Wish after the major spells are on cooldown; stop ground automation when the boss moves.'];
+    p.loop=mobileSolo?
+      ['Keep mobile Q/E damage running while dodging.',
+       'Pause RMB for full Hellfire charge and timed burst; do not spam Delayed Explosion.',
+       'Cast ground spells only if the Nightmare boss remains in their area.']:
+      ['Maintain Q repeatable damage and E ground uptime while the Conquest boss is stationary.',
+       'Pause RMB during important boss mechanics and Hellfire charge.',
+       'Use short offensive buffs manually when they will amplify real hits.'];
     p.hotbarNote=(mobileSolo?'Nightmare movement scenario: ':'Group PvE scenario: ')+
       chosen.label+'. Macro steps: '+p.macro.join(' + ')+
       (fireDifference===null?'':'. Fire-order difference in uncalibrated model: '+
