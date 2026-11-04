@@ -111,25 +111,35 @@ the RMB macro repeatedly attempts these **whole hotbar columns**, not
 a guaranteed fixed action sequence. This is the fast, low-input route for
 leveling and fresh45/endgame PvE, including moving Nightmare bosses:
 
-1. **Q** bottom (row 0) **Blaze**, then **Firestorm**. Blaze is attempted
-   only while Fire Mark is active; Firestorm or held Flame Arrow supplies
-   the mark. Neither skill is charged, and both have five-second base CDs.
+1. **Q** uses **Blaze → Firestorm** or **Firestorm → Blaze**, chosen
+   by a scenario-specific comparison of complete cast timelines. Blaze
+   requires the Fire Mark supplied by Firestorm or held LMB Flame Arrow.
+   Both skills have five-second base cooldowns. The relative simulator
+   changes priority only when Firestorm-first wins by over 0.5%; its
+   coefficients and input timing are NOT measured Global DPS, and in-game
+   macro order is not guaranteed.
 2. **E** bottom **Frost Burst** only if its mobile Specialty is actually
    equipped; then **Frost**; then **Bittercold Wind** and **Winter's
    Shackles** only when their respective mobile Specialties are equipped.
    These are cooldown and conditional actions; do not add no-cooldown
    Ice Chain or Flame Scattershot here and starve your fire engine.
-3. **R** (Quick Use 2, optionally mapped from T) repeats equipped
-   **Element Enhancement**, then **Delayed Explosion** when present.
-   **Burst objective** keeps Delayed Explosion manual to align its four-
-   second damage bonus with the fully charged Hellfire hit. These are
-   offensive Stigmas with defined cooldowns, not emergency abilities.
-   A missing or unlearned offensive Stigma does not occupy an empty
-   macro step.
+3. **R** (Quick Use 2, optionally mapped from T) tries equipped
+   **Element Enhancement**, **Delayed Explosion**, then **Wish of
+   Concentration LAST** (after its level-12 unlock) in continuous PvE.
+   With Wish's effective-level-16 Specialty, a cooldown reset removes
+   up to 10 seconds from skills **already cooling down**. The macro
+   cannot actually inspect other skill cooldowns, and auto-Wish may waste
+   some reset value. The simulator compares automatic and manually timed
+   Wish, reporting effective cooldown seconds, buff uptime, modeled
+   damage and manual actions per minute.
+   **Burst objective** keeps BOTH Wish and Delayed Explosion manual
+   for the short four-second amplification / fully charged Hellfire
+   window. No protection or ground spell belongs on automatic R.
 
-**Manually press only when necessary:** Hellfire on 1 (hold to a complete
-charge before releasing), Wish of Concentration on 2 for its Attack buff
-and timing-sensitive cooldown reset, defensive Stigmas, and ground skills
+**Manually press only when necessary:** Hellfire (hold to a complete
+charge, briefly releasing RMB to prevent an interrupted charge);
+**Burst-only** manually coordinated Wish and Delayed Explosion; defensive
+Stigmas and ground skills
 (Fire Wall/Cold Storm) during real stationary boss windows. A control or
 stagger utility remains on a situational key. All other equipped Stigmas
 are represented in one place: either the held macro or the manual bar,
@@ -166,8 +176,9 @@ documented above. Its visible Q/E/R hotbar checks obtained-board skill levels
 (not just future blue planned nodes), preserving the real unlock gate.
 
 The 1–8 hotbar is rebuilt from the **actual four equipped Stigmas**:
-1 = manual full-charge Hellfire, 2 = manual Wish of Concentration;
-only equipped Stigmas **not already automated** get additional manual keys.
+manual 1 = full-charge Hellfire. Continuous PvE gives Wish NO extra
+manual key because it is already in R; Burst assigns Wish its own
+manual key. Only equipped Stigmas **not already automated** get keys.
 For example, the Solo Sustained DPS bar no longer asks for manual Element
 Enhancement/Delayed Explosion on every cooldown; it still has direct manual
 Fire Wall and Cold Storm for stable target windows. No equipped Stigma is
