@@ -64,10 +64,15 @@ for(const goal of ['performance','sustained','burst','survivability','control'])
  assert(Number.isFinite(wished.automatic.robustScore));
  assert(Number.isFinite(wished.timedManual.robustScore));
  assert.equal(wished.selected,auto?'automatic':'timedManual');
- assert(wished.automatic.manualPerMinute<wished.timedManual.manualPerMinute,
-   'Continuous automatic Wish must eliminate at least one routine manual action');
- assert(wished.automatic.wishCastsAuto>0,
-   'Automatic Wish must actually fire during the modeled fight');
+ if(auto){
+  assert(wished.automatic.manualPerMinute<wished.timedManual.manualPerMinute,
+    'Continuous automatic Wish must eliminate at least one routine manual action');
+  assert(wished.automatic.wishCastsAuto>0,
+    'Automatic Wish must actually fire during the modeled fight');
+ }else{
+  assert.equal(wished.automatic.wishCastsAuto,0,
+    'Burst objective must not automate Wish even for a counterfactual flag');
+ }
  assert.equal(wished.timedManual.wishCastsAuto,0);
  assert(wished.automatic.wishResetSeconds>=0&&
    wished.timedManual.wishResetSeconds>=0);
