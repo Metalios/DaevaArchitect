@@ -389,8 +389,8 @@ const GlobalCombatEngine=(()=>{
         else now+=macroStepOverhead;
       }
       if(!eligible(name)){name='Flame Arrow';skippedForMp++}
-      if(name==='Wish of Concentration'&&macroSkills.has(name))wishCastsAuto++;
       if(cast(name)===false)break;
+      if(name==='Wish of Concentration'&&macroSkills.has(name))wishCastsAuto++;
       if(!Number.isFinite(damage)||!Number.isFinite(now))throw Error('Invalid combat simulation state');
     }
     settle(scenario.duration);
@@ -484,12 +484,35 @@ const GlobalCombatEngine=(()=>{
     return {selected,variants,switchMargin,
       evidence:'Uncalibrated Global timing sensitivity, not measured DPS or guaranteed cast order'};
   }
+  function compareWishAutomation(build,specialties,scenarios=ENCOUNTERS,
+      firePriority='blaze'){
+    const result={};
+    const weightedMetric=(samples,key)=>sum(samples.map(item=>
+      (item[key]||0)*item.weight))/(sum(samples.map(item=>item.weight))||1);
+    for(const [policy,autoWish] of [['automatic',true],['timedManual',false]]){
+      const sample=evaluate({...build,macroLayout:'flow',autoWish,firePriority},
+        specialties,scenarios);
+      result[policy]={
+        robustScore:sample.robustScore,modeledDamage:sample.score,
+        manualPerMinute:sample.manualPerMinute,
+        wishResetSeconds:weightedMetric(sample.samples,'wishResetSeconds'),
+        wishResetTargets:weightedMetric(sample.samples,'wishResetTargets'),
+        wishBuffUptime:weightedMetric(sample.samples,'wishBuffUptime'),
+        wishCastsAuto:weightedMetric(sample.samples,'wishCastsAuto'),
+        incompleteActions:weightedMetric(sample.samples,'incompleteActions')
+      };
+    }
+    return {...result,selected:build.objective==='burst'?'timedManual':'automatic',
+      evidence:'Relative combat model, not observed cooldown logs. Automatic macro cannot test whether other skills are cooling down.'};
+  }
   function chooseMacro(build,specialties,scenarios=ENCOUNTERS){
     let winner=null;
     const nightmare=scenarios.some(s=>String(s.id||'').startsWith('nightmare-'));
     const choices=build.macroLayout==='flow'||nightmare?['flow']:
       ['flow','mobile','mobile-extended','compact','balanced','ground'];
     const fireComparison=compareFirePriority(build,specialties,scenarios);
+    const wishComparison=compareWishAutomation(build,specialties,scenarios,
+      fireComparison.selected);
     for(const mode of choices){
       const priority=mode==='flow'?fireComparison.selected:'blaze';
       const variantBuild={...build,macroLayout:mode,firePriority:priority};
@@ -501,13 +524,11 @@ const GlobalCombatEngine=(()=>{
       if(!layout.steps.length)continue;
       if(mode==='ground'&&!['Fire Wall','Cold Storm']
         .some(name=>hasStigma(build,name)))continue;
-      const data=mode==='flow'
-        ?evaluate(variantBuild,specialties,scenarios)
-        :evaluate(variantBuild,specialties,scenarios);
+      const data=evaluate(variantBuild,specialties,scenarios);
       const adjusted=data.robustScore*(1-.002*(layout.steps.length-1));
       if(!winner||adjusted>winner.adjusted+1e-8)
         winner={...layout,mode,adjusted,...data,
-          firePriority:priority,fireComparison};
+          firePriority:priority,fireComparison,wishComparison};
     }
     return winner;
   }
@@ -572,7 +593,7 @@ const GlobalCombatEngine=(()=>{
   }
   return Object.freeze({SOURCE,ACTIONS,ENCOUNTERS,legalOptions,slots,effective,
     MACRO_LAYOUTS,NIGHTMARE_ENCOUNTERS,scenariosFor,isMobile,MOBILE_SPECIALTIES,
-    CONTINUOUS_OFFENSE,flowLayout,compareFirePriority,
+    CONTINUOUS_OFFENSE,flowLayout,compareFirePriority,compareWishAutomation,
     FIRESTORM_PROJECTILES,firestormHellfireCooldownReduction,
     chooseMacro,simulate,evaluate,tuneSpecialties,refineMastery,scoreMastery});
 })();
