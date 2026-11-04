@@ -142,21 +142,21 @@ const ClassCombatModels=(()=>{
    },
    solo:{
      performance:{
-       core:['Hellfire','Wish of Concentration','Firestorm','Robe of Earth','Absorb Essence','Blaze',"Winter's Shackles"],
+       core:['Firestorm','Blaze','Hellfire','Wish of Concentration','Robe of Earth','Absorb Essence',"Winter's Shackles"],
        support:['Grace of Enhancement','Robe of Flame','Fire Mark','Cold Snap','Grace of Resistance'],
        stigmas:['Element Enhancement','Delayed Explosion','Steel Barrier','Fire Wall'],
        priority:['Element Enhancement','Steel Barrier','Delayed Explosion','Fire Wall'],
        why:'Level-45 Solo PvE means Nightmare boss progression and Ascension Trials, not quest leveling. Keep a manual Steel Barrier against boss damage, retain Hellfire and the Delayed Explosion window, and use Fire Wall only when the target stays in it. Prioritize survivable kills over static dummy DPS.'
      },
      sustained:{
-       core:['Firestorm','Bittercold Wind','Flame Arrow','Blaze','Wish of Concentration','Hellfire','Robe of Flame'],
+       core:['Firestorm','Blaze','Flame Arrow','Bittercold Wind','Wish of Concentration','Hellfire','Robe of Flame'],
        support:['Fire Mark','Grace of Enhancement','Absorb Essence','Robe of Earth'],
        stigmas:['Element Enhancement','Delayed Explosion','Fire Wall','Cold Storm'],
        priority:['Element Enhancement','Fire Wall','Delayed Explosion','Cold Storm'],
        why:'Solo endgame sustained damage: deliberately sacrifice the Steel Barrier slot for all four offensive Stigmas. This is a riskier Nightmare speed-clear option, not the recommended safety setup for undergeared progression.'
      },
      burst:{
-       core:['Hellfire','Wish of Concentration',"Winter's Shackles",'Blaze','Firestorm','Robe of Flame','Fire Mark'],
+       core:['Hellfire','Firestorm','Blaze','Wish of Concentration',"Winter's Shackles",'Robe of Flame','Fire Mark'],
        support:['Robe of Earth','Absorb Essence','Grace of Enhancement','Cold Snap'],
        stigmas:['Element Enhancement','Delayed Explosion','Divine Burst','Steel Barrier'],
        priority:['Element Enhancement','Delayed Explosion','Steel Barrier','Divine Burst'],
