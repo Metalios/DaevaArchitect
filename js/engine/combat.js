@@ -430,7 +430,7 @@ const GlobalCombatEngine=(()=>{
     // for deliberate safe windows; do not let their theoretical dummy damage
     // win the always-on macro choice.
     const nightmare=scenarios.some(s=>String(s.id||'').startsWith('nightmare-'));
-    const choices=nightmare?['flow']:
+    const choices=build.macroLayout==='flow'||nightmare?['flow']:
       ['flow','mobile','mobile-extended','compact','balanced','ground'];
     for(const mode of choices){
       const layout=mode==='flow'?flowLayout(build,specialties):
