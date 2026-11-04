@@ -354,7 +354,15 @@ const GlobalCombatEngine=(()=>{
   }
   function chooseMacro(build,specialties,scenarios=ENCOUNTERS){
     let winner=null;
-    for(const mode of ['mobile','mobile-extended','compact','balanced','ground']){
+    // Nightmares demand movement between boss mechanics. Automatic stacks
+    // must NEVER trigger an attack that roots the Sorcerer unless its actual
+    // mobile Specialty is equipped. Stationary attacks remain manual options
+    // for deliberate safe windows; do not let their theoretical dummy damage
+    // win the always-on macro choice.
+    const nightmare=scenarios.some(s=>String(s.id||'').startsWith('nightmare-'));
+    const choices=nightmare?['mobile','mobile-extended']:
+      ['mobile','mobile-extended','compact','balanced','ground'];
+    for(const mode of choices){
       const layout=['mobile','mobile-extended'].includes(mode)
         ?mobileLayout(specialties,mode==='mobile-extended')
         :MACRO_LAYOUTS[mode];
