@@ -56,6 +56,10 @@ const GlobalCombatEngine=(()=>{
     return base;
   }
   const MACRO_LAYOUTS=Object.freeze({
+    // All Q skills below can be used on the move without a specialty.
+    // Do not automate a channel/ground placement in a forced-dodge window.
+    mobile:{label:'Continuous mobile Firestorm / Blaze',steps:['Q'],
+      stacks:[{key:'Q',title:'Moving fire damage',skills:['Firestorm','Blaze']}]},
     compact:{label:'One-stack Q',steps:['Q'],
       stacks:[{key:'Q',title:'Compact cooldown damage',skills:['Firestorm','Blaze','Bittercold Wind',"Winter's Shackles"]}]},
     balanced:{label:'Two-stack Q / E',steps:['Q','E'],
@@ -68,6 +72,26 @@ const GlobalCombatEngine=(()=>{
   });
   const CORE=['Firestorm','Blaze','Hellfire','Wish of Concentration','Bittercold Wind',"Winter's Shackles",'Flame Arrow'];
   const SPEC_KEYS=['Firestorm','Hellfire','Blaze','Wish of Concentration',"Winter's Shackles",'Flame Arrow','Bittercold Wind'];
+  // AION 2 Global mobile defaults and exact rank-8 mobile Specialty ids.
+  // This answers whether the caster can keep moving while USING a skill.
+  // It does not prove animation frames or real boss damage uptime.
+  const DEFAULT_MOBILE=new Set(['Flame Arrow','Firestorm','Blaze','Frost',
+    'Wish of Concentration','Element Enhancement','Delayed Explosion']);
+  const MOBILE_SPECIALTIES=Object.freeze({
+    'Hellfire':3,'Bittercold Wind':2,"Winter's Shackles":1,
+    'Frost Burst':2,'Flame Scattershot':3
+  });
+  const isMobile=(name,spec={})=>
+    DEFAULT_MOBILE.has(name)||
+    (MOBILE_SPECIALTIES[name]!==undefined&&has(spec,name,MOBILE_SPECIALTIES[name]));
+  const mobileLayout=(spec,extended=false)=>{
+    const extra=extended?['Bittercold Wind',"Winter's Shackles"]
+      .filter(name=>isMobile(name,spec)):[];
+    return {label:extra.length?'Mobile fire + mobile-specialty follow-ups':'Continuous mobile Firestorm / Blaze',
+      steps:extra.length?['Q','E']:['Q'],
+      stacks:[{key:'Q',title:'Moving fire cooldowns',skills:['Firestorm','Blaze']},
+        ...(extra.length?[{key:'E',title:'Only mobile-specialty follow-ups',skills:extra}]:[])]};
+  };
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,Number(v)||0));
   const sum=items=>items.reduce((acc,n)=>acc+n,0);
   const effective=(build,name)=>clamp((build.mastery[name]||1)+(build.boardSkills[name]||0)+(build.gearSkills[name]||0),1,40);
@@ -119,7 +143,8 @@ const GlobalCombatEngine=(()=>{
     let now=0,damage=0,mp=2000,fireMarkUntil=0,frostUntil=0,staggerUntil=0,
       wishBuffUntil=0,elementBuffUntil=0,delayedUntil=0,
       pveBuffUntil=0,combatBuffUntil=0,manualActions=0,missedGround=0,
-      skippedForMp=0,unavailable=0,castTime=0,fireMarkProcReady=0;
+      skippedForMp=0,unavailable=0,castTime=0,fireMarkProcReady=0,
+      forcedStopTime=0,stationaryCastTime=0,mobileCastTime=0;
     // Event queue preserves the four-second delayed hit and one-second
     // periodic damage rather than pretending every effect is instantaneous.
     const pending=[];
@@ -137,7 +162,9 @@ const GlobalCombatEngine=(()=>{
         record(next.name,next.amount,next.at);
       }
     };
-    const macro=MACRO_LAYOUTS[build.macroLayout]||MACRO_LAYOUTS.ground;
+    const macro=['mobile','mobile-extended'].includes(build.macroLayout)
+      ?mobileLayout(spec,build.macroLayout==='mobile-extended')
+      :(MACRO_LAYOUTS[build.macroLayout]||MACRO_LAYOUTS.ground);
     const macroStacks=macro.steps.map(key=>macro.stacks.find(stack=>stack.key===key))
       .filter(Boolean);
     let macroCursor=0;
@@ -157,8 +184,17 @@ const GlobalCombatEngine=(()=>{
     const reduceCooldown=(name,seconds)=>{cd[name]=Math.max(now,(cd[name]||0)-seconds)};
     const cast=name=>{
       const act=ACTIONS[name],current=effective(build,name),rankBonus=1+.035*(current-1),
-        time=speedTime(name),movement=scenario.movement||0;
-      now+=time;castTime+=time;settle(now);
+        time=speedTime(name),movement=scenario.movement||0,
+        mobile=isMobile(name,spec);
+      // A mobile attack keeps dealing damage during required dodges. A
+      // stationary cast requires a stop/positioning window and costs extra
+      // opportunity time. The multiplier is an explicitly UNMEASURED
+      // sensitivity parameter, not a claim about Global animation frames.
+      const stopCost=mobile?0:time*movement*
+        (name==='Hellfire'?1.45:1.0);
+      forcedStopTime+=stopCost;
+      if(mobile)mobileCastTime+=time;else stationaryCastTime+=time;
+      now+=time+stopCost;castTime+=time;settle(now);
       if(act.mp>=0)mp-=act.mp;else mp=Math.min(3000,mp-act.mp);
       // Unmeasured damage is normalized for comparative build ranking.
       let multiplier=rankBonus*(1+damageBoost+attackBonus);
@@ -186,7 +222,8 @@ const GlobalCombatEngine=(()=>{
       if(wishBuffUntil>now)multiplier*=1.1+(has(spec,'Wish of Concentration',2)?.1:0);
       if(elementBuffUntil>now)multiplier*=1.20;
       if(pveBuffUntil>now)multiplier*=1.2;
-      if(name==='Hellfire'&&movement>0&&!has(spec,'Hellfire',3))multiplier*=1-movement*.22;
+      // Nonmobile Hellfire is already penalized by the opportunity cost
+      // of stopping. Do not double-charge it with an arbitrary damage loss.
       if(act.ground){multiplier*=1-movement*.65;missedGround+=movement}
       const done=act.power*multiplier;
       if(name==='Delayed Explosion'){
@@ -275,6 +312,7 @@ const GlobalCombatEngine=(()=>{
     return {score:damage/scenario.duration,damage,damageBySkill,counts,manualActions,
       manualPerMinute:manualActions*60/scenario.duration,mpFinal:mp,castTime,
       missedGround,skippedForMp,unavailable,combatSpeed,cooldownReduction,damageBoost,
+      forcedStopTime,stationaryCastTime,mobileCastTime,
       units:'relative damage units per second (not measured DPS)'};
   }
   function evaluate(build,spec,scenarios=ENCOUNTERS){
@@ -316,8 +354,11 @@ const GlobalCombatEngine=(()=>{
   }
   function chooseMacro(build,specialties,scenarios=ENCOUNTERS){
     let winner=null;
-    for(const mode of ['compact','balanced','ground']){
-      const layout=MACRO_LAYOUTS[mode];
+    for(const mode of ['mobile','mobile-extended','compact','balanced','ground']){
+      const layout=['mobile','mobile-extended'].includes(mode)
+        ?mobileLayout(specialties,mode==='mobile-extended')
+        :MACRO_LAYOUTS[mode];
+      if(mode==='mobile-extended'&&layout.steps.length===1)continue;
       if(mode==='ground'&&!['Fire Wall','Cold Storm'].some(name=>hasStigma(build,name)))continue;
       const data=evaluate({...build,macroLayout:mode},specialties,scenarios);
       // Complexity cost is only a tie-breaker for setup burden. Actual
@@ -388,5 +429,6 @@ const GlobalCombatEngine=(()=>{
     return {levels:mastery,spent,score:best,passes:passes-1,upgrades};
   }
   return Object.freeze({SOURCE,ACTIONS,ENCOUNTERS,legalOptions,slots,effective,
-    MACRO_LAYOUTS,NIGHTMARE_ENCOUNTERS,scenariosFor,chooseMacro,simulate,evaluate,tuneSpecialties,refineMastery,scoreMastery});
+    MACRO_LAYOUTS,NIGHTMARE_ENCOUNTERS,scenariosFor,isMobile,MOBILE_SPECIALTIES,
+    chooseMacro,simulate,evaluate,tuneSpecialties,refineMastery,scoreMastery});
 })();
