@@ -89,15 +89,17 @@ try{
      document.querySelector('#leveling-stack')?.textContent.includes('Hellfire'))
     failures.push('Sorcerer level 11: wrong locked damage sequence');
   state.class='sorcerer';a=account();a.journey='leveling';a.context='solo';leveling().level=31;render();
-  const expectedSorc=model().combat.macro.steps;
+  const m31=model();
+  const expectedSorc=buildLevelingCombat('sorcerer',31,'solo',
+    SKILL_UNLOCKS.sorcerer,activeStigmas().slice(0,levelReward().slots),
+    m31.stigma.levels,(name,opt)=>specPicks(name,effective(name,m31)).includes(opt)).steps;
   const actualSorc=[...document.querySelectorAll('#leveling-stacks [data-stack-role="macro"]')].map(el=>el.dataset.stackKey);
-  if(!actualSorc.length||actualSorc.length>3||
-     actualSorc.some(key=>!expectedSorc.includes(key)))
-    failures.push('Sorcerer Lv31 visible macro must use feasible optimized Q/E/R subset');
+  if(actualSorc.join(',')!==expectedSorc.join(','))
+    failures.push('Sorcerer Lv31 must show its real unlocked Q/E/safe Stigma macro, not a separate endgame simulation');
   if(!document.querySelector('#leveling-manual [data-manual-key="1"]')?.textContent.includes('Hellfire'))
     failures.push('Sorcerer Lv31 manual key 1 should charge Hellfire');
-  if(['Hellfire','Wish of Concentration','Element Enhancement','Delayed Explosion'].some(name=>[...document.querySelectorAll('#leveling-stacks [data-leveling-skill]')].some(node=>node.dataset.levelingSkill===name)))
-    failures.push('Sorcerer Lv31: charged Hellfire or buff included in macro');
+  if(['Hellfire','Wish of Concentration','Fire Wall','Cold Storm'].some(name=>[...document.querySelectorAll('#leveling-stacks [data-leveling-skill]')].some(node=>node.dataset.levelingSkill===name)))
+    failures.push('Sorcerer Lv31: charged, reset or ground skill incorrectly automated');
   if(!document.querySelector('#leveling-manual [data-manual-key="2"]')?.textContent.includes('Wish of Concentration'))
     failures.push('Sorcerer Lv31: Wish buff should be manual on 2');
   if(!document.querySelector('#leveling-stacks')?.textContent.includes('Firestorm'))
@@ -117,13 +119,13 @@ try{
   if(account().quickUse2Bind!=='T'||document.querySelector('#quick-use-2-bind').value!=='T'||
      !document.querySelector('#rotation-stack-bindings')?.textContent.includes('Q · E · T'))
     failures.push('Changing Quick Use 2 from remapped R to original T did not update/re-render');
-  const groundPlan=buildLevelingCombat('sorcerer',45,'party',SKILL_UNLOCKS.sorcerer,
-    ['Fire Wall'],{'Fire Wall':5});
+  const buffPlan=buildLevelingCombat('sorcerer',45,'party',SKILL_UNLOCKS.sorcerer,
+    ['Element Enhancement','Fire Wall'],{'Element Enhancement':5,'Fire Wall':5});
   const sample=document.createElement('div');
-  sample.innerHTML=renderLevelingCombatMarkup(groundPlan,'RMB',account().quickUse2Bind);
+  sample.innerHTML=renderLevelingCombatMarkup(buffPlan,'RMB',account().quickUse2Bind);
   if(!sample.querySelector('[data-stack-key="T"]')||
      ![...sample.querySelectorAll('#leveling-macro-step kbd')].some(k=>k.textContent==='T'))
-    failures.push('Leveling R-based ground macro should display physical T when not remapped');
+    failures.push('Leveling R-based offensive Stigma macro should display physical T when not remapped');
   const resetQuickUse2=document.querySelector('#quick-use-2-bind');
   resetQuickUse2.value='R';resetQuickUse2.dispatchEvent(new Event('change',{bubbles:true}));
   if(account().quickUse2Bind!=='R'||!document.querySelector('#rotation-control-status')?.textContent.includes('Q/E/R'))
