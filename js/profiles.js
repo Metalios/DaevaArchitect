@@ -122,7 +122,7 @@ const PROFILES = {
       'Defiance (Space) — control break'],
     hotbar:[
       [['Hellfire'],'1: Hold to fully charge, then release','attack'],
-      [['Wish of Concentration'],'2: Manual offensive buff / cooldown-reset timing','buff'],
+      [['Bittercold Wind'],'2: Manually place on stable targets unless its mobile Specialty is equipped','attack'],
       [['Ice Chain'],'3: Optional manual control/MP trade-off','utility'],
       [['Flame Scattershot'],'4: Stagger-only manual finisher','attack'],
       [["Winter's Shackles"],'5: Manual burst amplification until mobile Specialty is equipped','attack'],
