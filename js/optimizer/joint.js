@@ -169,6 +169,13 @@ const JointProgression = (()=>{
     if(pvp&&/PvE|BossNpc/.test(key))scale=.02;
     if(!pvp&&/^PvP|^Abnormal/.test(key))scale=.01;
     if(objective==='survivability'&&/Defense|DecreaseDamage|Resist|HPMax|Evasion/.test(key))scale*=2.2;
+    // Ariel unlocks at 45 and is a separate PvE currency. Solo endgame
+    // requires surviving Nightmare mechanics; it must not inherit the exact
+    // same stat bias as a guarded five-player boss run.
+    if(context==='solo'&&/Defense|DecreaseDamage|Resist|HPMax|Evasion/.test(key))
+      scale*=objective==='survivability'?1.8:
+        objective==='performance'?1.6:objective==='control'?1.45:
+          objective==='burst'?1.2:1.0;
     if(objective==='burst'&&/Amplify|AddDamage|Critical|CombatSpeed/.test(key))scale*=1.8;
     if(objective==='sustained'&&/CoolTimeDecrease|CombatSpeed|Accuracy|AddDamage/.test(key))scale*=1.65;
     if(role==='healer'&&/HPMax|Defense|DecreaseDamage/.test(key))scale*=1.5;

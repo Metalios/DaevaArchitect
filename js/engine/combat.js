@@ -27,6 +27,10 @@ const GlobalCombatEngine=(()=>{
     'Wish of Concentration':{cd:60,occupied:.60,power:0,mp:100,mode:'manual-buff',speed:'combat'},
     'Element Enhancement':{cd:60,occupied:.60,power:0,mp:0,mode:'manual-buff',speed:'combat'},
     'Delayed Explosion':{cd:30,occupied:.65,power:.60,mp:200,mode:'manual-debuff',speed:'combat'},
+    // 60s Global base cooldown and 50 Stagger on the target. Triggered
+    // manually during a meaningful boss stagger/short burst opportunity;
+    // direct relative damage and action lock remain uncalibrated.
+    'Divine Burst':{cd:60,occupied:.68,power:.75,mp:200,mode:'manual-stagger',speed:'combat'},
     // Immediate power plus delayed ground DoT are uncalibrated relative
     // damage units; the 1s tick and 10s durations are from Global tooltips.
     'Fire Wall':{cd:60,occupied:.72,power:.65,mp:200,mode:'macro',speed:'combat',ground:true,dot:{ticks:10,every:1,power:.065}},
@@ -37,7 +41,25 @@ const GlobalCombatEngine=(()=>{
     {id:'mobile',duration:180,movement:.35,weight:.3,animation:1.15},
     {id:'short',duration:30,movement:.08,weight:.2,animation:.9}
   ];
+  // Solo level-45 is Nightmare and Ascension Trial progression, not
+  // campaign trash leveling. Movement is a transparent sensitivity
+  // parameter; exact boss uptime/animation traces are NOT yet measured.
+  const NIGHTMARE_ENCOUNTERS=Object.freeze([
+    {id:'nightmare-boss',duration:180,movement:.38,weight:.55,animation:1.12},
+    {id:'nightmare-mobile-boss',duration:180,movement:.60,weight:.30,animation:1.16},
+    {id:'nightmare-burst-window',duration:30,movement:.28,weight:.15,animation:1.08}
+  ]);
+  function scenariosFor(context,goal='performance'){
+    const base=context==='solo'?NIGHTMARE_ENCOUNTERS:ENCOUNTERS;
+    if(goal==='burst')return [base[2]];
+    if(goal==='sustained')return base.slice(0,2);
+    return base;
+  }
   const MACRO_LAYOUTS=Object.freeze({
+    // All Q skills below can be used on the move without a specialty.
+    // Do not automate a channel/ground placement in a forced-dodge window.
+    mobile:{label:'Continuous mobile Firestorm / Blaze',steps:['Q'],
+      stacks:[{key:'Q',title:'Moving fire damage',skills:['Firestorm','Blaze']}]},
     compact:{label:'One-stack Q',steps:['Q'],
       stacks:[{key:'Q',title:'Compact cooldown damage',skills:['Firestorm','Blaze','Bittercold Wind',"Winter's Shackles"]}]},
     balanced:{label:'Two-stack Q / E',steps:['Q','E'],
@@ -50,6 +72,26 @@ const GlobalCombatEngine=(()=>{
   });
   const CORE=['Firestorm','Blaze','Hellfire','Wish of Concentration','Bittercold Wind',"Winter's Shackles",'Flame Arrow'];
   const SPEC_KEYS=['Firestorm','Hellfire','Blaze','Wish of Concentration',"Winter's Shackles",'Flame Arrow','Bittercold Wind'];
+  // AION 2 Global mobile defaults and exact rank-8 mobile Specialty ids.
+  // This answers whether the caster can keep moving while USING a skill.
+  // It does not prove animation frames or real boss damage uptime.
+  const DEFAULT_MOBILE=new Set(['Flame Arrow','Firestorm','Blaze','Frost',
+    'Wish of Concentration','Element Enhancement','Delayed Explosion']);
+  const MOBILE_SPECIALTIES=Object.freeze({
+    'Hellfire':3,'Bittercold Wind':2,"Winter's Shackles":1,
+    'Frost Burst':2,'Flame Scattershot':3
+  });
+  const isMobile=(name,spec={})=>
+    DEFAULT_MOBILE.has(name)||
+    (MOBILE_SPECIALTIES[name]!==undefined&&has(spec,name,MOBILE_SPECIALTIES[name]));
+  const mobileLayout=(spec,extended=false)=>{
+    const extra=extended?['Bittercold Wind',"Winter's Shackles"]
+      .filter(name=>isMobile(name,spec)):[];
+    return {label:extra.length?'Mobile fire + mobile-specialty follow-ups':'Continuous mobile Firestorm / Blaze',
+      steps:extra.length?['Q','E']:['Q'],
+      stacks:[{key:'Q',title:'Moving fire cooldowns',skills:['Firestorm','Blaze']},
+        ...(extra.length?[{key:'E',title:'Only mobile-specialty follow-ups',skills:extra}]:[])]};
+  };
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,Number(v)||0));
   const sum=items=>items.reduce((acc,n)=>acc+n,0);
   const effective=(build,name)=>clamp((build.mastery[name]||1)+(build.boardSkills[name]||0)+(build.gearSkills[name]||0),1,40);
@@ -101,7 +143,8 @@ const GlobalCombatEngine=(()=>{
     let now=0,damage=0,mp=2000,fireMarkUntil=0,frostUntil=0,staggerUntil=0,
       wishBuffUntil=0,elementBuffUntil=0,delayedUntil=0,
       pveBuffUntil=0,combatBuffUntil=0,manualActions=0,missedGround=0,
-      skippedForMp=0,unavailable=0,castTime=0,fireMarkProcReady=0;
+      skippedForMp=0,unavailable=0,castTime=0,fireMarkProcReady=0,
+      forcedStopTime=0,stationaryCastTime=0,mobileCastTime=0;
     // Event queue preserves the four-second delayed hit and one-second
     // periodic damage rather than pretending every effect is instantaneous.
     const pending=[];
@@ -119,7 +162,9 @@ const GlobalCombatEngine=(()=>{
         record(next.name,next.amount,next.at);
       }
     };
-    const macro=MACRO_LAYOUTS[build.macroLayout]||MACRO_LAYOUTS.ground;
+    const macro=['mobile','mobile-extended'].includes(build.macroLayout)
+      ?mobileLayout(spec,build.macroLayout==='mobile-extended')
+      :(MACRO_LAYOUTS[build.macroLayout]||MACRO_LAYOUTS.ground);
     const macroStacks=macro.steps.map(key=>macro.stacks.find(stack=>stack.key===key))
       .filter(Boolean);
     let macroCursor=0;
@@ -139,8 +184,17 @@ const GlobalCombatEngine=(()=>{
     const reduceCooldown=(name,seconds)=>{cd[name]=Math.max(now,(cd[name]||0)-seconds)};
     const cast=name=>{
       const act=ACTIONS[name],current=effective(build,name),rankBonus=1+.035*(current-1),
-        time=speedTime(name),movement=scenario.movement||0;
-      now+=time;castTime+=time;settle(now);
+        time=speedTime(name),movement=scenario.movement||0,
+        mobile=isMobile(name,spec);
+      // A mobile attack keeps dealing damage during required dodges. A
+      // stationary cast requires a stop/positioning window and costs extra
+      // opportunity time. The multiplier is an explicitly UNMEASURED
+      // sensitivity parameter, not a claim about Global animation frames.
+      const stopCost=mobile?0:time*movement*
+        (name==='Hellfire'?1.45:1.0);
+      forcedStopTime+=stopCost;
+      if(mobile)mobileCastTime+=time;else stationaryCastTime+=time;
+      now+=time+stopCost;castTime+=time;settle(now);
       if(act.mp>=0)mp-=act.mp;else mp=Math.min(3000,mp-act.mp);
       // Unmeasured damage is normalized for comparative build ranking.
       let multiplier=rankBonus*(1+damageBoost+attackBonus);
@@ -168,7 +222,8 @@ const GlobalCombatEngine=(()=>{
       if(wishBuffUntil>now)multiplier*=1.1+(has(spec,'Wish of Concentration',2)?.1:0);
       if(elementBuffUntil>now)multiplier*=1.20;
       if(pveBuffUntil>now)multiplier*=1.2;
-      if(name==='Hellfire'&&movement>0&&!has(spec,'Hellfire',3))multiplier*=1-movement*.22;
+      // Nonmobile Hellfire is already penalized by the opportunity cost
+      // of stopping. Do not double-charge it with an arbitrary damage loss.
       if(act.ground){multiplier*=1-movement*.65;missedGround+=movement}
       const done=act.power*multiplier;
       if(name==='Delayed Explosion'){
@@ -225,8 +280,8 @@ const GlobalCombatEngine=(()=>{
       // Stagger is an encounter condition, not an unconditional spam ability.
       if(Math.floor(now/40)>Math.floor((now-.5)/40))staggerUntil=now+3;
       let name=null;
-      for(const manual of ['Element Enhancement','Wish of Concentration','Delayed Explosion','Hellfire']){
-        if(manual==='Element Enhancement'||manual==='Delayed Explosion'){
+      for(const manual of ['Element Enhancement','Wish of Concentration','Delayed Explosion','Divine Burst','Hellfire']){
+        if(manual==='Element Enhancement'||manual==='Delayed Explosion'||manual==='Divine Burst'){
           if(!hasStigma(build,manual))continue;
         }else if((build.mastery[manual]||1)===0)continue;
         if(eligible(manual)){name=manual;manualActions++;break}
@@ -257,6 +312,7 @@ const GlobalCombatEngine=(()=>{
     return {score:damage/scenario.duration,damage,damageBySkill,counts,manualActions,
       manualPerMinute:manualActions*60/scenario.duration,mpFinal:mp,castTime,
       missedGround,skippedForMp,unavailable,combatSpeed,cooldownReduction,damageBoost,
+      forcedStopTime,stationaryCastTime,mobileCastTime,
       units:'relative damage units per second (not measured DPS)'};
   }
   function evaluate(build,spec,scenarios=ENCOUNTERS){
@@ -282,12 +338,25 @@ const GlobalCombatEngine=(()=>{
   }
   function tuneSpecialties(build,specData,manual={},seed=null,scenarioSet=ENCOUNTERS){
     let current=candidateSpecs(build,specData,manual,seed);
+    const movingNightmare=scenarioSet.some(s=>
+      String(s.id||'').startsWith('nightmare-')&&(s.movement||0)>.2);
+    // Mobile Hellfire is a required *mobility constraint* for this explicitly
+    // mobile boss-playstyle when the player can unlock it, not an invented
+    // global DPS claim. An explicit manual Specialty configuration wins.
+    const requireMobileHellfire=movingNightmare&&!Array.isArray(manual.Hellfire)&&
+      effective(build,'Hellfire')>=8&&
+      legalOptions('Hellfire',effective(build,'Hellfire'),specData).includes(3);
+    if(requireMobileHellfire&&!current.Hellfire.includes(3)){
+      const allowed=slots(effective(build,'Hellfire'));
+      current.Hellfire=[...current.Hellfire.slice(0,Math.max(0,allowed-1)),3];
+    }
     let best=evaluate(build,current,scenarioSet);
     for(const name of SPEC_KEYS){
       if(Array.isArray(manual[name]))continue;
       const level=effective(build,name),options=legalOptions(name,level,specData),
         available=combinations(options,slots(level));
       for(const choices of available){
+        if(requireMobileHellfire&&name==='Hellfire'&&!choices.includes(3))continue;
         const candidate={...current,[name]:choices},estimate=evaluate(build,candidate,scenarioSet);
         if(estimate.robustScore>best.robustScore+1e-9){
           current=candidate;best=estimate;
@@ -298,8 +367,19 @@ const GlobalCombatEngine=(()=>{
   }
   function chooseMacro(build,specialties,scenarios=ENCOUNTERS){
     let winner=null;
-    for(const mode of ['compact','balanced','ground']){
-      const layout=MACRO_LAYOUTS[mode];
+    // Nightmares demand movement between boss mechanics. Automatic stacks
+    // must NEVER trigger an attack that roots the Sorcerer unless its actual
+    // mobile Specialty is equipped. Stationary attacks remain manual options
+    // for deliberate safe windows; do not let their theoretical dummy damage
+    // win the always-on macro choice.
+    const nightmare=scenarios.some(s=>String(s.id||'').startsWith('nightmare-'));
+    const choices=nightmare?['mobile','mobile-extended']:
+      ['mobile','mobile-extended','compact','balanced','ground'];
+    for(const mode of choices){
+      const layout=['mobile','mobile-extended'].includes(mode)
+        ?mobileLayout(specialties,mode==='mobile-extended')
+        :MACRO_LAYOUTS[mode];
+      if(mode==='mobile-extended'&&layout.steps.length===1)continue;
       if(mode==='ground'&&!['Fire Wall','Cold Storm'].some(name=>hasStigma(build,name)))continue;
       const data=evaluate({...build,macroLayout:mode},specialties,scenarios);
       // Complexity cost is only a tie-breaker for setup burden. Actual
@@ -370,5 +450,6 @@ const GlobalCombatEngine=(()=>{
     return {levels:mastery,spent,score:best,passes:passes-1,upgrades};
   }
   return Object.freeze({SOURCE,ACTIONS,ENCOUNTERS,legalOptions,slots,effective,
-    MACRO_LAYOUTS,chooseMacro,simulate,evaluate,tuneSpecialties,refineMastery,scoreMastery});
+    MACRO_LAYOUTS,NIGHTMARE_ENCOUNTERS,scenariosFor,isMobile,MOBILE_SPECIALTIES,
+    chooseMacro,simulate,evaluate,tuneSpecialties,refineMastery,scoreMastery});
 })();

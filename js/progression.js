@@ -130,10 +130,41 @@ function sorcererEasyMasteryStages(level,leveling,unlocks,skillNames,adjust){
    "Winter's Shackles",'Absorb Essence','Robe of Earth','Cold Snap'],10);
  return stages;
 }
+// Fresh-45 and later Sorcerer plans are content-specific. In particular,
+// Solo is Nightmare/Ascension endgame, NOT another pass through the leveling
+// rotation. Rank purchases and the order that they consume the 203+ budget
+// must reflect the actual objective, including defensive passive thresholds.
+function sorcererEndgameMasteryStages(mode,advice,unlocks,skillNames,adjust){
+ const known=new Set(skillNames), unique=names=>[...new Set(names||[])].filter(name=>known.has(name)&&(unlocks[name]||1)<=45);
+ const core=unique(advice?.core),support=unique(advice?.support);
+ const rest=unique(skillNames.filter(name=>!core.includes(name)&&!support.includes(name)));
+ const stages=[];
+ const add=(names,target)=>names.forEach(name=>stages.push([name,Math.max(1,Math.min(10,Number(adjust(name,target))||1))]));
+ // Equip useful boss attacks, first passive defenses/MP sustainability,
+ // then push real rank-8/10 specialty milestones. They may be reached by
+ // Mastery + actually recorded gear + funded Daevanion skill levels.
+ add(core.slice(0,3),8);
+ add(core.slice(3,5),5);
+ add(support.slice(0,2),5);
+ add(core.slice(0,3),10);
+ add(core.slice(3,6),8);
+ add(support.slice(0,3),8);
+ add(core.slice(3,6),10);
+ add(support.slice(0,3),10);
+ add(core.slice(6),8);
+ add(rest.slice(0,8),5);
+ add(core.slice(6),10);
+ add(support.slice(3),8);
+ add(rest,8);
+ add(support.slice(3),10);
+ add(rest,10);
+ return stages;
+}
 function progressionMasteryStages(cls,mode,level,leveling,advice,unlocks,skillNames,adjust){
- if(cls==='sorcerer'&&!isPvpContext(mode)&&
-    !['survivability','control'].includes(advice?.buildObjective))
-  return sorcererEasyMasteryStages(level,leveling,unlocks,skillNames,adjust);
+ if(cls==='sorcerer'&&!isPvpContext(mode)){
+  if(leveling)return sorcererEasyMasteryStages(level,true,unlocks,skillNames,adjust);
+  return sorcererEndgameMasteryStages(mode,advice,unlocks,skillNames,adjust);
+ }
  const policy=PROGRESSION_PLANS[cls];if(!policy)return null;
  const names=new Set(skillNames),known=name=>names.has(name)&&(unlocks[name]||1)<=level;
  const unique=sequence=>[...new Set(sequence)].filter(known);
@@ -215,14 +246,23 @@ function progressionStigmaStages(cls,mode,equipped,advice){
 function progressionBreakpoints(cls,mode,objective='performance'){
  const policy=PROGRESSION_PLANS[cls];if(!policy||isPvpContext(mode))return [];
  if(cls==='sorcerer'){
-  // Survival paths do not disguise damage-specialty nodes as defenses.
-  if(objective==='survivability')return [];
+  const solo=mode==='solo';
+  if(objective==='survivability')return solo?[
+   ['Robe of Earth',8],['Absorb Essence',8],['Grace of Resistance',8],
+   ['Robe of Earth',12]]:[
+   ['Robe of Earth',8],['Grace of Resistance',8],['Absorb Essence',8]];
   if(objective==='control')return [
    ["Winter's Shackles",8],['Frost',12],['Ice Chain',12]];
   if(objective==='burst')return [
-   ['Hellfire',16],['Wish of Concentration',16],['Firestorm',12],['Hellfire',20]];
+   ['Hellfire',16],['Wish of Concentration',16],
+   ["Winter's Shackles",8],['Hellfire',20]];
   if(objective==='sustained')return [
-   ['Firestorm',12],['Firestorm',16],['Wish of Concentration',16],['Hellfire',16]];
+   ['Firestorm',12],['Firestorm',16],['Blaze',12],
+   ['Bittercold Wind',16],['Wish of Concentration',16]];
+  if(solo)return [
+   ['Hellfire',12],['Robe of Earth',8],['Wish of Concentration',12],
+   ['Firestorm',12],['Hellfire',16]];
+  return policy.breakpoints;
  }
  if(cls==='cleric'&&mode==='party')return [
   ['Light of Regeneration',16],['Radiant Recovery',16],['Healing Light',16]];
@@ -239,11 +279,11 @@ function progressionBoardTargets(cls,mode,objective='performance'){
  }
  return result;
 }
-function progressionNextBreakpoint(cls,mode,effectiveLevel,ownedCrystals){
+function progressionNextBreakpoint(cls,mode,effectiveLevel,ownedCrystals,objective='performance'){
  const p=PROGRESSION_PLANS[cls];
  if(!p)return '';
  if(isPvpContext(mode))return 'PvP priorities depend on matchup; verify your defensive Stigma and control tools.';
- const next=progressionBreakpoints(cls,mode).find(([name,rank])=>effectiveLevel(name)<rank);
+ const next=progressionBreakpoints(cls,mode,objective).find(([name,rank])=>effectiveLevel(name)<rank);
  if(!next)return 'Key damage breakpoints reached. Recheck your chosen Specialties and combat rotation.';
  const [name,rank]=next,gap=rank-effectiveLevel(name);
  return name+' effective Lv '+rank+' next ('+gap+' level'+(gap===1?'':'s')+
@@ -304,6 +344,32 @@ function progressionRotationProfile(base,cls,mode,effectiveLevel,equippedStigmas
    p.loop=['Maintain Flame Arrow with Q fire pressure only during safe stationary attack windows.',
     'Manually time Soul Freeze or other CC around the enemy Defiance, immunity and escapes.',
     'Save Arctic Armor, Steel Barrier or Hibernation for the actual incoming burst; disengage instead of greedily channeling.'];
+  }else if(mode==='solo'){
+   // Fresh-45 Solo PvE is a mobile Nightmare/Ascension boss encounter.
+   // Firestorm and Blaze are natively usable while moving. Bittercold
+   // Wind / Winter's Shackles only join the automatic stack after their
+   // actual Global mobile Specialties are selected; otherwise the user
+   // decides when to briefly stop and land them.
+   const mobileFollowUps=[
+     ...(specialtyEnabled('Bittercold Wind',2)?['Bittercold Wind']:[]),
+     ...(specialtyEnabled("Winter's Shackles",1)?["Winter's Shackles"]:[])
+   ];
+   p.stacks=[{key:'Q',title:'Keep moving — Firestorm / Fire Mark → Blaze',
+     skills:['Firestorm','Blaze']},
+     ...(mobileFollowUps.length?[{key:'E',title:'Equipped mobile follow-up attacks',
+       skills:mobileFollowUps}]:[])];
+   p.macro=p.stacks.map(stack=>stack.key);
+   p.rule='Nightmare solo: keep moving with Flame Arrow + mobile Firestorm / Blaze. Use Hellfire fully charged manually; its level-8 mobile Specialty (option 3) permits charging while moving. Never automate stationary ground skills or interrupt a dodge to force a cast.';
+   p.summary='Fast damage during mechanics: natively mobile Flame Arrow, Firestorm and Blaze, with an optional E stack only for attacks whose mobile Specialty is selected.';
+   p.hotbar[4]=[['Bittercold Wind'],
+     mobileFollowUps.includes('Bittercold Wind')
+       ?'Bittercold Wind has mobile Specialty; automated in E'
+       :'5: Briefly stop to cast only if boss positioning allows','attack'];
+   p.hotbar[5]=[["Winter's Shackles"],
+     mobileFollowUps.includes("Winter's Shackles")
+       ?"Winter's Shackles is mobile; automated in E"
+       :'6: Manual 5-second PvE buff setup in a safe window','attack'];
+   p.hotbarNote='Nightmare/mobile Solo PvE: LMB Flame Arrow + RMB Macro Q Firestorm / Blaze. With verified mobile Specialties, E can also automate Bittercold Wind / Winter\'s Shackles. Keep Hellfire, damage buffs and all emergency Stigmas manual; avoid placing ground fields on moving targets.';
   }else{
    p.rule='Keep Hellfire fully charged on a manual key; place persistent ground effects only where targets remain.';
   }
@@ -313,12 +379,20 @@ function progressionRotationProfile(base,cls,mode,effectiveLevel,equippedStigmas
    :'Before Dark Crush Lv 16, use its trigger carefully; keep the remaining triggers available for later windows.';
  }
  if(mode==='solo'){
-  p.opener=['Enter with the available damage buffs; save a defensive skill if the target can punish the pull.',
-   'Start the main damage engine; do not automate movement or charged casts.',
-   'Use self-healing or mitigation when needed instead of blindly maintaining macro uptime.'];
-  p.loop=['Prioritize short time-to-kill without losing core cooldown windows.',
-   'Release held attacks for dodge, charge, recovery or repositioning.',
-   'Recheck your Specialties after reaching an effective-level breakpoint.'];
+  p.opener=cls==='sorcerer'
+   ?['Maintain movement while applying Flame Arrow to keep Fire Mark active.',
+     'Use the mobile Firestorm / Blaze macro Q; use Element Enhancement / Delayed Explosion and Wish manually when available.',
+     'Fully charge Hellfire in a safe boss window; take its mobile Specialty when earned to charge while dodging.']
+   :['Enter with the available damage buffs; save a defensive skill if the target can punish the pull.',
+     'Start the main damage engine; do not automate movement or charged casts.',
+     'Use self-healing or mitigation when needed instead of blindly maintaining macro uptime.'];
+  p.loop=cls==='sorcerer'
+   ?['Keep Flame Arrow, Firestorm and Fire-Marked Blaze flowing on the move.',
+     'Use Bittercold Wind and Winter\'s Shackles automatically ONLY when their mobile Specialties are equipped; otherwise manually when safe.',
+     'Place Fire Wall / Cold Storm only when a boss will remain in the field; never sacrifice a dodge for a ground spell.']
+   :['Prioritize short time-to-kill without losing core cooldown windows.',
+     'Release held attacks for dodge, charge, recovery or repositioning.',
+     'Recheck your Specialties after reaching an effective-level breakpoint.'];
  }else if(mode==='party'){
   if(cls==='cleric'||cls==='chanter'){
    p.rule+=' Keep healing and emergency decisions manual; never put critical heals in a spam macro.';
