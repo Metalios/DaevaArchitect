@@ -583,9 +583,33 @@ const GlobalCombatEngine=(()=>{
     let spent=Object.entries(mastery).reduce((v,[name,rank])=>{
       for(let r=2;r<=rank;r++)v+=cost(r);return v;
     },0);
-    const score=()=>scoreMastery({...build,mastery},specData,manualSpecs,null,scenarios);
+    // Previously every single candidate Mastery rank transfer ran an entire
+    // Specialty coordinate search (hundreds of nested combat evaluations).
+    // Optimize the baseline only once, compare legal neighboring ranks under
+    // that same Specialty policy, and retune once on the final accepted ranks.
+    // A constant policy makes local rank comparisons reproducible and avoids
+    // blocking the UI for seconds on every fresh goal selection.
+    const reference=tuneSpecialties({...build,mastery},specData,manualSpecs,
+      null,scenarios).specialties;
+    const score=()=>{
+      const candidate={...build,mastery},legal={};
+      for(const [name,picks] of Object.entries(reference)){
+        const level=effective(candidate,name),
+          allowed=new Set(legalOptions(name,level,specData)),
+          key=level>=20?'20':level>=16?'16':
+            level>=12?'12':level>=8?'8':null;
+        // Newly funded Lv 8/12/16 breakpoints should be valuable even if
+        // the initial build could not yet select their Specialty options.
+        // Only use owned legal options; the final full tune can refine them.
+        const unlocked=Array.isArray(manualSpecs[name])?[]:
+          (key?specData[name]?.picks?.[key]||[]:[]);
+        legal[name]=[...new Set([...picks,...unlocked])]
+          .filter(id=>allowed.has(id)).slice(0,slots(level));
+      }
+      return evaluate(candidate,legal,scenarios).robustScore;
+    };
     // Bounded coordinate exchange. Every accepted operation is legal and
-    // improves the same comparative combat objective. Does not invent points.
+    // improves a matched fixed-Specialty comparative score.
     let best=score(),passes=0;
     while(passes++<3){
       let improved=false;
@@ -629,7 +653,10 @@ const GlobalCombatEngine=(()=>{
       mastery[winner.name]++;spent+=winner.need;
       best=winner.trial;upgrades++;
     }
-    return {levels:mastery,spent,score:best,passes:passes-1,upgrades};
+    const finalTune=tuneSpecialties({...build,mastery},specData,
+      manualSpecs,reference,scenarios);
+    return {levels:mastery,spent,score:finalTune.robustScore,
+      fixedPolicyScore:best,passes:passes-1,upgrades};
   }
   return Object.freeze({SOURCE,ACTIONS,ENCOUNTERS,legalOptions,slots,effective,
     MACRO_LAYOUTS,NIGHTMARE_ENCOUNTERS,scenariosFor,isMobile,MOBILE_SPECIALTIES,

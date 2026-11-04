@@ -133,19 +133,22 @@ try{
    assert(results.visible.hotbarNames.includes(name)||
           results.visible.macroSkills.includes(name),
     'Equipped Solo Nightmare Stigma missing from manual bar AND macro: '+name);
- assert(results.visible.macroSkills.includes('Element Enhancement'),
-  'Balanced Nightmare macro must automatically refresh Element Enhancement');
- assert(results.visible.macroSkills.includes('Delayed Explosion'),
-  'Balanced Nightmare macro must automatically apply Delayed Explosion');
- assert(results.visible.macroSkills.includes('Wish of Concentration'),
-  'Continuous Nightmare must automatically attempt Wish after offensive Stigmas');
- assert(!results.visible.hotbarNames.includes('Wish of Concentration'),
-  'Automatic Wish must not occupy a second manual hotbar key');
- assert(!results.visible.hotbarNames.includes('Element Enhancement')&&
-        !results.visible.hotbarNames.includes('Delayed Explosion'),
-  'Automated offensive Stigmas should not waste additional manual hotkeys');
- assert(results.visible.macroKeys.includes('E'),
-  'The macro must cover Frost and available follow-ups without extra manual presses');
+ // Balanced Nightmare keeps short amplification and reset windows manual,
+ // rather than blindly casting them in the held RMB loop.
+ assert(!results.visible.macroSkills.includes('Element Enhancement'),
+  'Balanced Nightmare must reserve Element Enhancement for burst alignment');
+ assert(!results.visible.macroSkills.includes('Delayed Explosion'),
+  'Four-second Delayed Explosion amplification must remain manually timed');
+ assert(!results.visible.macroSkills.includes('Wish of Concentration'),
+  'Performance Nightmare should coordinate Wish after important cooldowns');
+ for(const name of ['Wish of Concentration','Element Enhancement','Delayed Explosion'])
+  assert(results.visible.hotbarNames.includes(name),
+   'Important manual burst skill missing from Nightmare quickbar: '+name);
+ // E exists only when its mobile follow-up Specialty has been earned.
+ // One Q stack can therefore be a valid two-button moving-boss macro.
+ assert(results.visible.macroKeys.length>=1&&
+   results.visible.macroKeys.length<=3,
+   'Only real earned damage stacks should enter the Nightmare macro');
  assert(new Set(results.visible.hotbarNames.filter(name=>name!=='Flex slot')).size===
    results.visible.hotbarNames.filter(name=>name!=='Flex slot').length,
    'Duplicate skills waste manual hotkeys');
