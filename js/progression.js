@@ -436,22 +436,28 @@ function progressionRotationProfile(base,cls,mode,effectiveLevel,equippedStigmas
  }
  if(mode==='solo'){
   p.opener=cls==='sorcerer'
-   ?['Hold LMB (Flame Arrow) + RMB (macro) continuously during safe damage: conditional Blaze, Firestorm, Frost follow-ups and the selected safe offensive Stigmas run automatically.',
-     objective==='burst'
-       ?'Manually align Wish, Delayed Explosion and fully charged Hellfire; use Wish after cooldowns for its reset when that Specialty is selected.'
-       :'Equipped Element Enhancement and Delayed Explosion are attempted automatically. Wish follows those buffs on R, giving up precise reset timing in exchange for fewer keys.',
-     'Fully charge Hellfire in a safe boss window. Rank-8 +30% Skill Speed comes first, then add mobile at rank 12 when those two options are available.']
+   ?['Hold LMB Flame Arrow + RMB for safe mobile damage. Keep ground spells manual when the Nightmare boss is moving.',
+     'Activate Element Enhancement, then manually time Delayed Explosion and the PvE buff from Winter\'s Shackles close to a fully charged Hellfire hit.',
+     'With the Wish cooldown-reset Specialty, use Wish after major attacks are already cooling down. Hold emergency shields for actual danger.']
    :['Enter with the available damage buffs; save a defensive skill if the target can punish the pull.',
      'Start the main damage engine; do not automate movement or charged casts.',
      'Use self-healing or mitigation when needed instead of blindly maintaining macro uptime.'];
   p.loop=cls==='sorcerer'
-   ?['Hold Flame Arrow + RMB for fire damage, earned Frost follow-ups and the safe automatic buff line.',
-     objective==='burst'?'Keep Wish and Delayed Explosion on manual keys for the burst window.':'Wish is attempted by the macro when ready; its actual cooldown-reset benefit varies as other skills enter cooldown.',
-     'Briefly release RMB to complete the full Hellfire charge without clipping; time defenses and ground-targeted spells manually.']
+   ?['Keep short fire attacks running on LMB + RMB through safe movement.',
+     'Pause the macro for a fully charged Hellfire and timed buffs; never waste Delayed Explosion.',
+     'Only place ground damage on bosses that will remain inside its area.']
    :['Prioritize short time-to-kill without losing core cooldown windows.',
      'Release held attacks for dodge, charge, recovery or repositioning.',
      'Recheck your Specialties after reaching an effective-level breakpoint.'];
  }else if(mode==='party'){
+  if(cls==='sorcerer'){
+   p.opener=['Maintain LMB + RMB fire attacks and Bittercold Wind when the Conquest boss is stable.',
+     'Use ground Stigmas only if their area will connect; manually coordinate Element Enhancement, Delayed Explosion and a fully charged Hellfire.',
+     'Use Wish after key cooldowns are running when its reset Specialty is equipped.'];
+   p.loop=['Keep Q repeatable damage and E ground effects on stationary targets.',
+     'Release RMB for full Hellfire charge and dangerous boss mechanics.',
+     'Switch off the ground stack or cast those skills manually when the boss moves.'];
+  }
   if(cls==='cleric'||cls==='chanter'){
    p.rule+=' Keep healing and emergency decisions manual; never put critical heals in a spam macro.';
   }
