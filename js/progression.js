@@ -344,6 +344,32 @@ function progressionRotationProfile(base,cls,mode,effectiveLevel,equippedStigmas
    p.loop=['Maintain Flame Arrow with Q fire pressure only during safe stationary attack windows.',
     'Manually time Soul Freeze or other CC around the enemy Defiance, immunity and escapes.',
     'Save Arctic Armor, Steel Barrier or Hibernation for the actual incoming burst; disengage instead of greedily channeling.'];
+  }else if(mode==='solo'){
+   // Fresh-45 Solo PvE is a mobile Nightmare/Ascension boss encounter.
+   // Firestorm and Blaze are natively usable while moving. Bittercold
+   // Wind / Winter's Shackles only join the automatic stack after their
+   // actual Global mobile Specialties are selected; otherwise the user
+   // decides when to briefly stop and land them.
+   const mobileFollowUps=[
+     ...(specialtyEnabled('Bittercold Wind',2)?['Bittercold Wind']:[]),
+     ...(specialtyEnabled("Winter's Shackles",1)?["Winter's Shackles"]:[])
+   ];
+   p.stacks=[{key:'Q',title:'Keep moving — Firestorm / Fire Mark → Blaze',
+     skills:['Firestorm','Blaze']},
+     ...(mobileFollowUps.length?[{key:'E',title:'Equipped mobile follow-up attacks',
+       skills:mobileFollowUps}]:[])];
+   p.macro=p.stacks.map(stack=>stack.key);
+   p.rule='Nightmare solo: keep moving with Flame Arrow + mobile Firestorm / Blaze. Use Hellfire fully charged manually; its level-8 mobile Specialty (option 3) permits charging while moving. Never automate stationary ground skills or interrupt a dodge to force a cast.';
+   p.summary='Fast damage during mechanics: natively mobile Flame Arrow, Firestorm and Blaze, with an optional E stack only for attacks whose mobile Specialty is selected.';
+   p.hotbar[4]=[['Bittercold Wind'],
+     mobileFollowUps.includes('Bittercold Wind')
+       ?'Bittercold Wind has mobile Specialty; automated in E'
+       :'5: Briefly stop to cast only if boss positioning allows','attack'];
+   p.hotbar[5]=[["Winter's Shackles"],
+     mobileFollowUps.includes("Winter's Shackles")
+       ?"Winter's Shackles is mobile; automated in E"
+       :'6: Manual 5-second PvE buff setup in a safe window','attack'];
+   p.hotbarNote='Nightmare/mobile Solo PvE: LMB Flame Arrow + RMB Macro Q Firestorm / Blaze. With verified mobile Specialties, E can also automate Bittercold Wind / Winter\'s Shackles. Keep Hellfire, damage buffs and all emergency Stigmas manual; avoid placing ground fields on moving targets.';
   }else{
    p.rule='Keep Hellfire fully charged on a manual key; place persistent ground effects only where targets remain.';
   }
@@ -353,12 +379,20 @@ function progressionRotationProfile(base,cls,mode,effectiveLevel,equippedStigmas
    :'Before Dark Crush Lv 16, use its trigger carefully; keep the remaining triggers available for later windows.';
  }
  if(mode==='solo'){
-  p.opener=['Enter with the available damage buffs; save a defensive skill if the target can punish the pull.',
-   'Start the main damage engine; do not automate movement or charged casts.',
-   'Use self-healing or mitigation when needed instead of blindly maintaining macro uptime.'];
-  p.loop=['Prioritize short time-to-kill without losing core cooldown windows.',
-   'Release held attacks for dodge, charge, recovery or repositioning.',
-   'Recheck your Specialties after reaching an effective-level breakpoint.'];
+  p.opener=cls==='sorcerer'
+   ?['Maintain movement while applying Flame Arrow to keep Fire Mark active.',
+     'Use the mobile Firestorm / Blaze macro Q; use Element Enhancement / Delayed Explosion and Wish manually when available.',
+     'Fully charge Hellfire in a safe boss window; take its mobile Specialty when earned to charge while dodging.']
+   :['Enter with the available damage buffs; save a defensive skill if the target can punish the pull.',
+     'Start the main damage engine; do not automate movement or charged casts.',
+     'Use self-healing or mitigation when needed instead of blindly maintaining macro uptime.'];
+  p.loop=cls==='sorcerer'
+   ?['Keep Flame Arrow, Firestorm and Fire-Marked Blaze flowing on the move.',
+     'Use Bittercold Wind and Winter\'s Shackles automatically ONLY when their mobile Specialties are equipped; otherwise manually when safe.',
+     'Place Fire Wall / Cold Storm only when a boss will remain in the field; never sacrifice a dodge for a ground spell.']
+   :['Prioritize short time-to-kill without losing core cooldown windows.',
+     'Release held attacks for dodge, charge, recovery or repositioning.',
+     'Recheck your Specialties after reaching an effective-level breakpoint.'];
  }else if(mode==='party'){
   if(cls==='cleric'||cls==='chanter'){
    p.rule+=' Keep healing and emergency decisions manual; never put critical heals in a spam macro.';
