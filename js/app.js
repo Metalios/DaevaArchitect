@@ -587,6 +587,17 @@ function nodeVisual(n){
 // keep their existing legal progression until their mechanics are validated.
 let lastOptimizedCombat=null;
 let combatResultCache={key:null,result:null};
+// Reuse complete routes when returning to a previously evaluated role.
+// The fingerprint includes every purchase, budget and equipment input; a
+// class/context change or recorded progression change cannot use stale paths.
+const OBJECTIVE_ROUTE_CACHE=new Map();
+const OBJECTIVE_ROUTE_CACHE_LIMIT=12;
+function rememberObjectiveRoute(key,value){
+  if(OBJECTIVE_ROUTE_CACHE.has(key))OBJECTIVE_ROUTE_CACHE.delete(key);
+  OBJECTIVE_ROUTE_CACHE.set(key,value);
+  if(OBJECTIVE_ROUTE_CACHE.size>OBJECTIVE_ROUTE_CACHE_LIMIT)
+    OBJECTIVE_ROUTE_CACHE.delete(OBJECTIVE_ROUTE_CACHE.keys().next().value);
+}
 let jointResultCache={key:null,result:null};
 let stigmaLoadoutCache={key:null,names:null};
 let jointSpecialtyCache={key:null,result:null};
@@ -778,13 +789,21 @@ function model(){
     const update=!valid||changedEarnedBudget||newBudgetAfterCompletion||
       (exhausted&&snapshot.completedBudget!==total)||
       (spent===0&&snapshot.basisKey!==basisKey);
+    const routeCacheKey=JSON.stringify([contextKey,basisKey,total,
+      [...obtainedNodes()].sort((x,y)=>x-y),a.boardMode||'recommended',
+      a.customNodes||[],a.customSpecialties||{},budget('mastery'),
+      budget('stigma'),currentLevel()]);
     if(update){
       const actual=obtainedNodes();
       const reference={mastery,stigma,boards:{owned:actual},effects:effects(actual)};
       const estimated=estimateCombatPower(reference);
       const baseCp=estimated.ready?estimated.value:null;
-      let computed=null;
-       if(!appIsPvpContext(a.context) && typeof PveBuildOptimizer!=='undefined'){
+      const cached=OBJECTIVE_ROUTE_CACHE.get(routeCacheKey);
+      let computed=cached?{
+        route:cached.route,initialFocus:cached.initialFocus,
+        baseCp:cached.baseCp,diagnostics:cached.diagnostics
+      }:null;
+       if(!computed&&!appIsPvpContext(a.context) && typeof PveBuildOptimizer!=='undefined'){
          try {
            const boardData=data(), baseWeights=activeWeights(), crystalBudget=budget('crystals');
            const objective=PVE_OBJECTIVES[a.pveObjective]?a.pveObjective:'performance';
@@ -794,16 +813,36 @@ function model(){
                budget('mastery'),masteryCost,names,1,isLeveling()?masteryRankCap:null);
              const build=engineBuild(proposed.levels,boardEffects,stigma.levels,activeStigmas());
              const structuralTie=candidate.score*.0000005;
-             if(state.class==='sorcerer'&&sorcererCombatEligible()&&objective!=='survivability'&&
+             if(state.class==='sorcerer'&&sorcererCombatEligible()&&
+                 !['survivability','control'].includes(objective)&&
                  !RoleBuildGoals.info(state.class,objective)){
-               // Tune specialties for the selected goal's encounter window.
+               // A full Specialty coordinate search for *every* board
+               // finalist was blocking the browser main thread for seconds.
+               // Score all finalists with their legal, current-level
+               // Specialty presets; then fully tune Mastery/Specialties ONCE
+               // for the selected funded route in enhanceSorcererCombat.
+               // This is a fixed-policy comparative score, not a promise
+               // of globally optimal DPS for each candidate.
                const scenarios=isLeveling()?GlobalCombatEngine.ENCOUNTERS:
                  GlobalCombatEngine.scenariosFor(a.context,objective);
-               const mobileBuild=!isLeveling()
+               const candidateBuild=!isLeveling()
                  ?{...build,macroLayout:'flow',objective}:build;
-               const evaluated=GlobalCombatEngine.tuneSpecialties(
-                 mobileBuild,SPECS.sorcerer,a.customSpecialties||{},null,scenarios);
-               return evaluated.robustScore+structuralTie;
+               const candidateSpecs={};
+               for(const [name,entry] of Object.entries(SPECS.sorcerer||{})){
+                 const level=GlobalCombatEngine.effective(candidateBuild,name);
+                 const key=level>=20?'20':level>=16?'16':
+                   level>=12?'12':level>=8?'8':null;
+                 const picks=Array.isArray(a.customSpecialties?.[name])
+                   ?a.customSpecialties[name]:(key?entry.picks?.[key]||[]:[]);
+                 const legal=new Set(GlobalCombatEngine.legalOptions(
+                   name,level,SPECS.sorcerer));
+                 candidateSpecs[name]=[...new Set(picks.map(Number))]
+                   .filter(id=>legal.has(id))
+                   .slice(0,GlobalCombatEngine.slots(level));
+               }
+               return GlobalCombatEngine.evaluate(
+                 candidateBuild,candidateSpecs,scenarios).robustScore+
+                 structuralTie;
              }
              if(typeof ClassCombatModels!=='undefined'&&ClassCombatModels.profile(state.class))
                return ClassCombatModels.evaluate({classId:state.class,context:a.context,
@@ -823,6 +862,13 @@ function model(){
          }
        }
       if(!computed)computed=chooseCombatBoardRoute(mastery,stigma,gearRanks,target,baseCp,actual);
+      if(!cached){
+        rememberObjectiveRoute(routeCacheKey,{
+          route:computed.route,initialFocus:computed.initialFocus,
+          baseCp:computed.baseCp,diagnostics:computed.diagnostics
+        });
+      }
+      if(computed.diagnostics)a.lastObjectiveAnalysis=computed.diagnostics;
       // The optimizer returns a complete future path. Budget fitting only
       // changes recommendation order, never board connectivity or costs.
       const fitted=customMode()?computed.route:
