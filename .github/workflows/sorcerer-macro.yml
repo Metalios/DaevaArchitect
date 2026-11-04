@@ -1,0 +1,37 @@
+name: Sorcerer macro regression
+
+on:
+  pull_request:
+    paths:
+      - 'js/engine/combat.js'
+      - 'js/app.js'
+      - 'js/progression.js'
+      - 'js/optimizer/joint.js'
+      - 'sorcerer_macro_audit.mjs'
+      - '.github/workflows/sorcerer-macro.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sorcerer-macro:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate JS syntax
+        run: |
+          node --check js/engine/combat.js
+          node --check js/app.js
+          node --check js/progression.js
+          node --check js/optimizer/joint.js
+      - name: Audit Nightmare and Conquest macro policy
+        run: node sorcerer_macro_audit.mjs
+      - name: Existing progression checks
+        run: |
+          node verify.mjs
+          node audit_leveling.mjs
+          node recommendations_audit.mjs
