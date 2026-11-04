@@ -11,6 +11,8 @@ vm.runInContext(fs.readFileSync('js/profiles.js','utf8')+
   '\nglobalThis.profile=PROFILES.sorcerer;',ctx);
 vm.runInContext(fs.readFileSync('js/progression.js','utf8')+
   '\nglobalThis.rotation=progressionRotationProfile;',ctx);
+vm.runInContext(fs.readFileSync('js/optimizer/joint.js','utf8')+
+  '\nglobalThis.joint=JointProgression;',ctx);
 const engine=ctx.engine;
 const available=Object.keys(engine.ACTIONS).filter(name=>
   !['Element Enhancement','Delayed Explosion','Fire Wall','Cold Storm',
@@ -96,6 +98,18 @@ assert.equal(chosen.autoWish,false);
 assert(!flatten(chosen).includes('Delayed Explosion'));
 assert(flatten(chosen).includes('Fire Wall'));
 assert(flatten(chosen).includes('Cold Storm'));
+const checked=ctx.joint.adviseMacro({
+  classId:'sorcerer',context:'party',objective:'performance',
+  profile:{stacks:engine.flowLayout(makeBuild('party'),specs).stacks,
+    hotbar:ctx.profile.hotbar},
+  available,stigma:all,levels:{},specialties:specs
+});
+assert(checked.stacks.some(stack=>stack.skills.includes('Bittercold Wind')),
+  'Joint macro safety filter must preserve explicitly automated Group Bittercold');
+assert(checked.stacks.some(stack=>stack.skills.includes('Fire Wall')),
+  'Joint macro filter must preserve equipped Group Fire Wall');
+assert(!checked.stacks.some(stack=>stack.skills.includes('Delayed Explosion')),
+  'Joint macro filter must never auto-cast short burst Stigmas');
 const fallback=ctx.rotation(ctx.profile,'sorcerer','party',()=>20,all,
   (name,option)=>name==='Wish of Concentration'&&option===5,'performance');
 assert(fallback.stacks.some(stack=>stack.skills.includes('Fire Wall')));
