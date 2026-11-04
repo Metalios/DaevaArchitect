@@ -39,7 +39,7 @@ const PveBuildOptimizer=(()=>{
       default:return {attack:1,defense:1.15,speed:1.15,passive:1.2};
     }
   }
-  function weightsFor(base,classId,context,goal,variant=0){
+  function weightsFor(base,classId,context,goal,variant=0,characterLevel=45){
     const p=parameters(goal,classId),skills={},stats={};
     const focus=RoleBuildGoals.info(classId,goal);
     const targetSkills=new Set(focus?.focus||[]);
@@ -67,7 +67,17 @@ const PveBuildOptimizer=(()=>{
       stats[name]=max(w)*(SURVIVAL.test(name)?p.defense:SPEED.test(name)?p.speed:p.attack)*
         RoleBuildGoals.roleStatBoost(name,classId,goal);
     }
-    if(context==='solo')for(const name of Object.keys(stats))if(SURVIVAL.test(name))stats[name]*=1.25;
+    if(context==='solo')for(const name of Object.keys(stats))if(SURVIVAL.test(name)){
+      // At fresh-45/endgame Solo is Nightmare and Ascension Trial, not a
+      // questing-only damage race. Risk is explicitly a goal selection:
+      // sustained speed-clears forfeit safety, while balanced and survival
+      // routes give defensives meaningful influence.
+      const endgame=characterLevel>=45;
+      const risk=endgame?goal==='survivability'?2.25:
+        goal==='performance'?1.8:goal==='control'?1.65:
+        goal==='burst'?1.3:1.05:1.25;
+      stats[name]*=risk;
+    }
     return {skills,stats};
   }
   function buildGraph(classData,level){
@@ -234,7 +244,7 @@ const PveBuildOptimizer=(()=>{
     const graphs=buildGraph(classData,characterLevel),budget=max(crystalBudget);
     const roots=new Set(graphs.flatMap(g=>[...g.roots]));
     const mandatory=distinct([...locked].map(Number)).filter(id=>graphs.some(g=>g.nodes.has(id)&&!roots.has(id)));
-    const base=weightsFor(baseWeights,classId,context,objective);
+    const base=weightsFor(baseWeights,classId,context,objective,0,characterLevel);
     const grade=selected=>scoreState(selected,classData,graphs,mastery,gear,base,skillTargets,classId,objective);
     let selected=new Set(roots),route=[],spent=0;
     for(const id of mandatory){
@@ -287,7 +297,7 @@ const PveBuildOptimizer=(()=>{
     // Hellfire and Firestorm. Previously only two of five defined variants
     // were ever compared, silently excluding the major skill thresholds.
     for(let variant=0;variant<(classId==='sorcerer'?5:1);variant++){
-      const w=weightsFor(baseWeights,classId,context,objective,variant);
+      const w=weightsFor(baseWeights,classId,context,objective,variant,characterLevel);
       const legacy=optimizeBoardRoute(classData,w,mastery,gear,0,null,mandatory,characterLevel,skillTargets);
       const fitted=fitConnectedBoardBudget(classData,legacy.route,budget);
       const eligible=fitted.route.filter(entry=>entry.id!==undefined);
