@@ -338,12 +338,25 @@ const GlobalCombatEngine=(()=>{
   }
   function tuneSpecialties(build,specData,manual={},seed=null,scenarioSet=ENCOUNTERS){
     let current=candidateSpecs(build,specData,manual,seed);
+    const movingNightmare=scenarioSet.some(s=>
+      String(s.id||'').startsWith('nightmare-')&&(s.movement||0)>.2);
+    // Mobile Hellfire is a required *mobility constraint* for this explicitly
+    // mobile boss-playstyle when the player can unlock it, not an invented
+    // global DPS claim. An explicit manual Specialty configuration wins.
+    const requireMobileHellfire=movingNightmare&&!Array.isArray(manual.Hellfire)&&
+      effective(build,'Hellfire')>=8&&
+      legalOptions('Hellfire',effective(build,'Hellfire'),specData).includes(3);
+    if(requireMobileHellfire&&!current.Hellfire.includes(3)){
+      const allowed=slots(effective(build,'Hellfire'));
+      current.Hellfire=[...current.Hellfire.slice(0,Math.max(0,allowed-1)),3];
+    }
     let best=evaluate(build,current,scenarioSet);
     for(const name of SPEC_KEYS){
       if(Array.isArray(manual[name]))continue;
       const level=effective(build,name),options=legalOptions(name,level,specData),
         available=combinations(options,slots(level));
       for(const choices of available){
+        if(requireMobileHellfire&&name==='Hellfire'&&!choices.includes(3))continue;
         const candidate={...current,[name]:choices},estimate=evaluate(build,candidate,scenarioSet);
         if(estimate.robustScore>best.robustScore+1e-9){
           current=candidate;best=estimate;
