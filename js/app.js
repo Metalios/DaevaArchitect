@@ -261,6 +261,11 @@ function recommendedStigmas(){
     ClassCombatModels.profile(state.class):null;
   // Templar party support's known Shield of Protection/Taunt balance must not
   // be displaced by a generic uncalibrated personal-DPS proxy.
+  // An uncalibrated generic Stigma scorer must not erase the deliberate
+  // group-vs-Nightmare and balanced-vs-burst-vs-sustain policies. Manual
+  // equipment/stigma selections remain authoritative in activeStigmas().
+  if(state.class==='sorcerer'&&!isLeveling()&&!appIsPvpContext(a.context))
+    return baseline;
   if(!combat||typeof JointProgression==='undefined'||isLeveling()||
      a.customStigmas||a.manualStigma||budget('stigma')<30||
      // A simple personal-DPS proxy must not displace a manually researched
@@ -658,9 +663,7 @@ function enhanceSorcererCombat(master,boardEffects,stigmas){
   }
   const a=account(),prepared=engineBuild(master.levels,boardEffects,stigmas.levels,activeStigmas());
   const objective=PVE_OBJECTIVES[a.pveObjective]?a.pveObjective:'performance';
-  const scenarios=objective==='burst'?[GlobalCombatEngine.ENCOUNTERS[2]]:
-    objective==='sustained'?GlobalCombatEngine.ENCOUNTERS.slice(0,2):
-      GlobalCombatEngine.ENCOUNTERS;
+  const scenarios=GlobalCombatEngine.scenariosFor(a.context,objective);
   const key=JSON.stringify([state.class,a.context,objective,currentLevel(),prepared,
     a.manualMastery,a.customSpecialties,budget('mastery')]);
   let result=combatResultCache.key===key?combatResultCache.result:null;
@@ -728,7 +731,7 @@ function model(){
     // Board level unlocks are a real change of eligible path; a level
     // increase inside the same unlock band must not shuffle suggestions.
     const contextKey=JSON.stringify([state.class,a.context,a.pvpOpponent||'all',BOARD_NAMES.filter(boardOpen),
-      sorcererCombatEligible()?'global-sorcerer-objectives-v3':'objective-board-search-v3',a.pveObjective||'performance']);
+      sorcererCombatEligible()?'global-sorcerer-nightmare-goals-v4':'objective-board-search-v3',a.pveObjective||'performance']);
     const snapshot=a.recommendedRouteSnapshot;
     // Prior to any real purchases, changes to the player's goal, mastery,
     // equipment or Stigmas should still influence the recommended route.
@@ -776,9 +779,7 @@ function model(){
              if(state.class==='sorcerer'&&sorcererCombatEligible()&&objective!=='survivability'&&
                  !RoleBuildGoals.info(state.class,objective)){
                // Tune specialties for the selected goal's encounter window.
-               const scenarios=objective==='burst'?[GlobalCombatEngine.ENCOUNTERS[2]]:
-                 objective==='sustained'?GlobalCombatEngine.ENCOUNTERS.slice(0,2):
-                   GlobalCombatEngine.ENCOUNTERS;
+               const scenarios=GlobalCombatEngine.scenariosFor(a.context,objective);
                const evaluated=GlobalCombatEngine.tuneSpecialties(
                  build,SPECS.sorcerer,a.customSpecialties||{},null,scenarios);
                return evaluated.robustScore+structuralTie;
@@ -1004,7 +1005,7 @@ function renderOverview(m){
     const updates=m.joint.trace?.reduce((sum,step)=>sum+(step.changes||0),0)||0;
     steps.push(`<b>Combined combat search:</b> Evaluated your recorded gear, effective skills, equipped Stigmas and all six boards together. ${updates} legal rank adjustments after the initial progression allocation. Combat-score comparisons are uncalibrated and are not measured DPS or guaranteed optimal builds.`);
   }
-  if(a.context==='solo')steps.push(`<b>Solo route:</b> Mastery, Stigmas and the board order favor personal damage and self-sustain. The board route differs from Group PvE.`);
+  if(a.context==='solo')steps.push(`<b>Level-45 Solo endgame:</b> This path is for Nightmare bosses and Ascension Trials, not quest leveling. Your selected <b>${esc(a.pveObjective)}</b> goal changes actual Mastery, Stigmas and Daevanion priorities. Expect bosses to move and to resist some control effects; reserve defensive actions for their mechanics.`);
   if(appIsPvpContext(a.context)){
     const boardStats={...m.effects.stats};
     for(const extra of [m.arielEffects,m.azphelEffects])
@@ -1101,7 +1102,9 @@ function renderMastery(m){
   }).join('')||(query?`<div class="mastery-empty">No unlocked skills match “${esc(state.masterySearch)}” at level ${currentLevel()}. Clear the search or choose a higher level.</div>`:isLeveling()?`<div class="mastery-empty">No Mastery upgrades are available at level ${currentLevel()}. Mastery points begin at level 4; your unlocked skills start at rank 1.</div>`:'');
 }
 function renderStigma(m){
-  const p=profile(),a=account(),slots=isLeveling()?levelReward().slots:4,selected=activeStigmas().slice(0,slots),mode={party:'Group PvE',solo:'Solo PvE',...PVP_CONTEXT_LABELS}[a.context];$('stigma-spent').textContent=`${m.stigma.spent} / ${budget('stigma')} spent`;$('loadout-title').textContent=isLeveling()?`${p.name} · ${slots} of 4 slots open`:`${p.name} ${mode} bar`;$('loadout-text').textContent=slots?selected.join(', ')+'. '+(a.context==='party'?p.swap:'This is a context-specific starting set; compare your live tooltips and matchups.'):'Stigmas open at level 22. The first Stigma point comes at level 23; more slots open at 27, 32 and 37.';
+  const p=profile(),a=account(),slots=isLeveling()?levelReward().slots:4,selected=activeStigmas().slice(0,slots),mode={party:'Group endgame PvE',solo:'Solo endgame PvE (Nightmare / Ascension)',...PVP_CONTEXT_LABELS}[a.context];$('stigma-spent').textContent=`${m.stigma.spent} / ${budget('stigma')} spent`;$('loadout-title').textContent=isLeveling()?`${p.name} · ${slots} of 4 slots open`:`${p.name} ${mode} bar`;$('loadout-text').textContent=slots?selected.join(', ')+'. '+(!isLeveling()&&!appIsPvpContext(a.context)&&state.class==='sorcerer'
+    ?(adviceFor(state.class,a.context,a.pveObjective)?.why||p.swap)
+    :a.context==='party'?p.swap:'This is a context-specific starting set; compare your live tooltips and matchups.'):'Stigmas open at level 22. The first Stigma point comes at level 23; more slots open at 27, 32 and 37.';
   $('stigma-heading').textContent=isLeveling()?`Stigmas · ${slots} of 4 slots open`:'Four stigma slots';$('stigma-description').textContent=isLeveling()?'Slots open at levels 22, 27, 32 and 37. Leveling points start at 23.':'Points advance the four equipped choices to their 5, 10, 15 and 20 breakpoints.';
   $('loadout-tags').innerHTML=selected.map(n=>`<span class="tag ${m.stigma.levels[n]>=5?'green':''}">${esc(n)} · Lv ${m.stigma.levels[n]||0}</span>`).join('');
   $('stigma-grid').innerHTML=selected.map(name=>{const info=STIGMAS[state.class]?.[name],lv=m.stigma.levels[name]||0,perks=info?.perks||{};
