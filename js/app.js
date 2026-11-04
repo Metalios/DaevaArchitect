@@ -1245,13 +1245,18 @@ function renderRotationSkillCoverage(m,p,stacks,hotbar,physicalHotkey){
       ?'Recommended Stigma Lv '+rank:
        'Planned Mastery '+rank+' · with obtained bonuses Lv '+owned;
     const specs=type==='active'?specPicks(name,owned):[];
+    const researched=state.class==='sorcerer'&&
+      typeof SORCERER_EASY_COMBAT!=='undefined'
+      ?SORCERER_EASY_COMBAT[name]?.role:null;
+    const note=specialNotes[name]||researched||
+      (type==='stigma'?STIGMAS[state.class]?.[name]?.base:null);
     return '<li class="rotation-coverage-skill" data-coverage-type="'+type+
       '" data-coverage-name="'+esc(name)+'" data-coverage-tone="'+tone+'">'+
       '<span class="rotation-coverage-icon">'+
         gameSkillIconMarkup(state.class,name,'rotation-coverage-art')+'</span>'+
       '<span class="rotation-coverage-copy"><strong>'+esc(name)+'</strong>'+
         '<small>'+esc(levelCopy)+'</small>'+
-        (specialNotes[name]?'<small>'+esc(specialNotes[name])+'</small>':'')+
+        (note?'<small>'+esc(note)+'</small>':'')+
         (specs.length?'<small>Specialty choices: '+specs.join(', ')+'</small>':'')+
       '</span><span class="rotation-coverage-state">'+esc(label)+'</span></li>';
   };
