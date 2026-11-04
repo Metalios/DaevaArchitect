@@ -62,6 +62,53 @@ unique; each of the five **within-context** goals has a distinct Stigma bar.
   are recomputed once for these policy changes, then retain the usual stable
   purchased-tile behavior.
 
+## Movement-first Nightmare combat (clarified objective)
+
+The user's Solo endgame priority is **damage delivered per real elapsed combat
+second while moving**, not maximum stationary dummy damage or the fewest
+seconds of theoretical cast time in a zero-movement arena. Fast attacks and
+mobility are the first offense constraints; shield/mitigation spending serves
+the chosen risk tolerance.
+
+**Verified Global movement mechanics** from the Global Sorcerer skill catalog:
+
+- **Mobile by default:** Flame Arrow (LMB), Firestorm (5s cooldown), Blaze
+  (Fire Mark required; 5s cooldown), Frost and the primary offensive buffs
+  Wish of Concentration, Element Enhancement and Delayed Explosion.
+- **Hellfire:** charged manually. Level-8 Specialty **option 3** changes it
+  to mobile. The Solo Nightmare damage search now treats this as a required
+  earned Specialty when available, unless the player manually pins different
+  choices. Full charge stays manual even if it can be completed while moving.
+- **Bittercold Wind:** level-8 Specialty **option 2** changes to mobile.
+- **Winter's Shackles:** level-8 Specialty **option 1** changes to mobile.
+- **Frost Burst / Flame Scattershot:** level-8 mobile Specialties
+  **options 2 / 3** respectively, but are conditional on Frost / Stagger;
+  they are not unconditional boss-fight filler.
+- **Fire Wall, Cold Storm, Divine Burst:** do not enter the automatic
+  moving-damage macro. They remain deliberate casts in safe stationary
+  windows; their ground fields lose value on relocating bosses.
+
+The planner scores **positioning/stop opportunity cost** in movement-heavy
+Nightmare scenarios rather than assuming all casts can be continuously used
+while moving. Its auto macro only attempts **Q: Firestorm → Blaze**, with a
+possible **E** containing Bittercold Wind and/or Winter's Shackles **only if
+the matching mobile Specialty is actually earned and selected**. The visible
+macro checks obtained-board skill levels (not just future blue planned
+nodes), preserving the real unlock gate.
+
+The stop-cost coefficient, base action occupancy, boss movement schedule,
+actual interruptions, Firestorm fireball count and server animation cancels
+are not measured. The relative damage-per-elapsed-second result is a
+**sensitivity ranking**, not a claim of absolute DPS or an exact Nightmare
+clear time. User-pinned Specialties always win over this policy.
+
+Source references:
+- [Global Sorcerer movement and cooldown overview](https://aion2.grimvane.app/companion/wiki/sorcerer-primer/)
+- [Global Firestorm 5s cooldown and Skill Speed](https://aion2.gaming.tools/skills/15040000)
+- [Global Bittercold Wind mobile Specialty](https://aion2.gaming.tools/skills/15280000)
+- [Global Winter's Shackles mobile Specialty](https://aion2.gaming.tools/skills/15110000)
+- [Global PvE Sorcerer mobility and Hellfire Specialty](https://metaroad.gg/aion2/build-guides/sorcerer-pve-dps-build)
+
 ## Scenario assumptions
 
 The dedicated Sorcerer relative-damage engine compares group scenarios
@@ -96,6 +143,9 @@ every gear score, boss and movement rate.
 - `node sorcerer_nightmare_regression.mjs`: ten endgame goal/context
   policies, five distinct Stigma bars per context, budget-safe actual
   fresh45 Mastery ranks, defensive/burst breakpoints and Solo scenarios.
+- `node sorcerer_mobile_damage_regression.mjs`: verified movement
+  gates, forced-stop time, earned mobile Hellfire, auto macro containment,
+  manual overrides and moving-only Q/E layouts.
 - `node sorcerer_nightmare_smoke.mjs`: executes the real application
   model in Chromium for five fresh45 Solo paths, asserts distinct
   **purchased** Mastery/stigma loadouts, non-identical funded board prefixes,
