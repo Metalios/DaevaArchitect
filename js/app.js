@@ -1135,15 +1135,17 @@ function renderRotation(m){
     // The optimizer scores FUNDED FUTURE board effects. The live macro must
     // use only Specialties actually available from purchased Mastery +
     // obtained board tiles + recorded gear, never a projected future pick.
-    const actualSpecs=mobileSolo
-      ?Object.fromEntries(['Hellfire','Bittercold Wind',"Winter's Shackles",'Frost Burst','Frost']
-        .map(name=>[name,specPicks(name,skillLevelBreakdown(name,m).withOwned)]))
-      :{};
+    const actualSpecs=Object.fromEntries(
+      ['Hellfire','Bittercold Wind',"Winter's Shackles",'Frost Burst','Frost']
+        .map(name=>[name,specPicks(name,skillLevelBreakdown(name,m).withOwned)]));
+    // The visible macro may NOT cast an attack using a planned but
+    // unpurchased mobility Specialty, even if the optimizer modeled it.
+    const movingFlow=chosen.mode==='flow'||mobileSolo;
     p.stacks=chosen.stacks.map(stack=>({...stack,
-      skills:mobileSolo?stack.skills.filter(name=>
+      skills:movingFlow?stack.skills.filter(name=>
         GlobalCombatEngine.isMobile(name,actualSpecs)):stack.skills}))
       .filter(stack=>stack.skills.length);
-    p.macro=mobileSolo?p.stacks.map(stack=>stack.key):[...chosen.steps];
+    p.macro=p.stacks.map(stack=>stack.key);
     if(mobileSolo){
       const automatic=new Set(p.stacks.flatMap(stack=>stack.skills));
       for(const [index,name] of [[4,'Bittercold Wind'],[5,"Winter's Shackles"]]){
