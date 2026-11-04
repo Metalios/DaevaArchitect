@@ -78,11 +78,20 @@ const unupgraded=model.chooseMacro(build,stationarySpecialties,contexts[0]);
 assert.equal(unupgraded.mode,'mobile');
 assert.deepEqual(Array.from(unupgraded.steps),['Q']);
 assert.deepEqual(Array.from(unupgraded.stacks[0].skills),
- ['Firestorm','Blaze']);
+ ['Blaze','Firestorm'],'Spend ready Fire Mark with Blaze before firing Firestorm');
+const rank8={...build,mastery:{...build.mastery,Hellfire:8},
+ boardSkills:{...build.boardSkills,Hellfire:0},macroLayout:'mobile'};
+const at8=model.tuneSpecialties(rank8,specData,{},null,[moving]);
+assert.deepEqual(Array.from(at8.specialties.Hellfire),[1],
+ 'At rank 8 prioritize +30% Hellfire Skill Speed: one slot cannot fit mobile too');
+const rank12={...rank8,boardSkills:{...rank8.boardSkills,Hellfire:4}};
+const at12=model.tuneSpecialties(rank12,specData,{},null,[moving]);
+assert.deepEqual(Array.from(at12.specialties.Hellfire),[1,3],
+ 'At rank 12 take fast charge AND mobility with two earned slots');
 const tuned=model.tuneSpecialties({...build,macroLayout:'mobile'},
  specData,{},null,[moving]);
 assert(tuned.specialties.Hellfire.includes(3),
- 'Nightmare damage optimizer must unlock mobile Hellfire once earned');
+ 'After two earned slots, Nightmare should combine fast Hellfire with mobile casting');
 const explicitlyPinned=model.tuneSpecialties({...build,macroLayout:'mobile'},
  specData,{Hellfire:[1,5]},null,[moving]);
 assert.deepEqual(Array.from(explicitlyPinned.specialties.Hellfire),
