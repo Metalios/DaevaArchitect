@@ -1127,7 +1127,7 @@ function renderStigma(m){
 }
 function numbered(items){return items.map((v,i)=>`<li><span class="rotation-num">${String(i+1).padStart(2,'0')}</span><span>${esc(v)}</span></li>`).join('')}
 function renderRotation(m){
-  const a=account(),p=typeof progressionRotationProfile==='function' ? progressionRotationProfile(profile(),state.class,a.context,name=>skillLevelBreakdown(name,m).withOwned,activeStigmas().filter(name=>(m.stigma.levels[name]||0)>0),(name,option)=>specPicks(name,skillLevelBreakdown(name,m).withOwned).includes(option)) : profile(),level=currentLevel(),levelingMode=isLeveling(),main=masteryStages()[0]?.[0]||skillNames()[0],macroKey=['RMB','Mouse 4','MMB','M'].includes(a.macroBind)?a.macroBind:'RMB',weaveKey=p.weaveKey||'LMB';
+  const a=account(),p=typeof progressionRotationProfile==='function' ? progressionRotationProfile(profile(),state.class,a.context,name=>skillLevelBreakdown(name,m).withOwned,activeStigmas().filter(name=>(m.stigma.levels[name]||0)>0),(name,option)=>specPicks(name,skillLevelBreakdown(name,m).withOwned).includes(option),a.pveObjective) : profile(),level=currentLevel(),levelingMode=isLeveling(),main=masteryStages()[0]?.[0]||skillNames()[0],macroKey=['RMB','Mouse 4','MMB','M'].includes(a.macroBind)?a.macroBind:'RMB',weaveKey=p.weaveKey||'LMB';
   const quickUse2Bind=a.quickUse2Bind==='T'?'T':'R';
   if(m.combat?.macro?.stacks&&sorcererCombatEligible()){
     const chosen=m.combat.macro;
