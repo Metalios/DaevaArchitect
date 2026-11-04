@@ -54,7 +54,7 @@ try{
    macroSkills:[...document.querySelectorAll(
     '#macro-stacks .macro-stack-auto [data-skill]')].map(row=>row.dataset.skill),
    macroKeys:[...document.querySelectorAll(
-    '#macro-stacks .macro-stack-auto [data-macro-key]')].map(row=>row.dataset.macroKey)
+    '#macro-stacks .macro-stack-auto[data-macro-key]')].map(row=>row.dataset.macroKey)
   };
   const actualMobileSpecs=Object.fromEntries(
    ['Hellfire','Bittercold Wind',"Winter's Shackles"].map(name=>
