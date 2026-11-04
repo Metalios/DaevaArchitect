@@ -180,7 +180,8 @@ const JointProgression = (()=>{
   // and point-type boundary. Its order is driven by marginal contextual
   // utility, not by cosmetic tab order or the next unconnected high stat.
   function rankConnectedBoard({board,context='party',objective='performance',
-      classId=null,role='damage',pvpOpponent='all',stats={},weights={},meta={},budget=Infinity}){
+      classId=null,role='damage',pvpOpponent='all',stats={},weights={},meta={},
+      budget=Infinity,locked=[]}){
     if(!board?.nodes?.length)throw Error('Board nodes required');
     const nodes=board.nodes;
     const grid=new Map(nodes.map(n=>[n[1]+':'+n[2],n]));
@@ -222,6 +223,67 @@ const JointProgression = (()=>{
       return value/Math.max(1,node[5])+
         (node[5]===1?.00001:0);
     }
+    // Fund already-obtained Ariel/Azphel nodes FIRST. Connect scattered
+    // marks with the cheapest real grid path, so the displayed route never
+    // silently replaces a user's purchased special-board investments.
+    const required=new Set((locked||[]).map(Number).filter(id=>
+      nodes.some(n=>n[0]===id&&n[5]>0)));
+    const adjacency=node=>{
+      const found=[];
+      for(const [r,c] of [[node[1]-1,node[2]],[node[1]+1,node[2]],
+        [node[1],node[2]-1],[node[1],node[2]+1]]){
+        const other=grid.get(r+':'+c);
+        if(other)found.push(other);
+      }
+      return found;
+    };
+    const byId=new Map(nodes.map(n=>[n[0],n]));
+    function pathTo(target){
+      const open=[...visited].map(id=>({id,cost:0})),
+        cost=new Map([...visited].map(id=>[id,0])),from=new Map();
+      while(open.length){
+        open.sort((a,b)=>a.cost-b.cost||a.id-b.id);
+        const step=open.shift();
+        if(step.cost!==cost.get(step.id))continue;
+        if(step.id===target){
+          const path=[];
+          let id=target;
+          while(!visited.has(id)){
+            path.push(byId.get(id));id=from.get(id);
+            if(id===undefined)throw Error('Unconnected special board target');
+          }
+          return path.reverse();
+        }
+        for(const n of adjacency(byId.get(step.id))){
+          const next=step.cost+(visited.has(n[0])?0:n[5]);
+          if(next<(cost.get(n[0])??Infinity)){
+            cost.set(n[0],next);from.set(n[0],step.id);
+            open.push({id:n[0],cost:next});
+          }
+        }
+      }
+      throw Error('Purchased special board tile has no connected route');
+    }
+    while([...required].some(id=>!visited.has(id))){
+      let selected=null;
+      for(const id of required){
+        if(visited.has(id))continue;
+        const path=pathTo(id),cost=path.reduce((sum,n)=>sum+n[5],0);
+        if(!selected||cost<selected.cost||
+            cost===selected.cost&&id<selected.id)selected={id,path,cost};
+      }
+      for(const node of selected.path){
+        if(visited.has(node[0]))continue;
+        visited.add(node[0]);frontier.delete(node[0]);
+        spent+=node[5];
+        route.push({board:board.name,id:node[0]});
+        for(const [key,value] of node[6]||[])
+          totals[key]=(totals[key]||0)+value;
+        offer(node);
+      }
+    }
+    if(spent>availablePoints)
+      throw Error('Recorded special-board purchases require more connected crystals than the entered budget');
     while(frontier.size){
       let choice=null,score=-Infinity;
       // Optimize the *actual available currency*, not only the order of a
