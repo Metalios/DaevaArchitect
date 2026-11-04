@@ -279,11 +279,11 @@ function progressionBoardTargets(cls,mode,objective='performance'){
  }
  return result;
 }
-function progressionNextBreakpoint(cls,mode,effectiveLevel,ownedCrystals){
+function progressionNextBreakpoint(cls,mode,effectiveLevel,ownedCrystals,objective='performance'){
  const p=PROGRESSION_PLANS[cls];
  if(!p)return '';
  if(isPvpContext(mode))return 'PvP priorities depend on matchup; verify your defensive Stigma and control tools.';
- const next=progressionBreakpoints(cls,mode).find(([name,rank])=>effectiveLevel(name)<rank);
+ const next=progressionBreakpoints(cls,mode,objective).find(([name,rank])=>effectiveLevel(name)<rank);
  if(!next)return 'Key damage breakpoints reached. Recheck your chosen Specialties and combat rotation.';
  const [name,rank]=next,gap=rank-effectiveLevel(name);
  return name+' effective Lv '+rank+' next ('+gap+' level'+(gap===1?'':'s')+
