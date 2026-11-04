@@ -63,7 +63,7 @@ const contexts=[
 for(const encounters of contexts){
  for(const selected of [mobileSpecialties,stationarySpecialties]){
   const plan=model.chooseMacro(build,selected,encounters);
-  assert(['mobile','mobile-extended'].includes(plan.mode),
+  assert.equal(plan.mode,'flow',
    'Nightmare must not choose automatic stationary cast / ground macros');
   assert(plan.stacks.every(stack=>stack.skills.every(name=>
    model.isMobile(name,selected))),
@@ -71,14 +71,23 @@ for(const encounters of contexts){
   assert(!plan.stacks.some(stack=>stack.skills.some(name=>
    ['Hellfire','Fire Wall','Cold Storm','Divine Burst'].includes(name))),
    'Charged attacks and ground fields must remain manual for Nightmare');
-  assert(plan.steps.length>=1&&plan.steps.length<=2);
+  assert(plan.steps.length>=2&&plan.steps.length<=3);
  }
 }
 const unupgraded=model.chooseMacro(build,stationarySpecialties,contexts[0]);
-assert.equal(unupgraded.mode,'mobile');
-assert.deepEqual(Array.from(unupgraded.steps),['Q']);
+assert.equal(unupgraded.mode,'flow');
+assert.deepEqual(Array.from(unupgraded.steps),['Q','E','R']);
 assert.deepEqual(Array.from(unupgraded.stacks[0].skills),
  ['Blaze','Firestorm'],'Spend ready Fire Mark with Blaze before firing Firestorm');
+assert.deepEqual(Array.from(unupgraded.stacks[1].skills),['Frost']);
+assert.deepEqual(Array.from(unupgraded.stacks[2].skills),
+ ['Element Enhancement','Delayed Explosion']);
+assert(unupgraded.stacks.every(stack=>!stack.skills.includes('Hellfire')),
+ 'No auto macro may consume charged Hellfire');
+const burst=model.flowLayout({...build,objective:'burst'},stationarySpecialties);
+assert(burst.stacks.some(stack=>stack.key==='R'));
+assert.deepEqual(Array.from(burst.stacks.find(stack=>stack.key==='R').skills),
+ ['Element Enhancement'],'Burst goal must keep Delayed Explosion manual');
 const rank8={...build,mastery:{...build.mastery,Hellfire:8},
  boardSkills:{...build.boardSkills,Hellfire:0},macroLayout:'mobile'};
 const at8=model.tuneSpecialties(rank8,specData,{},null,[moving]);
