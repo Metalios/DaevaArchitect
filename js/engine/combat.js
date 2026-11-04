@@ -41,7 +41,7 @@ const GlobalCombatEngine=(()=>{
     compact:{label:'One-stack Q',steps:['Q'],
       stacks:[{key:'Q',title:'Compact cooldown damage',skills:['Firestorm','Blaze','Bittercold Wind',"Winter's Shackles"]}]},
     balanced:{label:'Two-stack Q / E',steps:['Q','E'],
-      stacks:[{key:'Q',title:'Cooldown and frost setup',skills:['Firestorm','Bittercold Wind',"Winter's Shackles",'Frost']},
+      stacks:[{key:'Q',title:'Cooldown and frost setup',skills:["Winter's Shackles",'Bittercold Wind','Frost','Firestorm']},
         {key:'E',title:'Conditional follow-ups',skills:['Blaze','Frost Burst','Flame Scattershot']}]},
     ground:{label:'Ground-damage Q / E / R',steps:['Q','E','R'],
       stacks:[{key:'Q',title:'Cooldown and frost setup',skills:['Firestorm','Bittercold Wind',"Winter's Shackles",'Frost']},
@@ -120,7 +120,9 @@ const GlobalCombatEngine=(()=>{
       }
     };
     const macro=MACRO_LAYOUTS[build.macroLayout]||MACRO_LAYOUTS.ground;
-    const priority=macro.stacks.flatMap(stack=>stack.skills);
+    const macroStacks=macro.steps.map(key=>macro.stacks.find(stack=>stack.key===key))
+      .filter(Boolean);
+    let macroCursor=0;
     const macroStepOverhead=(macro.steps.length-1)*.012; // input sensitivity, not measured animation
     const equippedGround=macro.steps.includes('R')?['Fire Wall','Cold Storm'].filter(name=>hasStigma(build,name)):[];
     const maxSteps=2500;
@@ -230,11 +232,21 @@ const GlobalCombatEngine=(()=>{
         if(eligible(manual)){name=manual;manualActions++;break}
       }
       if(!name){
-        // Q/E is deliberately treated as opportunistic rather than a
-        // perfectly deterministic game macro execution sequence.
-        const available=priority.filter(eligible);
-        name=available[0]||'Flame Arrow';
-        if(!available.length)unavailable++;
+        // One in-game keypress selects at most one ready row from that
+        // stack. Do not flatten the Q/E/R columns into a fictitious priority
+        // queue. Round-robin is an explicit scheduling hypothesis, not proof
+        // of exact client order or action-time occupancy.
+        let selected=null;
+        for(let offset=0;offset<macroStacks.length;offset++){
+          const index=(macroCursor+offset)%macroStacks.length;
+          const ready=macroStacks[index].skills.find(eligible);
+          if(!ready)continue;
+          selected=ready;
+          macroCursor=(index+1)%macroStacks.length;
+          break;
+        }
+        name=selected||'Flame Arrow';
+        if(!selected)unavailable++;
         else now+=macroStepOverhead;
       }
       if(!eligible(name)){name='Flame Arrow';skippedForMp++}
