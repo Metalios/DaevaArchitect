@@ -112,7 +112,8 @@ const GlobalCombatEngine=(()=>{
       ...(capable('Frost Burst')&&isMobile('Frost Burst',spec)?['Frost Burst']:[]),
       ...(capable('Frost')?['Frost']:[]),
       ...['Bittercold Wind',"Winter's Shackles"]
-        .filter(name=>capable(name)&&isMobile(name,spec))
+        .filter(name=>capable(name)&&isMobile(name,spec)&&
+          !(isBurst&&name==="Winter's Shackles"))
     ];
     const buffs=CONTINUOUS_OFFENSE.filter(eligibleAutoStigma);
     const stacks=[
