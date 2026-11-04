@@ -25,6 +25,7 @@ for(const name of ['Fire Wall','Cold Storm','Divine Burst']){
 }
 const names=Object.keys(skills);
 const build={
+ context:'solo',objective:'performance',
  mastery:Object.fromEntries(names.map(name=>[name,10])),
  boardSkills:{Hellfire:6,'Bittercold Wind':6,"Winter's Shackles":6,
   'Firestorm':6,Blaze:6},
@@ -71,23 +72,27 @@ for(const encounters of contexts){
   assert(!plan.stacks.some(stack=>stack.skills.some(name=>
    ['Hellfire','Fire Wall','Cold Storm','Divine Burst'].includes(name))),
    'Charged attacks and ground fields must remain manual for Nightmare');
-  assert(plan.steps.length>=2&&plan.steps.length<=3);
+  assert(plan.steps.length>=1&&plan.steps.length<=3,
+   'Solo can omit E/R when no compatible mobile follow-ups are earned');
  }
 }
 const unupgraded=model.chooseMacro(build,stationarySpecialties,contexts[0]);
 assert.equal(unupgraded.mode,'flow');
-assert.deepEqual(Array.from(unupgraded.steps),['Q','E','R']);
+assert.deepEqual(Array.from(unupgraded.steps),['Q'],
+ 'No phantom E/R when no earned mobile follow-up or eligible buff is present');
 assert.deepEqual(Array.from(unupgraded.stacks[0].skills),
- ['Blaze','Firestorm'],'Spend ready Fire Mark with Blaze before firing Firestorm');
-assert.deepEqual(Array.from(unupgraded.stacks[1].skills),['Frost']);
-assert.deepEqual(Array.from(unupgraded.stacks[2].skills),
- ['Element Enhancement','Delayed Explosion','Wish of Concentration']);
+ unupgraded.firePriority==='firestorm'?['Firestorm','Blaze']:['Blaze','Firestorm'],
+ 'Q must honor the selected, explicitly modeled fire priority');
 assert(unupgraded.stacks.every(stack=>!stack.skills.includes('Hellfire')),
  'No auto macro may consume charged Hellfire');
+const upgraded=model.chooseMacro(build,mobileSpecialties,contexts[0]);
+assert(upgraded.steps.includes('E')&&
+ upgraded.stacks.some(stack=>stack.key==='E'&&stack.skills.includes('Bittercold Wind')),
+ 'Owned mobile Bittercold Specialty must unlock a usable moving stack');
 const burst=model.flowLayout({...build,objective:'burst'},stationarySpecialties);
-assert(burst.stacks.some(stack=>stack.key==='R'));
-assert.deepEqual(Array.from(burst.stacks.find(stack=>stack.key==='R').skills),
- ['Element Enhancement'],'Burst goal must keep Delayed Explosion manual');
+assert(!burst.stacks.some(stack=>stack.skills.includes('Delayed Explosion')||
+ stack.skills.includes('Wish of Concentration')),
+ 'Short burst Stigmas and cooldown-reset Wish remain manual');
 const rank8={...build,mastery:{...build.mastery,Hellfire:8},
  boardSkills:{...build.boardSkills,Hellfire:0},macroLayout:'mobile'};
 const at8=model.tuneSpecialties(rank8,specData,{},null,[moving]);
