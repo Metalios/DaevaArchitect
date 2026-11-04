@@ -16,9 +16,10 @@ const context=vm.createContext({
 vm.runInContext([
  'js/optimizer/roles.js','js/engine/class_models.js',
  'js/recommendations.js','js/progression.js',
- 'js/optimizer/objectives.js','js/engine/combat.js'
+ 'js/optimizer/objectives.js','js/engine/combat.js',
+ 'js/ariel_data.js','js/optimizer/joint.js'
 ].map(read).join('\n')+
- '\nglobalThis.api={adviceFor,progressionMasteryStages,progressionBoardTargets,ClassCombatModels,GlobalCombatEngine,PveBuildOptimizer};',
+ '\nglobalThis.api={adviceFor,progressionMasteryStages,progressionBoardTargets,ClassCombatModels,GlobalCombatEngine,PveBuildOptimizer,ARIEL,JointProgression};',
  context);
 const api=context.api;
 const names=Object.values(data.skills).map(s=>s.name);
@@ -95,4 +96,25 @@ const grp=api.PveBuildOptimizer.weightsFor(
  JSON.parse(read('context_routes.json')).sorcerer.weights.party,
  'sorcerer','party','performance',0,45);
 assert(soloWeights.stats.HPMax>grp.stats.HPMax);
-console.log('Fresh45 Sorcerer: 10 distinct PvE goal/context plans; 5 unique bars within each context, rank investments, boss-specific scenarios and target milestones verified.');
+const ariel=api.ARIEL.sorcerer;
+const routes=JSON.parse(read('context_routes.json'));
+const arielPrefixes=new Set();
+for(const goal of goals){
+ const full=api.JointProgression.rankConnectedBoard({
+  board:ariel,context:'solo',objective:goal,classId:'sorcerer',
+  role:'damage',stats:{},weights:routes.sorcerer.weights.solo.stats,
+  meta:data.stats||{},budget:80
+ });
+ let spent=0;
+ const funded=[];
+ for(const item of full){
+  const node=ariel.nodes.find(n=>n[0]===item.id);
+  if(!node||spent+node[5]>80)break;
+  spent+=node[5];funded.push(item.id);
+ }
+ assert(spent<=80&&funded.length>0,'Ariel '+goal+' route must fund connected affordable tiles');
+ arielPrefixes.add(funded.slice(0,50).join(','));
+}
+assert(arielPrefixes.size>=2,
+ 'Ariel is not differentiating Nightmare survival from offensive endgame objectives');
+console.log('Fresh45 Sorcerer: 10 distinct PvE goal/context plans; 5 unique bars within each context, rank investments, boss-specific scenarios and target milestones and separate Ariel routes verified.');
