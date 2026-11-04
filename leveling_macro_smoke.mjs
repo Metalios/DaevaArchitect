@@ -22,14 +22,8 @@ try{
      failures.push(cls+' '+level+': AION 2 control mode card hidden in leveling view');
    const plan=buildLevelingCombat(cls,level,context,SKILL_UNLOCKS[cls],activeStigmas().slice(0,levelReward().slots),
      m.stigma.levels,(name,option)=>specPicks(name,effective(name,m)).includes(option));
-   if(cls==='sorcerer'&&m.combat?.macro){
-     const available=new Set(plan.stacks.flatMap(group=>group.stack));
-     plan.stacks=m.combat.macro.stacks.map(group=>{
-       const stack=group.skills.filter(name=>available.has(name));
-       return {key:group.key,stack};
-     }).filter(group=>group.stack.length);
-     plan.steps=plan.stacks.map(group=>group.key);
-   }
+   // Sorcerer leveling MUST use real unlock-gated action stacks, not the
+   // unrelated endgame combat optimizer's speculative macro selection.
    if(!r.classList.contains('leveling-view'))failures.push(cls+' '+level+': no leveling view');
    const oldMacro=document.querySelector('#macro-stacks');
    if(getComputedStyle(oldMacro).display!=='none')failures.push(cls+' '+level+': endgame macro still displayed');
