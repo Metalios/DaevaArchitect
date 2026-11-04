@@ -595,8 +595,16 @@ const GlobalCombatEngine=(()=>{
       const candidate={...build,mastery},legal={};
       for(const [name,picks] of Object.entries(reference)){
         const level=effective(candidate,name),
-          allowed=new Set(legalOptions(name,level,specData));
-        legal[name]=picks.filter(id=>allowed.has(id)).slice(0,slots(level));
+          allowed=new Set(legalOptions(name,level,specData)),
+          key=level>=20?'20':level>=16?'16':
+            level>=12?'12':level>=8?'8':null;
+        // Newly funded Lv 8/12/16 breakpoints should be valuable even if
+        // the initial build could not yet select their Specialty options.
+        // Only use owned legal options; the final full tune can refine them.
+        const unlocked=Array.isArray(manualSpecs[name])?[]:
+          (key?specData[name]?.picks?.[key]||[]:[]);
+        legal[name]=[...new Set([...picks,...unlocked])]
+          .filter(id=>allowed.has(id)).slice(0,slots(level));
       }
       return evaluate(candidate,legal,scenarios).robustScore;
     };
