@@ -775,7 +775,8 @@ function model(){
         item.fixedStats,item.skillBonuses,item.stones,item.theostone,item.statNotes]:null;
     });
     const basisKey=JSON.stringify([target,mastery.levels,stigma.levels,gearRanks,
-      gearBasis,activeStigmas(),a.titlesOwned,a.cpAnchor]);
+      gearBasis,activeStigmas(),a.titlesOwned,a.cpAnchor,
+      a.customSpecialties||{}]);
     const total=budget('crystals'),spent=obtainedCrystalSpend(false);
     const exhausted=total>0&&spent>=total;
     const valid=snapshot?.contextKey===contextKey&&
