@@ -166,7 +166,8 @@ function specialBoardRoute(name){
   const equipment=gearEquipment();
   const fingerprint=JSON.stringify([state.class,name,context,objective,a.pvpOpponent||'all',
     equipment,a.gear,a.titlesOwned,
-    name==='Ariel'?a.ariel:a.azphel]);
+    name==='Ariel'?a.ariel:a.azphel,
+    [...obtainedNodes()].filter(id=>nodeMap().get(id)?.board===name).sort((x,y)=>x-y)]);
   if(SPECIAL_BOARD_ROUTE_CACHE.has(fingerprint))
     return SPECIAL_BOARD_ROUTE_CACHE.get(fingerprint);
   const board=name==='Ariel'?ARIEL[state.class]:AZPHEL[state.class];
@@ -181,6 +182,7 @@ function specialBoardRoute(name){
       route=JointProgression.rankConnectedBoard({
         board,context,objective,pvpOpponent:a.pvpOpponent||'all',classId:state.class,role:profile().kind,stats:totals,
         budget:name==='Ariel'?(a.ariel||0):(a.azphel||0),
+        locked:[...obtainedNodes()].filter(id=>nodeMap().get(id)?.board===name),
         weights,meta:data().stats
       });
     }catch(error){
@@ -268,9 +270,15 @@ function recommendedStigmas(){
   // Public Global PvP loadouts are candidates, not verified top-ranked builds.
   const observed=appIsPvpContext(a.context)&&typeof PVP_OBSERVATIONS!=='undefined'
     ?PVP_OBSERVATIONS.filter(row=>row.classId===state.class).map(row=>row.stigmas):[];
+  const contextualPvp=appIsPvpContext(a.context)?
+    Object.values(PVP_VARIANTS[state.class]||{}).map(entry=>entry.stigmas):[];
+  const sorcererSwaps=state.class==='sorcerer'&&appIsPvpContext(a.context)?[
+    ['Element Enhancement','Arctic Armor','Hibernation','Curse: Tree'],
+    ['Element Enhancement','Arctic Armor','Soul Freeze','Steel Barrier']
+  ]:[];
   const candidates=[standard,combat.damageStigmas,combat.survivalStigmas,
     variants[state.class]?.pvp,variants[state.class]?.solo,
-    advised?.stigmas,...observed].filter(Array.isArray);
+    advised?.stigmas,...contextualPvp,...sorcererSwaps,...observed].filter(Array.isArray);
   const key=JSON.stringify([state.class,a.context,a.pveObjective,a.pvpOpponent||'all',
     budget('stigma'),budget('mastery'),a.equipment,a.gear,
     a.obtainedNodes,a.manualMastery,a.customSpecialties,baseline,candidates]);
@@ -644,7 +652,8 @@ function enhanceSorcererCombat(master,boardEffects,stigmas){
   // The Sorcerer event simulator models damage, not crowd-control uptime.
   // Control goals use researched rank/board priorities and the safe default
   // macro, rather than presenting damage-tuned Specialties as CC-optimal.
-  if(RoleBuildGoals.info(state.class,account().pveObjective)||!sorcererCombatEligible()){
+  if(RoleBuildGoals.info(state.class,account().pveObjective)||
+     account().pveObjective==='survivability'||!sorcererCombatEligible()){
     lastOptimizedCombat=null;return master;
   }
   const a=account(),prepared=engineBuild(master.levels,boardEffects,stigmas.levels,activeStigmas());
@@ -783,7 +792,7 @@ function model(){
              objective,baseWeights,mastery:mastery.levels,gear:gearRanks,
              locked:[...actual].filter(id=>BOARD_NAMES.includes(nodeMap().get(id)?.board)),
              crystalBudget,characterLevel:currentLevel(),
-             skillTargets:typeof progressionBoardTargets==='function'?progressionBoardTargets(state.class,a.context):{},
+             skillTargets:typeof progressionBoardTargets==='function'?progressionBoardTargets(state.class,a.context,a.pveObjective):{},
              scoreFinal});
            a.lastObjectiveAnalysis=computed.diagnostics;
          }catch(error){
@@ -835,7 +844,12 @@ function model(){
       combatStats[key]=(combatStats[key]||0)+value;
   const combatEffects={skills:plannedEffects.skills,stats:combatStats};
   let joint=null,chosenMastery=finalMastery,chosenStigma=stigma;
-  if(typeof JointProgression!=='undefined'&&
+  // Offensive Sorcerer builds are already adjusted with the dedicated
+  // damage event model. A second, generic combat proxy rank exchange would
+  // overwrite those results and could reverse the selected macro/skill plan.
+  const sorcererDamageGoal=sorcererCombatEligible()&&
+    !['survivability','control'].includes(a.pveObjective);
+  if(!sorcererDamageGoal&&typeof JointProgression!=='undefined'&&
      typeof ClassCombatModels!=='undefined'&&
      ClassCombatModels.profile(state.class)){
     const fixed=engineBuild(finalMastery.levels,combatEffects,stigma.levels,stigmas);
@@ -868,7 +882,7 @@ function model(){
     }
   }
   let specialtyOptimization=null;
-  if(typeof JointProgression!=='undefined'&&
+  if(!sorcererDamageGoal&&typeof JointProgression!=='undefined'&&
      typeof ClassCombatModels!=='undefined'&&
      ClassCombatModels.profile(state.class)){
     const fixed=engineBuild(chosenMastery.levels,combatEffects,
@@ -897,7 +911,8 @@ function model(){
     }
   }
   latestSpecialtyPlan={classId:state.class,
-    picks:specialtyOptimization?.picks||null};
+    picks:specialtyOptimization?.picks||
+      (sorcererDamageGoal?lastOptimizedCombat?.specialties:null)||null};
   return {mastery:chosenMastery,stigma:chosenStigma,boards,ariel,azphel,
     effects:plannedEffects,acquiredEffects,combat:lastOptimizedCombat,
     joint,specialtyOptimization,arielEffects,azphelEffects};
