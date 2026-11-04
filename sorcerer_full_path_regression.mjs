@@ -47,8 +47,9 @@ for(const context of ['solo','party']){
     names.includes(name)&&rank>=1&&rank<=10));
   const targets=A.progressionBoardTargets('sorcerer',context,goal);
   if(goal==='survivability')
-    assert.equal(Object.keys(targets).length,0,
-      'Survivability must not be steered toward arbitrary DPS breakpoints');
+    assert(Object.hasOwn(targets,'Robe of Earth')&&
+      Object.hasOwn(targets,'Absorb Essence'),
+      'Survivability must target real defensive skill breakpoints, not damage-only gates');
   else if(goal==='control')
     assert(Object.hasOwn(targets,"Winter's Shackles"));
   else assert(Object.keys(targets).length>0);
