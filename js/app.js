@@ -608,7 +608,8 @@ function engineBuild(masteryLevels,boardEffects,stigmaLevels,equipped){
     mastery:masteryLevels,boardSkills:boardEffects.skills,
     boardStats:boardEffects.stats,gearSkills:equippedRanks,
     gearStats,
-    stigma:stigmaLevels,equippedStigmas:equipped,pvpOpponent:account().pvpOpponent||'all',
+    stigma:stigmaLevels,equippedStigmas:equipped,
+    context:account().context,pvpOpponent:account().pvpOpponent||'all',
     availableSkills:Object.entries(SKILL_UNLOCKS[state.class]||{})
       .filter(([,at])=>at<=currentLevel()).map(([name])=>name)
   };
@@ -1145,7 +1146,7 @@ function renderRotation(m){
         .map(name=>[name,specPicks(name,skillLevelBreakdown(name,m).withOwned)]));
     // The visible macro may NOT cast an attack using a planned but
     // unpurchased mobility Specialty, even if the optimizer modeled it.
-    const movingFlow=chosen.mode==='flow'||mobileSolo;
+    const movingFlow=mobileSolo; // Group Conquest can deliberately use ground or stationary attacks.
     p.stacks=chosen.stacks.map(stack=>({...stack,
       skills:movingFlow?stack.skills.filter(name=>
         GlobalCombatEngine.isMobile(name,actualSpecs)):stack.skills}))
@@ -1169,19 +1170,37 @@ function renderRotation(m){
     const fireDifference=fireComparison?
       Math.abs((fireComparison.firestorm.robustScore/
         Math.max(1e-9,fireComparison.blaze.robustScore)-1)*100):null;
-    p.rule='Two-button '+(mobileSolo?'Nightmare Solo':'Group')+
-      ' PvE: hold LMB Flame Arrow + RMB Macro. Q priority: '+fireOrder+
-      '. E runs eligible Frost follow-ups. R handles equipped offensive Stigmas'+
-      (wishAutomatic?' then Wish (lowest priority on that line).':
-        '. Wish stays manual for burst alignment.')+
-      ' Release RMB briefly while manually FULL-charging Hellfire; never clip the release.';
+    p.rule='Two-button '+(mobileSolo?'Nightmare Solo':'Conquest Group')+
+      ' PvE: hold LMB Flame Arrow + RMB Macro. Fire priority: '+fireOrder+
+      (mobileSolo?'. E handles owned mobile follow-ups only.':
+        '. Q also uses Bittercold Wind; E places equipped ground damage while the boss is stable.')+
+      (wishAutomatic?' R maintains eligible sustained buffs and Wish.':
+        '. Time Wish and Delayed Explosion manually for Hellfire; do not waste their short windows.')+
+      ' Release RMB to FULL-charge Hellfire without clipping its release.';
+    p.summary=mobileSolo?
+      'Nightmare: mobile fire attacks on held LMB + RMB, with full-charge Hellfire and brief burst buffs manual.':
+      'Conquest: held LMB + RMB handles short-cooldown fire and ground damage on stable bosses; burst windows and dangerous mechanics are manual.';
+    p.opener=mobileSolo?
+      ['Hold LMB + RMB for mobile fire damage while dodging.',
+       "Use Element Enhancement and Delayed Explosion manually for a safe Hellfire burst; land Winter's Shackles immediately before fully charged Hellfire when its PvE boost is selected.",
+       'If Wish has cooldown reset, press it after important attacks enter cooldown; use barriers before dangerous mechanics.']:
+      ['Hold LMB + RMB while the boss stays in range and inside ground effects.',
+       "Apply Element Enhancement, then coordinate Delayed Explosion / Winter's Shackles before a full Hellfire release within the short amplification window.",
+       'With Wish cooldown reset equipped, press Wish after the major spells are on cooldown; stop ground automation when the boss moves.'];
+    p.loop=mobileSolo?
+      ['Keep mobile Q/E damage running while dodging.',
+       'Pause RMB for full Hellfire charge and timed burst; do not spam Delayed Explosion.',
+       'Cast ground spells only if the Nightmare boss remains in their area.']:
+      ['Maintain Q repeatable damage and E ground uptime while the Conquest boss is stationary.',
+       'Pause RMB during important boss mechanics and Hellfire charge.',
+       'Use short offensive buffs manually when they will amplify real hits.'];
     p.hotbarNote=(mobileSolo?'Nightmare movement scenario: ':'Group PvE scenario: ')+
       chosen.label+'. Macro steps: '+p.macro.join(' + ')+
       (fireDifference===null?'':'. Fire-order difference in uncalibrated model: '+
         fireDifference.toFixed(2)+'%; this is not measured DPS')+
       '. Wish '+(wishAutomatic
-        ?'is automatic; its -10s reset only helps abilities already on cooldown.'
-        :'is manual so you can coordinate the short burst window.')+
+        ?'is automatic only without the cooldown-reset Specialty.'
+        :'is manual so you can coordinate burst or cooldown resets.')+
       ' In-game macro step order is not guaranteed, and movement / animation inputs are scenario estimates.';
   }
   const physicalHotkey=key=>key==='R'?quickUse2Bind:key;
@@ -1352,7 +1371,7 @@ function renderRotation(m){
   $('rhythm-weave-note').textContent=levelingMode?`The 1–8 bar below contains ${manualNow.length} currently available manual power${manualNow.length===1?'':'s'}. Press healing, movement, charges and defenses yourself; release Macro when timing matters.`:appIsPvpContext(a.context)?'Keep control, escape and defensive keys manual. Use the Stigmas tab for this PvP loadout; press the macro only for safe pressure.':state.class==='templar'?'E handles Judgment and Pummel during safe uptime. Fully charge Punishment manually, follow with Doom Shield when ready, and time Shield of Protection for a blockable hit. Pause the macro if it interrupts that sequence.':p.kind==='healer'?'Press the needed 1–8 heal or support key; manual input wins. Shift fully to healing when the group is in danger.':'Press or hold a 1–8 skill at its cue. During safe uptime, keep the base held; manual input wins over the macro.';
   $('rhythm-pause-note').textContent=p.kind==='healer'?`Release ${macroKey} and ${weaveKey} for healing triage or mechanics. Restart both when damage is safe.`:`Release ${macroKey} to stop Macro; release ${weaveKey} too when all attacks must stop. Pause Macro if a charge gets clipped.`;
   $('hotbar-grid').innerHTML=hotbar.map(([skills,cue,tone],i)=>`<article class="hotbar-card tone-${esc(tone)}"><div class="hotbar-top"><span class="hotbar-number">${i+1}</span><small>${esc(tone)}</small></div><div class="hotbar-skills">${skills.length?skills.map(name=>`<span class="game-hotbar-entry">${gameSkillIconMarkup(state.class,name,'hotbar-game-icon')}<strong>${esc(name)}</strong></span>`).join(''):'<strong>Flex slot</strong>'}</div><p>${esc(cue)}</p></article>`).join('');
-  $('hotbar-note').textContent=levelingMode?`Only unlocked skills appear here. Empty slots are free for future unlocks; update the layout when your level or Stigma points change. ${level>=16?'Defiance is on Space by default, shared with jump/glide.':'Defiance opens at level 16 and uses Space by default.'}`:`Defiance shares Space with jump/glide by default for every class; it does not consume a number-bar slot. Optional: turn on Separate Defiance Hotkey and give it a dedicated nearby key to avoid accidental glides. ${appIsPvpContext(a.context)?'The 1–8 bar includes this PvP Stigma set. Place matchup-specific control and defense where your hand can reach them.':state.class==='sorcerer'&&a.context==='solo'?'The 1–8 bar now includes every equipped Solo Stigma that is not in the automatic macro. Use ground attacks only in safe stationary windows, keep the first-priority Blaze + Firestorm macro mobile and prioritize +30% Hellfire Skill Speed at its first Specialty slot. Enable Skill Queue in the game’s Combat controls so macro key attempts are not lost during skill animations; macro input delay does not shorten skill cast time.':a.context==='solo'?'The 1–8 bar includes the Solo Stigma set; keep its recovery and movement keys manual.':fusionCharged?'Elemental Fusion has a charge specialty at this level, so put it on 7 and remove it from macro E. Keep Wind Spirit on a secondary row.':displayKeyCopy(p.hotbarNote)}`;
+  $('hotbar-note').textContent=levelingMode?`Only unlocked skills appear here. Empty slots are free for future unlocks; update the layout when your level or Stigma points change. ${level>=16?'Defiance is on Space by default, shared with jump/glide.':'Defiance opens at level 16 and uses Space by default.'}`:`Defiance shares Space with jump/glide by default for every class; it does not consume a number-bar slot. Optional: turn on Separate Defiance Hotkey and give it a dedicated nearby key to avoid accidental glides. ${appIsPvpContext(a.context)?'The 1–8 bar includes this PvP Stigma set. Place matchup-specific control and defense where your hand can reach them.':state.class==='sorcerer'&&a.context==='solo'?'The 1–8 bar contains equipped Solo Stigmas not already automated. Keep Delayed Explosion and cooldown-reset Wish manual, ground attacks on stable targets, and full-charge Hellfire separate. Enable Skill Queue so macro key attempts are not lost during animations; macro delay does not shorten cast time.':a.context==='solo'?'The 1–8 bar includes the Solo Stigma set; keep its recovery and movement keys manual.':fusionCharged?'Elemental Fusion has a charge specialty at this level, so put it on 7 and remove it from macro E. Keep Wind Spirit on a secondary row.':displayKeyCopy(p.hotbarNote)}`;
   // One physical stack diagram is one hotbar KEY, not a list of sequential
   // actions. Draw the actual in-game position: row 3 at the TOP and row 0
   // (first attempted skill) at the BOTTOM. Previous UI inverted this.
@@ -1392,7 +1411,12 @@ function renderRotation(m){
    </div>
    <p class="rotation-quick-caveat">You do <b>not</b> have to press ${esc(displayedMacroSteps.join(' and '))} repeatedly: the Macro does that. It cannot guarantee the order of actual casts; charged, defensive, healing and situational spells stay manual. This guide is for AION 2 control mode with RMB reserved for Macro. Test on a training target and adjust if needed.</p>`;
   $('setup-list').innerHTML=[`Select AION 2 control mode. Set Quick Use 1 to LMB and clear its secondary R binding. Set Quick Use 2 to ${quickUse2Bind} (${quickUse2Bind==='R'?'remapped from the default T':'original T'}). In Settings (O) → Key Settings → General → Macro, bind ${macroKey} (RMB recommended).`,`Put ${p.weave} on ${weaveKey}. Set currently available manual powers on 1–8 as shown.${levelingMode&&level<16?' Defiance unlocks at level 16.':' Defiance is on Space by default, shared with jump/glide; a separate Defiance key is optional.'}`,`Skills (K): make ${macroSteps.length?`the ${displayedMacroSteps.join(' and ')} stack${macroSteps.length===1?'':'s'}`:'a safe damage stack after the next unlock'}. Add only those hotbar keys to Macro, in order, starting each step at 10 ms.`,`Hold ${weaveKey} and ${macroKey} through safe damage, pressing or holding 1–8 at their cues. Manual input takes priority. Release ${macroKey} to stop Macro, and ${weaveKey} too when all attacks must stop.`].map(x=>`<li>${esc(x)}</li>`).join('');
-  $('manual-keys').innerHTML=levelingMode?hotbar.flatMap(([skills,cue],i)=>skills.length?[`<div class="manual-key"><b>${i+1} · ${esc(skills.join(' / '))}</b><small>${esc(cue)}</small></div>`]:[]).join('')+(level>=16?'<div class="manual-key"><b>Space · Defiance</b><small>Break control or answer danger manually.</small></div>':''):p.manual.map(v=>`<div class="manual-key"><b>${esc(v.split(' — ')[0])}</b><small>${esc(v.split(' — ')[1]||'Manual timing')}</small></div>`).join('');
+  // Use the actual post-optimizer hotbar, not legacy static profile.manual
+  // descriptions that could falsely claim a timed buff is still automatic.
+  const useActualManual=state.class==='sorcerer'&&!levelingMode&&!appIsPvpContext(a.context);
+  $('manual-keys').innerHTML=levelingMode?hotbar.flatMap(([skills,cue],i)=>skills.length?[`<div class="manual-key"><b>${i+1} · ${esc(skills.join(' / '))}</b><small>${esc(cue)}</small></div>`]:[]).join('')+(level>=16?'<div class="manual-key"><b>Space · Defiance</b><small>Break control or answer danger manually.</small></div>':''):
+    useActualManual?hotbar.flatMap(([skills,cue],i)=>skills.length?[`<div class="manual-key"><b>${i+1} · ${esc(skills.join(' / '))}</b><small>${esc(cue)}</small></div>`]:[]).join(''):
+    p.manual.map(v=>`<div class="manual-key"><b>${esc(v.split(' — ')[0])}</b><small>${esc(v.split(' — ')[1]||'Manual timing')}</small></div>`).join('');
 }
 function renderBoards(m){
   const a=account(),nodes=nodeMap(),actual=obtainedNodes(),isAz=state.board==='Azphel',isAriel=state.board==='Ariel',group=isAz?'azphel':isAriel?'ariel':'crystals',crystalBudget=isAz?(a.azphel||0):isAriel?(a.ariel||0):budget('crystals'),route=plannedRoute(group),plan=isAz?m.azphel:isAriel?m.ariel:m.boards,steps=routeSteps(route,nodes),pendingSteps=steps.filter(x=>!actual.has(x.id)),queue=new Map(pendingSteps.slice(0,16).map((x,i)=>[x.id,i+1])),boardNext=pendingSteps.find(x=>x.board===state.board);

@@ -434,6 +434,13 @@ const JointProgression = (()=>{
         .filter(name=>name==='Element Enhancement'||
           name==='Delayed Explosion'||name==='Wish of Concentration'));
       for(const name of explicitlyAutomated)manual.delete(name);
+      // An explicitly requested Conquest Bittercold attack must not vanish
+      // merely because the generic solo hotbar describes manual placement.
+      // Only these offensive spells are exempt; emergency defense, charged
+      // attacks and short burst buffs remain manual.
+      if(context==='party'&&(profile?.stacks||[]).some(stack=>
+        !stack.manual&&stack.skills.includes('Bittercold Wind')))
+        manual.delete('Bittercold Wind');
       // Some shared base profiles retain a *manual fallback* label for a
       // mobile-specialty attack. When its real Global option is selected
       // and the context profile deliberately placed it in E, the generic

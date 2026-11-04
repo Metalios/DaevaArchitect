@@ -1,57 +1,86 @@
-# Sorcerer Global — minimum manual input, high sustained damage
+# AION 2 Global Sorcerer — Solo Nightmare and Group Conquest PvE macro
 
-## AION 2 control mode and R remap
+Reviewed November 4, 2026. This document describes the **fresh-45/endgame**
+macro policy, not leveling, PvP, or proven frame-optimal DPS. Combat animation
+locks, cancel timings, and input scheduling remain unmeasured hypotheses.
 
-**This is for AION 2 action mode, not AION 1 mode.** LMB is Quick Use 1 / Flame Arrow basic attack; bind **RMB to the built-in Macro**. Quick Use 2 defaults to RMB / alternate T. Since RMB is reserved for Macro, **clear R from Quick Use 1's alternate binding**, then **remap Quick Use 2's T to R**. Manual abilities use **1–8**; macro hotbar stacks use **Q, E, and R (only when learned ground-damage Stigmas require the third stack)**. The planner can display original T instead by changing Quick Use 2 binding. See [control layout](./easy-human-macro-layout-2026.md).
+## Controls
 
-Reviewed 2026-10-24. This is the **Easy sustained PvE** preset. It is NOT a demonstrated frame-optimal DPS ranking.
+- **LMB:** hold Flame Arrow for repeatable basic damage and MP recovery.
+- **RMB:** bind the game's built-in Macro; hold it to press the *hotbar keys*
+  Q/E/R (only the steps actually shown in your current rotation).
+- **Q/E/R:** skill-stack hotbars. Row 0 is the **bottom** row, first attempted
+  when eligible. A step does not guarantee exact skill execution order.
+- **1–8:** the rotation panel displays the currently equipped and accessible
+  manual skills. **Hellfire stays on 1**, held to maximum charge and released
+  without the macro clipping the charge. Defiance remains on Space.
 
-## Only two routine mouse buttons
+In AION 2 control mode, clear the default Quick Use 1 secondary `R` binding,
+then remap Quick Use 2 from T to R if you want the three-key Q/E/R layout.
+You can also keep the original T binding in the planner.
 
-- **LMB:** hold Flame Arrow (MP recovery, Fire Mark).
-- **RMB:** hold the **in-game Macro**; it repeatedly tries all equipped automatic damage stacks. The player does not manually press Q/E/R.
-- **Manual 1:** hold Hellfire to maximum charge, release when safe.
-- **Manual 2:** Wish of Concentration buff. With its *actually acquired* level-16 reset Specialty, use after spending important cooldowns.
-- **Manual 3–4:** Element Enhancement and Delayed Explosion only if the Stigmas are actually learned/equipped. Other shields and emergency abilities remain manual.
+## Endgame Solo Nightmare (moving bosses)
 
-No class skill with unrestricted zero cooldown (e.g. Ice Chain) is included as a macro fallback because it can drain MP and compete with Flame Arrow or higher-impact attacks. Defiance stays on Space.
+- **Q:** Blaze and Firestorm, ordered by the selected comparative fire
+  priority. Both are repeatable mobile damage; Firestorm can reduce Hellfire's
+  cooldown with its actually equipped level-12 Specialty.
+- **E:** Bittercold Wind only with its **owned mobile Specialty**; Frost Burst
+  plus Frost only when the required mobile follow-up is owned. If unavailable,
+  E is omitted rather than showing a fictitious cast.
+- **R:** optional *Sustained DPS* auto Element Enhancement. Reset-free Wish
+  may also enter R if the performance/convenience comparison allows it.
+- **Manual:** Hellfire, Delayed Explosion, Winter's Shackles, Wish when its
+  cooldown-reset Specialty is equipped, defensive Stigmas, and ground
+  placement on bosses that will remain inside the effect.
 
-### Automatic stack priority (row 0 is BOTTOM)
+Do not assume a stationary ground cast or a 4-second damage-amplification
+Stigma is safe to repeat on every cooldown in mobile Nightmare content.
 
-| Stack/key | Row 0 — first tried | Row 1 | Row 2 | Row 3 |
-| --- | --- | --- | --- | --- |
-| **Q**, damage/debuff | Winter's Shackles | Bittercold Wind | Frost | Firestorm |
-| **E**, conditional | Blaze | Frost Burst | Flame Scattershot | — |
-| **R**, *only if damage Stigmas equipped* | Fire Wall | Cold Storm | — | — |
+## Endgame Group Conquest (relatively stable boss)
 
-R gets omitted entirely when neither Fire Wall nor Cold Storm is equipped. It is not a default phantom key at level 36 if the player has Element Enhancement, Delayed Explosion and Steel Barrier.
+- **Q:** Bittercold Wind, Blaze and Firestorm in a single stack for
+  Performance/Sustained; the Burst mode keeps Bittercold's timing manual.
+- **E:** equipped Fire Wall and/or Cold Storm in Performance/Sustained
+  builds. This stack is for a boss that will remain inside their ground
+  effects; stop the E macro step or use another layout if it moves.
+- **R:** optional sustained auto Element Enhancement / reset-free Wish.
+  Delayed Explosion is never repeated automatically.
+- **Manual:** charged Hellfire, coordinated burst buffs and resets, stagger
+  response, emergency protection, and any ground effects you choose to
+  position yourself.
 
-Flame Scattershot is a **Stagger-only** skill (Global skill ID 15010000) with no cooldown. On E it goes *after* Blaze and Frost Burst so it cannot starve the high-priority conditional attacks. It will be unusable outside a Stagger window, so it won't fire continuously.
+Survivability and Burst modes deliberately differ from full sustained
+ground-damage automation; no defensive Stigma or fully charged attack is
+automated.
 
-Winter's Shackles is a **damage attack applying a debuff**, with an optional +20% PvE damage specialty. Automatically casting it reduces human button presses but sacrifices the ability to hold it for a perfectly timed Hellfire burst. For maximum manual burst control, omit it from Q and cast it before Hellfire; the *Easy sustained* preset accepts this timing tradeoff.
+## Short Hellfire burst window
 
-Fire Wall and Cold Storm deal ground damage. They are automatically attempted on R **only when learned and equipped**. On frequently moving bosses an automatic ground cast may be wasted; players can remove the R macro step for those encounters. Because the user wants minimum manual effort, damage Stigmas are included by default rather than requiring two more keys to press.
+1. Apply Element Enhancement if equipped.
+2. Use Delayed Explosion and Winter's Shackles close to the big hit when
+   their short amplification effects are equipped and eligible.
+3. **Fully charge** Hellfire and release before the damage window expires.
+4. If Wish has the cooldown-reset Specialty, cast it **after** major spells
+   enter cooldown. Without reset, its Attack buff may be useful before
+   Hellfire instead.
 
-### Macro steps
+This is an execution goal, not a claim that the entire sequence fits a
+4-second window at every speed and latency. Verify when Hellfire actually
+lands in Global combat. Prefer a missed-buff-safe order rather than
+clipping its charge.
 
-1. Press Q
-2. Press E
-3. Press R **if and only if** one or both damaging ground Stigmas are equipped
+## Source and validation limitations
 
-Start at 10 ms per step. Delay is not cast time, execution order isn't guaranteed, and a held macro can't react to a moving boss as a player would. Use the client Skill Queue option if macro presses are being lost during casting.
+- Global skill and Specialty records:
+  https://aion2.gaming.tools/skills/15040000
+- AION 2 community macro and stack behavior:
+  https://aion2.grimvane.app/companion/wiki/macros-guide/
+- Skill guides and current references:
+  https://aion2data.com/guides/sorcerer
+- Original game macro control guide:
+  https://aion2data.com/macros/sorcerer
 
-### Human combat loop
-
-- **Regular mobs:** hold LMB + RMB. Finish with manual Hellfire only if warranted.
-- **Boss:** activate learned buffs manually, hold LMB + RMB for setup/conditional effects, fully charge Hellfire on 1 when ready. Use Wish manually around your actual reset Specialty. Stop macro for mechanics or when automatic ground effects would be wasted.
-
-### Global sources (regional scope)
-
-- [Global skill data — Flame Scattershot needs Stagger](https://aion2.gg/database/skills/flame-scattershot-15010000)
-- [Global skill data — Winter's Shackles is damage with a 45s cooldown and PvE boost Specialty](https://aion2.gaming.tools/skills/15110000)
-- [Global client macro rules: 10–9900ms delays, manual takes priority, macro step order not guaranteed](https://aion2data.com/macros/sorcerer)
-- [October 2026 Global Sorcerer three-chain community setup](https://aion2vault.com/builds/sorcerer/macro/) — split buff line from attack/conditional lines
-- [Corpus aLuckyRO PvE](https://corpus.gg/blog/aion-2/sorcerer-pve-build) — demonstrates conditional Scattershot as macro step
-- [October Global Sorcerer endgame examples](https://aion2.gaming.tools/builds/sorcerer/pve) — alternative longer damage macro, motion-sensitive ground attacks and Skill Queue advice
-
-The two/three-step Easy preset is an engineering compromise optimizing fewer manual inputs and strong sustained damage. Comparative Global target-dummy testing is needed to claim more damage than a one-step fire stack, especially during mobile boss phases.
+`node sorcerer_macro_audit.mjs` guards policy invariants across Solo/Group
+and all four PvE objectives. The `GlobalCombatEngine` uses explicit
+**unmeasured action-time and damage sensitivity assumptions**. It does not
+prove maximum DPS, perfect animation cancelling, or the ideal fire priority.
+Compare candidate rotations using matched Global boss fight evidence.

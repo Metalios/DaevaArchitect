@@ -394,33 +394,38 @@ function progressionRotationProfile(base,cls,mode,effectiveLevel,equippedStigmas
     'Manually time Soul Freeze or other CC around the enemy Defiance, immunity and escapes.',
     'Save Arctic Armor, Steel Barrier or Hibernation for the actual incoming burst; disengage instead of greedily channeling.'];
   }else if(mode==='solo'||mode==='party'){
-   // Stable, low-input PvE: hold LMB Flame Arrow + the RMB macro. The
-   // optional third Stigma column is safe only for repeatable offensive
-   // effects. Never charge Hellfire, toggle protection, activate CC or
-   // cast a ground-targeted zone automatically during moving encounters.
-   const e=[
-     ...(specialtyEnabled('Frost Burst',2)?['Frost Burst']:[]),
-     'Frost',
-     ...(specialtyEnabled('Bittercold Wind',2)?['Bittercold Wind']:[]),
-     ...(objective!=='burst'&&specialtyEnabled("Winter's Shackles",1)?["Winter's Shackles"]:[])
+   // Fallback and modified endgame builds must use the same safe PvE
+   // policy as the Sorcerer simulator. No timed Delayed Explosion in RMB.
+   const mobile=mode==='solo';
+   const q=[
+     ...(!mobile&&objective!=='burst'?['Bittercold Wind']:[]),
+     'Blaze','Firestorm'
    ];
+   const e=mobile?[
+     ...(specialtyEnabled('Bittercold Wind',2)?['Bittercold Wind']:[]),
+     ...(specialtyEnabled('Frost Burst',2)?['Frost Burst','Frost']:[])
+   ]:objective==='burst'||objective==='survivability'?[]:
+     ['Fire Wall','Cold Storm'].filter(name=>equippedStigmas.includes(name));
    const r=[
-     ...['Element Enhancement',...(objective==='burst'?[]:['Delayed Explosion'])]
-       .filter(name=>equippedStigmas.includes(name)),
-     ...(objective==='burst'?[]:['Wish of Concentration'])
+     ...(objective==='sustained'&&equippedStigmas.includes('Element Enhancement')
+       ?['Element Enhancement']:[]),
+     ...(objective==='sustained'&&!specialtyEnabled('Wish of Concentration',5)
+       ?['Wish of Concentration']:[])
    ];
    p.stacks=[
-     {key:'Q',title:'Conditional fire priority — compare Blaze / Firestorm',
-       skills:['Blaze','Firestorm']},
-     {key:'E',title:'Frost application / mobile conditional follow-ups',
-       skills:e},
-     ...(r.length?[{key:'R',title:'Safe offensive Stigma upkeep',skills:r}]:[])
+     {key:'Q',title:mobile?'Mobile fire damage':'Conquest damage and repeatable fire',skills:q},
+     ...(e.length?[{key:'E',title:mobile?'Owned mobile follow-ups':'Stable-boss ground damage',skills:e}]:[]),
+     ...(r.length?[{key:'R',title:'Optional sustained auto-buffs',skills:r}]:[])
    ];
    p.macro=p.stacks.map(stack=>stack.key);
    p.stigmas=[...equippedStigmas];
-   p.rule='Hold Flame Arrow (LMB) + Macro (RMB). Q prioritizes Blaze / Firestorm based on the selected rotation policy; E runs earned Frost follow-ups. R maintains learned offensive Stigmas and Wish LAST in continuous PvE. For Burst, time Wish and Delayed Explosion manually around full-charge Hellfire.';
-   p.summary='Continuous: LMB + RMB handles fire/Frost, regular offensive Stigmas and Wish; manual keys are mainly charged Hellfire and encounter response. Burst retains manual Wish and Delayed Explosion for synchronization.';
-   p.hotbarNote='Continuous PvE: Wish is the LAST/lower-priority attack in R after equipped offensive Stigmas. At effective Wish 16, its -10s reset only helps skills already on cooldown. Burst PvE: Wish and Delayed Explosion stay manually timed. Defensive and ground Stigmas remain manual. Release RMB for full Hellfire charge.';
+   p.rule=mobile
+     ?'Nightmare Solo: hold LMB Flame Arrow + RMB for mobile fire damage. Keep Hellfire fully charged and short burst buffs timed manually.'
+     :'Conquest Group: hold LMB + RMB for Firestorm, Blaze, Bittercold Wind and stationary-boss ground damage. Time short Hellfire buffs manually.';
+   p.summary=mobile
+     ?'Mobile Solo damage with a manual Hellfire burst and optional shields.'
+     :'Group boss damage, ground-effect uptime, and manual Hellfire amplification.';
+   p.hotbarNote='Do not automatically cast Delayed Explosion; its damage window is only four seconds. With the Wish cooldown-reset Specialty selected, press Wish after major skills enter cooldown. Stop ground automation on moving bosses.';
   }else{
    p.rule='Keep Hellfire fully charged on a manual key; place persistent ground effects only where targets remain.';
   }
@@ -431,22 +436,28 @@ function progressionRotationProfile(base,cls,mode,effectiveLevel,equippedStigmas
  }
  if(mode==='solo'){
   p.opener=cls==='sorcerer'
-   ?['Hold LMB (Flame Arrow) + RMB (macro) continuously during safe damage: conditional Blaze, Firestorm, Frost follow-ups and the selected safe offensive Stigmas run automatically.',
-     objective==='burst'
-       ?'Manually align Wish, Delayed Explosion and fully charged Hellfire; use Wish after cooldowns for its reset when that Specialty is selected.'
-       :'Equipped Element Enhancement and Delayed Explosion are attempted automatically. Wish follows those buffs on R, giving up precise reset timing in exchange for fewer keys.',
-     'Fully charge Hellfire in a safe boss window. Rank-8 +30% Skill Speed comes first, then add mobile at rank 12 when those two options are available.']
+   ?['Hold LMB Flame Arrow + RMB for safe mobile damage. Keep ground spells manual when the Nightmare boss is moving.',
+     'Activate Element Enhancement, then manually time Delayed Explosion and the PvE buff from Winter\'s Shackles close to a fully charged Hellfire hit.',
+     'With the Wish cooldown-reset Specialty, use Wish after major attacks are already cooling down. Hold emergency shields for actual danger.']
    :['Enter with the available damage buffs; save a defensive skill if the target can punish the pull.',
      'Start the main damage engine; do not automate movement or charged casts.',
      'Use self-healing or mitigation when needed instead of blindly maintaining macro uptime.'];
   p.loop=cls==='sorcerer'
-   ?['Hold Flame Arrow + RMB for fire damage, earned Frost follow-ups and the safe automatic buff line.',
-     objective==='burst'?'Keep Wish and Delayed Explosion on manual keys for the burst window.':'Wish is attempted by the macro when ready; its actual cooldown-reset benefit varies as other skills enter cooldown.',
-     'Briefly release RMB to complete the full Hellfire charge without clipping; time defenses and ground-targeted spells manually.']
+   ?['Keep short fire attacks running on LMB + RMB through safe movement.',
+     'Pause the macro for a fully charged Hellfire and timed buffs; never waste Delayed Explosion.',
+     'Only place ground damage on bosses that will remain inside its area.']
    :['Prioritize short time-to-kill without losing core cooldown windows.',
      'Release held attacks for dodge, charge, recovery or repositioning.',
      'Recheck your Specialties after reaching an effective-level breakpoint.'];
  }else if(mode==='party'){
+  if(cls==='sorcerer'){
+   p.opener=['Maintain LMB + RMB fire attacks and Bittercold Wind when the Conquest boss is stable.',
+     'Use ground Stigmas only if their area will connect; manually coordinate Element Enhancement, Delayed Explosion and a fully charged Hellfire.',
+     'Use Wish after key cooldowns are running when its reset Specialty is equipped.'];
+   p.loop=['Keep Q repeatable damage and E ground effects on stationary targets.',
+     'Release RMB for full Hellfire charge and dangerous boss mechanics.',
+     'Switch off the ground stack or cast those skills manually when the boss moves.'];
+  }
   if(cls==='cleric'||cls==='chanter'){
    p.rule+=' Keep healing and emergency decisions manual; never put critical heals in a spam macro.';
   }

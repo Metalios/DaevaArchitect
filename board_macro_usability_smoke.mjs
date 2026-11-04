@@ -85,37 +85,39 @@ try{
   if(macro.length!==chosen.length||!macro[0]?.includes('Q')||
      chosen.some((key,i)=>!macro[i]?.includes(key)))
     failures.push('Sorcerer RMB macro steps disagree with selected combat-ranked stacks');
-  if(chosen.includes('R')&&!activeStigmas().some(name=>
-      ['Element Enhancement','Delayed Explosion'].includes(name)&&
-      (model().stigma.levels[name]||0)>0)&&
-      !(account().pveObjective!=='burst'&&
-        skillLevelBreakdown('Wish of Concentration',model()).withOwned>=1))
-    failures.push('Sorcerer R needs an equipped offensive Stigma or unlocked automatic Wish');
+  if(chosen.includes('R')&&
+     !document.querySelector('#macro-stacks [data-macro-key="R"].macro-stack-auto'))
+    failures.push('Sorcerer R step must correspond to a real, displayed auto stack');
   if(chosen.includes('E')&&!document.querySelector('#macro-stacks [data-macro-key="E"].macro-stack-auto'))
     failures.push('Sorcerer selected E step missing from visible automatic stack');
   const autoSkills=[...document.querySelectorAll('#macro-stacks .macro-stack-auto .macro-physical-stack [data-skill]')].map(node=>node.dataset.skill);
   for(const manualOnly of ['Hellfire','Fire Wall','Cold Storm','Steel Barrier','Arctic Armor','Hibernation'])
     if(autoSkills.includes(manualOnly))failures.push('Sorcerer charge/reset/defense/ground skill included in RMB macro: '+manualOnly);
-  for(const automaticBuff of ['Element Enhancement','Delayed Explosion']){
-    const equipped=activeStigmas().includes(automaticBuff)&&
-      (model().stigma.levels[automaticBuff]||0)>0;
-    if(equipped&&(automaticBuff!=='Delayed Explosion'||account().pveObjective!=='burst')&&
-      !autoSkills.includes(automaticBuff))
-      failures.push('Equipped repeatable offensive Stigma missing from Sorcerer held macro: '+automaticBuff);
-  }
+  if(autoSkills.includes('Delayed Explosion'))
+    failures.push('Timed Delayed Explosion must never be spammed on RMB');
+  const objective=account().pveObjective;
+  const equippedElement=activeStigmas().includes('Element Enhancement')&&
+    (model().stigma.levels['Element Enhancement']||0)>0;
+  if(autoSkills.includes('Element Enhancement')&&
+    (objective!=='sustained'||!equippedElement))
+    failures.push('Element Enhancement may only auto-cycle for equipped sustained goal');
   for(const automated of ['Firestorm','Blaze'])
     if(!autoSkills.includes(automated))failures.push('Sorcerer core cooldown not automated: '+automated);
-  const manualKeys=[...document.querySelectorAll('#rotation-quick-guide [data-easy-key]')].map(el=>el.textContent);
+  const manualKeys=[...document.querySelectorAll('#rotation-quick-guide [data-easy-key]')]
+    .map(el=>el.textContent);
   if(!manualKeys[0]?.includes('Hellfire'))
     failures.push('Sorcerer manual fully charged Hellfire assignment missing');
-  if(account().pveObjective!=='burst'&&
-    (!autoSkills.includes('Wish of Concentration')||
-      manualKeys.some(key=>key.includes('Wish of Concentration'))))
-    failures.push('Continuous PvE Wish should auto-cycle, not duplicate manual slot');
-  if(account().pveObjective==='burst'&&
-      (autoSkills.includes('Wish of Concentration')||
-       !manualKeys.some(key=>key.includes('Wish of Concentration'))))
-    failures.push('Burst PvE Wish must remain manually timed');
+  const autoWish=autoSkills.includes('Wish of Concentration');
+  const hasReset=specPicks('Wish of Concentration',
+    skillLevelBreakdown('Wish of Concentration',model()).withOwned).includes(5);
+  if(hasReset&&autoWish)
+    failures.push('Wish with cooldown-reset Specialty must remain manual');
+  if(!autoWish&&!manualKeys.some(key=>key.includes('Wish of Concentration')))
+    failures.push('Manual Wish is missing when not in the macro');
+  if(!autoSkills.includes('Delayed Explosion')&&
+      activeStigmas().includes('Delayed Explosion')&&
+      !manualKeys.some(key=>key.includes('Delayed Explosion')))
+    failures.push('Equipped Delayed Explosion must remain on manual burst bar');
   const a=account();
   a.context='party';a.quickUse2Bind='R';a.stigma=160;a.manualStigma=null;
   render();

@@ -99,39 +99,69 @@ const GlobalCombatEngine=(()=>{
   // charged/channel and defensive abilities never enter this macro.
   // Only deterministic offensive Stigmas are auto-cast; burst builds retain
   // Delayed Explosion by hand for a deliberately timed Hellfire window.
-  const CONTINUOUS_OFFENSE=Object.freeze(['Element Enhancement','Delayed Explosion']);
+  // Offensive buffs with a short damage window (especially Delayed
+  // Explosion) are NOT safe to loop in an endgame RMB macro. The low-input
+  // sustained goal may cycle Element Enhancement, but burst-oriented goals
+  // keep the buffs in one *manual* hotbar stack.
+  const CONTINUOUS_OFFENSE=Object.freeze(['Element Enhancement']);
   function flowLayout(build,spec){
     const purpose=build.objective||'performance';
+    const context=build.context==='solo'?'solo':'party';
+    const isSustained=purpose==='sustained';
     const isBurst=purpose==='burst';
-    const firePriority=build.firePriority==='firestorm'?'firestorm':'blaze';
     const active=new Set(build.equippedStigmas||[]);
     const capable=name=>(build.availableSkills||[]).includes(name);
-    const eligibleAutoStigma=name=>active.has(name)&&
-      (build.stigma?.[name]||0)>0&&!(isBurst&&name==='Delayed Explosion');
-    const q=(firePriority==='firestorm'?['Firestorm','Blaze']:['Blaze','Firestorm'])
+    const equipped=name=>active.has(name)&&(build.stigma?.[name]||0)>0;
+    const firePriority=build.firePriority==='firestorm'?'firestorm':'blaze';
+    const fire=(firePriority==='firestorm'?['Firestorm','Blaze']:['Blaze','Firestorm'])
       .filter(capable);
-    const ice=[
-      ...(capable('Frost Burst')&&isMobile('Frost Burst',spec)?['Frost Burst']:[]),
-      ...(capable('Frost')?['Frost']:[]),
-      ...['Bittercold Wind',"Winter's Shackles"]
-        .filter(name=>capable(name)&&isMobile(name,spec)&&
-          !(isBurst&&name==="Winter's Shackles"))
+
+    // Conquest: spend Bittercold Wind on a relatively stable target before
+    // filler. Nightmare: only automate it after its genuine mobile option is
+    // owned, so a dodge never commits a stationary channel by accident.
+    const q=[
+      ...(context==='party'&&!isBurst&&capable('Bittercold Wind')
+        ?['Bittercold Wind']:[]),
+      ...fire
     ];
-    const autoWish=build.autoWish!==false&&!isBurst&&capable('Wish of Concentration');
-    // Wish goes AFTER the repeatable offensive Stigmas in this low-input
-    // column. Its real 10s cooldown reduction can still be wasted if
-    // macro step order drifts; we measure that instead of claiming a script.
-    const buffs=[...CONTINUOUS_OFFENSE.filter(eligibleAutoStigma),
-      ...(autoWish?['Wish of Concentration']:[])];
+    const mobileFrost=capable('Frost Burst')&&capable('Frost')&&
+      isMobile('Frost Burst',spec);
+    const mobileSolo=[
+      ...(capable('Bittercold Wind')&&isMobile('Bittercold Wind',spec)
+        ?['Bittercold Wind']:[]),
+      ...(mobileFrost?['Frost Burst','Frost']:[])
+    ];
+    // Persistent ground Stigmas are useful only if the boss remains inside.
+    // Group sustained/performance can automate them; burst and mobile Solo
+    // keep explicit positioning on the manual bar. All four Stigma slots
+    // remain constrained by actual funded ranks/equipment.
+    const groupGround=context==='party'&&!isBurst&&purpose!=='survivability'
+      ?['Fire Wall','Cold Storm'].filter(equipped):[];
+    const e=context==='solo'?mobileSolo:groupGround;
+
+    // The skill-level-16 Wish reset should be timed AFTER important skills
+    // enter cooldown. The simplified sustained goal can automatically cycle
+    // Wish *only without* that reset option, after a model comparison.
+    const autoWish=isSustained&&build.autoWish===true&&
+      !has(spec,'Wish of Concentration',5)&&capable('Wish of Concentration');
+    const r=[
+      ...(isSustained&&equipped('Element Enhancement')
+        ?['Element Enhancement']:[]),
+      ...(autoWish?['Wish of Concentration']:[])
+    ];
     const stacks=[
-      ...(q.length?[{key:'Q',title:'Fire Mark spender / short fire cooldown',skills:q}]:[]),
-      ...(ice.length?[{key:'E',title:'Frost and mobile follow-up damage',skills:ice}]:[]),
-      ...(buffs.length?[{key:'R',title:'Automatic offensive Stigmas; no emergency skills',skills:buffs}]:[])
+      ...(q.length?[{key:'Q',title:context==='solo'
+        ?'Mobile fire: Fire Mark spender / Hellfire cooldown support'
+        :'Conquest: Bittercold and repeatable fire damage',skills:q}]:[]),
+      ...(e.length?[{key:'E',title:context==='solo'
+        ?'Earned mobile follow-ups':'Ground damage on stable bosses',skills:e}]:[]),
+      ...(r.length?[{key:'R',title:'Optional sustained auto-buffs (never Delayed Explosion)',skills:r}]:[])
     ];
-    return {label:'Hold LMB + RMB · '+(firePriority==='firestorm'
-        ?'Firestorm-first':'Blaze-first')+
-        ', Frost and safe automatic buffs',
-      firePriority,autoWish,steps:stacks.map(s=>s.key),stacks};
+    return {
+      label:context==='solo'?'Nightmare mobile damage with timed burst':
+        'Conquest boss damage with conditional ground effects',
+      context,firePriority,autoWish,steps:stacks.map(stack=>stack.key),stacks
+    };
   }
   // Global Firestorm has five projectile hits. The level-12 Specialty
   // reduces Hellfire by two seconds for EACH projectile that actually hits.
@@ -502,8 +532,11 @@ const GlobalCombatEngine=(()=>{
         incompleteActions:weightedMetric(sample.samples,'incompleteActions')
       };
     }
-    return {...result,selected:build.objective==='burst'?'timedManual':'automatic',
-      evidence:'Relative combat model, not observed cooldown logs. Automatic macro cannot test whether other skills are cooling down.'};
+    const reset=has(specialties,'Wish of Concentration',5);
+    const autoEligible=build.objective==='sustained'&&!reset&&
+      result.automatic.robustScore>=result.timedManual.robustScore*.985;
+    return {...result,selected:autoEligible?'automatic':'timedManual',
+      evidence:'Relative combat model, not observed cooldown logs. A cooldown-reset Wish requires manual timing.'};
   }
   function chooseMacro(build,specialties,scenarios=ENCOUNTERS){
     let winner=null;
@@ -513,9 +546,15 @@ const GlobalCombatEngine=(()=>{
     const fireComparison=compareFirePriority(build,specialties,scenarios);
     const wishComparison=compareWishAutomation(build,specialties,scenarios,
       fireComparison.selected);
+    // Unlike the old code, the compared Wish policy is actually applied.
+    // Preserve the high-value -10s cooldown reset for human timing. With no
+    // reset Specialty, sustained mode may auto-buff if it costs less than
+    // 1.5% relative modeled throughput (convenience-sensitive threshold).
+    const autoWish=wishComparison.selected==='automatic';
     for(const mode of choices){
       const priority=mode==='flow'?fireComparison.selected:'blaze';
-      const variantBuild={...build,macroLayout:mode,firePriority:priority};
+      const variantBuild={...build,macroLayout:mode,firePriority:priority,
+        autoWish:mode==='flow'&&autoWish};
       const layout=mode==='flow'?flowLayout(variantBuild,specialties):
         ['mobile','mobile-extended'].includes(mode)
           ?mobileLayout(specialties,mode==='mobile-extended')
@@ -528,7 +567,8 @@ const GlobalCombatEngine=(()=>{
       const adjusted=data.robustScore*(1-.002*(layout.steps.length-1));
       if(!winner||adjusted>winner.adjusted+1e-8)
         winner={...layout,mode,adjusted,...data,
-          firePriority:priority,fireComparison,wishComparison};
+          firePriority:priority,autoWish:variantBuild.autoWish,
+          fireComparison,wishComparison};
     }
     return winner;
   }

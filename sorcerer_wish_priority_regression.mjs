@@ -14,6 +14,7 @@ const skills=Object.keys(JSON.parse(read('skill_unlocks.json')).sorcerer);
 const equipped=['Element Enhancement','Delayed Explosion','Fire Wall','Cold Storm'];
 const build={
  mastery:Object.fromEntries(skills.map(name=>[name,10])),
+ context:'solo',
  boardSkills:{'Hellfire':10,'Wish of Concentration':10,'Firestorm':10},
  gearSkills:{},boardStats:{},gearStats:{},objective:'performance',
  stigma:Object.fromEntries(equipped.map(name=>[name,10])),
@@ -46,33 +47,18 @@ for(const goal of ['performance','sustained','burst','survivability','control'])
  assert.equal(pick.firePriority,compare.selected);
  assert.deepEqual(Array.from(pick.stacks[0].skills),
    compare.selected==='firestorm'?['Firestorm','Blaze']:['Blaze','Firestorm']);
- const auto=goal!=='burst';
- const expectedWish=engine.flowLayout(input,specialties).stacks
-  .flatMap(stack=>stack.skills).includes('Wish of Concentration');
- assert.equal(expectedWish,auto,'Only continuous goals auto-cycle Wish');
+ const auto=false; // Equipped rank-16 reset requires human timing in all goals.
  const r=pick.stacks.find(stack=>stack.key==='R');
- if(auto){
-  assert(r&&r.skills.at(-1)==='Wish of Concentration',
-    'Wish must be last in the R column after offensive buffs');
-  assert(!r.skills.includes('Hellfire'));
- }else{
-  assert(!pick.stacks.some(stack=>
-    stack.skills.includes('Wish of Concentration')),
-    'Burst must retain manual Wish');
- }
+ assert(!r||!r.skills.includes('Wish of Concentration'),
+  'Cooldown-reset Wish must stay manual for Nightmare damage');
+ assert(!pick.stacks.some(stack=>stack.skills.includes('Delayed Explosion')),
+  'Four-second amplification cannot be blindly looped');
  const wished=engine.compareWishAutomation(input,specialties,scenarios,compare.selected);
  assert(Number.isFinite(wished.automatic.robustScore));
  assert(Number.isFinite(wished.timedManual.robustScore));
- assert.equal(wished.selected,auto?'automatic':'timedManual');
- if(auto){
-  assert(wished.automatic.manualPerMinute<wished.timedManual.manualPerMinute,
-    'Continuous automatic Wish must eliminate at least one routine manual action');
-  assert(wished.automatic.wishCastsAuto>0,
-    'Automatic Wish must actually fire during the modeled fight');
- }else{
-  assert.equal(wished.automatic.wishCastsAuto,0,
-    'Burst objective must not automate Wish even for a counterfactual flag');
- }
+ assert.equal(wished.selected,'timedManual');
+ assert.equal(wished.automatic.wishCastsAuto,0,
+  'Counterfactual automatic policy must respect the purchased cooldown-reset Specialty');
  assert.equal(wished.timedManual.wishCastsAuto,0);
  assert(wished.automatic.wishResetSeconds>=0&&
    wished.timedManual.wishResetSeconds>=0);
@@ -99,10 +85,21 @@ const manualBurst=engine.simulate({...build,objective:'burst'},specialties,
 assert.equal(manualBurst.wishCastsAuto,0);
 const automated=engine.simulate({...build,objective:'performance'},specialties,
  scenarios[1]);
-assert(automated.wishCastsAuto>0);
+assert.equal(automated.wishCastsAuto,0,
+ 'With cooldown-reset Specialty Wish remains manually timed');
 assert(automated.wishBuffUptime>0);
-assert(automated.wishResetTargets>=1,'Rank16 Wish should hit an existing cooldown');
+assert(automated.wishResetTargets>=1,'Manual reset Wish should hit an existing cooldown');
+const noReset={...specialties,'Wish of Concentration':[2,4]};
+const sustained={...build,objective:'sustained'};
+const noResetWish=engine.compareWishAutomation(sustained,noReset,scenarios);
+const eligible=noResetWish.automatic.robustScore>=
+ noResetWish.timedManual.robustScore*.985;
+assert.equal(noResetWish.selected,eligible?'automatic':'timedManual');
+const noResetMacro=engine.chooseMacro(sustained,noReset,scenarios);
+assert.equal(Boolean(noResetMacro.stacks.some(stack=>
+ stack.skills.includes('Wish of Concentration'))),eligible,
+ 'Chosen reset-free Wish automation must match the comparison decision');
 console.log('Sorcerer Q priority & Wish timeline candidates:');
 for(const r of results)
  console.log(JSON.stringify(r));
-console.log('PASS: five goals, conditional Blaze-vs-Firestorm, auto-Wish vs manual reset, complete-only hits and Burst manual timing.');
+console.log('PASS: five goals, conditional Blaze-vs-Firestorm, manual reset Wish and comparison-driven reset-free automation, complete-only hits.');
