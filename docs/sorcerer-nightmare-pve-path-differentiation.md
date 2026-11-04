@@ -83,6 +83,17 @@ the chosen risk tolerance.
   level 20, a third slot permits combining these with another legal effect
   such as the option-5 cooldown reduction. Player-pinned alternatives
   remain authoritative.
+- **Firestorm:** at effective level 8, Specialty **option 2** provides
+  +20% Skill Speed (option 1 instead halves MP cost when resources are
+  limiting). At effective level 12, option 4 reduces Hellfire's cooldown by
+  **2 seconds per fireball that hits**: Global Firestorm launches five,
+  meaning up to **10 seconds per full connecting cast**, not two seconds
+  per cast. The simulator assumes all five land until actual combat logs
+  provide hit counts; the numerical result is not a measured DPS claim.
+- **Wish of Concentration:** its rank-12 option 4 provides +10% Combat Speed
+  during the buff; its rank-16 option 5 reduces other cooldowns on activation.
+  Choose based on actual available slots and gameplay rather than treating
+  every unlocked option as simultaneously selected.
 - **Bittercold Wind:** level-8 Specialty **option 2** changes to mobile.
 - **Winter's Shackles:** level-8 Specialty **option 1** changes to mobile.
 - **Frost Burst / Flame Scattershot:** level-8 mobile Specialties
