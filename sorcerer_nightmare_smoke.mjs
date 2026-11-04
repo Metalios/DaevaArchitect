@@ -67,7 +67,7 @@ try{
     '#macro-stacks .macro-stack-auto[data-macro-key]')].map(row=>row.dataset.macroKey)
   };
   const actualMobileSpecs=Object.fromEntries(
-   ['Hellfire','Bittercold Wind',"Winter's Shackles"].map(name=>
+   ['Hellfire','Bittercold Wind',"Winter's Shackles",'Frost Burst','Frost'].map(name=>
     [name,specPicks(name,skillLevelBreakdown(name,model()).withOwned)]));
   visible.macroMobileSafe=visible.macroSkills.every(name=>
    GlobalCombatEngine.isMobile(name,actualMobileSpecs));
