@@ -262,9 +262,13 @@ const GlobalCombatEngine=(()=>{
       }
       if(name==="Winter's Shackles"&&has(spec,name,3))pveBuffUntil=now+5;
       if(name==='Firestorm'&&has(spec,name,4)){
-        // Each landed fireball reduces Hellfire by 2s. Hit count is NOT
-        // recorded; use one confirmed landed-hit event as a conservative floor.
-        reduceCooldown('Hellfire',2);
+        // Global client: Firestorm fires FIVE fireballs; each one that
+        // lands reduces Hellfire's cooldown by 2s (up to 10s / cast).
+        // This comparative simulator assumes its modeled attack connects
+        // with all five. Real misses/resists must be supplied by calibrated
+        // encounter evidence; do not falsely score the effect as one hit.
+        const modeledLandedFireballs=5;
+        reduceCooldown('Hellfire',2*modeledLandedFireballs);
       }
       if(name==='Blaze'&&has(spec,name,5))reduceCooldown('Wish of Concentration',3);
       if(name==='Wish of Concentration'){
