@@ -115,24 +115,28 @@ const ClassCombatModels=(()=>{
        core:['Hellfire','Firestorm','Wish of Concentration','Blaze',"Winter's Shackles",'Bittercold Wind','Flame Arrow'],
        support:['Robe of Flame','Fire Mark','Grace of Enhancement','Robe of Earth','Absorb Essence'],
        stigmas:['Element Enhancement','Delayed Explosion','Fire Wall','Steel Barrier'],
+       priority:['Element Enhancement','Delayed Explosion','Steel Barrier','Fire Wall'],
        why:'Group endgame performance: strong Hellfire windows and reliable boss damage, with Steel Barrier as a defensive safety slot. Swap Steel Barrier for Cold Storm if the group keeps the boss stationary and requires maximum damage.'
      },
      sustained:{
        core:['Firestorm','Bittercold Wind','Blaze','Flame Arrow','Wish of Concentration','Hellfire',"Winter's Shackles"],
        support:['Robe of Flame','Fire Mark','Grace of Enhancement','Absorb Essence'],
        stigmas:['Element Enhancement','Delayed Explosion','Fire Wall','Cold Storm'],
+       priority:['Element Enhancement','Fire Wall','Delayed Explosion','Cold Storm'],
        why:'Group sustained DPS: all four offensive Stigmas, repeatable fire throughput, damage-over-time uptime and cooldown efficiency. Trades away Steel Barrier and is most effective when the group holds the boss in ground effects.'
      },
      burst:{
        core:['Hellfire','Wish of Concentration',"Winter's Shackles",'Firestorm','Blaze','Bittercold Wind','Fire Mark'],
        support:['Robe of Flame','Grace of Enhancement','Fire Mark','Absorb Essence'],
        stigmas:['Element Enhancement','Delayed Explosion','Divine Burst','Fire Wall'],
+       priority:['Element Enhancement','Delayed Explosion','Divine Burst','Fire Wall'],
        why:'Group burst DPS: a short Hellfire buff window with manual Delayed Explosion and a manual 50-Stagger Divine Burst hit. Not a claim that Divine Burst beats Cold Storm over long fights.'
      },
      survivability:{
        core:['Robe of Earth','Grace of Resistance','Absorb Essence','Cold Snap','Hellfire','Firestorm','Wish of Concentration'],
        support:['Revitalization Contract','Robe of Cold','Grace of Enhancement','Flame Arrow'],
        stigmas:['Element Enhancement','Steel Barrier','Arctic Armor','Hibernation'],
+       priority:['Steel Barrier','Hibernation','Arctic Armor','Element Enhancement'],
        why:'Group survivability: explicit shield, mitigation and immunity tools with enough Hellfire damage to continue contributing. These emergency Stigmas must remain manual.'
      }
    },
@@ -141,24 +145,28 @@ const ClassCombatModels=(()=>{
        core:['Hellfire','Wish of Concentration','Firestorm','Robe of Earth','Absorb Essence','Blaze',"Winter's Shackles"],
        support:['Grace of Enhancement','Robe of Flame','Fire Mark','Cold Snap','Grace of Resistance'],
        stigmas:['Element Enhancement','Delayed Explosion','Steel Barrier','Fire Wall'],
+       priority:['Element Enhancement','Steel Barrier','Delayed Explosion','Fire Wall'],
        why:'Level-45 Solo PvE means Nightmare boss progression and Ascension Trials, not quest leveling. Keep a manual Steel Barrier against boss damage, retain Hellfire and the Delayed Explosion window, and use Fire Wall only when the target stays in it. Prioritize survivable kills over static dummy DPS.'
      },
      sustained:{
        core:['Firestorm','Bittercold Wind','Flame Arrow','Blaze','Wish of Concentration','Hellfire','Robe of Flame'],
        support:['Fire Mark','Grace of Enhancement','Absorb Essence','Robe of Earth'],
        stigmas:['Element Enhancement','Delayed Explosion','Fire Wall','Cold Storm'],
+       priority:['Element Enhancement','Fire Wall','Delayed Explosion','Cold Storm'],
        why:'Solo endgame sustained damage: deliberately sacrifice the Steel Barrier slot for all four offensive Stigmas. This is a riskier Nightmare speed-clear option, not the recommended safety setup for undergeared progression.'
      },
      burst:{
        core:['Hellfire','Wish of Concentration',"Winter's Shackles",'Blaze','Firestorm','Robe of Flame','Fire Mark'],
        support:['Robe of Earth','Absorb Essence','Grace of Enhancement','Cold Snap'],
        stigmas:['Element Enhancement','Delayed Explosion','Divine Burst','Steel Barrier'],
+       priority:['Element Enhancement','Delayed Explosion','Steel Barrier','Divine Burst'],
        why:'Solo Nightmare burst: keep Steel Barrier while prioritizing a fully charged Hellfire during a short safe boss vulnerability window. Divine Burst is a manually timed 50-Stagger hit, not an automatic boss CC guarantee; avoid relying on stationary ground spells.'
      },
      survivability:{
        core:['Robe of Earth','Absorb Essence','Grace of Resistance','Cold Snap','Hellfire','Wish of Concentration','Firestorm'],
        support:['Revitalization Contract','Robe of Cold','Grace of Enhancement','Flame Arrow'],
        stigmas:['Element Enhancement','Steel Barrier','Arctic Armor','Hibernation'],
+       priority:['Steel Barrier','Hibernation','Arctic Armor','Element Enhancement'],
        why:'Solo Nightmare progression survival: prioritize damage tolerance, a manual shield and invulnerability/escape while retaining enough fire damage to finish boss phases. No unsupported assumption that Nightmare bosses can be polymorphed or rooted.'
      }
    }
@@ -173,7 +181,7 @@ const ClassCombatModels=(()=>{
    if(sorc){
      return {...base,buildObjective:objective,
        core:[...sorc.core],support:[...sorc.support],
-       stigmas:[...sorc.stigmas],stigmaPriority:[...sorc.stigmas],
+       stigmas:[...sorc.stigmas],stigmaPriority:[...(sorc.priority||sorc.stigmas)],
        stigmaMilestones:undefined,why:sorc.why};
    }
    if(objective==='performance')return base;
