@@ -94,6 +94,12 @@ const GlobalCombatEngine=(()=>{
       stacks:[{key:'Q',title:'Fire Mark spender then mobile setup',skills:['Blaze','Firestorm']},
         ...(extra.length?[{key:'E',title:'Only mobile-specialty follow-ups',skills:extra}]:[])]};
   };
+  // Global Firestorm has five projectile hits. The level-12 Specialty
+  // reduces Hellfire by two seconds for EACH projectile that actually hits.
+  // This helper accepts an observed landed count once combat logs supply it.
+  const FIRESTORM_PROJECTILES=5;
+  const firestormHellfireCooldownReduction=landed=>
+    2*Math.max(0,Math.min(FIRESTORM_PROJECTILES,Math.floor(Number(landed)||0)));
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,Number(v)||0));
   const sum=items=>items.reduce((acc,n)=>acc+n,0);
   const effective=(build,name)=>clamp((build.mastery[name]||1)+(build.boardSkills[name]||0)+(build.gearSkills[name]||0),1,40);
@@ -267,8 +273,9 @@ const GlobalCombatEngine=(()=>{
         // This comparative simulator assumes its modeled attack connects
         // with all five. Real misses/resists must be supplied by calibrated
         // encounter evidence; do not falsely score the effect as one hit.
-        const modeledLandedFireballs=5;
-        reduceCooldown('Hellfire',2*modeledLandedFireballs);
+        const modeledLandedFireballs=FIRESTORM_PROJECTILES;
+        reduceCooldown('Hellfire',
+          firestormHellfireCooldownReduction(modeledLandedFireballs));
       }
       if(name==='Blaze'&&has(spec,name,5))reduceCooldown('Wish of Concentration',3);
       if(name==='Wish of Concentration'){
@@ -468,5 +475,6 @@ const GlobalCombatEngine=(()=>{
   }
   return Object.freeze({SOURCE,ACTIONS,ENCOUNTERS,legalOptions,slots,effective,
     MACRO_LAYOUTS,NIGHTMARE_ENCOUNTERS,scenariosFor,isMobile,MOBILE_SPECIALTIES,
+    FIRESTORM_PROJECTILES,firestormHellfireCooldownReduction,
     chooseMacro,simulate,evaluate,tuneSpecialties,refineMastery,scoreMastery});
 })();
