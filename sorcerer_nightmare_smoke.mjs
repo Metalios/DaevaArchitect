@@ -40,6 +40,9 @@ try{
     firestormSpecialties:[...(m.combat?.specialties?.Firestorm||[])],
     macro:m.combat?.macro?{
       mode:m.combat.macro.mode,
+      firePriority:m.combat.macro.firePriority,
+      fireComparison:m.combat.macro.fireComparison,
+      wishComparison:m.combat.macro.wishComparison,
       steps:[...m.combat.macro.steps],
       skills:m.combat.macro.stacks.flatMap(stack=>stack.skills),
       mobileHellfire:m.combat.specialties?.Hellfire?.includes(3)||false
@@ -118,8 +121,14 @@ try{
   'Visible Nightmare macro attempted an unearned stationary attack');
  assert(results.visible.macroKeys.includes('Q'),
   'Visible moving fire stack Q must remain bound');
- assert.deepEqual(results.visible.qRowPriority.slice(0,2),['Blaze','Firestorm'],
-  'The moving Q stack must use ready conditional Blaze before Firestorm');
+ const chosenPriority=results.cases.performance.macro.firePriority;
+ assert.deepEqual(results.visible.qRowPriority.slice(0,2),
+  chosenPriority==='firestorm'?['Firestorm','Blaze']:['Blaze','Firestorm'],
+  'Rendered Q stack must agree with current scenario Firestorm/Blaze comparison');
+ const comparison=results.cases.performance.macro.fireComparison;
+ assert(comparison&&Number.isFinite(comparison.variants.blaze.robustScore)&&
+    Number.isFinite(comparison.variants.firestorm.robustScore),
+    'Both Q priority candidates must be independently simulated');
  for(const name of results.visible.equippedStigmas)
    assert(results.visible.hotbarNames.includes(name)||
           results.visible.macroSkills.includes(name),
@@ -128,6 +137,10 @@ try{
   'Balanced Nightmare macro must automatically refresh Element Enhancement');
  assert(results.visible.macroSkills.includes('Delayed Explosion'),
   'Balanced Nightmare macro must automatically apply Delayed Explosion');
+ assert(results.visible.macroSkills.includes('Wish of Concentration'),
+  'Continuous Nightmare must automatically attempt Wish after offensive Stigmas');
+ assert(!results.visible.hotbarNames.includes('Wish of Concentration'),
+  'Automatic Wish must not occupy a second manual hotbar key');
  assert(!results.visible.hotbarNames.includes('Element Enhancement')&&
         !results.visible.hotbarNames.includes('Delayed Explosion'),
   'Automated offensive Stigmas should not waste additional manual hotkeys');
