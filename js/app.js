@@ -1138,6 +1138,15 @@ function renderRotation(m){
         GlobalCombatEngine.isMobile(name,actualSpecs)):stack.skills}))
       .filter(stack=>stack.skills.length);
     p.macro=mobileSolo?p.stacks.map(stack=>stack.key):[...chosen.steps];
+    if(mobileSolo){
+      const automatic=new Set(p.stacks.flatMap(stack=>stack.skills));
+      for(const [index,name] of [[4,'Bittercold Wind'],[5,"Winter's Shackles"]]){
+        if(!p.hotbar[index]?.[0]?.includes(name))continue;
+        p.hotbar[index][1]=automatic.has(name)
+          ?name+' has its earned mobile Specialty: automatically attempted in E.'
+          :name+' is not in the moving macro: cast manually only when boss mechanics permit a brief stop.';
+      }
+    }
     p.rule=mobileSolo
       ?'Nightmare mobile DPS: '+chosen.label+'. Flame Arrow on LMB, fire cooldowns on RMB Macro, full-charge Hellfire and buffs manual. Mobile Specialties permit casting specific attacks during movement; unavailable mobile perks never count as equipped.'
       :'Easy Global Sorcerer: '+chosen.label+' (modeled selection). Keep LMB basic attacks and RMB Macro held, charge Hellfire and use offensive buffs manually.';
