@@ -67,6 +67,23 @@ const PveBuildOptimizer=(()=>{
       stats[name]=max(w)*(SURVIVAL.test(name)?p.defense:SPEED.test(name)?p.speed:p.attack)*
         RoleBuildGoals.roleStatBoost(name,classId,goal);
     }
+    if(classId==='sorcerer'&&context==='solo'&&characterLevel>=45){
+      // First-order throughput stats matter when boss movement constantly
+      // interrupts stationary skills. Relative weights are explicit
+      // hypotheses; never turn them into server-measured damage claims.
+      const speedScale=goal==='survivability'?1.1:
+        goal==='control'?1.25:goal==='burst'?1.30:1.55;
+      for(const name of Object.keys(stats))
+        if(SPEED.test(name))stats[name]*=speedScale;
+      const mobileDpsScale=goal==='survivability'?1.08:
+        goal==='control'?1.10:1.35;
+      for(const name of ['Firestorm','Blaze','Flame Arrow'])
+        if(name in skills)skills[name]*=mobileDpsScale;
+      // Hellfire's rank-8 mobile Specialty enables charging while moving.
+      // The bonus applies only to completing that real effective-level gate.
+      if(goal!=='survivability'&&'Hellfire' in skills)
+        skills.Hellfire*=1.12;
+    }
     if(context==='solo')for(const name of Object.keys(stats))if(SURVIVAL.test(name)){
       // At fresh-45/endgame Solo is Nightmare and Ascension Trial, not a
       // questing-only damage race. Risk is explicitly a goal selection:
