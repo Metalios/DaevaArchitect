@@ -12,7 +12,7 @@ vm.runInContext(read('js/engine/combat.js')+'\n'+read('js/optimizer/joint.js')+
 const {engine,joint}=ctx.check;
 const skills=Object.keys(JSON.parse(read('skill_unlocks.json')).sorcerer);
 const specs={
- 'Frost Burst':[2],Frost:[3],Bittercold Wind:[2],
+ 'Frost Burst':[2],Frost:[3],'Bittercold Wind':[2],
  "Winter's Shackles":[1],Hellfire:[1,3],Firestorm:[2,4]};
 const loadouts={
  performance:['Element Enhancement','Delayed Explosion','Steel Barrier','Fire Wall'],
