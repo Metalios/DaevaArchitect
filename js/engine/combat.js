@@ -27,8 +27,10 @@ const GlobalCombatEngine=(()=>{
     'Wish of Concentration':{cd:60,occupied:.60,power:0,mp:100,mode:'manual-buff',speed:'combat'},
     'Element Enhancement':{cd:60,occupied:.60,power:0,mp:0,mode:'manual-buff',speed:'combat'},
     'Delayed Explosion':{cd:30,occupied:.65,power:.60,mp:200,mode:'manual-debuff',speed:'combat'},
-    'Fire Wall':{cd:60,occupied:.72,power:1.15,mp:200,mode:'macro',speed:'combat',ground:true},
-    'Cold Storm':{cd:60,occupied:.75,power:.78,mp:200,mode:'macro',speed:'combat',ground:true}
+    // Immediate power plus delayed ground DoT are uncalibrated relative
+    // damage units; the 1s tick and 10s durations are from Global tooltips.
+    'Fire Wall':{cd:60,occupied:.72,power:.65,mp:200,mode:'macro',speed:'combat',ground:true,dot:{ticks:10,every:1,power:.065}},
+    'Cold Storm':{cd:60,occupied:.75,power:.42,mp:200,mode:'macro',speed:'combat',ground:true,dot:{ticks:10,every:1,power:.056}}
   });
   const ENCOUNTERS=[
     {id:'stationary',duration:180,movement:0,weight:.5,animation:1},
@@ -39,7 +41,7 @@ const GlobalCombatEngine=(()=>{
     compact:{label:'One-stack Q',steps:['Q'],
       stacks:[{key:'Q',title:'Compact cooldown damage',skills:['Firestorm','Blaze','Bittercold Wind',"Winter's Shackles"]}]},
     balanced:{label:'Two-stack Q / E',steps:['Q','E'],
-      stacks:[{key:'Q',title:'Cooldown and frost setup',skills:['Firestorm','Bittercold Wind',"Winter's Shackles",'Frost']},
+      stacks:[{key:'Q',title:'Cooldown and frost setup',skills:["Winter's Shackles",'Bittercold Wind','Frost','Firestorm']},
         {key:'E',title:'Conditional follow-ups',skills:['Blaze','Frost Burst','Flame Scattershot']}]},
     ground:{label:'Ground-damage Q / E / R',steps:['Q','E','R'],
       stacks:[{key:'Q',title:'Cooldown and frost setup',skills:['Firestorm','Bittercold Wind',"Winter's Shackles",'Frost']},
@@ -96,10 +98,31 @@ const GlobalCombatEngine=(()=>{
       return Math.max(.18,action.occupied*scenario.animation*(1-speed)/overall);
     };
     const cd={},counts={},damageBySkill={},stigma=build.stigma;
-    let now=0,damage=0,mp=2000,fireMarkUntil=0,frostUntil=0,staggerUntil=0,attackBuffUntil=0,
-      pveBuffUntil=0,combatBuffUntil=0,manualActions=0,missedGround=0,skippedForMp=0,unavailable=0,castTime=0,fireMarkProcReady=0;
+    let now=0,damage=0,mp=2000,fireMarkUntil=0,frostUntil=0,staggerUntil=0,
+      wishBuffUntil=0,elementBuffUntil=0,delayedUntil=0,
+      pveBuffUntil=0,combatBuffUntil=0,manualActions=0,missedGround=0,
+      skippedForMp=0,unavailable=0,castTime=0,fireMarkProcReady=0;
+    // Event queue preserves the four-second delayed hit and one-second
+    // periodic damage rather than pretending every effect is instantaneous.
+    const pending=[];
+    const delayedBonus=at=>at<delayedUntil-1e-9?
+      1+((stigma['Delayed Explosion']||0)>=20?.25:.15):1;
+    const record=(name,raw,at)=>{
+      if(raw<=0)return;
+      const done=raw*delayedBonus(at);
+      damage+=done;damageBySkill[name]=(damageBySkill[name]||0)+done;
+    };
+    const settle=until=>{
+      pending.sort((a,b)=>a.at-b.at);
+      while(pending.length&&pending[0].at<=until+1e-9){
+        const next=pending.shift();
+        record(next.name,next.amount,next.at);
+      }
+    };
     const macro=MACRO_LAYOUTS[build.macroLayout]||MACRO_LAYOUTS.ground;
-    const priority=macro.stacks.flatMap(stack=>stack.skills);
+    const macroStacks=macro.steps.map(key=>macro.stacks.find(stack=>stack.key===key))
+      .filter(Boolean);
+    let macroCursor=0;
     const macroStepOverhead=(macro.steps.length-1)*.012; // input sensitivity, not measured animation
     const equippedGround=macro.steps.includes('R')?['Fire Wall','Cold Storm'].filter(name=>hasStigma(build,name)):[];
     const maxSteps=2500;
@@ -117,7 +140,7 @@ const GlobalCombatEngine=(()=>{
     const cast=name=>{
       const act=ACTIONS[name],current=effective(build,name),rankBonus=1+.035*(current-1),
         time=speedTime(name),movement=scenario.movement||0;
-      now+=time;castTime+=time;
+      now+=time;castTime+=time;settle(now);
       if(act.mp>=0)mp-=act.mp;else mp=Math.min(3000,mp-act.mp);
       // Unmeasured damage is normalized for comparative build ranking.
       let multiplier=rankBonus*(1+damageBoost+attackBonus);
@@ -139,14 +162,31 @@ const GlobalCombatEngine=(()=>{
       const robeDouble=robe*.002;
       multiplier*=(1+robePve)*(1+Math.min(.50,robeDouble))*
         (1+(mp>750?.004*grace*graceBoost:0));
-      if(attackBuffUntil>now)multiplier*=1.1;
+      // The Global buffs are distinct: Wish = +10% Attack, Element =
+      // +20% Fire/Water Attack, and Shackles = +20% PvE Damage Boost.
+      // Actual additive/multiplicative server stacking is not yet measured.
+      if(wishBuffUntil>now)multiplier*=1.1+(has(spec,'Wish of Concentration',2)?.1:0);
+      if(elementBuffUntil>now)multiplier*=1.20;
       if(pveBuffUntil>now)multiplier*=1.2;
       if(name==='Hellfire'&&movement>0&&!has(spec,'Hellfire',3))multiplier*=1-movement*.22;
       if(act.ground){multiplier*=1-movement*.65;missedGround+=movement}
       const done=act.power*multiplier;
-      damage+=done;damageBySkill[name]=(damageBySkill[name]||0)+done;
+      if(name==='Delayed Explosion'){
+        // Global: +15% damage taken for FOUR seconds, impact at expiry.
+        // Only this skill's hit is deferred; other actions benefit meanwhile.
+        delayedUntil=now+4;
+        pending.push({name,at:delayedUntil,amount:done});
+      }else record(name,done,now);
+      if(act.dot){
+        const retention=Math.max(.2,1-movement*.65);
+        for(let tick=1;tick<=act.dot.ticks;tick++)
+          pending.push({name,at:now+tick*act.dot.every,
+            amount:act.dot.power*multiplier*retention});
+      }
       counts[name]=(counts[name]||0)+1;
-      cd[name]=now+Math.max(0,act.cd*(1-cooldownReduction)-
+      cd[name]=now+Math.max(0,(act.cd-
+        (name==='Delayed Explosion'&&(stigma[name]||0)>=10?10:0)-
+        (name==='Frost'&&has(spec,'Frost',2)?5:0))*(1-cooldownReduction)-
         (name==='Hellfire'&&has(spec,'Hellfire',5)?15:0));
       if(name==='Flame Arrow'||name==='Firestorm'){fireMarkUntil=now+5;mp=Math.min(3000,mp+35)}
        // Expected Fire Mark proc approximation, limited by its internal cooldown.
@@ -159,16 +199,26 @@ const GlobalCombatEngine=(()=>{
            fireMarkProcReady=now+1;
          }
        }
-      if(name==='Frost')frostUntil=now+4;
+      if(name==='Frost'){
+        frostUntil=now+3;
+        if(has(spec,'Frost',3))reduceCooldown('Frost Burst',10000);
+      }
       if(name==="Winter's Shackles"&&has(spec,name,3))pveBuffUntil=now+5;
-      if(name==='Firestorm'&&has(spec,name,4))reduceCooldown('Hellfire',10);
+      if(name==='Firestorm'&&has(spec,name,4)){
+        // Each landed fireball reduces Hellfire by 2s. Hit count is NOT
+        // recorded; use one confirmed landed-hit event as a conservative floor.
+        reduceCooldown('Hellfire',2);
+      }
       if(name==='Blaze'&&has(spec,name,5))reduceCooldown('Wish of Concentration',3);
       if(name==='Wish of Concentration'){
-        attackBuffUntil=now+15;
-        if(has(spec,name,4))combatBuffUntil=now+15;
+        wishBuffUntil=now+10;
+        if(has(spec,name,4))combatBuffUntil=now+10;
         if(has(spec,name,5))for(const target of Object.keys(cd))reduceCooldown(target,10);
       }
-      if(name==='Element Enhancement')attackBuffUntil=Math.max(attackBuffUntil,now+10);
+      if(name==='Element Enhancement')
+        elementBuffUntil=now+((stigma[name]||0)>=20?20:10);
+      if(name==='Delayed Explosion'&&(stigma[name]||0)>=5)
+        mp=Math.min(3000,mp+200);
       if(name==='Flame Scattershot')staggerUntil=0;
     };
     for(let step=0;now<scenario.duration&&step<maxSteps;step++){
@@ -182,17 +232,28 @@ const GlobalCombatEngine=(()=>{
         if(eligible(manual)){name=manual;manualActions++;break}
       }
       if(!name){
-        // Q/E is deliberately treated as opportunistic rather than a
-        // perfectly deterministic game macro execution sequence.
-        const available=priority.filter(eligible);
-        name=available[0]||'Flame Arrow';
-        if(!available.length)unavailable++;
+        // One in-game keypress selects at most one ready row from that
+        // stack. Do not flatten the Q/E/R columns into a fictitious priority
+        // queue. Round-robin is an explicit scheduling hypothesis, not proof
+        // of exact client order or action-time occupancy.
+        let selected=null;
+        for(let offset=0;offset<macroStacks.length;offset++){
+          const index=(macroCursor+offset)%macroStacks.length;
+          const ready=macroStacks[index].skills.find(eligible);
+          if(!ready)continue;
+          selected=ready;
+          macroCursor=(index+1)%macroStacks.length;
+          break;
+        }
+        name=selected||'Flame Arrow';
+        if(!selected)unavailable++;
         else now+=macroStepOverhead;
       }
       if(!eligible(name)){name='Flame Arrow';skippedForMp++}
       cast(name);
       if(!Number.isFinite(damage)||!Number.isFinite(now))throw Error('Invalid combat simulation state');
     }
+    settle(scenario.duration);
     return {score:damage/scenario.duration,damage,damageBySkill,counts,manualActions,
       manualPerMinute:manualActions*60/scenario.duration,mpFinal:mp,castTime,
       missedGround,skippedForMp,unavailable,combatSpeed,cooldownReduction,damageBoost,

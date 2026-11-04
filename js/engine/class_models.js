@@ -55,6 +55,18 @@ const ClassCombatModels=(()=>{
    evidence:'https://aion2data.com/guides/ranger/pve',
    mechanics:'Deadshot full charge manual; Snipe cooldown reduction; Gale Arrow 16 cooldown; Vaizel 20 crit-based reductions'
   },
+  sorcerer:{
+   offense:['Hellfire','Firestorm','Blaze','Bittercold Wind',"Winter's Shackles",'Flame Arrow','Frost Burst'],
+   defense:['Robe of Earth','Grace of Resistance','Absorb Essence','Robe of Cold','Cold Snap','Revitalization Contract'],
+   support:['Robe of Flame','Fire Mark','Grace of Enhancement','Wish of Concentration'],
+   milestones:{Hellfire:[8,12,16,20],Firestorm:[12,16,20],
+    'Wish of Concentration':[12,16,20],"Winter's Shackles":[8,16],Frost:[8,12]},
+   burstBuffs:['Element Enhancement','Delayed Explosion'],
+   survivalStigmas:['Steel Barrier','Arctic Armor','Hibernation','Element Enhancement'],
+   damageStigmas:['Element Enhancement','Delayed Explosion','Fire Wall','Cold Storm'],
+   evidence:'https://aion2.gaming.tools/classes/sorcerer',
+   mechanics:'Manually charge Hellfire; stack separately timed Wish, Element and Delayed buffs; keep defensive Stigmas and control reactive.'
+  },
   spiritmaster:{
    offense:['Elemental Fusion','Combustion','Summon: Fire Spirit','Summon: Water Spirit','Summon: Earth Spirit','Dimensional Control','Jointstrike: Curse','Cold Shock'],
    defense:['Spirit Protection','Spirit Revitalization','Spirit Communion','Revitalization Contract'],
@@ -265,6 +277,24 @@ const ClassCombatModels=(()=>{
      add(stigma("Vaizel's Authority")>=20,1.31,'sustained','Vaizel critical-hit cooldown return');
      add(stigma('Bow of Blessing')>=15,1.12,'burst','Bow of Blessing critical damage');
      add(stigma("Mother Nature's Breath")>=5,1.16,'survival','Ranger self recovery');
+     break;
+    case 'sorcerer':
+     // Comparative utility complements the dedicated PvE damage simulator;
+     // do not treat these rank/defense sensitivities as server-measured DPS.
+     add(gate('Firestorm',12)&&hasOption('Firestorm',4),1.10,'sustained','Firestorm fireball Hellfire cooldown reduction');
+     add(gate('Hellfire',16)&&hasOption('Hellfire',5),1.13,'burst','Hellfire base cooldown reduction');
+     add(gate('Wish of Concentration',16)&&hasOption('Wish of Concentration',5),1.14,'sustained','Wish cooldown reset after expenditure');
+     add(gate("Winter's Shackles",8)&&hasOption("Winter's Shackles",3),1.12,'burst','Winter damage amplification window');
+     add(stigma('Element Enhancement')>0,1.17,'sustained','Element Enhancement fire/water attack window');
+     add(stigma('Element Enhancement')>=10,1.09,'sustained','Element Enhancement Robe of Flame synergy');
+     add(stigma('Delayed Explosion')>0,1.13,'burst','Delayed Explosion four-second damage window');
+     add(stigma('Fire Wall')>0,1.09,'sustained','Ground fire damage, uptime unmeasured');
+     add(stigma('Cold Storm')>0,1.08,'sustained','Ground water damage, uptime unmeasured');
+     add(stigma('Steel Barrier')>0,1.25,'survival','Steel Barrier HP shield and tolerance');
+     add(stigma('Arctic Armor')>0,1.28,'survival','Arctic Armor mitigation and MP displacement');
+     add(stigma('Hibernation')>0,1.26,'survival','Manual Hibernation immunity');
+     add(stigma('Hibernation')>=10,1.07,'survival','Hibernation regeneration perk');
+     add(stigma('Soul Freeze')>0,1.06,'survival','Manual Seal can create escape windows');
      break;
     case 'spiritmaster':{
      const spirits=['Summon: Fire Spirit','Summon: Water Spirit','Summon: Earth Spirit','Summon: Wind Spirit']

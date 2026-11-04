@@ -283,7 +283,10 @@ const PveBuildOptimizer=(()=>{
     // The legacy route remains a legal full-board fallback and provides a
     // comparison candidate, but can no longer dictate the funded prefix.
     const variantRoutes=[];
-    for(let variant=0;variant<(classId==='sorcerer'?2:1);variant++){
+    // All Sorcerer priors are candidates: default, Robe of Flame, Fire Mark,
+    // Hellfire and Firestorm. Previously only two of five defined variants
+    // were ever compared, silently excluding the major skill thresholds.
+    for(let variant=0;variant<(classId==='sorcerer'?5:1);variant++){
       const w=weightsFor(baseWeights,classId,context,objective,variant);
       const legacy=optimizeBoardRoute(classData,w,mastery,gear,0,null,mandatory,characterLevel,skillTargets);
       const fitted=fitConnectedBoardBudget(classData,legacy.route,budget);

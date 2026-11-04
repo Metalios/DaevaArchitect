@@ -11,7 +11,8 @@ vm.runInContext(load('js/optimizer/roles.js')+'\n'+load('js/engine/global_action
 const model=ctx.models;
 const goals=['performance','survivability','sustained','burst'];
 const contexts=['solo','party'];
-assert.equal(Object.keys(model.profiles).length,7);
+assert.equal(Object.keys(model.profiles).length,8);
+assert(model.profile('sorcerer'),'The eighth Global class must not silently skip the common model');
 let total=0;
 for(const [cls,p] of Object.entries(model.profiles)){
  assert(classes[cls],cls+': class missing');
@@ -69,6 +70,7 @@ const speedPicks={
   templar:['Punishment',3],
   assassin:['Savage Roar',2],
   ranger:['Deadshot',2],
+  sorcerer:['Firestorm',2],
   spiritmaster:['Combustion',4],
   cleric:['Judgment Thunder',3],
   chanter:['Impactful Crush',4]
@@ -95,4 +97,4 @@ for(const [cls,[skill,id]] of Object.entries(speedPicks)){
     build:{...build,boardStats:{CombatSpeed:1000}}});
   assert(combatSpeed.castThroughput>slower.castThroughput,cls+': combat speed missed');
 }
-console.log('Validated '+total+' class/context/objective mechanic projections across seven Global classes.');
+console.log('Validated '+total+' class/context/objective mechanic projections across eight Global classes.');
