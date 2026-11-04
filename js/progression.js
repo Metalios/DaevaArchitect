@@ -130,10 +130,41 @@ function sorcererEasyMasteryStages(level,leveling,unlocks,skillNames,adjust){
    "Winter's Shackles",'Absorb Essence','Robe of Earth','Cold Snap'],10);
  return stages;
 }
+// Fresh-45 and later Sorcerer plans are content-specific. In particular,
+// Solo is Nightmare/Ascension endgame, NOT another pass through the leveling
+// rotation. Rank purchases and the order that they consume the 203+ budget
+// must reflect the actual objective, including defensive passive thresholds.
+function sorcererEndgameMasteryStages(mode,advice,unlocks,skillNames,adjust){
+ const known=new Set(skillNames), unique=names=>[...new Set(names||[])].filter(name=>known.has(name)&&(unlocks[name]||1)<=45);
+ const core=unique(advice?.core),support=unique(advice?.support);
+ const rest=unique(skillNames.filter(name=>!core.includes(name)&&!support.includes(name)));
+ const stages=[];
+ const add=(names,target)=>names.forEach(name=>stages.push([name,Math.max(1,Math.min(10,Number(adjust(name,target))||1))]));
+ // Equip useful boss attacks, first passive defenses/MP sustainability,
+ // then push real rank-8/10 specialty milestones. They may be reached by
+ // Mastery + actually recorded gear + funded Daevanion skill levels.
+ add(core.slice(0,3),8);
+ add(core.slice(3,5),5);
+ add(support.slice(0,2),5);
+ add(core.slice(0,3),10);
+ add(core.slice(3,6),8);
+ add(support.slice(0,3),8);
+ add(core.slice(3,6),10);
+ add(support.slice(0,3),10);
+ add(core.slice(6),8);
+ add(rest.slice(0,8),5);
+ add(core.slice(6),10);
+ add(support.slice(3),8);
+ add(rest,8);
+ add(support.slice(3),10);
+ add(rest,10);
+ return stages;
+}
 function progressionMasteryStages(cls,mode,level,leveling,advice,unlocks,skillNames,adjust){
- if(cls==='sorcerer'&&!isPvpContext(mode)&&
-    !['survivability','control'].includes(advice?.buildObjective))
-  return sorcererEasyMasteryStages(level,leveling,unlocks,skillNames,adjust);
+ if(cls==='sorcerer'&&!isPvpContext(mode)){
+  if(leveling)return sorcererEasyMasteryStages(level,true,unlocks,skillNames,adjust);
+  return sorcererEndgameMasteryStages(mode,advice,unlocks,skillNames,adjust);
+ }
  const policy=PROGRESSION_PLANS[cls];if(!policy)return null;
  const names=new Set(skillNames),known=name=>names.has(name)&&(unlocks[name]||1)<=level;
  const unique=sequence=>[...new Set(sequence)].filter(known);
@@ -215,14 +246,23 @@ function progressionStigmaStages(cls,mode,equipped,advice){
 function progressionBreakpoints(cls,mode,objective='performance'){
  const policy=PROGRESSION_PLANS[cls];if(!policy||isPvpContext(mode))return [];
  if(cls==='sorcerer'){
-  // Survival paths do not disguise damage-specialty nodes as defenses.
-  if(objective==='survivability')return [];
+  const solo=mode==='solo';
+  if(objective==='survivability')return solo?[
+   ['Robe of Earth',8],['Absorb Essence',8],['Grace of Resistance',8],
+   ['Robe of Earth',12]]:[
+   ['Robe of Earth',8],['Grace of Resistance',8],['Absorb Essence',8]];
   if(objective==='control')return [
    ["Winter's Shackles",8],['Frost',12],['Ice Chain',12]];
   if(objective==='burst')return [
-   ['Hellfire',16],['Wish of Concentration',16],['Firestorm',12],['Hellfire',20]];
+   ['Hellfire',16],['Wish of Concentration',16],
+   ["Winter's Shackles",8],['Hellfire',20]];
   if(objective==='sustained')return [
-   ['Firestorm',12],['Firestorm',16],['Wish of Concentration',16],['Hellfire',16]];
+   ['Firestorm',12],['Firestorm',16],['Blaze',12],
+   ['Bittercold Wind',16],['Wish of Concentration',16]];
+  if(solo)return [
+   ['Hellfire',12],['Robe of Earth',8],['Wish of Concentration',12],
+   ['Firestorm',12],['Hellfire',16]];
+  return policy.breakpoints;
  }
  if(cls==='cleric'&&mode==='party')return [
   ['Light of Regeneration',16],['Radiant Recovery',16],['Healing Light',16]];
