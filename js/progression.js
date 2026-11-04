@@ -131,7 +131,8 @@ function sorcererEasyMasteryStages(level,leveling,unlocks,skillNames,adjust){
  return stages;
 }
 function progressionMasteryStages(cls,mode,level,leveling,advice,unlocks,skillNames,adjust){
- if(cls==='sorcerer'&&!isPvpContext(mode))
+ if(cls==='sorcerer'&&!isPvpContext(mode)&&
+    !['survivability','control'].includes(advice?.buildObjective))
   return sorcererEasyMasteryStages(level,leveling,unlocks,skillNames,adjust);
  const policy=PROGRESSION_PLANS[cls];if(!policy)return null;
  const names=new Set(skillNames),known=name=>names.has(name)&&(unlocks[name]||1)<=level;
@@ -270,7 +271,32 @@ function progressionRotationProfile(base,cls,mode,effectiveLevel,equippedStigmas
    :stack);
   p.rule='Marking Shot supplies Precision. E prioritizes Gale and Drill before Tempest; Q applies Snare before Burst and equipped Explosive Arrow. Charge Deadshot manually.';
  }else if(cls==='sorcerer'){
-  p.rule='Keep Hellfire fully charged on a manual key; place persistent ground effects only where targets remain.';
+  if(isPvpContext(mode)){
+   // PvP is reactive: never automate Seal, polymorph, emergency immunity,
+   // Frost/Slow windows or damage Stigmas that should be aimed at the target.
+   // Q is intentionally the safe pressure loop, not a pre-scripted CC opener.
+   p.stacks=[{key:'Q',title:'PvP safe fire pressure',skills:['Blaze','Firestorm']}];
+   p.macro=['Q'];
+   p.stigmas=[...equippedStigmas];
+   p.hotbar=[
+    [['Hellfire'],'1: Fully charge ONLY when the target cannot escape','attack'],
+    [['Wish of Concentration'],'2: Manual offensive/reset window','buff'],
+    ...equippedStigmas.map(name=>[[name],'PvP Stigma — manual timing / targeting',
+       /Element Enhancement/.test(name)?'buff':'defense']),
+    [["Winter's Shackles"],'Manual Slow and damage-buff opener','utility'],
+    [['Frost'],'Manual Frost application, control and follow-up setup','utility']
+   ].slice(0,8);
+   while(p.hotbar.length<8)p.hotbar.push([[],'Free situational PvP key','utility']);
+   p.rule='PvP: use Q only for safe fire pressure. Keep Soul Freeze, Lumiel, barriers, Hibernation, Frost and Winter\'s Shackles reactive; charge Hellfire only after a confirmed safe control window.';
+   p.opener=['Approach with cover, conserving Defiance (Space) and defensive Stigmas.',
+    'Manually apply Frost, Winter\'s Shackles or an equipped control Stigma when its timing matters.',
+    'Use Wish and fully charged Hellfire only after verifying the target cannot escape or interrupt.'];
+   p.loop=['Maintain Flame Arrow with Q fire pressure only during safe stationary attack windows.',
+    'Manually time Soul Freeze or other CC around the enemy Defiance, immunity and escapes.',
+    'Save Arctic Armor, Steel Barrier or Hibernation for the actual incoming burst; disengage instead of greedily channeling.'];
+  }else{
+   p.rule='Keep Hellfire fully charged on a manual key; place persistent ground effects only where targets remain.';
+  }
  }else if(cls==='chanter'){
   p.rule=effectiveLevel('Dark Crush')>=16&&specialtyEnabled('Dark Crush',5)
    ?'Dark Crush cooldown-removal Specialty is selected: let each available trigger flow to Dark Crush.'
