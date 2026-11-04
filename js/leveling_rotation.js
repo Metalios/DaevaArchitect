@@ -42,25 +42,22 @@ const LEVELING_COMBAT={
  },
  sorcerer:{
   weave:'Flame Arrow',weaveKey:'LMB',key:'Q',
-  // Global Easy PvE: RMB automates all routine class damage, attack debuffs
-  // and conditional Stagger followups. Hellfire and real buffs remain manual.
-  // Avoid Ice Chain as no-CD spam competing for MP/animation uptime.
-  stack:['Bittercold Wind','Firestorm','Blaze'],
+  // Same hands-free fire/Frost pattern as fresh45: two held mouse buttons,
+  // earned mobile specialties only, safe offensive Stigmas automatically.
+  // Buff resets, charged Hellfire, CC, defensives and ground targets manual.
+  stack:['Blaze','Firestorm'],
   upgradedAt:10,
   upgradedStacks:[
-    {key:'Q',label:'Auto damage, Frost and debuff setup',macro:true,
-      stack:["Winter's Shackles",'Bittercold Wind','Frost','Firestorm']},
-    {key:'E',label:'Auto Fire Mark, Frost and Stagger finishers',macro:true,
-      stack:['Blaze','Frost Burst','Flame Scattershot']},
-    {key:'R',label:'Auto ground damage if equipped',macro:true,
-      stack:['Fire Wall','Cold Storm']}
+    {key:'Q',label:'Conditional Blaze before Firestorm',macro:true,
+      stack:['Blaze','Firestorm']},
+    {key:'E',label:'Frost / actually earned mobile follow-ups',macro:true,
+      stack:['Frost Burst','Frost','Bittercold Wind',"Winter's Shackles"]},
+    {key:'R',label:'Safe equipped Stigma buffs',macro:true,
+      stack:['Element Enhancement','Delayed Explosion']}
   ],
-  // Scattershot has no cooldown but is usable only on a Staggered enemy;
-  // place it after both ordinary conditional finishers. Ice Chain is left
-  // out entirely because its unrestricted casts spend MP needed for damage.
-  noCooldown:['Flame Scattershot'],
-  manual:['Hellfire','Wish of Concentration'],
-  focus:'Easy sustained Sorcerer: hold LMB + RMB and let the Macro handle damage, Frost, finishers and learned ground attacks. Only fully charged Hellfire and manual buffs need extra keys.'
+  noCooldown:[],
+  manual:['Hellfire','Wish of Concentration','Frost Burst','Bittercold Wind',"Winter's Shackles",'Ice Chain'],
+  focus:'Hold Flame Arrow on LMB + Macro on RMB to keep fire damage, Frost and safe offensive Stigmas flowing. Fully charge Hellfire on a single manual key; time Wish and situational defense/ground skills only as needed.'
  },
  spiritmaster:{
   weave:'Cold Shock',key:'Q',
@@ -101,6 +98,10 @@ function buildLevelingCombat(cls,level,context,unlocks,stigmaNames,stigmaLevels,
      if(cls==='templar'&&context==='party'&&name==='Warding Strike')return false;
      // Only one Chanter trigger until the cooldown-removal option is equipped.
      if(cls==='chanter'&&name==='Spinning Strike'&&!specialtyEnabled('Dark Crush',5))return false;
+     if(cls==='sorcerer'){
+       const mobile={'Frost Burst':2,'Bittercold Wind':2,"Winter's Shackles":1};
+       if(mobile[name]&&!specialtyEnabled(name,mobile[name]))return false;
+     }
      return true;
    }).slice(0,4)
  })).filter(group=>group.stack.length);
@@ -113,9 +114,9 @@ function buildLevelingCombat(cls,level,context,unlocks,stigmaNames,stigmaLevels,
   .sort((a,b)=>a[1]-b[1])[0];
  const noCooldown=plan.noCooldown;
  const manualChoices=cls==='sorcerer'
-  ? ['Hellfire','Wish of Concentration','Element Enhancement',
-     'Delayed Explosion','Steel Barrier','Arctic Armor','Ice Chain']
-      .filter(name=>available(name)&&!stacked.has(name))
+  ? ['Hellfire','Wish of Concentration',...stigma,'Frost Burst',
+     'Bittercold Wind',"Winter's Shackles",'Ice Chain']
+      .filter((name,i,list)=>list.indexOf(name)===i&&available(name)&&!stacked.has(name))
   : [...manual,...stigma].filter((name,i,list)=>list.indexOf(name)===i);
  // Preserve key 1-3 as fixed Ranger action slots; render reserved slots
  // before their skills unlock, rather than renumbering live abilities.
