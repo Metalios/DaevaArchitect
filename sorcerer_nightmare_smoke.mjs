@@ -36,6 +36,8 @@ try{
     board:route.filter(row=>m.boards.owned.has(row.id)).map(row=>row.id),
     objective:a.pveObjective,
     hellfireRank:skillLevelBreakdown('Hellfire',m).withPlan,
+    hellfireSpecialties:[...(m.combat?.specialties?.Hellfire||[])],
+    firestormSpecialties:[...(m.combat?.specialties?.Firestorm||[])],
     macro:m.combat?.macro?{
       mode:m.combat.macro.mode,
       steps:[...m.combat.macro.steps],
@@ -104,8 +106,13 @@ try{
      !result.macro.skills.includes('Cold Storm'),
     'Moving boss macro cannot automatically place stationary ground fields');
    if(result.hellfireRank>=8)
-     assert(result.macro&&result.macro.mobileHellfire||result.hellfireRank<12,
-       'Only rank12+ offers two Hellfire slots for speed and mobile at '+goal);
+     assert(result.hellfireSpecialties.includes(1),
+       'Hellfire first Specialty must grant +30% Skill Speed at '+goal);
+   if(result.hellfireRank>=12)
+     assert(result.hellfireSpecialties.includes(3),
+       'Hellfire second Specialty must enable mobility at '+goal);
+   else assert(!result.hellfireSpecialties.includes(3),
+       'Hellfire rank8 must not sacrifice +30% speed for mobile at '+goal);
  }
  assert(results.visible.macroMobileSafe,
   'Visible Nightmare macro attempted an unearned stationary attack');
