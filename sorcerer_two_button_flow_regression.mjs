@@ -98,6 +98,6 @@ for(const [goal,equipped] of Object.entries(loadouts)){
 assert(engine.flowLayout({
  mastery:{},boardSkills:{},gearSkills:{},availableSkills:skills,
  stigma:{},equippedStigmas:[],objective:'performance'
-},{}).steps.length===2);
+},{}).steps.length===3);
 console.log('Global Sorcerer two-button macro: '+actions.length+
  ' goal/mobility combinations; action eligibility, proactive safe Stigmas and hand-charged Hellfire passed.');
