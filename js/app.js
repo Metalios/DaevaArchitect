@@ -1667,7 +1667,9 @@ function renderTitles(){
     return `<article class="title-column"><div class="title-slot">${slot} slot</div><h3>${pick?esc(pick.name):'No earned title marked'}</h3><p class="title-current">${pick?`Equip now · ${esc(pick.equip)}`:'Mark a title below or in the full catalog when earned.'}</p><div class="title-next"><b>${upgrade?pick?'Next path upgrade':'First path title':next?'Next collection':'Path complete'}</b><span>${next?`${esc(titleName(next,faction))} · ${esc(next.earn)}`:'Every title on this suggested path is marked earned.'}</span></div><div class="title-options">${items.slice().reverse().map(t=>`<div class="title-option ${titleOwned(t,owned,faction)?'earned':''}"><label><input type="checkbox" data-title="${esc(titleKey(t,faction))}" data-legacy-title="${t.id}" ${titleOwned(t,owned,faction)?'checked':''}><strong>${esc(titleName(t,faction))}</strong></label><small><b>Equipped:</b> ${esc(t.equip)}</small><small><b>Owned:</b> ${esc(t.owned)}</small><small><b>Earn:</b> ${esc(t.earn)}</small><a href="${esc(t.url)}" target="_blank" rel="noopener noreferrer">Check source ↗</a></div>`).join('')}</div></article>`
   }).join('');
   $('title-preview').textContent=`${previews.join(' · ')}. Every earned collection effect stays active. Search all ${TITLE_CATALOG.length} titles in the Titles tab.`;
-  renderTitleCatalog();
+  // Hundreds of searchable title cards are irrelevant while changing a
+  // build role on the workspace. Mount them only when the Titles tab is open.
+  if(state.tab==='titles')renderTitleCatalog();
 }
 function renderTitleCatalog(){
   const a=account(),owned=a.titlesOwned||{},query=state.titleSearch.trim().toLowerCase();
