@@ -700,7 +700,8 @@ function enhanceSorcererCombat(master,boardEffects,stigmas){
       a.customSpecialties||{},null,scenarios);
     let macro=GlobalCombatEngine.chooseMacro(finalBuild,optimized.specialties,scenarios);
     if(macro.mode!=='ground'){
-      optimized=GlobalCombatEngine.tuneSpecialties({...finalBuild,macroLayout:macro.mode},
+      optimized=GlobalCombatEngine.tuneSpecialties({
+        ...finalBuild,macroLayout:macro.mode,firePriority:macro.firePriority},
         SPECS.sorcerer,a.customSpecialties||{},optimized.specialties,scenarios);
       macro=GlobalCombatEngine.chooseMacro(finalBuild,optimized.specialties,scenarios);
     }
@@ -716,6 +717,10 @@ function enhanceSorcererCombat(master,boardEffects,stigmas){
     result={mastery:final,specialties:optimized.specialties,
       score:macro.robustScore,baselineScore:original.robustScore,
       macro:{mode:macro.mode,label:macro.label,steps:[...macro.steps],
+        firePriority:macro.firePriority,
+        fireComparison:macro.fireComparison,
+        wishComparison:macro.wishComparison,
+        autoWish:macro.autoWish,
         stacks:macro.stacks.map(stack=>({...stack,skills:[...stack.skills]}))},
       manualPerMinute:macro.manualPerMinute,
       scenarios:macro.samples,source:GlobalCombatEngine.SOURCE,
@@ -1155,12 +1160,29 @@ function renderRotation(m){
           :name+' is not in the moving macro: cast manually only when boss mechanics permit a brief stop.';
       }
     }
-    p.rule=mobileSolo
-      ?'Two-button Nightmare PvE: hold Flame Arrow (LMB) + the complete RMB macro. It repeats ready Blaze/Firestorm, mobile Frost follow-ups and equipped safe offensive Stigmas. Press charged Hellfire and Wish manually; keep defense and ground positioning reactive.'
-      :'Two-button PvE: hold LMB + RMB for conditional fire/Frost and safe offensive Stigmas. Charge Hellfire manually; only tactical buffs, defense and ground positioning need additional presses.';
-    p.hotbarNote=(mobileSolo?'Nightmare movement-weighted setup: ':'Recommended ')+
-      chosen.label+'. Available automatic steps: '+p.macro.join(' + ')+
-      '. Missing mobile Specialties stay locked until actually obtained. Hellfire, Wish, emergency defenses and stationary ground placement stay manual; Element Enhancement and (except Burst goal) Delayed Explosion can cycle automatically when equipped. Macro attempts are not deterministic cast guarantees.';
+    const burstGoal=a.pveObjective==='burst';
+    const fireOrder=chosen.firePriority==='firestorm'
+      ?'Firestorm → Blaze':'Blaze → Firestorm';
+    const wishAutomatic=p.stacks.some(stack=>
+      !stack.manual&&stack.skills.includes('Wish of Concentration'));
+    const fireComparison=chosen.fireComparison?.variants;
+    const fireDifference=fireComparison?
+      Math.abs((fireComparison.firestorm.robustScore/
+        Math.max(1e-9,fireComparison.blaze.robustScore)-1)*100):null;
+    p.rule='Two-button '+(mobileSolo?'Nightmare Solo':'Group')+
+      ' PvE: hold LMB Flame Arrow + RMB Macro. Q priority: '+fireOrder+
+      '. E runs eligible Frost follow-ups. R handles equipped offensive Stigmas'+
+      (wishAutomatic?' then Wish (lowest priority on that line).':
+        '. Wish stays manual for burst alignment.')+
+      ' Release RMB briefly while manually FULL-charging Hellfire; never clip the release.';
+    p.hotbarNote=(mobileSolo?'Nightmare movement scenario: ':'Group PvE scenario: ')+
+      chosen.label+'. Macro steps: '+p.macro.join(' + ')+
+      (fireDifference===null?'':'. Fire-order difference in uncalibrated model: '+
+        fireDifference.toFixed(2)+'%; this is not measured DPS')+
+      '. Wish '+(wishAutomatic
+        ?'is automatic; its -10s reset only helps abilities already on cooldown.'
+        :'is manual so you can coordinate the short burst window.')+
+      ' In-game macro step order is not guaranteed, and movement / animation inputs are scenario estimates.';
   }
   const physicalHotkey=key=>key==='R'?quickUse2Bind:key;
   const displayKeyCopy=value=>quickUse2Bind==='T'?String(value).replace(/\bR\b/g,'T'):String(value);
@@ -1179,7 +1201,8 @@ function renderRotation(m){
   if(levelingMode && typeof buildLevelingCombat==='function'){
     const plan=buildLevelingCombat(state.class,level,a.context,SKILL_UNLOCKS[state.class],
       activeStigmas().slice(0,levelReward().slots),m.stigma.levels,
-      (name,option)=>specPicks(name,skillLevelBreakdown(name,m).withOwned).includes(option));
+      (name,option)=>specPicks(name,skillLevelBreakdown(name,m).withOwned).includes(option),
+      a.pveObjective);
     // Do not overwrite the current-level, unlock-gated Sorcerer macro
     // with the endgame damage simulator's speculative Q/E/R layout. The
     // actual skills, Stigmas and mobile Specialties above are authoritative.

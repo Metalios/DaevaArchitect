@@ -81,7 +81,7 @@ assert.deepEqual(Array.from(unupgraded.stacks[0].skills),
  ['Blaze','Firestorm'],'Spend ready Fire Mark with Blaze before firing Firestorm');
 assert.deepEqual(Array.from(unupgraded.stacks[1].skills),['Frost']);
 assert.deepEqual(Array.from(unupgraded.stacks[2].skills),
- ['Element Enhancement','Delayed Explosion']);
+ ['Element Enhancement','Delayed Explosion','Wish of Concentration']);
 assert(unupgraded.stacks.every(stack=>!stack.skills.includes('Hellfire')),
  'No auto macro may consume charged Hellfire');
 const burst=model.flowLayout({...build,objective:'burst'},stationarySpecialties);

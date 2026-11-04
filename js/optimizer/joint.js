@@ -431,7 +431,8 @@ const JointProgression = (()=>{
     if(classId==='sorcerer'&&context!=='pvp'&&!String(context).startsWith('pvp-')){
       const explicitlyAutomated=new Set((profile?.stacks||[])
         .filter(stack=>!stack.manual).flatMap(stack=>stack.skills)
-        .filter(name=>name==='Element Enhancement'||name==='Delayed Explosion'));
+        .filter(name=>name==='Element Enhancement'||
+          name==='Delayed Explosion'||name==='Wish of Concentration'));
       for(const name of explicitlyAutomated)manual.delete(name);
       // Some shared base profiles retain a *manual fallback* label for a
       // mobile-specialty attack. When its real Global option is selected

@@ -86,16 +86,19 @@ try{
   const m31=model();
   const expectedSorc=buildLevelingCombat('sorcerer',31,'solo',
     SKILL_UNLOCKS.sorcerer,activeStigmas().slice(0,levelReward().slots),
-    m31.stigma.levels,(name,opt)=>specPicks(name,effective(name,m31)).includes(opt)).steps;
+    m31.stigma.levels,(name,opt)=>specPicks(name,effective(name,m31)).includes(opt),
+    account().pveObjective).steps;
   const actualSorc=[...document.querySelectorAll('#leveling-stacks [data-stack-role="macro"]')].map(el=>el.dataset.stackKey);
   if(actualSorc.join(',')!==expectedSorc.join(','))
     failures.push('Sorcerer Lv31 must show its real unlocked Q/E/safe Stigma macro, not a separate endgame simulation');
   if(!document.querySelector('#leveling-manual [data-manual-key="1"]')?.textContent.includes('Hellfire'))
     failures.push('Sorcerer Lv31 manual key 1 should charge Hellfire');
-  if(['Hellfire','Wish of Concentration','Fire Wall','Cold Storm'].some(name=>[...document.querySelectorAll('#leveling-stacks [data-leveling-skill]')].some(node=>node.dataset.levelingSkill===name)))
+  if(['Hellfire','Fire Wall','Cold Storm'].some(name=>[...document.querySelectorAll('#leveling-stacks [data-leveling-skill]')].some(node=>node.dataset.levelingSkill===name)))
     failures.push('Sorcerer Lv31: charged, reset or ground skill incorrectly automated');
-  if(!document.querySelector('#leveling-manual [data-manual-key="2"]')?.textContent.includes('Wish of Concentration'))
-    failures.push('Sorcerer Lv31: Wish buff should be manual on 2');
+  if(account().pveObjective!=='burst'&&
+      (!document.querySelector('#leveling-stacks')?.textContent.includes('Wish of Concentration')||
+       document.querySelector('#leveling-manual')?.textContent.includes('Wish of Concentration')))
+    failures.push('Sorcerer Lv31: Wish must cycle on R without duplicate manual key');
   if(!document.querySelector('#leveling-stacks')?.textContent.includes('Firestorm'))
     failures.push('Sorcerer Lv31: Firestorm missing from optimized automatic stacks');
   const bind=document.querySelector('#leveling-macro-bind');

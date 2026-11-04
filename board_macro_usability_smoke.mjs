@@ -87,12 +87,14 @@ try{
     failures.push('Sorcerer RMB macro steps disagree with selected combat-ranked stacks');
   if(chosen.includes('R')&&!activeStigmas().some(name=>
       ['Element Enhancement','Delayed Explosion'].includes(name)&&
-      (model().stigma.levels[name]||0)>0))
-    failures.push('Sorcerer R should only automate equipped, learned offensive Stigmas');
+      (model().stigma.levels[name]||0)>0)&&
+      !(account().pveObjective!=='burst'&&
+        skillLevelBreakdown('Wish of Concentration',model()).withOwned>=1))
+    failures.push('Sorcerer R needs an equipped offensive Stigma or unlocked automatic Wish');
   if(chosen.includes('E')&&!document.querySelector('#macro-stacks [data-macro-key="E"].macro-stack-auto'))
     failures.push('Sorcerer selected E step missing from visible automatic stack');
   const autoSkills=[...document.querySelectorAll('#macro-stacks .macro-stack-auto .macro-physical-stack [data-skill]')].map(node=>node.dataset.skill);
-  for(const manualOnly of ['Hellfire','Wish of Concentration','Fire Wall','Cold Storm','Steel Barrier','Arctic Armor','Hibernation'])
+  for(const manualOnly of ['Hellfire','Fire Wall','Cold Storm','Steel Barrier','Arctic Armor','Hibernation'])
     if(autoSkills.includes(manualOnly))failures.push('Sorcerer charge/reset/defense/ground skill included in RMB macro: '+manualOnly);
   for(const automaticBuff of ['Element Enhancement','Delayed Explosion']){
     const equipped=activeStigmas().includes(automaticBuff)&&
@@ -104,8 +106,16 @@ try{
   for(const automated of ['Firestorm','Blaze'])
     if(!autoSkills.includes(automated))failures.push('Sorcerer core cooldown not automated: '+automated);
   const manualKeys=[...document.querySelectorAll('#rotation-quick-guide [data-easy-key]')].map(el=>el.textContent);
-  if(!manualKeys[0]?.includes('Hellfire')||!manualKeys[1]?.includes('Wish of Concentration'))
-    failures.push('Sorcerer manual Hellfire and Wish assignments missing');
+  if(!manualKeys[0]?.includes('Hellfire'))
+    failures.push('Sorcerer manual fully charged Hellfire assignment missing');
+  if(account().pveObjective!=='burst'&&
+    (!autoSkills.includes('Wish of Concentration')||
+      manualKeys.some(key=>key.includes('Wish of Concentration'))))
+    failures.push('Continuous PvE Wish should auto-cycle, not duplicate manual slot');
+  if(account().pveObjective==='burst'&&
+      (autoSkills.includes('Wish of Concentration')||
+       !manualKeys.some(key=>key.includes('Wish of Concentration'))))
+    failures.push('Burst PvE Wish must remain manually timed');
   const a=account();
   a.context='party';a.quickUse2Bind='R';a.stigma=160;a.manualStigma=null;
   render();

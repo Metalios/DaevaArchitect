@@ -21,7 +21,7 @@ const loadouts={
  survivability:['Element Enhancement','Steel Barrier','Arctic Armor','Hibernation'],
  control:['Hibernation','Curse: Tree','Cold Storm','Steel Barrier']
 };
-const forbidden=new Set(['Hellfire','Wish of Concentration','Flame Arrow',
+const forbidden=new Set(['Hellfire','Flame Arrow',
  'Fire Wall','Cold Storm','Steel Barrier','Arctic Armor','Hibernation',
  'Divine Burst','Curse: Tree','Soul Freeze','Ice Chain','Flame Scattershot','Defiance']);
 const actions=[];
@@ -44,9 +44,13 @@ for(const [goal,equipped] of Object.entries(loadouts)){
   assert.equal(new Set(names).size,names.length,goal+': duplicate automatic action');
   for(const action of names)
    assert(!forbidden.has(action),'Forbidden held-macro action: '+action);
-  const automatedStigmas=names.filter(name=>equipped.includes(name));
-  const expected=['Element Enhancement',...(goal==='burst'?[]:['Delayed Explosion'])]
-   .filter(name=>equipped.includes(name));
+  const automatedStigmas=names.filter(name=>
+    equipped.includes(name)||name==='Wish of Concentration');
+  const expected=[
+    ...['Element Enhancement',...(goal==='burst'?[]:['Delayed Explosion'])]
+      .filter(name=>equipped.includes(name)),
+    ...(goal==='burst'?[]:['Wish of Concentration'])
+  ];
   assert.deepEqual(automatedStigmas,expected,
    goal+': only nondefensive safe offensive Stigmas should be automated');
   const trusted=joint.adviseMacro({
@@ -66,8 +70,15 @@ for(const [goal,equipped] of Object.entries(loadouts)){
   });
   assert.deepEqual(
    Array.from(trusted.stacks.flatMap(stack=>stack.skills)
-    .filter(name=>equipped.includes(name))),
-   expected,goal+': generic safety filter dropped safe offensive Stigmas');
+    .filter(name=>equipped.includes(name)||name==='Wish of Concentration')),
+   expected,goal+': generic safety filter dropped safe offensive Stigmas / Wish');
+  assert.equal(names.includes('Wish of Concentration'),goal!=='burst',
+   goal+': only continuous PvE may automate Wish');
+  if(goal!=='burst'){
+    const r=layout.stacks.find(stack=>stack.key==='R');
+    assert(r&&r.skills.at(-1)==='Wish of Concentration',
+      'Wish must remain LAST after offensive Stigmas in the R priority column');
+  }
   // Burst holds Winter's Shackles for the timed Hellfire damage window,
   // regardless of movement eligibility. All other goals may automate it
   // once its actual mobile Specialty is earned.
@@ -87,6 +98,6 @@ for(const [goal,equipped] of Object.entries(loadouts)){
 assert(engine.flowLayout({
  mastery:{},boardSkills:{},gearSkills:{},availableSkills:skills,
  stigma:{},equippedStigmas:[],objective:'performance'
-},{}).steps.length===2);
+},{}).steps.length===3);
 console.log('Global Sorcerer two-button macro: '+actions.length+
  ' goal/mobility combinations; action eligibility, proactive safe Stigmas and hand-charged Hellfire passed.');

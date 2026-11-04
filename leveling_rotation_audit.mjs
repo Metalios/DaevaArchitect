@@ -24,7 +24,8 @@ for(const [cls,u] of Object.entries(unlocks)){
   assert.equal(plan.macroUnlocked,level>=4);
   const autoOffense=cls==='sorcerer'&&equipped.some(name=>
     ['Element Enhancement','Delayed Explosion'].includes(name)&&earned[name]>0);
-  const expectedSteps=level<4?0:cls==='sorcerer'&&level>=10?(autoOffense?3:2):cls==='ranger'&&level>=10?2:1;
+  const expectedSteps=level<4?0:cls==='sorcerer'&&level>=10?
+    (level>=12||autoOffense?3:2):cls==='ranger'&&level>=10?2:1;
   assert.equal(plan.steps.length,expectedSteps,cls+' Lv'+level+': expected '+expectedSteps+' macro step(s)');
   for(const group of plan.stacks){
     assert(group.stack.length>=1&&group.stack.length<=4,cls+' '+level+': invalid stack size');
@@ -70,7 +71,7 @@ for(const [cls,u] of Object.entries(unlocks)){
   }
   if(cls==='sorcerer'){
    const automated=new Set(plan.stacks.filter(group=>group.macro).flatMap(group=>group.stack));
-   for(const manualOnly of ['Wish of Concentration','Hellfire','Fire Wall','Cold Storm','Steel Barrier'])
+   for(const manualOnly of ['Hellfire','Fire Wall','Cold Storm','Steel Barrier'])
     assert(!automated.has(manualOnly),
      'Sorcerer Lv'+level+': charged, reset, protection or ground power automated: '+manualOnly);
    if(level>=10){
@@ -84,7 +85,12 @@ for(const [cls,u] of Object.entries(unlocks)){
     if(equipped.includes(name)&&earned[name]>0&&level>=10)
       assert(automated.has(name),'Learned automatic offensive Stigma missing: '+name);
    if(level>=14)assert.equal(plan.manualKeys[0]?.name,'Hellfire','Sorcerer Hellfire should be key 1');
-   if(level>=12)assert(plan.manualKeys.some(x=>x.name==='Wish of Concentration'),'Sorcerer Wish buff not manual');
+   if(level>=12){
+     assert(automated.has('Wish of Concentration'),
+       'Sorcerer continuous leveling should automate learned Wish after buffs');
+     assert(!plan.manualKeys.some(x=>x.name==='Wish of Concentration'),
+       'Automated Wish must not waste a manual key');
+   }
   }
   assert(plan.manual.every(name=>u[name]<=level));
   assert(plan.rows.every((r,index)=>r.row===index&&r.name===plan.stack[index]));
@@ -100,18 +106,19 @@ const templar=buildLevelingCombat('templar',8,'solo',unlocks.templar,[],{});
 assert.deepEqual(Array.from(templar.stack),['Judgment','Shield Smite','Warding Strike','Pummel']);
 assert.deepEqual(Array.from(buildLevelingCombat('templar',8,'party',unlocks.templar,[],{}).stack),['Judgment','Shield Smite','Pummel']);
 const sorc31=buildLevelingCombat('sorcerer',31,'solo',unlocks.sorcerer,[],{});
-assert.deepEqual(Array.from(sorc31.steps),['Q','E']);
+assert.deepEqual(Array.from(sorc31.steps),['Q','E','R']);
 assert.deepEqual(Array.from(sorc31.stacks[0].stack),['Blaze','Firestorm']);
 assert.deepEqual(Array.from(sorc31.stacks[1].stack),['Frost']);
 assert(sorc31.stacks.every(group=>group.macro));
-assert.deepEqual(Array.from(sorc31.manualKeys.slice(0,2).map(x=>x.name)),['Hellfire','Wish of Concentration']);
+assert.equal(sorc31.manualKeys[0]?.name,'Hellfire');
+assert(sorc31.stacks[2].stack.includes('Wish of Concentration'));
 assert(!sorc31.stacks.flatMap(x=>x.stack).includes('Hellfire'));
 const sorcWithStigmas=buildLevelingCombat('sorcerer',34,'solo',unlocks.sorcerer,
  ['Element Enhancement','Delayed Explosion','Fire Wall'],
  {'Element Enhancement':1,'Delayed Explosion':1,'Fire Wall':1});
 assert.deepEqual(Array.from(sorcWithStigmas.steps),['Q','E','R']);
 assert.deepEqual(Array.from(sorcWithStigmas.stacks[2].stack),
- ['Element Enhancement','Delayed Explosion']);
+ ['Element Enhancement','Delayed Explosion','Wish of Concentration']);
 assert(!sorcWithStigmas.manualKeys.some(x=>['Element Enhancement','Delayed Explosion'].includes(x.name)));
 assert(sorcWithStigmas.manualKeys.some(x=>x.name==='Fire Wall'));
 assert(!sorcWithStigmas.stacks.flatMap(g=>g.stack).includes('Fire Wall'));
@@ -127,9 +134,16 @@ assert.deepEqual(Array.from(sorcMobile.stacks[1].stack),
 assert(!sorcMobile.stacks.flatMap(group=>group.stack).includes('Hellfire'));
 const sorcReset=buildLevelingCombat('sorcerer',45,'solo',unlocks.sorcerer,[],{},
  (name,option)=>name==='Wish of Concentration'&&option===5);
-assert.deepEqual(Array.from(sorcReset.steps),['Q','E']);
-assert(!sorcReset.stacks.some(g=>g.stack.includes('Wish of Concentration')),
- 'Actual cooldown-reset Specialty never auto-casts Wish');
+assert.deepEqual(Array.from(sorcReset.steps),['Q','E','R']);
+assert(sorcReset.stacks[2].stack.includes('Wish of Concentration'),
+ 'Cooldown-reset Specialty is eligible in automatic continuous mode');
+const sorcBurst=buildLevelingCombat('sorcerer',45,'solo',unlocks.sorcerer,
+ ['Element Enhancement','Delayed Explosion'],
+ {'Element Enhancement':5,'Delayed Explosion':5},()=>false,'burst');
+assert.deepEqual(Array.from(sorcBurst.stacks[2].stack),
+ ['Element Enhancement'],'Burst alignment keeps Wish and Delayed manual');
+assert(sorcBurst.manualKeys.some(x=>x.name==='Wish of Concentration'));
+assert(sorcBurst.manualKeys.some(x=>x.name==='Delayed Explosion'));
 const rangerStigma=buildLevelingCombat('ranger',30,'solo',unlocks.ranger,
  ['Explosive Arrow',"Vaizel's Authority",'Bow of Blessing'],
  {'Explosive Arrow':5,"Vaizel's Authority":5,'Bow of Blessing':5});
