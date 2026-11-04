@@ -369,7 +369,7 @@ function actionsView(m){
  ['Stigma',m.stigma.next?`Earn ${m.stigma.next.need} points for ${m.stigma.next.name}`:'Inspect levels & unlocked effects','stigma'],
  ['Daevanion',nextBoard?`${nextBoard.board} · ${effectText(nextBoard.node)}`:'Review connected purchase path','boards']
  ];
- const breakpoint=typeof progressionNextBreakpoint==='function'?progressionNextBreakpoint(state.class,account().context,name=>effective(name,m),budget('crystals')):'';
+ const breakpoint=typeof progressionNextBreakpoint==='function'?progressionNextBreakpoint(state.class,account().context,name=>effective(name,m),budget('crystals'),account().pveObjective):'';
  next.innerHTML=`<details class="v4-next-details"><summary><b>Next recommended upgrades</b><span>Mastery · Stigma · Daevanion</span></summary><div class="v4-next-content">`+(breakpoint?`<p class="v2-next-progress">${esc(breakpoint)}</p>`:'')+parts.map(([name,detail,target],i)=>`<button data-v2-focus="${target}"><em>${i+1}</em><span><b>${name}</b><small>${esc(detail)}</small></span><span>→</span></button>`).join('')+'</div></details>';
  // Keep Compare builds, class-specific combat evidence and guidance
  // accessible in the collapsed upgrade drawer, rather than deleting them.
@@ -446,6 +446,10 @@ function sync(m){
    roleSelect.dataset.catalog=signature;
  }
  roleSelect.value=roleGoal;
+ const soloNightmare=state.class==='sorcerer'&&!isLeveling()&&a.context==='solo';
+ const titleText=$('v2-objective-label').firstChild;
+ if(titleText&&titleText.nodeType===3)
+   titleText.textContent=soloNightmare?'Nightmare / Ascension goal':'Build role';
  const roleDescription=roleChoices.find(g=>g.id===roleGoal)?.description||
    'Choose your class role.';
  roleSelect.title=roleDescription;
@@ -524,8 +528,15 @@ function bind(){
    }
   });
  $('v2-objective').addEventListener('change',e=>{
-   account().pveObjective=RoleBuildGoals.normalize(state.class,account().context,e.target.value);
-   account().recommendedRouteSnapshot=null;
+   const a=account();
+   a.pveObjective=RoleBuildGoals.normalize(state.class,a.context,e.target.value);
+   a.recommendedRouteSnapshot=null;
+   const pinned=a.manualMastery!==null&&a.manualMastery!==undefined||
+     a.manualStigma!==null&&a.manualStigma!==undefined||
+     !!a.customStigmas||Object.keys(a.customSpecialties||{}).length>0;
+   message=pinned
+     ?'Role changed. Your custom Mastery, Stigmas or Specialties remain pinned, so the displayed allocations may not change. Use Restore recommended allocations to see this goal\'s complete path without deleting gear, earned currency or obtained boards.'
+     :'Role changed: Mastery, Stigmas, Specialties and Daevanion recommendations recalculated for this goal.';
    render();
  });
  $('v2-context').addEventListener('change',e=>setContext(e.target.value));
