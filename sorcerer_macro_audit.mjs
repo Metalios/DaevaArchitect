@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 
-const ctx=vm.createContext({});
+const ctx=vm.createContext({isPvpContext: mode=>String(mode).startsWith('pvp')});
 vm.runInContext(fs.readFileSync('js/engine/combat.js','utf8')+
   '\nglobalThis.engine=GlobalCombatEngine;',ctx);
 vm.runInContext(fs.readFileSync('js/profiles.js','utf8')+
