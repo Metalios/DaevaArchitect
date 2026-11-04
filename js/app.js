@@ -1182,10 +1182,10 @@ function renderRotation(m){
       'Conquest: held LMB + RMB handles short-cooldown fire and ground damage on stable bosses; burst windows and dangerous mechanics are manual.';
     p.opener=mobileSolo?
       ['Hold LMB + RMB for mobile fire damage while dodging.',
-       'Use Element Enhancement and Delayed Explosion manually for a safe Hellfire burst; land Winter\\'s Shackles immediately before fully charged Hellfire when its PvE boost is selected.',
+       "Use Element Enhancement and Delayed Explosion manually for a safe Hellfire burst; land Winter's Shackles immediately before fully charged Hellfire when its PvE boost is selected.",
        'If Wish has cooldown reset, press it after important attacks enter cooldown; use barriers before dangerous mechanics.']:
       ['Hold LMB + RMB while the boss stays in range and inside ground effects.',
-       'Apply Element Enhancement, then coordinate Delayed Explosion / Winter\\'s Shackles before a full Hellfire release within the short amplification window.',
+       "Apply Element Enhancement, then coordinate Delayed Explosion / Winter's Shackles before a full Hellfire release within the short amplification window.",
        'With Wish cooldown reset equipped, press Wish after the major spells are on cooldown; stop ground automation when the boss moves.'];
     p.loop=mobileSolo?
       ['Keep mobile Q/E damage running while dodging.',
