@@ -1125,15 +1125,25 @@ function renderRotation(m){
   const quickUse2Bind=a.quickUse2Bind==='T'?'T':'R';
   if(m.combat?.macro?.stacks&&sorcererCombatEligible()){
     const chosen=m.combat.macro;
-    p.stacks=chosen.stacks.map(stack=>({...stack}));
-    p.macro=[...chosen.steps];
     const mobileSolo=a.context==='solo'&&!levelingMode;
+    // The optimizer scores FUNDED FUTURE board effects. The live macro must
+    // use only Specialties actually available from purchased Mastery +
+    // obtained board tiles + recorded gear, never a projected future pick.
+    const actualSpecs=mobileSolo
+      ?Object.fromEntries(['Hellfire','Bittercold Wind',"Winter's Shackles"]
+        .map(name=>[name,specPicks(name,skillLevelBreakdown(name,m).withOwned)]))
+      :{};
+    p.stacks=chosen.stacks.map(stack=>({...stack,
+      skills:mobileSolo?stack.skills.filter(name=>
+        GlobalCombatEngine.isMobile(name,actualSpecs)):stack.skills}))
+      .filter(stack=>stack.skills.length);
+    p.macro=mobileSolo?p.stacks.map(stack=>stack.key):[...chosen.steps];
     p.rule=mobileSolo
       ?'Nightmare mobile DPS: '+chosen.label+'. Flame Arrow on LMB, fire cooldowns on RMB Macro, full-charge Hellfire and buffs manual. Mobile Specialties permit casting specific attacks during movement; unavailable mobile perks never count as equipped.'
       :'Easy Global Sorcerer: '+chosen.label+' (modeled selection). Keep LMB basic attacks and RMB Macro held, charge Hellfire and use offensive buffs manually.';
     p.hotbarNote=(mobileSolo?'Nightmare movement-weighted setup: ':'Recommended ')+
-      chosen.label+'. Automatic steps: '+chosen.steps.join(' + ')+
-      '. Hellfire, Wish and offensive/defensive Stigmas remain manual. Occupied action time and stop/positioning costs are explicitly unmeasured sensitivity inputs.';
+      chosen.label+'. Available automatic steps: '+p.macro.join(' + ')+
+      '. Mobile skills that require future Daevanion levels are NOT auto-equipped early. Hellfire, Wish and offensive/defensive Stigmas remain manual. Occupied action time and stop/positioning costs are explicitly unmeasured sensitivity inputs.';
   }
   const physicalHotkey=key=>key==='R'?quickUse2Bind:key;
   const displayKeyCopy=value=>quickUse2Bind==='T'?String(value).replace(/\bR\b/g,'T'):String(value);
