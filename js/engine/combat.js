@@ -103,11 +103,13 @@ const GlobalCombatEngine=(()=>{
   function flowLayout(build,spec){
     const purpose=build.objective||'performance';
     const isBurst=purpose==='burst';
+    const firePriority=build.firePriority==='firestorm'?'firestorm':'blaze';
     const active=new Set(build.equippedStigmas||[]);
     const capable=name=>(build.availableSkills||[]).includes(name);
     const eligibleAutoStigma=name=>active.has(name)&&
       (build.stigma?.[name]||0)>0&&!(isBurst&&name==='Delayed Explosion');
-    const q=['Blaze','Firestorm'].filter(capable);
+    const q=(firePriority==='firestorm'?['Firestorm','Blaze']:['Blaze','Firestorm'])
+      .filter(capable);
     const ice=[
       ...(capable('Frost Burst')&&isMobile('Frost Burst',spec)?['Frost Burst']:[]),
       ...(capable('Frost')?['Frost']:[]),
@@ -115,14 +117,21 @@ const GlobalCombatEngine=(()=>{
         .filter(name=>capable(name)&&isMobile(name,spec)&&
           !(isBurst&&name==="Winter's Shackles"))
     ];
-    const buffs=CONTINUOUS_OFFENSE.filter(eligibleAutoStigma);
+    const autoWish=build.autoWish!==false&&!isBurst&&capable('Wish of Concentration');
+    // Wish goes AFTER the repeatable offensive Stigmas in this low-input
+    // column. Its real 10s cooldown reduction can still be wasted if
+    // macro step order drifts; we measure that instead of claiming a script.
+    const buffs=[...CONTINUOUS_OFFENSE.filter(eligibleAutoStigma),
+      ...(autoWish?['Wish of Concentration']:[])];
     const stacks=[
       ...(q.length?[{key:'Q',title:'Fire Mark spender / short fire cooldown',skills:q}]:[]),
       ...(ice.length?[{key:'E',title:'Frost and mobile follow-up damage',skills:ice}]:[]),
       ...(buffs.length?[{key:'R',title:'Automatic offensive Stigmas; no emergency skills',skills:buffs}]:[])
     ];
-    return {label:'Hold LMB + RMB · conditional fire, Frost and safe offensive buffs',
-      steps:stacks.map(s=>s.key),stacks};
+    return {label:'Hold LMB + RMB · '+(firePriority==='firestorm'
+        ?'Firestorm-first':'Blaze-first')+
+        ', Frost and safe automatic buffs',
+      firePriority,autoWish,steps:stacks.map(s=>s.key),stacks};
   }
   // Global Firestorm has five projectile hits. The level-12 Specialty
   // reduces Hellfire by two seconds for EACH projectile that actually hits.
@@ -182,7 +191,9 @@ const GlobalCombatEngine=(()=>{
       wishBuffUntil=0,elementBuffUntil=0,delayedUntil=0,
       pveBuffUntil=0,combatBuffUntil=0,manualActions=0,missedGround=0,
       skippedForMp=0,unavailable=0,castTime=0,fireMarkProcReady=0,
-      forcedStopTime=0,stationaryCastTime=0,mobileCastTime=0;
+      forcedStopTime=0,stationaryCastTime=0,mobileCastTime=0,
+      wishResetSeconds=0,wishResetTargets=0,wishCastsAuto=0,wishBuffUptime=0,
+      incompleteActions=0;
     // Event queue preserves the four-second delayed hit and one-second
     // periodic damage rather than pretending every effect is instantaneous.
     const pending=[];
@@ -233,6 +244,12 @@ const GlobalCombatEngine=(()=>{
       // sensitivity parameter, not a claim about Global animation frames.
       const stopCost=mobile?0:time*movement*
         (name==='Hellfire'?1.45:1.0);
+      // Damage and buffs apply on COMPLETED actions only. A Hellfire whose
+      // final charge/release extends beyond the scenario cannot be counted
+      // as a landed hit; incomplete action attempts are reported explicitly.
+      if(now+time+stopCost>scenario.duration+1e-9){
+        incompleteActions++;now=scenario.duration;return false;
+      }
       forcedStopTime+=stopCost;
       if(mobile)mobileCastTime+=time;else stationaryCastTime+=time;
       now+=time+stopCost;castTime+=time;settle(now);
@@ -312,9 +329,21 @@ const GlobalCombatEngine=(()=>{
       }
       if(name==='Blaze'&&has(spec,name,5))reduceCooldown('Wish of Concentration',3);
       if(name==='Wish of Concentration'){
+        wishBuffUptime+=Math.max(0,Math.min(now+10,scenario.duration)-
+          Math.max(now,wishBuffUntil));
         wishBuffUntil=now+10;
         if(has(spec,name,4))combatBuffUntil=now+10;
-        if(has(spec,name,5))for(const target of Object.keys(cd))reduceCooldown(target,10);
+        if(has(spec,name,5)){
+          // Only report seconds removed from cooldowns that are actually
+          // RUNNING. This reveals wasted early auto-Wish activations.
+          for(const [target,endsAt] of Object.entries(cd)){
+            if(target===name)continue;
+            const removed=Math.min(10,Math.max(0,endsAt-now));
+            if(removed<=0)continue;
+            wishResetTargets++;wishResetSeconds+=removed;
+            reduceCooldown(target,10);
+          }
+        }
       }
       if(name==='Element Enhancement')
         elementBuffUntil=now+((stigma[name]||0)>=20?20:10);
@@ -326,7 +355,15 @@ const GlobalCombatEngine=(()=>{
       // Stagger is an encounter condition, not an unconditional spam ability.
       if(Math.floor(now/40)>Math.floor((now-.5)/40))staggerUntil=now+3;
       let name=null;
-      for(const manual of ['Element Enhancement','Wish of Concentration','Delayed Explosion','Divine Burst','Hellfire']){
+      // With the -10s cooldown Specialty, a manually timed Wish belongs
+      // AFTER a completed major attack; otherwise the Attack buff can
+      // reasonably precede it. Automatic Wish never enters this loop.
+      const manualOrder=has(spec,'Wish of Concentration',5)
+        ?['Element Enhancement','Delayed Explosion','Divine Burst','Hellfire',
+          'Wish of Concentration']
+        :['Element Enhancement','Wish of Concentration','Delayed Explosion',
+          'Divine Burst','Hellfire'];
+      for(const manual of manualOrder){
         if(macroSkills.has(manual))continue;
         if(manual==='Element Enhancement'||manual==='Delayed Explosion'||manual==='Divine Burst'){
           if(!hasStigma(build,manual))continue;
@@ -352,7 +389,8 @@ const GlobalCombatEngine=(()=>{
         else now+=macroStepOverhead;
       }
       if(!eligible(name)){name='Flame Arrow';skippedForMp++}
-      cast(name);
+      if(name==='Wish of Concentration'&&macroSkills.has(name))wishCastsAuto++;
+      if(cast(name)===false)break;
       if(!Number.isFinite(damage)||!Number.isFinite(now))throw Error('Invalid combat simulation state');
     }
     settle(scenario.duration);
@@ -360,6 +398,8 @@ const GlobalCombatEngine=(()=>{
       manualPerMinute:manualActions*60/scenario.duration,mpFinal:mp,castTime,
       missedGround,skippedForMp,unavailable,combatSpeed,cooldownReduction,damageBoost,
       forcedStopTime,stationaryCastTime,mobileCastTime,
+      wishResetSeconds,wishResetTargets,wishCastsAuto,wishBuffUptime,
+      incompleteActions,
       units:'relative damage units per second (not measured DPS)'};
   }
   function evaluate(build,spec,scenarios=ENCOUNTERS){
@@ -423,30 +463,51 @@ const GlobalCombatEngine=(()=>{
     }
     return {specialties:current,...best};
   }
+  function compareFirePriority(build,specialties,scenarios=ENCOUNTERS){
+    const variants={};
+    for(const firePriority of ['blaze','firestorm']){
+      const candidate={...build,macroLayout:'flow',firePriority};
+      const summary=evaluate(candidate,specialties,scenarios);
+      variants[firePriority]={
+        robustScore:summary.robustScore,modeledDamage:summary.score,
+        manualPerMinute:summary.manualPerMinute,
+        wishResetSeconds:sum(summary.samples.map(x=>
+          x.wishResetSeconds*x.weight))/(sum(summary.samples.map(x=>x.weight))||1)
+      };
+    }
+    // Below 0.5% there is no meaningful relative separation even in
+    // this incomplete simulator; prefer the stable conditional Blaze
+    // priority instead of thrashing recommendations on tiny fluctuations.
+    const switchMargin=.005;
+    const selected=variants.firestorm.robustScore>
+      variants.blaze.robustScore*(1+switchMargin)?'firestorm':'blaze';
+    return {selected,variants,switchMargin,
+      evidence:'Uncalibrated Global timing sensitivity, not measured DPS or guaranteed cast order'};
+  }
   function chooseMacro(build,specialties,scenarios=ENCOUNTERS){
     let winner=null;
-    // Nightmares demand movement between boss mechanics. Automatic stacks
-    // must NEVER trigger an attack that roots the Sorcerer unless its actual
-    // mobile Specialty is equipped. Stationary attacks remain manual options
-    // for deliberate safe windows; do not let their theoretical dummy damage
-    // win the always-on macro choice.
     const nightmare=scenarios.some(s=>String(s.id||'').startsWith('nightmare-'));
     const choices=build.macroLayout==='flow'||nightmare?['flow']:
       ['flow','mobile','mobile-extended','compact','balanced','ground'];
+    const fireComparison=compareFirePriority(build,specialties,scenarios);
     for(const mode of choices){
-      const layout=mode==='flow'?flowLayout(build,specialties):
+      const priority=mode==='flow'?fireComparison.selected:'blaze';
+      const variantBuild={...build,macroLayout:mode,firePriority:priority};
+      const layout=mode==='flow'?flowLayout(variantBuild,specialties):
         ['mobile','mobile-extended'].includes(mode)
-        ?mobileLayout(specialties,mode==='mobile-extended')
-        :MACRO_LAYOUTS[mode];
+          ?mobileLayout(specialties,mode==='mobile-extended')
+          :MACRO_LAYOUTS[mode];
       if(mode==='mobile-extended'&&layout.steps.length===1)continue;
       if(!layout.steps.length)continue;
-      if(mode==='ground'&&!['Fire Wall','Cold Storm'].some(name=>hasStigma(build,name)))continue;
-      const data=evaluate({...build,macroLayout:mode},specialties,scenarios);
-      // Complexity cost is only a tie-breaker for setup burden. Actual
-      // human inputs remain LMB+RMB with charged Hellfire/buffs manual.
+      if(mode==='ground'&&!['Fire Wall','Cold Storm']
+        .some(name=>hasStigma(build,name)))continue;
+      const data=mode==='flow'
+        ?evaluate(variantBuild,specialties,scenarios)
+        :evaluate(variantBuild,specialties,scenarios);
       const adjusted=data.robustScore*(1-.002*(layout.steps.length-1));
       if(!winner||adjusted>winner.adjusted+1e-8)
-        winner={...layout,mode,adjusted,...data};
+        winner={...layout,mode,adjusted,...data,
+          firePriority:priority,fireComparison};
     }
     return winner;
   }
@@ -511,7 +572,7 @@ const GlobalCombatEngine=(()=>{
   }
   return Object.freeze({SOURCE,ACTIONS,ENCOUNTERS,legalOptions,slots,effective,
     MACRO_LAYOUTS,NIGHTMARE_ENCOUNTERS,scenariosFor,isMobile,MOBILE_SPECIALTIES,
-    CONTINUOUS_OFFENSE,flowLayout,
+    CONTINUOUS_OFFENSE,flowLayout,compareFirePriority,
     FIRESTORM_PROJECTILES,firestormHellfireCooldownReduction,
     chooseMacro,simulate,evaluate,tuneSpecialties,refineMastery,scoreMastery});
 })();
