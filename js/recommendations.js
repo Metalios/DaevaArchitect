@@ -287,62 +287,22 @@ const PVP_VARIANTS={
  },
  "sorcerer": {
   "pvp-arena": {
-   "stigmas": [
-    "Curse: Tree",
-    "Hibernation",
-    "Steel Barrier",
-    "Soul Freeze"
-   ],
-   "lead": [
-    "Winter's Shackles",
-    "Frost",
-    "Hellfire",
-    "Ice Chain"
-   ],
-   "supportLead": [
-    "Grace of Resistance",
-    "Robe of Earth",
-    "Cold Snap"
-   ],
-   "why": "Arena of Solitude (1v1): protect the opening with Steel Barrier, force Defiance, then create a safe cast window through polymorph/Seal; Hibernation is a manual emergency reset."
+   "stigmas": ["Element Enhancement","Arctic Armor","Hibernation","Soul Freeze"],
+   "lead": ["Winter's Shackles","Frost","Firestorm","Hellfire"],
+   "supportLead": ["Grace of Resistance","Robe of Earth","Absorb Essence","Robe of Cold"],
+   "why": "Arena of Solitude (1v1): preserve Element damage while Arctic Armor and Hibernation answer burst. Keep Soul Freeze manual for a control-confirmed full Hellfire; Frost PvP chance and Firestorm anti-heal depend on purchased Specialties. Curse: Tree or Steel Barrier are conditional swaps, not default mandatory skills."
   },
   "pvp-abyss-solo": {
-   "stigmas": [
-    "Hibernation",
-    "Steel Barrier",
-    "Curse: Tree",
-    "Element Enhancement"
-   ],
-   "lead": [
-    "Ice Chain",
-    "Winter's Shackles",
-    "Firestorm",
-    "Hellfire"
-   ],
-   "supportLead": [
-    "Grace of Resistance",
-    "Robe of Earth"
-   ],
-   "why": "Solo Abyss: survive unexpected engagements with Barrier and Hibernation; retreat through slows/polymorph before committing to stationary spell bursts."
+   "stigmas": ["Element Enhancement","Hibernation","Soul Freeze","Steel Barrier"],
+   "lead": ["Ice Chain","Winter's Shackles","Frost","Firestorm","Hellfire"],
+   "supportLead": ["Grace of Resistance","Robe of Earth","Cold Snap","Absorb Essence"],
+   "why": "Solo Abyss: keep an escape and an interrupt/Seal response to melee pressure and ranged focus; damage while kiting. Steel Barrier provides a longer-lived shield, while Arctic Armor is an optional swap when sustained pressure demands it. Full-charge Hellfire only after reliable control."
   },
   "pvp-abyss-group": {
-   "stigmas": [
-    "Lumiel's Space",
-    "Steel Barrier",
-    "Soul Freeze",
-    "Fire Wall"
-   ],
-   "lead": [
-    "Firestorm",
-    "Winter's Shackles",
-    "Frost",
-    "Hellfire"
-   ],
-   "supportLead": [
-    "Grace of Resistance",
-    "Cold Snap"
-   ],
-   "why": "Group Abyss: aim area Airborne and ground effects at clustered opponents, use Seal for priority targets and cast from allied protection."
+   "stigmas": ["Element Enhancement","Soul Freeze","Lumiel's Space","Hibernation"],
+   "lead": ["Firestorm","Winter's Shackles","Frost","Hellfire"],
+   "supportLead": ["Grace of Resistance","Robe of Earth","Absorb Essence"],
+   "why": "Group Abyss: keep Element damage and a manual Soul Freeze on priority targets; Lumiel's Space is situational area Airborne and Hibernation protects the caster from enemy focus. Alternate Fire Wall or Arctic Armor based on actual party setup, flight rules and enemy composition."
   }
  },
  "spiritmaster": {
