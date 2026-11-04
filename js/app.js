@@ -613,7 +613,7 @@ function sorcererCombatEligible(){
 }
 function chooseCombatBoardRoute(provisional,stigma,gearRanks,target,baseCp,actual){
   const baseWeights=activeWeights(),targets=typeof progressionBoardTargets==='function'
-    ?progressionBoardTargets(state.class,account().context):{};
+    ?progressionBoardTargets(state.class,account().context,account().pveObjective):{};
   const baseArgs=[data(),baseWeights,provisional.levels,gearRanks,
     baseCp===null?0:target,baseCp,actual,currentLevel(),targets];
   const original=optimizeBoardRoute(...baseArgs);
