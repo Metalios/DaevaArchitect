@@ -27,6 +27,10 @@ const GlobalCombatEngine=(()=>{
     'Wish of Concentration':{cd:60,occupied:.60,power:0,mp:100,mode:'manual-buff',speed:'combat'},
     'Element Enhancement':{cd:60,occupied:.60,power:0,mp:0,mode:'manual-buff',speed:'combat'},
     'Delayed Explosion':{cd:30,occupied:.65,power:.60,mp:200,mode:'manual-debuff',speed:'combat'},
+    // 60s Global base cooldown and 50 Stagger on the target. Triggered
+    // manually during a meaningful boss stagger/short burst opportunity;
+    // direct relative damage and action lock remain uncalibrated.
+    'Divine Burst':{cd:60,occupied:.68,power:.75,mp:200,mode:'manual-stagger',speed:'combat'},
     // Immediate power plus delayed ground DoT are uncalibrated relative
     // damage units; the 1s tick and 10s durations are from Global tooltips.
     'Fire Wall':{cd:60,occupied:.72,power:.65,mp:200,mode:'macro',speed:'combat',ground:true,dot:{ticks:10,every:1,power:.065}},
@@ -37,6 +41,20 @@ const GlobalCombatEngine=(()=>{
     {id:'mobile',duration:180,movement:.35,weight:.3,animation:1.15},
     {id:'short',duration:30,movement:.08,weight:.2,animation:.9}
   ];
+  // Solo level-45 is Nightmare and Ascension Trial progression, not
+  // campaign trash leveling. Movement is a transparent sensitivity
+  // parameter; exact boss uptime/animation traces are NOT yet measured.
+  const NIGHTMARE_ENCOUNTERS=Object.freeze([
+    {id:'nightmare-boss',duration:180,movement:.38,weight:.55,animation:1.12},
+    {id:'nightmare-mobile-boss',duration:180,movement:.60,weight:.30,animation:1.16},
+    {id:'nightmare-burst-window',duration:30,movement:.28,weight:.15,animation:1.08}
+  ]);
+  function scenariosFor(context,goal='performance'){
+    const base=context==='solo'?NIGHTMARE_ENCOUNTERS:ENCOUNTERS;
+    if(goal==='burst')return [base[2]];
+    if(goal==='sustained')return base.slice(0,2);
+    return base;
+  }
   const MACRO_LAYOUTS=Object.freeze({
     compact:{label:'One-stack Q',steps:['Q'],
       stacks:[{key:'Q',title:'Compact cooldown damage',skills:['Firestorm','Blaze','Bittercold Wind',"Winter's Shackles"]}]},
@@ -225,8 +243,8 @@ const GlobalCombatEngine=(()=>{
       // Stagger is an encounter condition, not an unconditional spam ability.
       if(Math.floor(now/40)>Math.floor((now-.5)/40))staggerUntil=now+3;
       let name=null;
-      for(const manual of ['Element Enhancement','Wish of Concentration','Delayed Explosion','Hellfire']){
-        if(manual==='Element Enhancement'||manual==='Delayed Explosion'){
+      for(const manual of ['Element Enhancement','Wish of Concentration','Delayed Explosion','Divine Burst','Hellfire']){
+        if(manual==='Element Enhancement'||manual==='Delayed Explosion'||manual==='Divine Burst'){
           if(!hasStigma(build,manual))continue;
         }else if((build.mastery[manual]||1)===0)continue;
         if(eligible(manual)){name=manual;manualActions++;break}
@@ -370,5 +388,5 @@ const GlobalCombatEngine=(()=>{
     return {levels:mastery,spent,score:best,passes:passes-1,upgrades};
   }
   return Object.freeze({SOURCE,ACTIONS,ENCOUNTERS,legalOptions,slots,effective,
-    MACRO_LAYOUTS,chooseMacro,simulate,evaluate,tuneSpecialties,refineMastery,scoreMastery});
+    MACRO_LAYOUTS,NIGHTMARE_ENCOUNTERS,scenariosFor,chooseMacro,simulate,evaluate,tuneSpecialties,refineMastery,scoreMastery});
 })();
