@@ -315,8 +315,10 @@ function sorcererPveManualHotbar(equippedStigmas=[],automaticSkills=[],available
    ['Steel Barrier','Arctic Armor','Hibernation'].includes(name)?'defense':
    ['Fire Wall','Cold Storm','Divine Burst','Glacial Smite'].includes(name)?'attack':'utility';
  const rows=[
-  [['Hellfire'],'Full-charge Hellfire manually; Skill Speed option 1 is priority at rank 8','attack'],
-  [['Wish of Concentration'],'Manual Attack / Combat Speed buff and cooldown reset timing','buff'],
+  [['Hellfire'],'Full-charge Hellfire manually; release RMB while charging to avoid a clipped release','attack'],
+  ...(!auto.has('Wish of Concentration')&&usable('Wish of Concentration')
+    ?[[['Wish of Concentration'],'Manual Attack buff / -10s cooldown window for a coordinated burst','buff']]
+    :[]),
   ...choices.map(name=>[[name],stigmaCue(name),tone(name)])
  ];
  const used=new Set(rows.flatMap(([skills])=>skills));
@@ -402,10 +404,13 @@ function progressionRotationProfile(base,cls,mode,effectiveLevel,equippedStigmas
      ...(specialtyEnabled('Bittercold Wind',2)?['Bittercold Wind']:[]),
      ...(objective!=='burst'&&specialtyEnabled("Winter's Shackles",1)?["Winter's Shackles"]:[])
    ];
-   const r=['Element Enhancement',...(objective==='burst'?[]:['Delayed Explosion'])]
-     .filter(name=>equippedStigmas.includes(name));
+   const r=[
+     ...['Element Enhancement',...(objective==='burst'?[]:['Delayed Explosion'])]
+       .filter(name=>equippedStigmas.includes(name)),
+     ...(objective==='burst'?[]:['Wish of Concentration'])
+   ];
    p.stacks=[
-     {key:'Q',title:'Blaze first — Firestorm fallback',
+     {key:'Q',title:'Conditional fire priority — compare Blaze / Firestorm',
        skills:['Blaze','Firestorm']},
      {key:'E',title:'Frost application / mobile conditional follow-ups',
        skills:e},
@@ -413,9 +418,9 @@ function progressionRotationProfile(base,cls,mode,effectiveLevel,equippedStigmas
    ];
    p.macro=p.stacks.map(stack=>stack.key);
    p.stigmas=[...equippedStigmas];
-   p.rule='Hold Flame Arrow (LMB) + Macro (RMB). Q automatically spends Fire Mark with Blaze, then Firestorm; E handles Frost and earned mobile follow-ups. R refreshes equipped offensive Stigmas (except Delayed Explosion on Burst builds). Fully charge Hellfire by hand; do not macro emergency, ground or charged abilities.';
-   p.summary='Continuous two-button fire/Frost damage with automatic safe Stigmas. Manual actions are limited to charged Hellfire, well-timed Wish, and encounter-specific defenses or ground placement.';
-   p.hotbarNote='Keep both mouse buttons held between dodges. Defensive Stigmas, charged Hellfire and ground placement remain manual. Wish resets cooldowns at high Specialty levels and should not be spent automatically; the macro never puts it on R.';
+   p.rule='Hold Flame Arrow (LMB) + Macro (RMB). Q prioritizes Blaze / Firestorm based on the selected rotation policy; E runs earned Frost follow-ups. R maintains learned offensive Stigmas and Wish LAST in continuous PvE. For Burst, time Wish and Delayed Explosion manually around full-charge Hellfire.';
+   p.summary='Continuous: LMB + RMB handles fire/Frost, regular offensive Stigmas and Wish; manual keys are mainly charged Hellfire and encounter response. Burst retains manual Wish and Delayed Explosion for synchronization.';
+   p.hotbarNote='Continuous PvE: Wish is the LAST/lower-priority attack in R after equipped offensive Stigmas. At effective Wish 16, its -10s reset only helps skills already on cooldown. Burst PvE: Wish and Delayed Explosion stay manually timed. Defensive and ground Stigmas remain manual. Release RMB for full Hellfire charge.';
   }else{
    p.rule='Keep Hellfire fully charged on a manual key; place persistent ground effects only where targets remain.';
   }
@@ -428,16 +433,16 @@ function progressionRotationProfile(base,cls,mode,effectiveLevel,equippedStigmas
   p.opener=cls==='sorcerer'
    ?['Hold LMB (Flame Arrow) + RMB (macro) continuously during safe damage: conditional Blaze, Firestorm, Frost follow-ups and the selected safe offensive Stigmas run automatically.',
      objective==='burst'
-       ?'Manually apply Delayed Explosion shortly before fully charged Hellfire. Wish remains on its manual key.'
-       :'Element Enhancement and equipped Delayed Explosion are attempted automatically; weave Wish manually when its cooldown reduction will help.',
+       ?'Manually align Wish, Delayed Explosion and fully charged Hellfire; use Wish after cooldowns for its reset when that Specialty is selected.'
+       :'Equipped Element Enhancement and Delayed Explosion are attempted automatically. Wish follows those buffs on R, giving up precise reset timing in exchange for fewer keys.',
      'Fully charge Hellfire in a safe boss window. Rank-8 +30% Skill Speed comes first, then add mobile at rank 12 when those two options are available.']
    :['Enter with the available damage buffs; save a defensive skill if the target can punish the pull.',
      'Start the main damage engine; do not automate movement or charged casts.',
      'Use self-healing or mitigation when needed instead of blindly maintaining macro uptime.'];
   p.loop=cls==='sorcerer'
-   ?['Keep Flame Arrow + RMB held: the macro rotates Firestorm/Blaze and mobile Frost skills between your basic attacks.',
-     'Use full-charge Hellfire on your manual key after damage is committed, not as an automatic macro action; add Wish when useful.',
-     'Press defensive or ground-targeting skills only when the encounter calls for them. Do not sacrifice damage to force an unsafe cast.']
+   ?['Hold Flame Arrow + RMB for fire damage, earned Frost follow-ups and the safe automatic buff line.',
+     objective==='burst'?'Keep Wish and Delayed Explosion on manual keys for the burst window.':'Wish is attempted by the macro when ready; its actual cooldown-reset benefit varies as other skills enter cooldown.',
+     'Briefly release RMB to complete the full Hellfire charge without clipping; time defenses and ground-targeted spells manually.']
    :['Prioritize short time-to-kill without losing core cooldown windows.',
      'Release held attacks for dodge, charge, recovery or repositioning.',
      'Recheck your Specialties after reaching an effective-level breakpoint.'];
