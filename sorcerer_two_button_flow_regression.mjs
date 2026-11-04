@@ -57,7 +57,8 @@ for(const [goal,equipped] of Object.entries(loadouts)){
      [['Hellfire'],'Fully charged manually','attack'],
      [['Wish of Concentration'],'Manual cooldown reset','buff'],
      [['Element Enhancement'],'Damage buff','buff'],
-     [['Delayed Explosion'],'Manual burst window','buff']
+     [['Delayed Explosion'],'Manual burst window','buff'],
+     [["Winter's Shackles"],'Manual fallback until mobile Specialty','attack']
     ]
    },
    available:skills,stigma:equipped,
@@ -67,6 +68,12 @@ for(const [goal,equipped] of Object.entries(loadouts)){
    Array.from(trusted.stacks.flatMap(stack=>stack.skills)
     .filter(name=>equipped.includes(name))),
    expected,goal+': generic safety filter dropped safe offensive Stigmas');
+  if(mobility)assert(trusted.stacks.some(stack=>
+     stack.key==='E'&&stack.skills.includes("Winter's Shackles")),
+    goal+': generic fallback cue must not remove earned mobile Winter\'s Shackles');
+  else assert(!trusted.stacks.some(stack=>
+     stack.skills.includes("Winter's Shackles")),
+    goal+': missing mobile Specialty must keep Winter\'s Shackles manual');
   const scenario={id:'nightmare-moving',duration:120,weight:1,
    movement:.6,animation:1.12};
   const sample=engine.simulate(build,picked,scenario);
