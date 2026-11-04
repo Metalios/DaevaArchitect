@@ -41,6 +41,7 @@ jobs:
           node sorcerer_full_path_regression.mjs
           node sorcerer_nightmare_regression.mjs
           node sorcerer_mobile_damage_regression.mjs
+          node sorcerer_manual_hotbar_regression.mjs
           node recommendation_regression.mjs
           node class_role_regression.mjs
           node pvp_context_regression.mjs

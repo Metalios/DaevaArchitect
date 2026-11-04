@@ -58,10 +58,12 @@ const GlobalCombatEngine=(()=>{
   const MACRO_LAYOUTS=Object.freeze({
     // All Q skills below can be used on the move without a specialty.
     // Do not automate a channel/ground placement in a forced-dodge window.
-    mobile:{label:'Continuous mobile Firestorm / Blaze',steps:['Q'],
-      stacks:[{key:'Q',title:'Moving fire damage',skills:['Firestorm','Blaze']}]},
+    // Blaze is conditional on Fire Mark. Attempt the ready spender FIRST;
+    // Firestorm then supplies mark/MP pressure when Blaze is unavailable.
+    mobile:{label:'Mobile Blaze priority / Firestorm setup',steps:['Q'],
+      stacks:[{key:'Q',title:'Fire Mark spender before setup',skills:['Blaze','Firestorm']}]},
     compact:{label:'One-stack Q',steps:['Q'],
-      stacks:[{key:'Q',title:'Compact cooldown damage',skills:['Firestorm','Blaze','Bittercold Wind',"Winter's Shackles"]}]},
+      stacks:[{key:'Q',title:'Compact cooldown damage',skills:['Blaze','Firestorm','Bittercold Wind',"Winter's Shackles"]}]},
     balanced:{label:'Two-stack Q / E',steps:['Q','E'],
       stacks:[{key:'Q',title:'Cooldown and frost setup',skills:["Winter's Shackles",'Bittercold Wind','Frost','Firestorm']},
         {key:'E',title:'Conditional follow-ups',skills:['Blaze','Frost Burst','Flame Scattershot']}]},
@@ -89,9 +91,15 @@ const GlobalCombatEngine=(()=>{
       .filter(name=>isMobile(name,spec)):[];
     return {label:extra.length?'Mobile fire + mobile-specialty follow-ups':'Continuous mobile Firestorm / Blaze',
       steps:extra.length?['Q','E']:['Q'],
-      stacks:[{key:'Q',title:'Moving fire cooldowns',skills:['Firestorm','Blaze']},
+      stacks:[{key:'Q',title:'Fire Mark spender then mobile setup',skills:['Blaze','Firestorm']},
         ...(extra.length?[{key:'E',title:'Only mobile-specialty follow-ups',skills:extra}]:[])]};
   };
+  // Global Firestorm has five projectile hits. The level-12 Specialty
+  // reduces Hellfire by two seconds for EACH projectile that actually hits.
+  // This helper accepts an observed landed count once combat logs supply it.
+  const FIRESTORM_PROJECTILES=5;
+  const firestormHellfireCooldownReduction=landed=>
+    2*Math.max(0,Math.min(FIRESTORM_PROJECTILES,Math.floor(Number(landed)||0)));
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,Number(v)||0));
   const sum=items=>items.reduce((acc,n)=>acc+n,0);
   const effective=(build,name)=>clamp((build.mastery[name]||1)+(build.boardSkills[name]||0)+(build.gearSkills[name]||0),1,40);
@@ -260,9 +268,14 @@ const GlobalCombatEngine=(()=>{
       }
       if(name==="Winter's Shackles"&&has(spec,name,3))pveBuffUntil=now+5;
       if(name==='Firestorm'&&has(spec,name,4)){
-        // Each landed fireball reduces Hellfire by 2s. Hit count is NOT
-        // recorded; use one confirmed landed-hit event as a conservative floor.
-        reduceCooldown('Hellfire',2);
+        // Global client: Firestorm fires FIVE fireballs; each one that
+        // lands reduces Hellfire's cooldown by 2s (up to 10s / cast).
+        // This comparative simulator assumes its modeled attack connects
+        // with all five. Real misses/resists must be supplied by calibrated
+        // encounter evidence; do not falsely score the effect as one hit.
+        const modeledLandedFireballs=FIRESTORM_PROJECTILES;
+        reduceCooldown('Hellfire',
+          firestormHellfireCooldownReduction(modeledLandedFireballs));
       }
       if(name==='Blaze'&&has(spec,name,5))reduceCooldown('Wish of Concentration',3);
       if(name==='Wish of Concentration'){
@@ -340,15 +353,24 @@ const GlobalCombatEngine=(()=>{
     let current=candidateSpecs(build,specData,manual,seed);
     const movingNightmare=scenarioSet.some(s=>
       String(s.id||'').startsWith('nightmare-')&&(s.movement||0)>.2);
-    // Mobile Hellfire is a required *mobility constraint* for this explicitly
-    // mobile boss-playstyle when the player can unlock it, not an invented
-    // global DPS claim. An explicit manual Specialty configuration wins.
-    const requireMobileHellfire=movingNightmare&&!Array.isArray(manual.Hellfire)&&
-      effective(build,'Hellfire')>=8&&
-      legalOptions('Hellfire',effective(build,'Hellfire'),specData).includes(3);
-    if(requireMobileHellfire&&!current.Hellfire.includes(3)){
-      const allowed=slots(effective(build,'Hellfire'));
-      current.Hellfire=[...current.Hellfire.slice(0,Math.max(0,allowed-1)),3];
+    // Global Hellfire rank 8 offers mutually exclusive +30% Skill Speed
+    // (option 1) and Mobile (option 3) in the first and only slot.
+    // The old solver forced Mobile immediately, which made charged attacks
+    // visibly sluggish. For damage-first moving Nightmares, use speed at
+    // one slot and add Mobile once rank 12 opens a second slot.
+    // An explicit player-selected Specialty is never overwritten.
+    const hellfireRank=effective(build,'Hellfire');
+    const availableHellfire=legalOptions('Hellfire',hellfireRank,specData);
+    const hellfireSlots=slots(hellfireRank);
+    const requireHellfireSpeed=movingNightmare&&!Array.isArray(manual.Hellfire)&&
+      availableHellfire.includes(1)&&hellfireSlots>=1;
+    const requireHellfireMobile=requireHellfireSpeed&&
+      availableHellfire.includes(3)&&hellfireSlots>=2;
+    if(requireHellfireSpeed){
+      const preferred=[1,...(requireHellfireMobile?[3]:[]),
+        ...current.Hellfire].filter((id,i,all)=>
+          availableHellfire.includes(id)&&all.indexOf(id)===i);
+      current.Hellfire=preferred.slice(0,hellfireSlots);
     }
     let best=evaluate(build,current,scenarioSet);
     for(const name of SPEC_KEYS){
@@ -356,7 +378,9 @@ const GlobalCombatEngine=(()=>{
       const level=effective(build,name),options=legalOptions(name,level,specData),
         available=combinations(options,slots(level));
       for(const choices of available){
-        if(requireMobileHellfire&&name==='Hellfire'&&!choices.includes(3))continue;
+        if(name==='Hellfire'&&requireHellfireSpeed&&
+           (!choices.includes(1)||(requireHellfireMobile&&!choices.includes(3))))
+          continue;
         const candidate={...current,[name]:choices},estimate=evaluate(build,candidate,scenarioSet);
         if(estimate.robustScore>best.robustScore+1e-9){
           current=candidate;best=estimate;
@@ -451,5 +475,6 @@ const GlobalCombatEngine=(()=>{
   }
   return Object.freeze({SOURCE,ACTIONS,ENCOUNTERS,legalOptions,slots,effective,
     MACRO_LAYOUTS,NIGHTMARE_ENCOUNTERS,scenariosFor,isMobile,MOBILE_SPECIALTIES,
+    FIRESTORM_PROJECTILES,firestormHellfireCooldownReduction,
     chooseMacro,simulate,evaluate,tuneSpecialties,refineMastery,scoreMastery});
 })();

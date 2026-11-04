@@ -35,6 +35,9 @@ try{
     mastery:effective,
     board:route.filter(row=>m.boards.owned.has(row.id)).map(row=>row.id),
     objective:a.pveObjective,
+    hellfireRank:skillLevelBreakdown('Hellfire',m).withPlan,
+    hellfireSpecialties:[...(m.combat?.specialties?.Hellfire||[])],
+    firestormSpecialties:[...(m.combat?.specialties?.Firestorm||[])],
     macro:m.combat?.macro?{
       mode:m.combat.macro.mode,
       steps:[...m.combat.macro.steps],
@@ -53,6 +56,13 @@ try{
    steps:document.getElementById('now-steps').textContent,
    macroSkills:[...document.querySelectorAll(
     '#macro-stacks .macro-stack-auto [data-skill]')].map(row=>row.dataset.skill),
+   qRowPriority:[...document.querySelectorAll(
+    '#macro-stacks .macro-stack-auto[data-macro-key="Q"] [data-row][data-skill]')]
+      .map(row=>({row:Number(row.dataset.row),name:row.dataset.skill}))
+      .sort((a,b)=>a.row-b.row).map(row=>row.name),
+   hotbarNames:[...document.querySelectorAll('#hotbar-grid .hotbar-skills strong')]
+      .map(node=>node.textContent.trim()),
+   equippedStigmas:[...activeStigmas()],
    macroKeys:[...document.querySelectorAll(
     '#macro-stacks .macro-stack-auto[data-macro-key]')].map(row=>row.dataset.macroKey)
   };
@@ -95,13 +105,27 @@ try{
    assert(!result.macro.skills.includes('Fire Wall')&&
      !result.macro.skills.includes('Cold Storm'),
     'Moving boss macro cannot automatically place stationary ground fields');
-   assert(result.macro.mobileHellfire,
-    'Fresh45 offensive Sorcerer should prioritize earned mobile Hellfire at '+goal);
+   if(result.hellfireRank>=8)
+     assert(result.hellfireSpecialties.includes(1),
+       'Hellfire first Specialty must grant +30% Skill Speed at '+goal);
+   if(result.hellfireRank>=12)
+     assert(result.hellfireSpecialties.includes(3),
+       'Hellfire second Specialty must enable mobility at '+goal);
+   else assert(!result.hellfireSpecialties.includes(3),
+       'Hellfire rank8 must not sacrifice +30% speed for mobile at '+goal);
  }
  assert(results.visible.macroMobileSafe,
   'Visible Nightmare macro attempted an unearned stationary attack');
  assert(results.visible.macroKeys.includes('Q'),
   'Visible moving fire stack Q must remain bound');
+ assert.deepEqual(results.visible.qRowPriority.slice(0,2),['Blaze','Firestorm'],
+  'The moving Q stack must use ready conditional Blaze before Firestorm');
+ for(const name of results.visible.equippedStigmas)
+   assert(results.visible.hotbarNames.includes(name),
+    'Equipped Solo Nightmare Stigma missing from the manual 1–8 bar: '+name);
+ assert(new Set(results.visible.hotbarNames.filter(name=>name!=='Flex slot')).size===
+   results.visible.hotbarNames.filter(name=>name!=='Flex slot').length,
+   'Duplicate skills waste manual hotkeys');
  assert(results.visible.title.includes('Nightmare'));
  assert(/Nightmare/.test(results.visible.loadout));
  assert(/Nightmare bosses/.test(results.visible.steps));

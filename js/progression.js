@@ -290,6 +290,53 @@ function progressionNextBreakpoint(cls,mode,effectiveLevel,ownedCrystals,objecti
   ' remaining through Mastery, connected Daevanion nodes and recorded equipment). '+
   (ownedCrystals>=327?'Recheck the remaining route with your 327+ crystal budget.':'Keep recording earned and purchased Daevanion nodes.');
 }
+// Generate real manual hotbar slots from the FOUR equipped Global Stigmas,
+// not the generic Sorcerer preset. Skills already cast by a macro stack are
+// shown there instead. This prevents a selected ground Stigma from silently
+// vanishing when the moving-boss macro intentionally excludes it.
+function sorcererPveManualHotbar(equippedStigmas=[],automaticSkills=[],available=null){
+ const auto=new Set(automaticSkills);
+ const known=available?new Set(available):null;
+ const usable=name=>!known||known.has(name);
+ const choices=[...new Set(equippedStigmas)].filter(name=>
+   usable(name)&&!auto.has(name)).slice(0,4);
+ const stigmaCue=name=>{
+   if(name==='Element Enhancement')return 'Damage buff — manual burst alignment';
+   if(name==='Delayed Explosion')return 'Manual 4-second damage-amplification window before charged Hellfire';
+   if(name==='Fire Wall'||name==='Cold Storm')
+     return 'Manual ground placement ONLY while the boss stays inside its area';
+   if(name==='Divine Burst'||name==='Glacial Smite')
+     return 'Manual stagger damage when the boss presents a safe attack window';
+   if(['Steel Barrier','Arctic Armor','Hibernation'].includes(name))
+     return 'Emergency defensive skill — never spend automatically';
+   return 'Situational Stigma — timing and target selection remain manual';
+ };
+ const tone=name=>['Element Enhancement','Delayed Explosion'].includes(name)?'buff':
+   ['Steel Barrier','Arctic Armor','Hibernation'].includes(name)?'defense':
+   ['Fire Wall','Cold Storm','Divine Burst','Glacial Smite'].includes(name)?'attack':'utility';
+ const rows=[
+  [['Hellfire'],'Full-charge Hellfire manually; Skill Speed option 1 is priority at rank 8','attack'],
+  [['Wish of Concentration'],'Manual Attack / Combat Speed buff and cooldown reset timing','buff'],
+  ...choices.map(name=>[[name],stigmaCue(name),tone(name)])
+ ];
+ const used=new Set(rows.flatMap(([skills])=>skills));
+ for(const [name,cue] of [
+  ["Winter's Shackles",'Manual PvE damage window: align with Delayed Explosion and Hellfire'],
+  ['Bittercold Wind','Use when the boss will remain inside the summon area'],
+  ['Frost Burst','Conditional Frost hit: manually use only when Frost is active'],
+  ['Frost','Manual Frost setup when target is susceptible'],
+  ['Ice Chain','Optional mobile MP-cost attack; choose only when it fits the fight']
+ ]){
+  if(rows.length>=8)break;
+  if(!usable(name)||auto.has(name)||used.has(name))continue;
+  rows.push([[name],cue,'attack']);
+  used.add(name);
+ }
+ while(rows.length<8)rows.push([[],'Free manual key','utility']);
+ return rows.map(([skills,cue,tone],i)=>[
+   skills,skills.length?(i+1)+': '+cue:cue,tone
+ ]);
+}
 function progressionRotationProfile(base,cls,mode,effectiveLevel,equippedStigmas=[],specialtyEnabled=()=>false){
  const p={...base,stacks:base.stacks.map(s=>({...s,skills:[...s.skills]})),
   hotbar:base.hotbar.map(([skills,cue,tone])=>[[...skills],cue,tone])};
@@ -354,13 +401,13 @@ function progressionRotationProfile(base,cls,mode,effectiveLevel,equippedStigmas
      ...(specialtyEnabled('Bittercold Wind',2)?['Bittercold Wind']:[]),
      ...(specialtyEnabled("Winter's Shackles",1)?["Winter's Shackles"]:[])
    ];
-   p.stacks=[{key:'Q',title:'Keep moving — Firestorm / Fire Mark → Blaze',
-     skills:['Firestorm','Blaze']},
+   p.stacks=[{key:'Q',title:'Conditional Blaze → mobile Firestorm',
+     skills:['Blaze','Firestorm']},
      ...(mobileFollowUps.length?[{key:'E',title:'Equipped mobile follow-up attacks',
        skills:mobileFollowUps}]:[])];
    p.macro=p.stacks.map(stack=>stack.key);
-   p.rule='Nightmare solo: keep moving with Flame Arrow + mobile Firestorm / Blaze. Use Hellfire fully charged manually; its level-8 mobile Specialty (option 3) permits charging while moving. Never automate stationary ground skills or interrupt a dodge to force a cast.';
-   p.summary='Fast damage during mechanics: natively mobile Flame Arrow, Firestorm and Blaze, with an optional E stack only for attacks whose mobile Specialty is selected.';
+   p.rule='Nightmare solo: prioritize ready Fire-Marked Blaze over Firestorm on Q; hold Flame Arrow on LMB. Hellfire needs a manual full charge; take +30% Skill Speed (option 1) with its first rank-8 Specialty, then optionally add mobile (option 3) once rank 12 gives a second slot. Never automatically sacrifice a dodge for a ground spell.';
+   p.summary='Short mobile cooldown damage: conditional Blaze first, then Firestorm to refresh Fire Mark, with Flame Arrow as MP-restoring LMB weave. Charged Hellfire and timed damage buffs stay manual.';
    p.hotbar[4]=[['Bittercold Wind'],
      mobileFollowUps.includes('Bittercold Wind')
        ?'Bittercold Wind has mobile Specialty; automated in E'
@@ -369,7 +416,7 @@ function progressionRotationProfile(base,cls,mode,effectiveLevel,equippedStigmas
      mobileFollowUps.includes("Winter's Shackles")
        ?"Winter's Shackles is mobile; automated in E"
        :'6: Manual 5-second PvE buff setup in a safe window','attack'];
-   p.hotbarNote='Nightmare/mobile Solo PvE: LMB Flame Arrow + RMB Macro Q Firestorm / Blaze. With verified mobile Specialties, E can also automate Bittercold Wind / Winter\'s Shackles. Keep Hellfire, damage buffs and all emergency Stigmas manual; avoid placing ground fields on moving targets.';
+   p.hotbarNote='Nightmare/mobile Solo PvE: Q row 0 Blaze, row 1 Firestorm; conditional Blaze is skipped without Fire Mark. LMB Flame Arrow maintains MP. Additional E attacks require their purchased mobile Specialties; manually time charged Hellfire and ground spells.';
   }else{
    p.rule='Keep Hellfire fully charged on a manual key; place persistent ground effects only where targets remain.';
   }
@@ -381,15 +428,15 @@ function progressionRotationProfile(base,cls,mode,effectiveLevel,equippedStigmas
  if(mode==='solo'){
   p.opener=cls==='sorcerer'
    ?['Maintain movement while applying Flame Arrow to keep Fire Mark active.',
-     'Use the mobile Firestorm / Blaze macro Q; use Element Enhancement / Delayed Explosion and Wish manually when available.',
-     'Fully charge Hellfire in a safe boss window; take its mobile Specialty when earned to charge while dodging.']
+     'Use Q Blaze (when Fire Mark is active) then Firestorm; keep Flame Arrow on LMB for MP and mark refresh. Time Element Enhancement / Delayed Explosion and Wish manually.',
+     'Fully charge Hellfire in a safe boss window. Rank-8 Hellfire +30% Skill Speed comes first; add the mobile option at rank 12 if the build can afford both.']
    :['Enter with the available damage buffs; save a defensive skill if the target can punish the pull.',
      'Start the main damage engine; do not automate movement or charged casts.',
      'Use self-healing or mitigation when needed instead of blindly maintaining macro uptime.'];
   p.loop=cls==='sorcerer'
-   ?['Keep Flame Arrow, Firestorm and Fire-Marked Blaze flowing on the move.',
+   ?['Keep Flame Arrow and conditional Blaze-first Q / Firestorm flowing on the move.',
      'Use Bittercold Wind and Winter\'s Shackles automatically ONLY when their mobile Specialties are equipped; otherwise manually when safe.',
-     'Place Fire Wall / Cold Storm only when a boss will remain in the field; never sacrifice a dodge for a ground spell.']
+     'Cast equipped Fire Wall / Cold Storm on their own manual hotbar keys only when the boss will remain in the field; never sacrifice a dodge for a ground spell.']
    :['Prioritize short time-to-kill without losing core cooldown windows.',
      'Release held attacks for dodge, charge, recovery or repositioning.',
      'Recheck your Specialties after reaching an effective-level breakpoint.'];

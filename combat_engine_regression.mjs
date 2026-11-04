@@ -14,6 +14,13 @@ const engine=ctx.combat;
 assert.match(engine.SOURCE.version,/Global/);
 assert.equal(engine.slots(16),2);
 assert.equal(engine.slots(20),3);
+assert.equal(engine.FIRESTORM_PROJECTILES,5,'Global Firestorm hits five times');
+assert.equal(engine.firestormHellfireCooldownReduction(5),10,
+  'Rank-12 Firestorm grants up to 10s Hellfire reduction across five hits');
+assert.equal(engine.firestormHellfireCooldownReduction(1),2);
+assert.equal(engine.firestormHellfireCooldownReduction(0),0);
+assert.equal(engine.firestormHellfireCooldownReduction(20),10,
+  'Hit count cannot exceed five actual Firestorm projectiles');
 assert.deepEqual(Array.from(engine.legalOptions('Firestorm',12,specs)),[1,2,3,4]);
 assert.deepEqual(Array.from(engine.legalOptions('Firestorm',16,specs)),[1,2,3,4,5]);
 assert.equal(rewards[36].crystals,100);

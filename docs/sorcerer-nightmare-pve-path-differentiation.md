@@ -75,10 +75,25 @@ the chosen risk tolerance.
 - **Mobile by default:** Flame Arrow (LMB), Firestorm (5s cooldown), Blaze
   (Fire Mark required; 5s cooldown), Frost and the primary offensive buffs
   Wish of Concentration, Element Enhancement and Delayed Explosion.
-- **Hellfire:** charged manually. Level-8 Specialty **option 3** changes it
-  to mobile. The Solo Nightmare damage search now treats this as a required
-  earned Specialty when available, unless the player manually pins different
-  choices. Full charge stays manual even if it can be completed while moving.
+- **Hellfire:** always fully charged manually. At effective level 8, there
+  is only **one** Specialty slot: choose **option 1, +30% Skill Speed** first,
+  instead of the previous rule that forced mobile option 3 and made charges
+  sluggish. Effective level 12 unlocks the second slot: for mobile Nightmare
+  play, use **options 1 + 3** (+30% Skill Speed and mobile). At effective
+  level 20, a third slot permits combining these with another legal effect
+  such as the option-5 cooldown reduction. Player-pinned alternatives
+  remain authoritative.
+- **Firestorm:** at effective level 8, Specialty **option 2** provides
+  +20% Skill Speed (option 1 instead halves MP cost when resources are
+  limiting). At effective level 12, option 4 reduces Hellfire's cooldown by
+  **2 seconds per fireball that hits**: Global Firestorm launches five,
+  meaning up to **10 seconds per full connecting cast**, not two seconds
+  per cast. The simulator assumes all five land until actual combat logs
+  provide hit counts; the numerical result is not a measured DPS claim.
+- **Wish of Concentration:** its rank-12 option 4 provides +10% Combat Speed
+  during the buff; its rank-16 option 5 reduces other cooldowns on activation.
+  Choose based on actual available slots and gameplay rather than treating
+  every unlocked option as simultaneously selected.
 - **Bittercold Wind:** level-8 Specialty **option 2** changes to mobile.
 - **Winter's Shackles:** level-8 Specialty **option 1** changes to mobile.
 - **Frost Burst / Flame Scattershot:** level-8 mobile Specialties
@@ -90,11 +105,28 @@ the chosen risk tolerance.
 
 The planner scores **positioning/stop opportunity cost** in movement-heavy
 Nightmare scenarios rather than assuming all casts can be continuously used
-while moving. Its auto macro only attempts **Q: Firestorm → Blaze**, with a
-possible **E** containing Bittercold Wind and/or Winter's Shackles **only if
-the matching mobile Specialty is actually earned and selected**. The visible
-macro checks obtained-board skill levels (not just future blue planned
-nodes), preserving the real unlock gate.
+while moving. Its **Q stack now tries conditional Blaze first
+(bottom row 0), then Firestorm (row 1)**; LMB Flame Arrow provides
+repeatable Fire Mark and MP recovery when the cooldown skills are unavailable.
+A possible **E** stack contains Bittercold Wind and/or Winter's Shackles
+**only if the matching mobile Specialty is actually earned and selected**.
+The visible macro checks obtained-board skill levels (not just future blue
+planned nodes), preserving the real unlock gate.
+
+The 1–8 hotbar is rebuilt from the **actual four equipped Stigmas**:
+1 = manual full-charge Hellfire, 2 = manual Wish of Concentration;
+then all equipped Stigmas not already in the automatic macro get their own
+manual keys, with unused slots assigned to deliberate follow-up attacks.
+For example, Solo Sustained DPS now displays Element Enhancement,
+Delayed Explosion, Fire Wall and Cold Storm on the manual bar. Ground spells
+remain manually timed for stationary windows, not cast automatically on
+moving bosses. No equipped but unautomated Stigma is silently omitted.
+
+To reduce perceived lag, enable **Skill Queue** in the game's
+**Settings > Combat > Controls** (when available in the Global client).
+In-game Macro steps use a minimum 10 ms delay, but the game explicitly
+does **not** guarantee deterministic keypress order. Do not confuse
+macro delay with actual cast animation or cooldown time.
 
 The stop-cost coefficient, base action occupancy, boss movement schedule,
 actual interruptions, Firestorm fireball count and server animation cancels
@@ -144,8 +176,11 @@ every gear score, boss and movement rate.
   policies, five distinct Stigma bars per context, budget-safe actual
   fresh45 Mastery ranks, defensive/burst breakpoints and Solo scenarios.
 - `node sorcerer_mobile_damage_regression.mjs`: verified movement
-  gates, forced-stop time, earned mobile Hellfire, auto macro containment,
-  manual overrides and moving-only Q/E layouts.
+  gates, forced-stop time, Hellfire's faster first Specialty followed by
+  mobile second Specialty, Blaze-first priority, manual overrides and Q/E.
+- `node sorcerer_manual_hotbar_regression.mjs`: asserts that all equipped
+  unautomated Stigmas have unique manual keys for every Solo PvE role,
+  with automatic Group PvE ground Stigmas accounted for separately.
 - `node sorcerer_nightmare_smoke.mjs`: executes the real application
   model in Chromium for five fresh45 Solo paths, asserts distinct
   **purchased** Mastery/stigma loadouts, non-identical funded board prefixes,
