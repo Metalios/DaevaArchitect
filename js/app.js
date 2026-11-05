@@ -271,7 +271,7 @@ function recommendedStigmas(){
      // A simple personal-DPS proxy must not displace a manually researched
      // healing, tanking, CC or group-support Stigma set.
      (!appIsPvpContext(a.context)&&RoleBuildGoals.info(state.class,a.pveObjective))||
-     (state.class==='templar'&&(a.context==='party'||appIsPvpContext(a.context))))return baseline;
+     (state.class==='templar'&&(a.context==='party'||appIsPvpContext(a.context)&&a.context!=='pvp-abyss-solo')))return baseline;
   // Public Global PvP loadouts are candidates, not verified top-ranked builds.
   const observed=appIsPvpContext(a.context)&&typeof PVP_OBSERVATIONS!=='undefined'
     ?PVP_OBSERVATIONS.filter(row=>row.classId===state.class).map(row=>row.stigmas):[];
@@ -281,7 +281,15 @@ function recommendedStigmas(){
     ['Element Enhancement','Arctic Armor','Hibernation','Curse: Tree'],
     ['Element Enhancement','Arctic Armor','Soul Freeze','Steel Barrier']
   ]:[];
-  const candidates=[standard,combat.damageStigmas,combat.survivalStigmas,
+  const templarSolo=state.class==='templar'&&a.context==='pvp-abyss-solo';
+  const candidates=templarSolo?[
+    baseline,
+    ['Doom Shield','Grapple','Executing Blade','Second Skin'],
+    ['Doom Shield','Grapple','Executing Blade',"Nezekan's Shield"],
+    ['Doom Shield','Grapple','Executing Blade','Battlefield Banner'],
+    ['Doom Shield','Grapple','Executing Blade',"Empyrean Lord's Punishment"],
+    ['Grapple','Executing Blade','Shield of Protection',"Nezekan's Shield"]
+  ]:[standard,combat.damageStigmas,combat.survivalStigmas,
     variants[state.class]?.pvp,variants[state.class]?.solo,
     advised?.stigmas,...contextualPvp,...sorcererSwaps,...observed].filter(Array.isArray);
   const key=JSON.stringify([state.class,a.context,a.pveObjective,a.pvpOpponent||'all',
@@ -301,12 +309,17 @@ function recommendedStigmas(){
       isKnown:name=>!!STIGMAS[state.class]?.[name],
       rankPlan:names=>optimizeRecommendedStigmas(names,budget('stigma'),
         state.class,a.context),
-      score:(names,levels)=>ClassCombatModels.evaluate({
-        classId:state.class,context:a.context,
-        objective:a.pveObjective||'performance',
-        build:{...base,stigma:levels,equippedStigmas:names},
-        selectedSpecs:a.customSpecialties||{}
-      }).score
+      score:(names,levels)=>{
+        const candidate={...base,stigma:levels,equippedStigmas:names};
+        const picks=templarSolo
+          ?templarPvpSpecialtySeed(candidate,a.customSpecialties||{})
+          :a.customSpecialties||{};
+        return ClassCombatModels.evaluate({
+          classId:state.class,context:a.context,
+          objective:a.pveObjective||'performance',
+          build:candidate,selectedSpecs:picks
+        }).score;
+      }
     });
     stigmaLoadoutCache={key,names:selected.names};
     return selected.names;
@@ -1028,7 +1041,8 @@ function model(){
         masteryCost,stigmaCost,masteryCap:masteryRankCap,scoreBuild:scoring,
         pinMastery:!!a.manualMastery,
         pinStigma:!!a.manualStigma||isLeveling()||budget('stigma')<30,
-        stigmaFloors:researchedSoloAbyssStigmas&&budget('stigma')>=20
+        stigmaFloors:state.class==='templar'&&a.context==='pvp-abyss-solo'&&
+          !a.manualStigma&&budget('stigma')>=20
           ?Object.fromEntries(stigmas.map(name=>[name,5])):{}});
       jointResultCache={key:jointKey,result:joint};
       chosenMastery=joint.mastery;
