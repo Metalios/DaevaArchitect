@@ -321,13 +321,24 @@ const PvpCombatModels = (() => {
     const kit=KITS[classId],m=contributions(classId,build,selectedSpecs);
     const stats=statsOf(build);
     const stat=k=>Math.max(0,stats[k]||0);
+    // Actual gear lines are additive to acquired board stats. PvP-specific
+    // stats remain strongest, but recorded Attack, general damage boost,
+    // Critical, Multi-Hit and armor are no longer ignored. Coefficients are
+    // bounded comparative sensitivities, NOT invented damage formulas.
     const power=1+cap(stat('PvPAmplifyDamage')/10000,0,.6)*1.6+
       cap(stat('PvPAddDamage')/500,0,.5)+
       cap(stat('PvPAccuracy')/3000,0,.25)*.3+
-      cap(stat('CombatSpeed')/10000,0,.6)*.45;
+      cap(stat('CombatSpeed')/10000,0,.6)*.45+
+      cap(stat('AmplifyAllDamage')/10000,0,.6)*.65+
+      cap(stat('FixingDamage')/3000,0,.6)*.35+
+      cap((stat('Critical')+stat('PvPCritical'))/1600,0,.5)*.22+
+      cap(stat('AdditionalHitRate')/10000,0,.5)*.12;
     const defense=1+cap(stat('PvPDecreaseDamage')/10000,0,.5)*1.25+
       cap(stat('PvPDamageDefense')/4000,0,.7)*.65+
-      cap(stat('HPMax')/25000,0,.5)*.5;
+      cap(stat('HPMax')/25000,0,.5)*.5+
+      cap(stat('DecreaseDamage')/10000,0,.6)*.6+
+      cap(stat('Defense')/7000,0,.6)*.25+
+      cap((stat('CriticalResist')+stat('PvPCriticalResist'))/1600,0,.5)*.16;
     const cc=1+cap(stat('AbnormalAccuracy')/3000,0,.7)*.45;
     const resist=1+cap(stat('AbnormalResistance')/3000,0,.7)*.45;
     const move=1+cap(stat('MoveSpeed')/10000,0,.5);
