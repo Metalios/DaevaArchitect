@@ -12,7 +12,7 @@ const ctx={DATA,STIGMAS,SKILL_UNLOCKS:load('skill_unlocks.json'),LEVEL_REWARDS:l
 vm.createContext(ctx);
 const source=read('js/app.js');
 vm.runInContext(read('js/recommendations.js')+'\n'+read('js/progression.js')+'\n'+source.slice(0,source.indexOf('function render(){'))+
- '\nglobalThis.testing={isPvpContext,adviceFor,progressionMasteryStages,optimizeRecommendedStigmas,progressionBoardTargets,state,account,activeWeights};',ctx);
+ '\nglobalThis.testing={isPvpContext,adviceFor,progressionMasteryStages,optimizeRecommendedStigmas,progressionBoardTargets,progressionRotationProfile,progressionStigmaStages,state,account,activeWeights};',ctx);
 const p=ctx.testing;
 const modes=['pvp','pvp-arena','pvp-abyss-solo','pvp-abyss-group'];
 const costs=rank=>Array.from({length:rank},(_,i)=>i+1<=5?1:i+1<=10?2:i+1<=15?4:8).reduce((a,b)=>a+b,0);
@@ -49,11 +49,32 @@ assert.equal(t.levels.Taunt,5);
 assert.equal(t.levels['Doom Shield'],5);
 for(const [mode,expected] of Object.entries({
  'pvp-arena':['Doom Shield','Shield of Protection','Battlefield Banner',"Nezekan's Shield"],
- 'pvp-abyss-solo':['Doom Shield','Grapple','Shield of Protection','Battlefield Banner'],
+ 'pvp-abyss-solo':['Doom Shield','Grapple','Executing Blade','Shield of Protection'],
  'pvp-abyss-group':['Grapple',"Empyrean Lord's Punishment",'Comrade in Arms','Doom Shield']
 })){
  const advised=p.adviceFor('templar',mode);
  assert.deepEqual(Array.from(advised.stigmas),expected,'Templar '+mode+' should retain researched Stigmas');
  if(mode==='pvp-abyss-solo')assert(advised.core.includes('Shield Rush')&&advised.core.includes('Debilitating Smash'));
 }
+// Solo Abyss needs a deliberately pressed control/burst stack, NOT a held
+// macro that repeatedly burns a 90-second Grapple or taps charged Punishment.
+const soloNames=p.adviceFor('templar','pvp-abyss-solo').stigmas;
+const solo=p.progressionRotationProfile(ctx.PROFILES.templar,'templar','pvp-abyss-solo',()=>10,soloNames);
+const q=solo.stacks.find(stack=>stack.key==='Q');
+const e=solo.stacks.find(stack=>stack.key==='E');
+assert(q?.manual,'Solo Abyss Q must be manually triggered');
+assert.deepEqual(Array.from(q.skills),['Grapple','Executing Blade','Punishment']);
+assert.deepEqual(Array.from(solo.macro),['E'],'RMB must not auto-attempt the catch/burst Q stack');
+assert.deepEqual(Array.from(e.skills),['Judgment','Warding Strike','Pummel']);
+const available=new Set([...solo.stacks.flatMap(stack=>stack.skills),
+ ...solo.hotbar.flatMap(([skills])=>skills)]);
+for(const stigma of soloNames)assert(available.has(stigma),'Hidden equipped Stigma: '+stigma);
+for(const required of ['Poach','Shield Rush','Debilitating Smash','Shield Smite','Annihilate','Punishment'])
+ assert(available.has(required),'Missing PvP manual skill: '+required);
+const milestones=p.progressionStigmaStages('templar','pvp-abyss-solo',soloNames,
+ p.adviceFor('templar','pvp-abyss-solo'));
+assert(milestones.some(([name,level])=>name==='Executing Blade'&&level===10),
+ 'Executing Blade Exposed Lv10 must have a Stigma budget milestone');
+assert(milestones.some(([name,level])=>name==='Shield of Protection'&&level===10),
+ 'Mobile guaranteed Block Lv10 must remain a target');
 console.log('Verified '+count+' PvP class/mode combinations, 29–300 point allocations and Templar 61-point breakpoints.');
