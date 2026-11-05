@@ -307,8 +307,11 @@ function recommendedStigmas(){
     const selected=JointProgression.chooseStigmaLoadout({
       baseline,candidates,minimumImprovement:appIsPvpContext(a.context)?0.04:0.12,
       isKnown:name=>!!STIGMAS[state.class]?.[name],
-      rankPlan:names=>optimizeRecommendedStigmas(names,budget('stigma'),
-        state.class,a.context),
+      rankPlan:names=>templarSolo&&names.join('|')===baseline.join('|')
+        ?allocate(progressionStigmaStages('templar',a.context,names,advised),
+          budget('stigma'),stigmaCost,names,0)
+        :optimizeRecommendedStigmas(names,budget('stigma'),
+          state.class,a.context),
       score:(names,levels)=>{
         const candidate={...base,stigma:levels,equippedStigmas:names};
         const picks=templarSolo
