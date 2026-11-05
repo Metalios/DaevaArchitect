@@ -619,10 +619,16 @@ let stigmaLoadoutCache={key:null,names:null};
 let jointSpecialtyCache={key:null,result:null};
 let currentCombatEvidence=null;
 let latestSpecialtyPlan={classId:null,picks:null};
+function equippedSkillLevelBonuses(){
+  // Items (including Arcana) and manual +skill entries are INDEPENDENT
+  // sources. Object spread would overwrite a rolled +level on the same skill.
+  const ranks={...gearSkillLevels()};
+  for(const [name,value] of Object.entries(account().gear||{}))
+    ranks[name]=(ranks[name]||0)+(Number(value)||0);
+  return ranks;
+}
 function engineBuild(masteryLevels,boardEffects,stigmaLevels,equipped){
-  const equippedRanks={...gearSkillLevels()};
-  for(const [name,n] of Object.entries(account().gear||{}))
-    equippedRanks[name]=(equippedRanks[name]||0)+(Number(n)||0);
+  const equippedRanks=equippedSkillLevelBonuses();
   // All explicitly recorded equipment stats contribute: catalog fixed stats,
   // socket stones, recognized Soul Binding roll text and Amplification stars.
   // Do not double-count Arcana divine multipliers as flat base stats.
@@ -866,12 +872,11 @@ function model(){
     // A new cycle begins only after the full entered PvE budget has been
     // marked obtained, or the user deliberately changes class/context.
     const target=profile().kind==='healer'?0:Number(a.goalTarget)||0;
-    const gearRanks={...gearSkillLevels()};
-    for(const [name,n] of Object.entries(a.gear||{}))gearRanks[name]=(gearRanks[name]||0)+Number(n||0);
+    const gearRanks=equippedSkillLevelBonuses();
     // Board level unlocks are a real change of eligible path; a level
     // increase inside the same unlock band must not shuffle suggestions.
     const contextKey=JSON.stringify([state.class,a.context,a.pvpOpponent||'all',BOARD_NAMES.filter(boardOpen),
-      sorcererCombatEligible()?'global-sorcerer-nightmare-goals-v4':state.class==='templar'&&a.context==='pvp-abyss-solo'?'templar-solo-burst-joint-v1':'objective-board-search-v3',a.pveObjective||'performance']);
+      sorcererCombatEligible()?'global-sorcerer-nightmare-goals-v4':state.class==='templar'&&a.context==='pvp-abyss-solo'?'templar-solo-effective-gear-arcana-v2':'objective-board-search-v3',a.pveObjective||'performance']);
     const snapshot=a.recommendedRouteSnapshot;
     // Prior to any real purchases, changes to the player's goal, mastery,
     // equipment or Stigmas should still influence the recommended route.
@@ -883,8 +888,9 @@ function model(){
     const gearBasis=GEAR_SLOTS.map(slot=>{
       const item=recordedEquipment[slot.id];
       return item?[slot.id,item.href,item.itemLevel,item.enhancement,item.amplification,item.amplificationCap,item.amplificationBonuses,
-        item.fixedStats,item.skillBonuses,item.stones,item.theostone,item.statNotes]:null;
+        item.fixedStats,item.skillBonuses,item.stones,item.theostone,item.statNotes,item.arcanaSet]:null;
     });
+    const equipmentKey=JSON.stringify([gearBasis,a.gear||{},a.equipment||{}]);
     const basisKey=JSON.stringify([target,a.ariel||0,a.azphel||0,mastery.levels,stigma.levels,gearRanks,
       gearBasis,activeStigmas(),a.titlesOwned,a.cpAnchor,
       a.customSpecialties||{}]);
@@ -898,7 +904,10 @@ function model(){
     const changedEarnedBudget=valid&&snapshot.budget!==total;
     const newBudgetAfterCompletion=valid&&snapshot.completedBudget!==null&&
       snapshot.completedBudget!==undefined&&total>snapshot.completedBudget;
-    const update=!valid||changedEarnedBudget||newBudgetAfterCompletion||
+    // Freeze during individual tile clicks, but do not freeze obsolete
+    // recommendations when the actual physical gear or Arcana changes.
+    const changedEquipment=valid&&snapshot.equipmentKey!==equipmentKey;
+    const update=!valid||changedEquipment||changedEarnedBudget||newBudgetAfterCompletion||
       (exhausted&&snapshot.completedBudget!==total)||
       (spent===0&&snapshot.basisKey!==basisKey);
     const routeCacheKey=JSON.stringify([contextKey,basisKey,total,
@@ -987,7 +996,7 @@ function model(){
         fitConnectedBoardBudget(data(),computed.route,total).route;
       liveRoute=fitted;liveRouteBasis={initialFocus:computed.initialFocus,baseCp:computed.baseCp};
       a.recommendedRouteSnapshot={
-        contextKey,basisKey,route:fitted,budget:total,
+        contextKey,basisKey,equipmentKey,route:fitted,budget:total,
         initialFocus:computed.initialFocus,baseCp:computed.baseCp,
         completedBudget:exhausted?total:null
       };
@@ -1014,7 +1023,7 @@ function model(){
   const finalMastery=a.manualMastery?optimizedMastery:spendAvailableMastery(
     optimizedMastery,budget('mastery'),masteryCost,masteryRankCap,names,
     masteryStages(plannedEffects.skills),activeWeights().skills,
-    plannedEffects.skills,{...gearSkillLevels(),...a.gear});
+    plannedEffects.skills,equippedSkillLevelBonuses());
   const arielEffects=effects(ariel.owned),azphelEffects=effects(azphel.owned);
   // Every candidate includes all six boards, without transferring crystals
   // between the independent standard, Ariel and Azphel currency pools.
@@ -1113,7 +1122,7 @@ function skillLevelBreakdown(name,m){
   const mastery=m.mastery.levels[name]||1,
     purchased=m.acquiredEffects?.skills[name]||0,
     projected=m.effects.skills[name]||0,
-    gear=(account().gear[name]||0)+(gearSkillLevels()[name]||0);
+    gear=equippedSkillLevelBonuses()[name]||0;
   const entered=Number(account().currentRanks?.[name]);
   const recordedRank=Number.isInteger(entered)&&entered>=1&&entered<=10?entered:null;
   return {mastery,boardOwned:purchased,boardPlanned:projected,gear,recordedRank,
