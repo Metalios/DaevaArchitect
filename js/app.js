@@ -1163,7 +1163,7 @@ function renderOverview(m){
     `<b>${mode==='healing'?'Healing':'Fight'} priority:</b> ${esc(p.rule)}`];
   if(m.joint&&!m.joint.error){
     const updates=m.joint.trace?.reduce((sum,step)=>sum+(step.changes||0),0)||0;
-    steps.push(`<b>Combined combat search:</b> Evaluated your recorded gear, effective skills, equipped Stigmas and all six boards together. ${updates} legal rank adjustments after the initial progression allocation. Combat-score comparisons are uncalibrated and are not measured DPS or guaranteed optimal builds.`);
+    steps.push(`<b>Combined combat search:</b> Evaluated your recorded gear, projected effective skills, equipped Stigmas and independent board effects in a bounded comparison. ${updates} legal rank adjustments after the initial progression allocation. This is neither measured DPS nor a guarantee of a globally optimal build.`);
   }
   if(a.context==='solo')steps.push(`<b>Level-45 Solo endgame:</b> This path is for Nightmare bosses and Ascension Trials, not quest leveling. Your selected <b>${esc(a.pveObjective)}</b> goal changes actual Mastery, Stigmas and Daevanion priorities. Expect bosses to move and to resist some control effects; reserve defensive actions for their mechanics.`);
   if(appIsPvpContext(a.context)){
@@ -1175,6 +1175,18 @@ function renderOverview(m){
       selectedSpecs:latestSpecialtyPlan.picks||a.customSpecialties||{}});
     const target=a.pvpOpponent||'all';
     steps.push(`<b>PvP matchup:</b> ${esc(target==='all'?'all eight classes':target)}. Comparative PvP score ${summary.score.toFixed(2)}; weakest tested scenario: ${esc(summary.worst)}. This is a scenario sensitivity proxy, not a win rate or measured DPS. Azphel uses ${a.azphel||0} separate crystals.`);
+    if(state.class==='templar'&&a.context==='pvp-abyss-solo'){
+      const pins=[
+        a.manualMastery?'Mastery':null,
+        a.manualStigma?'Stigma ranks':null,
+        a.customStigmas?'Stigma loadout':null,
+        Object.keys(a.customSpecialties||{}).length?'Specialties':null,
+        a.boardMode==='custom'?'Daevanion boards':null
+      ].filter(Boolean);
+      steps.push('<b>Solo Abyss objective:</b> Prioritize a short ranged catch-and-kill window, healing denial and enough defense to survive the first counterattack; sustained target uptime is not assumed.');
+      if(pins.length)steps.push('<b>Optimization constraints:</b> Your manual '+
+        esc(pins.join(', '))+' selections are preserved. Reset those selections to compare a complete recommended respec.');
+    }
   }
   $('now-steps').innerHTML=steps.map((v,i)=>`<li><span class="step-num">${i+1}</span><span>${v}</span></li>`).join('');
   const next=[];if(m.mastery.next)next.push([`+${m.mastery.next.need} mastery`,`${m.mastery.next.name} rank ${m.mastery.next.rank}`]);if(m.stigma.next)next.push([`+${m.stigma.next.need} stigma`,`${m.stigma.next.name} rank ${m.stigma.next.rank}`]);if(m.boards.next)next.push([`+${m.boards.next.need} PvE crystals`,`${m.boards.next.board}: ${effectText(nodeMap().get(m.boards.next.id).node)}`]);if(appIsPvpContext(a.context)&&m.azphel.next)next.push([`+${m.azphel.next.need} Azphel crystals`,effectText(nodeMap().get(m.azphel.next.id).node)]);
