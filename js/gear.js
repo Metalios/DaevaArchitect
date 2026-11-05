@@ -212,7 +212,7 @@ function gearRolledStatTotals(){
     const item=gearEquipment()[slot.id];
     if(!gearIsActive(slot,item)||!item.statNotes)continue;
     for(const part of String(item.statNotes).split(/[\n,;]+/)){
-      const match=part.trim().match(/^(.+?)\s*[:+]\s*([+-]?\d+(?:\.\d+)?)\s*(%)?$/);
+      const match=part.trim().match(/^(.+?)\s*(?:[:+]\s*|\s+)([+-]?\d+(?:\.\d+)?)\s*(%)?$/);
       if(!match)continue;
       const raw=match[1].trim().toLowerCase();
       const name=known.get(raw)||aliases[raw];
