@@ -37,11 +37,17 @@ const PvpCombatModels = (() => {
       burst:['Ruinous Blow','Overhead Slam'],contact:['Rush Strike','Leaping Slam','Ankle Slice'],
       control:['Ankle Slice','Leaping Slam','Aerial Snare'],mitigation:['Protection Armor','Survival Willpower'],
       recovery:['Blood Absorption'],escape:['Rush Strike'],team:['Crushing Wave']},
-    templar:{melee:true,pressure:['Judgment','Pummel','Punishment','Debilitating Smash'],
-      burst:['Judgment','Punishment','Annihilate','Shield Smite'],contact:['Poach','Shield Rush'],
-      control:['Poach','Shield Smite'],antiheal:['Debilitating Smash'],
-      mitigation:['Warding Strike','Block Pain','Survival Willpower'],
-      recovery:['Enhance Health','Warding Shield'],team:['Warding Strike','Guarding Seal'],escape:['Poach']},
+    templar:{melee:true,
+      pressure:['Judgment','Pummel','Punishment','Debilitating Smash',
+        'Punishing Benediction','Insulting Roar','Fury'],
+      burst:['Judgment','Punishment','Annihilate','Shield Smite',
+        'Punishing Benediction','Impact Hit'],
+      contact:['Poach','Shield Rush','Flash Rampage'],
+      control:['Poach','Shield Smite','Impact Hit'],antiheal:['Debilitating Smash'],
+      mitigation:['Warding Strike','Ironclad Defense','Guarding Seal',
+        'Block Pain','Survival Willpower'],
+      recovery:['Enhance Health','Warding Shield'],team:['Warding Strike','Guarding Seal'],
+      escape:['Poach','Defiance']},
     assassin:{melee:true,pressure:['Heart Gore','Quick Slice','Insignia Explosion','Shadowstrike'],
       burst:['Insignia Explosion','Heart Gore','Ambush'],contact:['Ambush','Shadowstrike','Infiltrate'],
       control:['Shadow Fall','Ambush'],mitigation:['Determination','Heightened Sixth Sense'],
@@ -154,17 +160,47 @@ const PvpCombatModels = (() => {
   // Verified tooltip options in specialties.json; each modifier requires the
   // effective rank unlock and the option to be actually selected.
   const OPTIONS = Object.freeze({
+    // Option IDs are from Global specialties.json. Every active Templar
+    // Specialty participates, but values are comparative role sensitivities,
+    // not fabricated DPS or percentages of guaranteed CC success.
     templar:{
-      Poach:{1:{contact:.65},2:{control:.6},4:{mitigation:.24},5:{control:.65}},
-      'Shield Rush':{2:{contact:1.05},4:{contact:.32},5:{control:.45}},
-      'Debilitating Smash':{2:{antiheal:.42},3:{antiheal:1.55},4:{burst:.35}},
-      Defiance:{1:{contact:.22,escape:.2},3:{recovery:.25},4:{mitigation:.3,escape:.28},5:{mitigation:.85}},
-      'Shield Smite':{1:{control:.5,burst:.14},3:{control:.2},4:{control:.25},5:{team:.25}},
-      Annihilate:{1:{burst:.4},2:{control:.46,burst:.2},4:{burst:.38}},
-      Judgment:{2:{burst:.25},3:{burst:.33},4:{burst:.4},5:{burst:.55}},
-      Punishment:{3:{burst:.48},4:{burst:.5,contact:.2},5:{burst:.72}},
-      Pummel:{3:{burst:.18},4:{burst:.23},5:{burst:.28}},
-      'Warding Strike':{1:{mitigation:.20},2:{mitigation:.35},4:{mitigation:.38},5:{mitigation:.35,team:.7}}
+      'Shield Smite':{
+        1:{control:.55},2:{recovery:.10},
+        3:{antiheal:.55,burst:.20},4:{burst:.22},5:{control:.25}},
+      Judgment:{
+        1:{recovery:.20},2:{burst:.35},3:{burst:.43},
+        4:{burst:.67},5:{burst:.95}},
+      'Vicious Strike':{
+        1:{pressure:.04},2:{recovery:.18},3:{burst:.20},
+        4:{mitigation:.25},5:{burst:.17}},
+      Pummel:{
+        1:{pressure:.05},2:{recovery:.20},3:{burst:.25},
+        4:{burst:.19},5:{burst:.24}},
+      'Warding Strike':{
+        1:{mitigation:.23},2:{mitigation:.30},3:{recovery:.32},
+        4:{mitigation:.40},5:{mitigation:.35,team:.70}},
+      Punishment:{
+        1:{recovery:.26},2:{pressure:.20},3:{burst:.52},
+        4:{burst:.32,contact:.32},5:{burst:1.00}},
+      Annihilate:{
+        1:{burst:.44},2:{control:.53,burst:.18},
+        3:{burst:.53},4:{burst:.42},5:{pressure:.15}},
+      'Debilitating Smash':{
+        1:{control:.30},2:{antiheal:.45},
+        3:{antiheal:1.70},4:{burst:.48},5:{mitigation:.10,burst:.19}},
+      Poach:{
+        1:{contact:.78},2:{control:.72},
+        3:{contact:.15},4:{mitigation:.40},5:{control:.42}},
+      'Flash Rampage':{
+        1:{recovery:.22},2:{pressure:.04},
+        3:{contact:.45},4:{burst:.29},5:{burst:.30}},
+      'Shield Rush':{
+        1:{contact:.07},2:{contact:1.1},3:{burst:.23},
+        4:{contact:.35},5:{control:.34}},
+      Defiance:{
+        1:{control:.23,escape:.30},2:{escape:.16},
+        3:{recovery:.32},4:{mitigation:.31,escape:.32},
+        5:{mitigation:.93,escape:.22}}
     },
     gladiator:{'Rush Strike':{2:{contact:.7},4:{contact:.5},5:{control:.45}},
       'Ankle Slice':{1:{control:.45},3:{contact:.75},4:{pressure:.35}},
