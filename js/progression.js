@@ -234,7 +234,7 @@ function progressionStigmaStages(cls,mode,equipped,advice){
   stages.push([next10,10]);
  }
  for(const name of priority)if(name!==first&&name!==second)stages.push([name,5]);
- const preference=(mode==='party'&&cls==='templar'&&Array.isArray(advice.stigmaMilestones))
+ const preference=(cls==='templar'&&Array.isArray(advice.stigmaMilestones))
   ?advice.stigmaMilestones
   :!isPvpContext(mode)?policy.stigma:[];
  for(const [name,rank] of preference)if(selected.has(name))stages.push([name,rank]);
@@ -244,7 +244,13 @@ function progressionStigmaStages(cls,mode,equipped,advice){
 // Keep all checkpoints. Object.fromEntries keyed only by skill incorrectly
 // overwrote intermediate Lv16 objectives with the eventual Lv20 objective.
 function progressionBreakpoints(cls,mode,objective='performance'){
- const policy=PROGRESSION_PLANS[cls];if(!policy||isPvpContext(mode))return [];
+ const policy=PROGRESSION_PLANS[cls];if(!policy)return [];
+ if(cls==='templar'&&isPvpContext(mode)){
+  if(mode==='pvp-abyss-solo')return [['Poach',8],['Shield Rush',12],['Debilitating Smash',8],['Defiance',8],['Poach',16],['Shield Rush',16],['Defiance',16],['Debilitating Smash',12],['Shield Smite',12],['Annihilate',12],['Judgment',16]];
+  if(mode==='pvp-abyss-group')return [['Poach',8],['Shield Smite',12],['Debilitating Smash',8],['Annihilate',12],['Defiance',16],['Judgment',16],['Shield Rush',12]];
+  return [['Debilitating Smash',8],['Defiance',16],['Shield Smite',12],['Poach',12],['Annihilate',12],['Judgment',16],['Shield Rush',12]];
+ }
+ if(isPvpContext(mode))return [];
  if(cls==='sorcerer'){
   const solo=mode==='solo';
   if(objective==='survivability')return solo?[
@@ -358,10 +364,50 @@ function progressionRotationProfile(base,cls,mode,effectiveLevel,equippedStigmas
    p.rule='Use Earth Punishment before Condemnation for the level-5 critical synergy; keep all emergency and regular heals manual.';
   }
  }else if(cls==='templar'){
-  p.rule=effectiveLevel('Judgment')>=16&&specialtyEnabled('Judgment',5)
-   ?'Judgment cooldown-removal Specialty is selected: prioritize it in the trigger stack; keep charged Punishment manual.'
-   :'Until Judgment Lv 16, trigger one Judgment per shield-skill window; keep charged Punishment manual.';
- }else if(cls==='ranger'){
+  if(isPvpContext(mode)){
+   const group=mode==='pvp-abyss-group';
+   p.stacks=[
+    {key:'E',title:'Safe melee pressure',skills:['Judgment','Warding Strike','Pummel']},
+    {key:'Q',title:'Manual CC follow-ups',skills:['Debilitating Smash','Annihilate'],manual:true}
+   ];
+   p.macro=['E'];
+   p.stigmas=[...equippedStigmas];
+   p.hotbar=[
+    [['Poach'],'20m pull / Root; manually bait enemy control break','movement'],
+    [['Shield Rush'],'Manual gap close, preserve a second engage','movement'],
+    ...equippedStigmas.map(name=>[[name],
+     name==='Doom Shield'?'20m rush / knockdown; wait for immunity':
+     name==='Grapple'?'20m pull / Root, save for next enemy escape':
+     name==='Shield of Protection'?'Time guaranteed Block against burst':
+     name==='Battlefield Banner'?'Use attack buff during a confirmed kill window':
+     name==='Comrade in Arms'?'Protect focused ally, manage redirected damage':
+     name==="Empyrean Lord's Punishment"?'Area Stun after enemy Defiance':
+     'Manual control or defensive Stigma',
+     /Shield|Skin|Comrade|Armor/.test(name)?'defense':'utility']),
+    [['Punishment'],'Manual mobile / fast Punishment; charge only if safe','attack'],
+    [['Shield Smite'],'Manual Stun outside enemy immunity','attack']
+   ].slice(0,8);
+   p.rule=group
+    ?'Group Abyss: hook a backline target and peel for allies. Do not automate crowd control or movement.'
+    :'Solo Abyss: chain gap closers, bait enemy Defiance, land anti-heal and burst. RMB only safe melee attacks.';
+   p.summary='Closing the distance and baiting Defiance are separate decisions. Preserve a chase tool and a defensive escape.';
+   p.opener=[
+    'Approach with cover and Defiance (Space) ready; avoid chasing into groups.',
+    'Use Poach or Shield Rush manually; reserve Grapple or Doom Shield for the opponent\'s escape.',
+    group?'Coordinate Grapple and area Stun with allies; time Comrade in Arms for focused damage.':'Wait out enemy Defiance immunity, apply Debilitating Smash anti-heal, then Stun / Knockdown and Battlefield Banner burst if equipped.'
+   ];
+   p.loop=[
+    'Hold Vicious Strike (LMB) plus E safe pressure (RMB) only while in melee range.',
+    'Press Q manually for Debilitating Smash / Annihilate when control will connect.',
+    'Keep Defiance, a defensive Stigma and a gap closer for the enemy counterattack.'
+   ];
+   p.hold='Hold LMB + RMB only while connected. Poach, Shield Rush, Grapple, Doom Shield and Defiance stay reactive.';
+   p.hotbarNote='Space remains Defiance. Q is manual, not an RMB macro step.';
+  }else{
+   p.rule=effectiveLevel('Judgment')>=16&&specialtyEnabled('Judgment',5)
+    ?'Judgment cooldown-removal Specialty is selected: prioritize it in the trigger stack; keep charged Punishment manual.'
+    :'Until Judgment Lv 16, trigger one Judgment per shield-skill window; keep charged Punishment manual.';
+  } }else if(cls==='ranger'){
   // Only attach the optional Slow-sensitive Stigma if the build has learned
   // and equipped it. Keep Snare in Row 0, before either damage spender.
   const explosive=equippedStigmas.includes('Explosive Arrow');
