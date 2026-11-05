@@ -403,9 +403,17 @@ const PvpCombatModels = (() => {
       // This 6% comparative access sensitivity is NOT a measured hit chance.
       const extendedReach=classId==='templar'&&needsEngage&&
         selectedOptions(classId,build,'Shield Rush',selectedSpecs).includes(2)?1.06:1;
-      const contact=cap((needsEngage?.44:.85)+m.contact*(needsEngage?.115:.045)+
+      const contactPotential=(needsEngage?.44:.85)+m.contact*(needsEngage?.115:.045)+
         m.control*.045+(!kit.melee?m.escape*.035:0)-
-        (needsEngage?enemy.control*.065:0),.35,1.1)*move*extendedReach;
+        (needsEngage?enemy.control*.065:0);
+      // A hard cap made every Grapple/Shield Rush investment identical in
+      // difficult ranged matchups. Use smooth diminishing returns instead,
+      // retaining the unavoidable difficulty of getting to a kiting target.
+      // This is an uncalibrated contact INDEX, not an uptime prediction.
+      const accessible=classId==='templar'&&needsEngage
+        ?.35+.70*(1-Math.exp(-Math.max(0,contactPotential-.25)/1.1))
+        :cap(contactPotential,.35,1.1);
+      const contact=accessible*move*extendedReach;
       const control=m.control*cc/(1+enemy.defense*.08);
       const offense=m.pressure*power*(kit.melee?contact:.9+contact*.1);
       const healPressure=1+Math.min(.4,m.antiheal*.12*enemy.recovery);
