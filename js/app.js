@@ -732,12 +732,43 @@ function chooseCombatBoardRoute(provisional,stigma,gearRanks,target,baseCp,actua
       const build=engineBuild(funded.levels,
         {skills:board.skills,stats:mergedStats},
         stigma.levels,activeStigmas());
-      const picks=templarPvpSpecialtySeed(build,a.customSpecialties||{});
-      const value=PvpCombatModels.evaluate({
-        classId:'templar',context:a.context,build,selectedSpecs:picks
-      }).score;
-      if(!best||value>best.score+1e-9)
-        best={score:value,route:{...route,route:fitted.route}};
+      const scoreRanks=(masteryRanks,stigmaRanks)=>{
+        const candidate={...build,mastery:masteryRanks,stigma:stigmaRanks};
+        return PvpCombatModels.evaluate({
+          classId:'templar',context:a.context,build:candidate,
+          selectedSpecs:templarPvpSpecialtySeed(candidate,a.customSpecialties||{})
+        }).score;
+      };
+      // Do NOT choose a board using a temporary fixed skill distribution:
+      // each connected candidate receives its own legal affordable Mastery,
+      // Stigma and effective-Specialty reallocation before comparison.
+      const candidate=JointProgression.optimizeCombined({
+        classId:'templar',context:a.context,objective:'burst',
+        mastery:funded,stigma,masteryNames:names,stigmaNames:activeStigmas(),
+        masteryBudget:budget('mastery'),stigmaBudget:budget('stigma'),
+        masteryCost,stigmaCost,masteryCap:masteryRankCap,
+        scoreBuild:scoreRanks,pinMastery:!!a.manualMastery,
+        pinStigma:!!a.manualStigma||budget('stigma')<30,
+        stigmaFloors:budget('stigma')>=20
+          ?Object.fromEntries(activeStigmas().map(name=>[name,5])):{},
+        rounds:1,maxMasteryEvaluations:130,maxStigmaEvaluations:90
+      });
+      const optimizedBuild={...build,mastery:candidate.mastery.levels,
+        stigma:candidate.stigma.levels};
+      const specialty=JointProgression.optimizeSpecialties({
+        skillNames:names,specData:SPECS.templar,manual:a.customSpecialties||{},
+        preferred:(name,rank,entry)=>adviceSpecialtyChoices(
+          'templar',a.context,name,rank,entry.options),
+        effectiveLevel:name=>(optimizedBuild.mastery[name]||1)+
+          (optimizedBuild.boardSkills[name]||0)+(optimizedBuild.gearSkills[name]||0),
+        score:picks=>PvpCombatModels.evaluate({
+          classId:'templar',context:a.context,build:optimizedBuild,
+          selectedSpecs:picks
+        }).score,
+        maxEvaluations:95
+      });
+      if(!best||specialty.score>best.score+1e-9)
+        best={score:specialty.score,route:{...route,route:fitted.route}};
     }
     return best.route;
   }
