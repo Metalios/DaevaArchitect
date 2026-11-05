@@ -29,7 +29,7 @@ try {
   await page.locator('[name="statNotes"]').fill('Attack +31 from Soul Binding');
   await page.locator('[name="notes"]').fill('Old armor annotations');
   await page.locator('[name="skill0"]').selectOption('Insulting Roar');
-  await page.locator('[name="levels0"]').fill('4');
+  await page.locator('[name="levels0"]').fill('1');
   await page.locator('[name="stoneSlots"]').fill('1');
   await page.locator('[name="stoneType"]').selectOption('Superior');
   await page.locator('[name="stoneStat0"]').fill('HP');
@@ -59,7 +59,7 @@ try {
   await page.locator('[data-gear-slot="top"]').first().click();
   await page.locator('#gear-results [data-gear-result]').first().click();
   assert.equal(await page.locator('[name="enhancement"]').inputValue(),'11');
-  assert.equal(await page.locator('[name="levels0"]').inputValue(),'4');
+  assert.equal(await page.locator('[name="levels0"]').inputValue(),'1');
   assert.equal(await page.locator('[name="stoneValue0"]').inputValue(),'150');
 
   // Choose a distinct item in the same slot. Every old item-specific value
