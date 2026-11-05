@@ -1003,11 +1003,16 @@ function model(){
      typeof ClassCombatModels!=='undefined'&&
      ClassCombatModels.profile(state.class)){
     const fixed=engineBuild(finalMastery.levels,combatEffects,stigma.levels,stigmas);
-    const scoring=(masteryRanks,stigmaRanks)=>ClassCombatModels.evaluate({
-      classId:state.class,context:a.context,objective:a.pveObjective||'performance',
-      build:{...fixed,mastery:masteryRanks,stigma:stigmaRanks},
-      selectedSpecs:a.customSpecialties||{}
-    }).score;
+    const scoring=(masteryRanks,stigmaRanks)=>{
+      const proposed={...fixed,mastery:masteryRanks,stigma:stigmaRanks};
+      const picks=state.class==='templar'&&a.context==='pvp-abyss-solo'
+        ?templarPvpSpecialtySeed(proposed,a.customSpecialties||{})
+        :a.customSpecialties||{};
+      return ClassCombatModels.evaluate({
+        classId:state.class,context:a.context,objective:a.pveObjective||'performance',
+        build:proposed,selectedSpecs:picks
+      }).score;
+    };
     const jointKey=JSON.stringify([
       state.class,a.context,a.pveObjective,a.pvpOpponent||'all',currentLevel(),budget('mastery'),
       budget('stigma'),finalMastery.levels,stigma.levels,stigmas,
@@ -1022,7 +1027,9 @@ function model(){
         masteryBudget:budget('mastery'),stigmaBudget:budget('stigma'),
         masteryCost,stigmaCost,masteryCap:masteryRankCap,scoreBuild:scoring,
         pinMastery:!!a.manualMastery,
-        pinStigma:!!a.manualStigma||researchedSoloAbyssStigmas||isLeveling()||budget('stigma')<30});
+        pinStigma:!!a.manualStigma||isLeveling()||budget('stigma')<30,
+        stigmaFloors:researchedSoloAbyssStigmas&&budget('stigma')>=20
+          ?Object.fromEntries(stigmas.map(name=>[name,5])):{}});
       jointResultCache={key:jointKey,result:joint};
       chosenMastery=joint.mastery;
       chosenStigma=joint.stigma;
@@ -1045,6 +1052,10 @@ function model(){
         jointSpecialtyCache.result:JointProgression.optimizeSpecialties({
           skillNames:names,specData:SPECS[state.class],
           manual:a.customSpecialties||{},
+          preferred:state.class==='templar'&&appIsPvpContext(a.context)
+            ?(name,rank,entry)=>typeof adviceSpecialtyChoices==='function'
+              ?adviceSpecialtyChoices('templar',a.context,name,rank,entry.options)
+              :null:null,
           effectiveLevel:name=>Math.min(40,
             (chosenMastery.levels[name]||1)+
             (combatEffects.skills[name]||0)+
