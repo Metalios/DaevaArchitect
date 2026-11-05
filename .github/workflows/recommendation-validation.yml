@@ -32,6 +32,7 @@ jobs:
           node amplification_regression.mjs
           node budget_exhaustion_regression.mjs
           node arcana_ariel_regression.mjs
+          node arcana_gear_templar_pvp_regression.mjs
           node global_action_evidence_audit.mjs
           node timeline_engine_regression.mjs
           node animation_evidence_regression.mjs
