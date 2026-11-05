@@ -623,7 +623,17 @@ function engineBuild(masteryLevels,boardEffects,stigmaLevels,equipped){
   const equippedRanks={...gearSkillLevels()};
   for(const [name,n] of Object.entries(account().gear||{}))
     equippedRanks[name]=(equippedRanks[name]||0)+(Number(n)||0);
-  const visibleStats=[...gearFixedTotals().stats,...gearSocketTotals().stats];
+  // All explicitly recorded equipment stats contribute: catalog fixed stats,
+  // socket stones, recognized Soul Binding roll text and Amplification stars.
+  // Do not double-count Arcana divine multipliers as flat base stats.
+  const visibleStats=[
+    ...gearFixedTotals().stats,
+    ...gearSocketTotals().stats,
+    ...gearRolledStatTotals().stats,
+    ...gearAmplificationTotals().stats.map(row=>({
+      name:row.stat,value:row.value,unit:row.unit||''
+    }))
+  ];
   // Include all recorded stats supported by the imported Global dataset.
   // Unknown equipment bonuses remain unknown; no gear is invented.
   const gearStats={};
