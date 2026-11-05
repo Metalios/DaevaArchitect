@@ -1,7 +1,7 @@
 // Global PvP scenarios: four actual build contexts, not four UI aliases.
 const PVP_CONTEXT_LABELS=Object.freeze({pvp:'General PvP','pvp-arena':'Arena PvP','pvp-abyss-solo':'Solo PvP (Abyss)','pvp-abyss-group':'Group PvP (Abyss)'});
 function isPvpContext(mode){return Object.prototype.hasOwnProperty.call(PVP_CONTEXT_LABELS,mode)}
-const PVP_CONTEXT_SOURCES=Object.freeze(['https://metabot.gg/en/aion-2/guides/arena-pvp-guide','https://aion2maps.com/guides/pvp/','https://aion2data.com/guides','https://aion2.gg/tier-list/pvp-group']);
+const PVP_CONTEXT_SOURCES=Object.freeze(['https://metabot.gg/en/aion-2/guides/arena-pvp-guide','https://aion2maps.com/guides/pvp/','https://aion2data.com/guides','https://aion2.gg/tier-list/pvp-group','https://aion2vault.com/builds/templar/pvp/','https://aion2.gg/builds/templar/pvp-solo']);
 /* AION 2 Global build advice, reviewed 2026-10-22.
    These are progression priorities, NOT exact damage-simulation outputs.
    Sources: https://aion2data.com/guides (global-client-labelled player builds)
@@ -112,62 +112,26 @@ const PVP_VARIANTS={
  },
  "templar": {
   "pvp-arena": {
-   "stigmas": [
-    "Grapple",
-    "Doom Shield",
-    "Second Skin",
-    "Shield of Protection"
-   ],
-   "lead": [
-    "Poach",
-    "Debilitating Smash",
-    "Judgment",
-    "Pummel"
-   ],
-   "supportLead": [
-    "Survival Willpower",
-    "Block Pain"
-   ],
-   "why": "Arena of Solitude (1v1): pull/root, threaten Judgment through Doom Shield, maintain mobile guaranteed Block and survive the opponent's burst. Taunt PvE tolerance does not apply as a full PvP modifier."
+   "stigmas":["Doom Shield","Shield of Protection","Battlefield Banner","Nezekan's Shield"],
+   "stigmaPriority":["Shield of Protection","Doom Shield","Battlefield Banner","Nezekan's Shield"],
+   "lead":["Debilitating Smash","Poach","Defiance","Shield Smite","Judgment","Annihilate","Pummel","Punishment"],
+   "supportLead":["Survival Willpower","Impact Hit","Block Pain","Enhance Health"],
+   "why":"Arena 1v1: bait a burst into shields, preserve Defiance, sustain Debilitating Smash anti-heal and counterattack with Battlefield Banner. Swap Nezekan's Shield for Grapple against persistent ranged kiting."
   },
   "pvp-abyss-solo": {
-   "stigmas": [
-    "Doom Shield",
-    "Grapple",
-    "Shield of Protection",
-    "Second Skin"
-   ],
-   "lead": [
-    "Poach",
-    "Judgment",
-    "Punishment",
-    "Pummel"
-   ],
-   "supportLead": [
-    "Survival Willpower",
-    "Enhance Health"
-   ],
-   "why": "Solo Abyss: pick fights with gap closure and Grapple, keep guaranteed Block mobile and retain a defensive disengage option."
+   "stigmas":["Doom Shield","Grapple","Shield of Protection","Battlefield Banner"],
+   "stigmaPriority":["Shield of Protection","Doom Shield","Grapple","Battlefield Banner"],
+   "stigmaMilestones":[["Doom Shield",5],["Grapple",5],["Shield of Protection",10],["Battlefield Banner",5],["Grapple",10],["Doom Shield",10]],
+   "lead":["Poach","Shield Rush","Debilitating Smash","Defiance","Shield Smite","Judgment","Punishment","Annihilate"],
+   "supportLead":["Survival Willpower","Impact Hit","Enhance Health","Block Pain","Fury"],
+   "why":"Solo Abyss against ranged-heavy opponents: manually chain Poach / Shield Rush / Doom Shield / Grapple to re-engage over 20m, bait enemy Defiance, maintain anti-heal, then burst with Battlefield Banner. Shield of Protection Lv10 enables mobile blocking; retain escape and a chase cooldown."
   },
   "pvp-abyss-group": {
-   "stigmas": [
-    "Grapple",
-    "Nezekan's Shield",
-    "Comrade in Arms",
-    "Second Skin"
-   ],
-   "lead": [
-    "Warding Strike",
-    "Poach",
-    "Judgment",
-    "Shield Rush"
-   ],
-   "supportLead": [
-    "Block Pain",
-    "Guarding Seal",
-    "Survival Willpower"
-   ],
-   "why": "Group Abyss: pull and root priority targets, protect nearby allies with Nezekan's Shield, absorb focused damage with Comrade in Arms and hold the front line."
+   "stigmas":["Grapple","Empyrean Lord's Punishment","Comrade in Arms","Doom Shield"],
+   "stigmaPriority":["Grapple","Doom Shield","Empyrean Lord's Punishment","Comrade in Arms"],
+   "lead":["Poach","Shield Rush","Debilitating Smash","Shield Smite","Annihilate","Judgment","Defiance","Punishment"],
+   "supportLead":["Impact Hit","Survival Willpower","Block Pain","Fury","Enhance Health"],
+   "why":"Group Abyss: hook the exposed healer or damage dealer, coordinate area Stun after enemy Defiance, mitigate focus with Comrade in Arms, and save Doom Shield to re-engage. Anti-heal priority targets."
   }
  },
  "assassin": {
@@ -487,7 +451,8 @@ function adviceFor(cls,context,objective='performance'){
    const distinct=items=>[...new Set(items)];
    return {...original,core:distinct([...(preset.lead||[]),...original.core]).slice(0,8),
      support:distinct([...(preset.supportLead||[]),...original.support]).slice(0,7),
-     stigmas:[...preset.stigmas],stigmaPriority:[...preset.stigmas],
+     stigmas:[...preset.stigmas],stigmaPriority:[...(preset.stigmaPriority||preset.stigmas)],
+      ...(preset.stigmaMilestones?{stigmaMilestones:preset.stigmaMilestones}:{}),
      why:preset.why,researchSources:PVP_CONTEXT_SOURCES,buildContext:context};
  }
  const base=BUILD_ADVICE[cls]?.[context]||BUILD_ADVICE[cls]?.party||null;
@@ -503,10 +468,24 @@ const SPECIALTY_CONTEXT={
  gladiator:{solo:{
   'Keen Strike':{'8':[2],'12':[2,4],'16':[4,5],'20':[2,4,5]}
  }},
- templar:{pvp:{
-  'Pummel':{'8':[2],'12':[2,4],'16':[2,4],'20':[2,4,5]},
-  'Warding Strike':{'8':[2],'12':[2,4],'16':[4,5],'20':[2,4,5]}
- }},
+ templar:{
+  pvp:{
+   'Poach':{'8':[2],'12':[2,4],'16':[2,5],'20':[2,4,5]},
+   'Shield Rush':{'8':[2],'12':[2,4],'16':[4,5],'20':[2,4,5]},
+   'Debilitating Smash':{'8':[3],'12':[2,3],'16':[2,3],'20':[2,3,4]},
+   'Shield Smite':{'8':[1],'12':[1,4],'16':[1,4],'20':[1,4,5]},
+   'Defiance':{'8':[1],'12':[1,4],'16':[1,5],'20':[1,4,5]},
+   'Annihilate':{'8':[2],'12':[2,4],'16':[2,4],'20':[1,2,4]},
+   'Pummel':{'8':[2],'12':[2,4],'16':[2,5],'20':[2,4,5]},
+   'Warding Strike':{'8':[2],'12':[1,2],'16':[1,2],'20':[1,2,5]},
+   'Punishment':{'8':[3],'12':[3,4],'16':[3,4],'20':[3,4,5]},
+   'Judgment':{'8':[3],'12':[3,4],'16':[3,5],'20':[3,4,5]}
+  },
+  'pvp-abyss-solo':{
+   'Shield Rush':{'8':[2],'12':[2,4],'16':[2,5],'20':[2,4,5]},
+   'Poach':{'8':[2],'12':[2,4],'16':[2,5],'20':[2,4,5]}
+  }
+ },
  assassin:{pvp:{
   'Ambush':{'8':[3],'12':[1,3],'16':[3,5],'20':[1,3,5]}
  }},
