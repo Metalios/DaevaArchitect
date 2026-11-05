@@ -53,6 +53,7 @@ jobs:
           node class_role_regression.mjs
           node pvp_context_regression.mjs
           node pvp_matchup_regression.mjs
+          node templar_pvp_joint_regression.mjs
           node leveling_rotation_audit.mjs
           node ranger_rotation_regression.mjs
           node recommendations_audit.mjs
@@ -68,6 +69,7 @@ jobs:
           node combat_optimizer_smoke.mjs
           node leveling_macro_smoke.mjs
           node recommendation_coherence_smoke.mjs
+          node templar_pvp_burst_smoke.mjs
           node goal_route_smoke.mjs
           node mastery_board_gear_smoke.mjs
           node board_macro_usability_smoke.mjs
