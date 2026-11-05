@@ -119,12 +119,12 @@ const PVP_VARIANTS={
    "why":"Arena 1v1: bait a burst into shields, preserve Defiance, sustain Debilitating Smash anti-heal and counterattack with Battlefield Banner. Swap Nezekan's Shield for Grapple against persistent ranged kiting."
   },
   "pvp-abyss-solo": {
-   "stigmas":["Doom Shield","Grapple","Shield of Protection","Battlefield Banner"],
-   "stigmaPriority":["Shield of Protection","Doom Shield","Grapple","Battlefield Banner"],
-   "stigmaMilestones":[["Doom Shield",5],["Grapple",5],["Shield of Protection",10],["Battlefield Banner",5],["Grapple",10],["Doom Shield",10]],
+   "stigmas":["Doom Shield","Grapple","Executing Blade","Shield of Protection"],
+   "stigmaPriority":["Shield of Protection","Executing Blade","Grapple","Doom Shield"],
+   "stigmaMilestones":[["Grapple",5],["Executing Blade",5],["Doom Shield",5],["Shield of Protection",10],["Executing Blade",10],["Grapple",10],["Doom Shield",10],["Executing Blade",15]],
    "lead":["Poach","Shield Rush","Debilitating Smash","Defiance","Shield Smite","Judgment","Punishment","Annihilate"],
    "supportLead":["Survival Willpower","Impact Hit","Enhance Health","Block Pain","Fury"],
-   "why":"Solo Abyss against ranged-heavy opponents: manually chain Poach / Shield Rush / Doom Shield / Grapple to re-engage over 20m, bait enemy Defiance, maintain anti-heal, then burst with Battlefield Banner. Shield of Protection Lv10 enables mobile blocking; retain escape and a chase cooldown."
+   "why":"Solo Abyss against ranged-heavy opponents: re-engage with Poach / Shield Rush / Doom Shield / Grapple, bait enemy Defiance, then apply Debilitating Smash anti-heal and a manual Grapple → Executing Blade → Punishment burst. Executing Blade cuts Defense by 30% for 5s and adds Exposed at Stigma Lv10. Preserve mobile blocking from Shield of Protection Lv10. Do not assume macro/stack steps execute sequentially or auto-charge Punishment."
   },
   "pvp-abyss-group": {
    "stigmas":["Grapple","Empyrean Lord's Punishment","Comrade in Arms","Doom Shield"],
