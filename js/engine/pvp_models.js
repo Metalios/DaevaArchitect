@@ -12,9 +12,15 @@ const PvpCombatModels = (() => {
   const MODES = Object.freeze({
     pvp: {pressure:.25,burst:.18,contact:.16,control:.12,mitigation:.13,recovery:.09,team:.03,escape:.04},
     'pvp-arena': {pressure:.22,burst:.22,contact:.18,control:.17,mitigation:.12,recovery:.07,team:0,escape:.02},
-    'pvp-abyss-solo': {pressure:.06,burst:.42,contact:.17,control:.14,mitigation:.16,recovery:.01,team:0,escape:.04},
+    'pvp-abyss-solo': {pressure:.20,burst:.17,contact:.18,control:.11,mitigation:.12,recovery:.10,team:0,escape:.12},
     'pvp-abyss-group': {pressure:.21,burst:.14,contact:.10,control:.13,mitigation:.12,recovery:.08,team:.19,escape:.03}
   });
+  const TEMPLAR_SOLO_WEIGHTS=Object.freeze({
+    pressure:.06,burst:.42,contact:.17,control:.14,
+    mitigation:.16,recovery:.01,team:0,escape:.04
+  });
+  const weightsFor=(classId,context)=>classId==='templar'&&
+    context==='pvp-abyss-solo'?TEMPLAR_SOLO_WEIGHTS:MODES[context]||MODES.pvp;
   const OPPONENTS = Object.freeze({
     gladiator:{ranged:0,burst:1.1,control:.8,recovery:.45,defense:1.1},
     templar:{ranged:0,burst:.65,control:.75,recovery:.65,defense:1.35},
@@ -288,7 +294,7 @@ const PvpCombatModels = (() => {
   }
   function stigmaUtility(classId,context,opponent,name,rank){
     if(rank<=0)return 0;
-    const roles=STIGMA[classId]?.[name]||{pressure:.25},w=MODES[context]||MODES.pvp;
+    const roles=STIGMA[classId]?.[name]||{pressure:.25},w=weightsFor(classId,context);
     let weight=0;
     for(const [role,value] of Object.entries(roles)){
       const normalized=role==='antiheal'?.12:(w[role]||0.03);
@@ -316,7 +322,7 @@ const PvpCombatModels = (() => {
     const resist=1+cap(stat('AbnormalResistance')/3000,0,.7)*.45;
     const move=1+cap(stat('MoveSpeed')/10000,0,.5);
     const chosen=opponent||build.pvpOpponent||'all';
-    const weights=MODES[context];
+    const weights=weightsFor(classId,context);
     const rows=opponents(chosen).map(name=>{
       const enemy=OPPONENTS[name];
       const needsEngage=kit.melee&&enemy.ranged;
@@ -354,7 +360,7 @@ const PvpCombatModels = (() => {
       // to the enemy's first burst should not beat a viable mixed build.
       // A soft floor avoids pretending we know the exact survival threshold.
       const minimumSurvival=.67+enemy.burst*.17;
-      const survivalFactor=context==='pvp-abyss-solo'&&kit.melee
+      const survivalFactor=classId==='templar'&&context==='pvp-abyss-solo'
         ?Math.max(.68,Math.min(1,mit/minimumSurvival)):1;
       const score=weighted*survivalFactor;
       return {opponent:name,score,components};
@@ -366,6 +372,6 @@ const PvpCombatModels = (() => {
       classification:'Short PvP burst/contact and counter-burst proxy; not measured DPS, time-to-kill, win rate or hit probability',
       provenance:{version:VERSION,assumptions:'Equal opponent scenarios, bounded sensitivity parameters, unmeasured action and CC timing'}};
   }
-  return Object.freeze({VERSION,isPvp,OPPONENTS,MODES,KITS,STIGMA,OPTIONS,
+  return Object.freeze({VERSION,isPvp,OPPONENTS,MODES,weightsFor,KITS,STIGMA,OPTIONS,
     evaluate,opponents,statPriority,skillPriority,stigmaUtility});
 })();
