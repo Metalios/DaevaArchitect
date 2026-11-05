@@ -12,7 +12,7 @@ const ctx={DATA,STIGMAS,SKILL_UNLOCKS:load('skill_unlocks.json'),LEVEL_REWARDS:l
 vm.createContext(ctx);
 const source=read('js/app.js');
 vm.runInContext(read('js/recommendations.js')+'\n'+read('js/progression.js')+'\n'+source.slice(0,source.indexOf('function render(){'))+
- '\nglobalThis.testing={isPvpContext,adviceFor,progressionMasteryStages,optimizeRecommendedStigmas,progressionBoardTargets,progressionRotationProfile,progressionStigmaStages,state,account,activeWeights};',ctx);
+ '\nglobalThis.testing={isPvpContext,adviceFor,progressionMasteryStages,optimizeRecommendedStigmas,progressionBoardTargets,progressionRotationProfile,progressionStigmaStages,allocate,stigmaCost,state,account,activeWeights};',ctx);
 const p=ctx.testing;
 const modes=['pvp','pvp-arena','pvp-abyss-solo','pvp-abyss-group'];
 const costs=rank=>Array.from({length:rank},(_,i)=>i+1<=5?1:i+1<=10?2:i+1<=15?4:8).reduce((a,b)=>a+b,0);
@@ -77,4 +77,15 @@ assert(milestones.some(([name,level])=>name==='Executing Blade'&&level===10),
  'Executing Blade Exposed Lv10 must have a Stigma budget milestone');
 assert(milestones.some(([name,level])=>name==='Shield of Protection'&&level===10),
  'Mobile guaranteed Block Lv10 must remain a target');
+for(const [points,expected] of [
+ [30,{'Shield of Protection':10,'Doom Shield':5,'Grapple':5,'Executing Blade':5}],
+ [60,{'Shield of Protection':10,'Doom Shield':10,'Grapple':10,'Executing Blade':10}],
+ [80,{'Shield of Protection':10,'Doom Shield':10,'Grapple':10,'Executing Blade':15}]
+]){
+ const funded=p.allocate(milestones,points,p.stigmaCost,soloNames,0);
+ assert.equal(funded.spent,points,'Solo Abyss Stigma plan should spend '+points+' legally');
+ for(const [name,rank] of Object.entries(expected))
+  assert.equal(funded.levels[name],rank,points+' Shards: expected '+name+' Lv'+rank);
+}
+
 console.log('Verified '+count+' PvP class/mode combinations, 29–300 point allocations and Templar 61-point breakpoints.');
