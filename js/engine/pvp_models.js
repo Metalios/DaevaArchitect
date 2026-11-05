@@ -377,7 +377,9 @@ const PvpCombatModels = (() => {
       (1+divine('Destruction'))*
       (1+divine('Time')*.7)*
       (1+divine('Death')*.4)*
-      (1+divine('Wisdom')*.2);
+      (1+divine('Wisdom')*.2)*
+      (1+divine('Freedom')*.20)*
+      (1+divine('Illusion')*.20);
     const defense=(1+cap(stat('PvPDecreaseDamage')/10000,0,.5)*1.25+
       cap(stat('PvPDamageDefense')/4000,0,.7)*.65+
       cap(stat('HPMax')/25000,0,.5)*.5+
@@ -385,7 +387,7 @@ const PvpCombatModels = (() => {
       cap(stat('Defense')/7000,0,.6)*.25+
       cap((stat('CriticalResist')+stat('PvPCriticalResist'))/1600,0,.5)*.16)*
       (1+divine('Justice')*.6)*(1+divine('Life')*.6)*
-      (1+divine('Space')*.3);
+      (1+divine('Space')*.3)*(1+divine('Freedom')*.15);
     const cc=1+cap(stat('AbnormalAccuracy')/3000,0,.7)*.45;
     const resist=1+cap(stat('AbnormalResistance')/3000,0,.7)*.45+
       divine('Destiny')*.12;
