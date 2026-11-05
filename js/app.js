@@ -746,7 +746,17 @@ function enhanceSorcererCombat(master,boardEffects,stigmas){
 function model(){
   const a=account(),names=skillNames(),recommendedMastery=allocate(masteryStages(),budget('mastery'),masteryCost,names,1,isLeveling()?masteryRankCap:null),
     mastery=a.manualMastery?manualAllocation(a.manualMastery,names,budget('mastery'),masteryCost,1,masteryRankCap):recommendedMastery,
-    stigmas=activeStigmas(),recommendedStigma=optimizeRecommendedStigmas(stigmas,budget('stigma')),
+    stigmas=activeStigmas(),
+    researchedSoloAbyssStigmas=state.class==='templar'&&a.context==='pvp-abyss-solo'&&
+      !a.customStigmas&&
+      ['Doom Shield','Grapple','Executing Blade','Shield of Protection']
+        .every(name=>stigmas.includes(name)),
+    // A player-tested catch-and-kill preset has concrete cost milestones.
+    // Do not replace its 30/60/80-point rank route with a generic uncalibrated
+    // survival coefficient. Other modes/customized bars retain adaptive search.
+    recommendedStigma=researchedSoloAbyssStigmas
+      ?allocate(stigmaStages(),budget('stigma'),stigmaCost,stigmas,0)
+      :optimizeRecommendedStigmas(stigmas,budget('stigma')),
     stigma=a.manualStigma?manualAllocation(a.manualStigma,stigmas,budget('stigma'),stigmaCost,0,20):recommendedStigma;
   {
     // Freeze the RECOMMENDED route during each crystal-spending cycle.
@@ -941,7 +951,7 @@ function model(){
         masteryBudget:budget('mastery'),stigmaBudget:budget('stigma'),
         masteryCost,stigmaCost,masteryCap:masteryRankCap,scoreBuild:scoring,
         pinMastery:!!a.manualMastery,
-        pinStigma:!!a.manualStigma||isLeveling()||budget('stigma')<30});
+        pinStigma:!!a.manualStigma||researchedSoloAbyssStigmas||isLeveling()||budget('stigma')<30});
       jointResultCache={key:jointKey,result:joint};
       chosenMastery=joint.mastery;
       chosenStigma=joint.stigma;
