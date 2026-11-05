@@ -18,13 +18,14 @@ const JointProgression = (()=>{
     return sum;
   },0);
   function improveRanks({names,initial,budget,cost,cap,score,minimum=1,
-      pinned=[],maxEvaluations=700,maxPasses=10,breakpoints=[]}){
+      pinned=[],minRanks={},maxEvaluations=700,maxPasses=10,breakpoints=[]}){
     if(!Array.isArray(names)||!names.length||typeof score!=='function')
       throw Error('Rank optimization requires legal names and a combat scorer');
     const set=new Set(pinned),allowed=new Set(names);
+    const floor=name=>Math.max(minimum,Math.floor(Number(minRanks[name])||minimum));
     const values=Object.fromEntries(names.map(name=>{
       const limit=typeof cap==='function'?cap(name):cap;
-      return [name,clamp(Math.floor(initial[name]??minimum),minimum,limit)];
+      return [name,clamp(Math.floor(initial[name]??minimum),floor(name),limit)];
     }));
     const limit=Math.max(0,Math.floor(budget||0));
     let spent=spend(values,names,cost,minimum);
@@ -69,7 +70,7 @@ const JointProgression = (()=>{
         // Legal point-for-point tradeoffs let the engine reassign ranks
         // even when no unspent currency remains. Evaluate complete builds.
         for(const donor of names){
-          if(donor===recipient||set.has(donor)||values[donor]<=minimum)continue;
+          if(donor===recipient||set.has(donor)||values[donor]<=floor(donor))continue;
           const refund=cost(values[donor]),nextSpent=spent-refund+addition;
           if(nextSpent>limit)continue;
           const candidate={...values,[recipient]:current+1,
@@ -96,8 +97,8 @@ const JointProgression = (()=>{
             update(raised,spent+addition,{skill:recipient,from:current,to:target});
           for(const donor of names){
             if(evaluations>=maxEvaluations)break;
-            if(donor===recipient||set.has(donor)||values[donor]<=minimum)continue;
-            const previous=[minimum,...breakpoints.filter(rank=>rank<values[donor]&&rank>=minimum)]
+            if(donor===recipient||set.has(donor)||values[donor]<=floor(donor))continue;
+            const previous=[floor(donor),...breakpoints.filter(rank=>rank<values[donor]&&rank>=floor(donor))]
               .sort((a,b)=>b-a)[0];
             if(previous>=values[donor])continue;
             let refund=0;for(let rank=previous+1;rank<=values[donor];rank++)refund+=cost(rank);
@@ -137,7 +138,7 @@ const JointProgression = (()=>{
   function optimizeCombined({classId,context,objective,
       mastery,stigma,masteryNames,stigmaNames,masteryBudget,stigmaBudget,
       masteryCost,stigmaCost,masteryCap,scoreBuild,
-      pinMastery=false,pinStigma=false}){
+      pinMastery=false,pinStigma=false,stigmaFloors={}}){
     const mNames=masteryNames.filter(Boolean),sNames=stigmaNames.filter(Boolean);
     const initialM={...mastery.levels},initialS={...stigma.levels};
     let m={...mastery,levels:initialM},s={...stigma,levels:initialS};
@@ -158,7 +159,7 @@ const JointProgression = (()=>{
       if(!pinStigma&&sNames.length){
         const result=improveRanks({names:sNames,initial:s.levels,
           budget:stigmaBudget,cost:stigmaCost,cap:20,
-          score:r=>score(m.levels,r),minimum:0,maxEvaluations:350,
+          score:r=>score(m.levels,r),minimum:0,minRanks:stigmaFloors,maxEvaluations:350,
           maxPasses:6,breakpoints:[5,10,15,20]});
         s={...s,levels:result.levels,spent:result.spent,
           unspent:result.unspent,next:result.next};
