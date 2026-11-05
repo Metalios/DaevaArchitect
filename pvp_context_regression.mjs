@@ -29,7 +29,9 @@ for(const cls of Object.keys(DATA)){
   for(const name of advice.stigmas)assert(STIGMAS[cls][name],cls+' '+mode+' unknown stigma '+name);
   for(const name of [...advice.core,...advice.support])assert(skills.has(name),cls+' '+mode+' unknown mastery '+name);
   assert(Object.keys(p.activeWeights().skills).length>0);
-  assert.equal(Object.keys(p.progressionBoardTargets(cls,mode)).length,0);
+  const boardGoals=p.progressionBoardTargets(cls,mode);
+  if(cls==='templar')assert(Object.keys(boardGoals).length>0,cls+' '+mode+' missing effective PvP board targets');
+  else assert.equal(Object.keys(boardGoals).length,0);
   for(const points of [29,61,100,300]){
     const allocation=p.optimizeRecommendedStigmas(advice.stigmas,points,cls,mode);
     assert.equal(Object.values(allocation.levels).reduce((sum,rank)=>sum+costs(rank),0),allocation.spent);
@@ -45,4 +47,13 @@ assert.equal(t.levels['Noble Armor'],15);
 assert.equal(t.levels['Shield of Protection'],10);
 assert.equal(t.levels.Taunt,5);
 assert.equal(t.levels['Doom Shield'],5);
+for(const [mode,expected] of Object.entries({
+ 'pvp-arena':['Doom Shield','Shield of Protection','Battlefield Banner',"Nezekan's Shield"],
+ 'pvp-abyss-solo':['Doom Shield','Grapple','Shield of Protection','Battlefield Banner'],
+ 'pvp-abyss-group':['Grapple',"Empyrean Lord's Punishment",'Comrade in Arms','Doom Shield']
+})){
+ const advised=p.adviceFor('templar',mode);
+ assert.deepEqual(Array.from(advised.stigmas),expected,'Templar '+mode+' should retain researched Stigmas');
+ if(mode==='pvp-abyss-solo')assert(advised.core.includes('Shield Rush')&&advised.core.includes('Debilitating Smash'));
+}
 console.log('Verified '+count+' PvP class/mode combinations, 29–300 point allocations and Templar 61-point breakpoints.');
