@@ -145,9 +145,12 @@ function gearSkillLevels(){
     if(slot.area==='arcana'&&
       !arcanaValidBonuses(state.class,slot.id,item.grade,item.enhancement,item.skillBonuses||[]))
       continue;
+    const seen=new Set();
     for(const bonus of (item.skillBonuses||[]).slice(0,
       slot.area==='arcana'?4:gearSkillLineCapacity(slot,item.grade))){
-      if(!pool.has(bonus.skill))continue;
+      if(!pool.has(bonus.skill)||seen.has(bonus.skill)||
+        !Number.isFinite(Number(bonus.levels))||Number(bonus.levels)<=0)continue;
+      seen.add(bonus.skill);
       // A non-Arcana line cannot become +30 by typing "+30" into the editor.
       const ranks=slot.area==='arcana'?clamp(bonus.levels,1,4):1;
       total[bonus.skill]=(total[bonus.skill]||0)+ranks;
