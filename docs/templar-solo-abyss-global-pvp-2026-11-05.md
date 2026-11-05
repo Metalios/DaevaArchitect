@@ -48,7 +48,7 @@ A fresh Global level 45 after the required third Ascension begins with **30 Shar
 | Executing Blade | 5 (-15s cooldown) | 5 |
 | **Total** | | **30** |
 
-When additional points are available, evaluate **Executing Blade 10 (Exposed)**, **Grapple 10 (HP shield)** and **Doom Shield 10 (Block)**. The deterministic planning milestones include Executing Blade 10 and 15, but the joint engine may allocate a different legal rank split if its comparative proxy scores it higher. Never claim the proxy is a measured PvP win-rate optimizer.
+The default Solo Abyss rank policy now preserves these tested-cost milestones instead of letting a generic comparative proxy override them. It produces **all four Stigmas at Lv10 with 60 Shards**, then **Executing Blade Lv15 at 80 Shards**, respecting the actual cumulative brackets and any manual player customization. These are explicit strategic targets, not a measured optimal win-rate solution.
 
 ### Mastery / Daevanian effective-level goals
 
