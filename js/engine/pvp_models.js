@@ -269,6 +269,16 @@ const PvpCombatModels = (() => {
     const melee=!!KITS[classId]?.melee,selected=opponents(opponent);
     const ranged=selected.filter(c=>OPPONENTS[c].ranged).length/selected.length;
     const team=context==='pvp-abyss-group';
+    if(classId==='templar'&&context==='pvp-abyss-solo'){
+      // Azphel's 4-point attack corners and 3-point control accuracy nodes
+      // are real kill-window contributors. Keep defensives as a second
+      // priority, not as a false assumption of unlimited sustained fighting.
+      if(/PvPAmplifyDamage|PvPAddDamage/.test(key))return 1.75;
+      if(/AbnormalAccuracy|PvPAccuracy/.test(key))return 1.45+.35*ranged;
+      if(/CombatSpeed/.test(key))return 1.45;
+      if(/PvPDecreaseDamage|PvPDamageDefense|AbnormalResistance/.test(key))return 1.17;
+      if(/CoolTimeDecrease/.test(key))return 1.05;
+    }
     if(/PvE|BossNpc/.test(key))return .02;
     if(/AbnormalAccuracy|StatusEffectAccuracy/.test(key))return 1.1+(melee?ranged*.55:0)+(team?.1:0);
     if(/AbnormalResistance|Willpower/.test(key))return 1.1+selected.reduce((a,c)=>a+OPPONENTS[c].control,0)/selected.length*.15;
