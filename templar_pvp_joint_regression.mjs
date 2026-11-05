@@ -27,7 +27,7 @@ const state={
 const score=(build,opts={})=>pvp.evaluate({
  classId:'templar',context:'pvp-abyss-solo',build,selectedSpecs:opts
 }).score;
-assert(pvp.MODES['pvp-abyss-solo'].burst>.4,
+assert(pvp.weightsFor('templar','pvp-abyss-solo').burst>.4,
  'Solo Abyss must prioritize first burst over sustained recovery');
 const baseline=score(state);
 const blade10=score({...state,stigma:{...state.stigma,'Executing Blade':10}});
