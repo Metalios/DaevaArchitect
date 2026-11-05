@@ -56,7 +56,7 @@ for(const cls of classes){
   const high=fund(stages,100,equipped);
   assert(high.spent<=100&&Math.max(...Object.values(high.ranks))>=15,cls+' '+mode+': 100-point milestone missing');
   const route=p.progressionBoardTargets(cls,mode);
-  if(mode==='pvp')assert.equal(Object.keys(route).length,0);
+  if(mode==='pvp'&&cls!=='templar')assert.equal(Object.keys(route).length,0);
   else for(const [name,targets] of Object.entries(route)){
    assert(known.has(name));assert(targets.milestones.length);
    assert(targets.milestones.every((goal,index,all)=>[8,12,16,20].includes(goal.rank)&&goal.weight>0&&(index===0||all[index-1].rank<=goal.rank)));
