@@ -7,6 +7,9 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
   verify:
     runs-on: ubuntu-24.04
@@ -44,6 +47,8 @@ jobs:
           node sorcerer_two_button_flow_regression.mjs
           node sorcerer_wish_priority_regression.mjs
           node sorcerer_manual_hotbar_regression.mjs
+          node sorcerer_macro_audit.mjs
+          node verify_icons.mjs
           node recommendation_regression.mjs
           node class_role_regression.mjs
           node pvp_context_regression.mjs

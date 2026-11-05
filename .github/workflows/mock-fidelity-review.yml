@@ -7,6 +7,9 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
   validate:
     runs-on: ubuntu-24.04
@@ -21,6 +24,19 @@ jobs:
           node-version: '22'
       - name: Build planner
         run: python build.py
+      - name: Include interactive preview instructions
+        run: |
+          cat > dist/PREVIEW-README.txt <<'EOF'
+          DaevaArchitect: INTERACTIVE PR REVIEW
+
+          1. Download the mock-fidelity-preview artifact.
+          2. Extract it and open a terminal in the folder with index.html.
+          3. Run: python -m http.server 8000
+          4. Open http://localhost:8000 in your browser.
+
+          This is the unmerged code from this pull request.
+          Use a separate browser profile to avoid overwriting local saves.
+          EOF
       - name: Audit game rules, class advice, and point budgets
         run: |
           node verify.mjs
