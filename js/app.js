@@ -244,7 +244,7 @@ function activeWeights(){
   const stats={...base.stats};
   const pvpStatScale={
     'pvp-arena':{PvPAddDamage:1.35,PvPAccuracy:1.3,AbnormalAccuracy:1.25,AbnormalResistance:1.25,CombatSpeed:1.15},
-    'pvp-abyss-solo':{PvPDamageDefense:1.5,PvPEvasion:1.3,AbnormalResistance:1.35,HPMax:1.4,CombatSpeed:1.25},
+    'pvp-abyss-solo':{PvPAddDamage:1.45,PvPAccuracy:1.35,AbnormalAccuracy:1.6,PvPDamageDefense:1.35,PvPEvasion:1.15,AbnormalResistance:1.35,HPMax:1.2,CombatSpeed:1.25,CoolTimeDecrease:1.25},
     'pvp-abyss-group':{PvPDamageDefense:1.65,PvPCriticalResist:1.3,AbnormalResistance:1.4,CoolTimeDecrease:1.2,HPMax:1.35}
   }[ctx]||{};
   for(const [name,scale] of Object.entries(pvpStatScale))stats[name]=(stats[name]||0)*scale;
@@ -271,7 +271,7 @@ function recommendedStigmas(){
      // A simple personal-DPS proxy must not displace a manually researched
      // healing, tanking, CC or group-support Stigma set.
      (!appIsPvpContext(a.context)&&RoleBuildGoals.info(state.class,a.pveObjective))||
-     (state.class==='templar'&&a.context==='party'))return baseline;
+     (state.class==='templar'&&(a.context==='party'||appIsPvpContext(a.context))))return baseline;
   // Public Global PvP loadouts are candidates, not verified top-ranked builds.
   const observed=appIsPvpContext(a.context)&&typeof PVP_OBSERVATIONS!=='undefined'
     ?PVP_OBSERVATIONS.filter(row=>row.classId===state.class).map(row=>row.stigmas):[];
@@ -1139,7 +1139,7 @@ function recommendedSpecPicks(name,eff){const spec=SPECS[state.class]?.[name];if
       eff>=(id<=3?8:id===4?12:16)).slice(0,specialtySlots(eff));let key=eff>=20?'20':eff>=16?'16':eff>=12?'12':eff>=8?'8':null;if(!key)return [];
   const contextual=typeof adviceSpecialtyChoices==='function'?adviceSpecialtyChoices(state.class,account().context,name,eff,spec.options):null;
   if(contextual)return contextual;
-  let picks=spec.picks[key]||[];if(state.class==='templar'&&appIsPvpContext(account().context)&&name==='Poach'&&eff>=12)picks=eff>=20?[2,4,3]:[2,4];if(state.class==='templar'&&appIsPvpContext(account().context)&&name==='Defiance'&&eff>=12)picks=eff>=20?[1,3,5]:eff>=16?[1,3]:[1,3];return picks}
+  let picks=spec.picks[key]||[];return picks}
 function specPicks(name,eff){
   const spec=SPECS[state.class]?.[name],manual=account().customSpecialties?.[name];
   if(!spec||!Array.isArray(manual))return recommendedSpecPicks(name,eff);
@@ -1510,8 +1510,9 @@ function renderRotation(m){
   $('macro-rank-summary').textContent=`${roleInstructions?'Selected class role: '+roleInstructions+' ':''}Macro skill levels: ${macroRanks.join(' · ')}. ${cooldownSummary.length?'Global base cooldowns: '+cooldownSummary.join(' · ')+'. ':''}${effectsSummary.length?'Your selected cooldown interactions: '+effectsSummary.join(' · ')+'. ':''}Conditional resets and chances are not guaranteed. Cast, animation and macro timing still require valid Global or patch-compatible measurements.`;
   $('rotation-opener-title').textContent=appIsPvpContext(a.context)?'PvP engage':{party:'Group opener',solo:'Solo opener'}[a.context];
   const manualNow=hotbar.flatMap(([skills])=>skills),buffNow=hotbar.filter(([, ,tone])=>tone==='buff').flatMap(([skills])=>skills),healNow=hotbar.filter(([, ,tone])=>tone==='heal').flatMap(([skills])=>skills);
-  const opener=levelingMode?[buffNow.length?`Use ${buffNow.slice(0,2).join(' and ')} before the pull when ready.`:'Approach a manageable target and watch its first attack.',`Hold ${weaveKey} (${p.weave}) with ${macroKey} to cycle ${displayedMacroSteps.join(' then ')||'your unlocked damage key'} while safe.`,healNow.length?`Keep ${healNow.slice(0,2).join(' and ')} available for recovery.`:manualNow.length?`Use ${manualNow.slice(0,2).join(' and ')} manually when their timing helps.`:'Add manual skills to 1–8 as they unlock.']:appIsPvpContext(a.context)?['Approach with cover and keep your escape or control break available.','Open with a manual control or gap close after the opponent commits.','Use the damage macro only while your target is in range and you can safely finish the cast.']:p.opener.map(displayKeyCopy);
-  const loop=levelingMode?[`Keep ${p.weave} and the unlocked Macro cycling during safe damage.`,healNow.length?'Release Macro to heal; restart it only when health is stable.':'Release Macro for enemy mechanics, movement, or a charge window.',level>=16?'Use Defiance on Space when control or a dangerous hit calls for it.':'Keep the manual keys visible as new powers unlock.']:appIsPvpContext(a.context)?['Use manual control, defensive Stigmas and Defiance (Space) around enemy burst.','Weave your safe damage skills when the target is in range; stop the macro during a chase or disengage.','Keep a mobility or peel skill ready instead of spending every cooldown for damage.']:p.loop.map(displayKeyCopy);
+  const templarPvp=state.class==='templar'&&appIsPvpContext(a.context);
+  const opener=levelingMode?[buffNow.length?`Use ${buffNow.slice(0,2).join(' and ')} before the pull when ready.`:'Approach a manageable target and watch its first attack.',`Hold ${weaveKey} (${p.weave}) with ${macroKey} to cycle ${displayedMacroSteps.join(' then ')||'your unlocked damage key'} while safe.`,healNow.length?`Keep ${healNow.slice(0,2).join(' and ')} available for recovery.`:manualNow.length?`Use ${manualNow.slice(0,2).join(' and ')} manually when their timing helps.`:'Add manual skills to 1–8 as they unlock.']:appIsPvpContext(a.context)?(templarPvp?p.opener.map(displayKeyCopy):['Approach with cover and keep your escape or control break available.','Open with a manual control or gap close after the opponent commits.','Use the damage macro only while your target is in range and you can safely finish the cast.']):p.opener.map(displayKeyCopy);
+  const loop=levelingMode?[`Keep ${p.weave} and the unlocked Macro cycling during safe damage.`,healNow.length?'Release Macro to heal; restart it only when health is stable.':'Release Macro for enemy mechanics, movement, or a charge window.',level>=16?'Use Defiance on Space when control or a dangerous hit calls for it.':'Keep the manual keys visible as new powers unlock.']:appIsPvpContext(a.context)?(templarPvp?p.loop.map(displayKeyCopy):['Use manual control, defensive Stigmas and Defiance (Space) around enemy burst.','Weave your safe damage skills when the target is in range; stop the macro during a chase or disengage.','Keep a mobility or peel skill ready instead of spending every cooldown for damage.']):p.loop.map(displayKeyCopy);
   $('rotation-opener').innerHTML=numbered(opener);$('rotation-loop').innerHTML=numbered(loop);
   $('macro-bind').value=macroKey;$('weave-basic-key').textContent=weaveKey;$('weave-macro-key').textContent=macroKey;
   $('weave-guide').textContent=appIsPvpContext(a.context)?`Tap ${weaveKey} + ${macroKey} only during safe pressure windows. Release the macro to move, peel, or answer an opponent's burst; manual control takes priority.`:`Hold ${weaveKey} (${p.weave}) with ${macroKey} (the in-game Macro bind) as your default safe-damage state. Press manual keys over the held loop; they take priority.`;
