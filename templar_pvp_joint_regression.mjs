@@ -48,6 +48,10 @@ assert(score({...state,boardStats:{PvPAmplifyDamage:250,AbnormalAccuracy:250}})>
  'Offensive PvP board nodes must contribute to the score');
 assert(score({...state,boardStats:{PvPDecreaseDamage:250,AbnormalResistance:250}})>baseline,
  'Survival/CC-resist nodes must contribute to the score');
+assert(score({...state,gearStats:{FixingDamage:200,Critical:200,AmplifyAllDamage:100}})>baseline,
+ 'Recorded Attack/Critical/Damage Boost equipment must affect burst scoring');
+assert(score({...state,gearStats:{Defense:500,DecreaseDamage:200}})>baseline,
+ 'Recorded Defense and generic tolerance equipment must affect survival scoring');
 
 const mc=rank=>rank<=4?1:rank<=7?2:4;
 const sc=rank=>rank<=5?1:rank<=10?2:rank<=15?4:8;
