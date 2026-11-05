@@ -366,43 +366,69 @@ function progressionRotationProfile(base,cls,mode,effectiveLevel,equippedStigmas
  }else if(cls==='templar'){
   if(isPvpContext(mode)){
    const group=mode==='pvp-abyss-group';
+   const soloBurst=mode==='pvp-abyss-solo' &&
+     equippedStigmas.includes('Grapple') && equippedStigmas.includes('Executing Blade');
+   // PvP: held RMB is safe repeatable melee pressure, never a chase, charge,
+   // pull, stun or defensive cooldown. Q is an intentionally pressed stack.
    p.stacks=[
     {key:'E',title:'Safe melee pressure',skills:['Judgment','Warding Strike','Pummel']},
-    {key:'Q',title:'Manual CC follow-ups',skills:['Debilitating Smash','Annihilate'],manual:true}
+    {key:'Q',title:soloBurst?'MANUAL Grapple → Executing Blade → Punishment':'Manual CC follow-ups',
+     skills:soloBurst?['Grapple','Executing Blade','Punishment']:['Debilitating Smash','Annihilate'],
+     manual:true}
    ];
    p.macro=['E'];
    p.stigmas=[...equippedStigmas];
+   // Grapple and Executing Blade live in the manual Q stack when equipped.
+   // Keep the other Stigmas visible on 1–8; reserve direct Punishment on 8
+   // for a deliberately held charge rather than an automatically tapped cast.
+   const standaloneStigmas=equippedStigmas.filter(name=>
+     !soloBurst||!['Grapple','Executing Blade'].includes(name));
    p.hotbar=[
     [['Poach'],'20m pull / Root; manually bait enemy control break','movement'],
-    [['Shield Rush'],'Manual gap close, preserve a second engage','movement'],
-    ...equippedStigmas.map(name=>[[name],
-     name==='Doom Shield'?'20m rush / knockdown; wait for immunity':
-     name==='Grapple'?'20m pull / Root, save for next enemy escape':
-     name==='Shield of Protection'?'Time guaranteed Block against burst':
-     name==='Battlefield Banner'?'Use attack buff during a confirmed kill window':
-     name==='Comrade in Arms'?'Protect focused ally, manage redirected damage':
+    [['Shield Rush'],'Manual gap close; retain another approach','movement'],
+    ...standaloneStigmas.map(name=>[[name],
+     name==='Doom Shield'?'20m rush / knockdown; save until needed':
+     name==='Grapple'?'20m pull / Root, reserve for chase':
+     name==='Shield of Protection'?'Time guaranteed Block against ranged burst':
+     name==='Battlefield Banner'?'Attack buff after a confirmed control window':
+     name==='Executing Blade'?'4m damage / -30% Defense for 5s':
+     name==='Comrade in Arms'?'Protect focused ally, manage damage redirect':
      name==="Empyrean Lord's Punishment"?'Area Stun after enemy Defiance':
      'Manual control or defensive Stigma',
      /Shield|Skin|Comrade|Armor/.test(name)?'defense':'utility']),
-    [['Punishment'],'Manual mobile / fast Punishment; charge only if safe','attack'],
-    [['Shield Smite'],'Manual Stun outside enemy immunity','attack']
+    [['Debilitating Smash'],'Manual -60% incoming-heal debuff on contact','attack'],
+    [['Shield Smite'],'Manual Stun outside enemy immunity','attack'],
+    [['Annihilate'],'Manual knockdown follow-up during incapacitation','attack'],
+    [['Punishment'],soloBurst?
+      'Direct Punishment key for deliberate full charge; Q also offers quick-tap Executor':
+      'Manual fast / mobile Punishment; charge only if safe','attack']
    ].slice(0,8);
    p.rule=group
-    ?'Group Abyss: hook a backline target and peel for allies. Do not automate crowd control or movement.'
-    :'Solo Abyss: chain gap closers, bait enemy Defiance, land anti-heal and burst. RMB only safe melee attacks.';
-   p.summary='Closing the distance and baiting Defiance are separate decisions. Preserve a chase tool and a defensive escape.';
+    ?'Group Abyss: hook a backliner and peel for allies. Never automate crowd control or movement.'
+    :soloBurst
+     ?'Solo Abyss: manually TAP Q for Grapple → Executing Blade → Punishment, checking 4m range and enemy immunity. Hold RMB ONLY for E damage; do not auto-spam Q.'
+     :'Solo Abyss: manually chain chase tools, anti-heal and control. RMB runs only safe melee damage.';
+   p.summary=soloBurst?
+     'Q is a manual priority stack, NOT a guaranteed three-cast script: Grapple is 20m/90s, Executing Blade is 4m/45s (30s at Stigma Lv5), Punishment is a 20m charge skill. The player must confirm range, cooldown and target control.':
+     'Closing the gap and baiting Defiance are distinct decisions. Preserve a chase tool and a defensive escape.';
    p.opener=[
-    'Approach with cover and Defiance (Space) ready; avoid chasing into groups.',
-    'Use Poach or Shield Rush manually; reserve Grapple or Doom Shield for the opponent\'s escape.',
-    group?'Coordinate Grapple and area Stun with allies; time Comrade in Arms for focused damage.':'Wait out enemy Defiance immunity, apply Debilitating Smash anti-heal, then Stun / Knockdown and Battlefield Banner burst if equipped.'
+    'Approach with cover and Defiance (Space) ready; do not chase into a hostile group.',
+    'Use Poach or Shield Rush manually and wait out the opponent\'s Defiance immunity; keep Doom Shield for a second engage.',
+    group?'Coordinate Grapple and area Stun; protect an ally with Comrade in Arms if equipped.':
+     soloBurst?'When Grapple is ready: press manual Q to pull at 20m; confirm the target is inside 4m before Executing Blade, then tap Punishment for Executor (or direct-charge it on 8 when safe). Apply Debilitating Smash anti-heal when in melee range.':
+     'Apply Debilitating Smash anti-heal, then control and burst once enemy immunity ends.'
    ];
    p.loop=[
-    'Hold Vicious Strike (LMB) plus E safe pressure (RMB) only while in melee range.',
-    'Press Q manually for Debilitating Smash / Annihilate when control will connect.',
-    'Keep Defiance, a defensive Stigma and a gap closer for the enemy counterattack.'
+    'Hold Vicious Strike (LMB) plus E safe pressure (RMB) only while connected in melee range.',
+    soloBurst?'Use Q deliberately for a short catch-and-finish attempt; after Grapple is spent, Executing Blade can recur sooner. Keep Punishment on its direct hotkey for controlled charging.':'Use manual Q only when Debilitating Smash / Annihilate can connect.',
+    'Keep Defiance, mobile Block and an unused chase tool for the counter-burst or enemy escape.'
    ];
-   p.hold='Hold LMB + RMB only while connected. Poach, Shield Rush, Grapple, Doom Shield and Defiance stay reactive.';
-   p.hotbarNote='Space remains Defiance. Q is manual, not an RMB macro step.';
+   p.hold=soloBurst
+    ?'Hold LMB + RMB only in melee. Q is a MANUAL conditional burst stack, not a repeat macro; 8 is direct Punishment.'
+    :'Hold LMB + RMB only in melee. All pulls and defenses are reactive.';
+   p.hotbarNote=soloBurst
+    ?'Q tries the first ready skill, not a guaranteed 1-2-3: Grapple requires a sensible 20m target, Executing Blade needs 4m, and Punishment may tap rather than charge. Direct Punishment on 8 is for charging. If the client cannot bind Punishment twice, remove it from Q and use Q for Grapple/Blade, then 8 for Punishment.'
+    :'Defiance is on Space. Q is manual, never a held RMB step.';
   }else{
    p.rule=effectiveLevel('Judgment')>=16&&specialtyEnabled('Judgment',5)
     ?'Judgment cooldown-removal Specialty is selected: prioritize it in the trigger stack; keep charged Punishment manual.'
