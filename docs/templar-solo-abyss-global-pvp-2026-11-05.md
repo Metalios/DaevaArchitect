@@ -1,52 +1,72 @@
-# AION 2 Global Templar PvP — November 5, 2026
+# AION 2 Global Templar Solo Abyss PvP — 5 November 2026
 
-## Purpose and problem
+## Research correction: Executing Blade beats the default Banner for the catch-and-kill profile
 
-Previous solo Abyss recommendations used Doom Shield, Grapple, Shield of Protection, Second Skin: four defensively slanted Stigmas with no offensive burst buff. The core skill priorities placed Judgment and Punishment before ranged-access Shield Rush and anti-heal Debilitating Smash. PvP Daevanion breakpoint targets were empty, and an uncalibrated generic scorer could replace the intentional loadout.
+The original Solo Abyss draft used **Doom Shield / Grapple / Shield of Protection / Battlefield Banner**. That build had engagement and defense but omitted the short-range Defense shred needed to convert Grapple into a kill. A November 2 comparison of 394 public Global Templar macros found player **riderastolfo** using **Grapple → Executing Blade → Punishment** once in a larger macro cycle; seven other public builds copied that layout. Community adoption is evidence of use, not measured win-rate superiority.
 
-## Three distinct four-Stigma builds
+The default Solo Abyss (ranged-heavy) preset is now:
 
-| Context | Stigmas | Reason |
+**Doom Shield / Grapple / Executing Blade / Shield of Protection.**
+
+The fourth slot is matchup-dependent:
+- **Executing Blade** (default): 4m range, 45s cooldown reduced to 30s at Stigma Lv5. Applies **-30% Defense for 5s**, Lv10 adds **Exposed for 5s**, Lv15 guarantees a Critical Hit, Lv20 adds damage against Impact-status targets. This gives a more frequent attack/debuff window than Battlefield Banner.
+- **Battlefield Banner** (swap): Attack scaling with Defense, valuable for maximizing one planned damage window. Client and guide versions disagree on duration; validate actual Global client before promising a measured gain.
+- **Second Skin** (survival swap): manual PvP tolerance if getting focused, at the cost of offensive Stigma damage.
+- **Shield of Protection** (retain default): guaranteed Block during ranged pressure, two uses at Lv5 and mobile casting at Lv10.
+
+### Context profiles remain distinct
+
+| Venue | Recommended equipped Stigmas | Role |
 | --- | --- | --- |
-| Solo Abyss, ranged-heavy | Doom Shield, Grapple, Shield of Protection, Battlefield Banner | Multiple re-engages, block, and a dedicated kill window |
-| Arena 1v1 | Doom Shield, Shield of Protection, Battlefield Banner, Nezekan's Shield | Counterattack from survival; swap Nezekan's Shield for Grapple against kiting |
-| Group Abyss | Grapple, Empyrean Lord's Punishment, Comrade in Arms, Doom Shield | Pull a backliner, area CC, protect an ally and re-engage |
+| Solo Abyss | Doom Shield, Grapple, Executing Blade, Shield of Protection | Re-engage, strip Defense, finish, survive |
+| Arena 1v1 | Doom Shield, Shield of Protection, Battlefield Banner, Nezekan's Shield | Bait burst and counterattack; swap to Grapple against persistent kiting |
+| Group Abyss | Grapple, Empyrean Lord's Punishment, Comrade in Arms, Doom Shield | Hook targets, area crowd control, protect allies |
 
-The solo choice **trades Second Skin** (15% PvP Damage Tolerance for 20 seconds, in bundled Global tooltip data) **for Battlefield Banner** (20-second attack scaling with Defense). A defensive alternative may be better when undergeared or outnumbered. This recommendation is not proof of highest win rate.
+Global equips **four**, not five, Stigmas. This is an evidence-grounded default, not universally proven best-in-slot.
 
-## Solo skill priority, effective levels, Specialties
+## How the catch-and-finish sequence works
 
-Mastery purchases and effective levels are separate: earned Mastery points buy up to rank 10; earned / acquired Daevanion board tiles and recorded equipment can raise effective level to 12/16/20.
+- **Grapple**: 20m target selection, pulls up to four enemies from a 7m area in front of the caster, 3s Root; **90s base cooldown**, Lv5 adds a 50% Stun chance, Lv10 a 20% Max HP Protective Shield, Lv15 reduces its cooldown 30s.
+- **Executing Blade**: follows only if enemy was pulled within **4m**; its -30% Defense lasts 5s. At Lv10 Exposed improves the chance of landing follow-up attacks (additional exact Evasion/Block claims are community-reported, not independently verified from Global tooltip).
+- **Punishment**: **20m charge skill, 30s cooldown**, grants Executor for 20s: **+200 Accuracy, +20% PvE Damage Boost and +10% PvP Damage Boost**. The PvP community often taps for Executor rather than charging because targets escape or interrupt. The fully charged version is a manual situational option.
 
-- Poach: effective 8 option 2 (-20% target Status Effect Resist); 12 options 2+4 (10% Max HP shield); 16 options 2+5 (50% Stun chance); 20 options 2+4+5.
-- Shield Rush: effective 8 option 2 (+10m range); 12 options 2+4 (-10s cooldown); 16 options 2+5 (+25% Stun chance); 20 options 2+4+5.
-- Debilitating Smash: 8 option 3 (-60% Incoming Heal); 12 options 2+3 (+3s debuff); 20 options 2+3+4 (ignore Block/Evasion and Multi-Hit).
-- Defiance: 8 option 1 (Capture follow-up); 12 options 1+4 (+2s Tenacity); 16 options 1+5 (+25% PvP Damage Tolerance in Tenacity); 20 options 1+4+5.
-- Shield Smite: 8 option 1 (+1s Stun), 12 options 1+4 (-2s cooldown). Annihilate: 8 option 2 (+20% Knockdown chance), 12 options 2+4 (-10s cooldown).
-- Punishment: 8 option 3 (+30% Skill Speed), 12 options 3+4 (mobile). Manual charge when the target cannot escape.
+**Important:** Q is a **manual, priority-ordered three-skill stack**, not a promise of deterministic sequencing. In-game stacks select the highest-priority ready skill; a 4m range gate, CC immunity, cooldown and skill-queue timing can interrupt or skip the intended order. **Do not put Q in the held RMB macro**: that would auto-spend a 90-second Grapple or release Punishment at minimum charge. The actual controlled PvP sequence may be `Q → Q → Q` while the target remains in range, using 8 for a deliberate charged Punishment. If the client disallows two Punishment bindings, use only Grapple / Executing Blade in Q and Punishment on 8.
 
-The progression priority is Poach, Shield Rush, Debilitating Smash, Defiance, Shield Smite, Judgment, Punishment, Annihilate; then Pummel and survivability passives. Actual rank allocations must respect entered budgets.
+The held safe-uptime macro remains **LMB Vicious Strike + RMB E (Judgment → Warding Strike → Pummel)**; no movement or control in the automatic stack. Manual number keys also expose Poach, Shield Rush, Doom Shield, Shield of Protection, Debilitating Smash, Shield Smite and Annihilate. Defiance (Space) is reactive. Keep **Debilitating Smash's -60% Incoming Heal** debuff active when in melee range. Wait out enemy Defiance immunity before trying to land Stun / Knockdown.
 
-## Stigma Shards
+## Points and skill milestones
 
-Fresh 45 starts with **30 points** after third Ascension. A useful legal baseline is Shield of Protection 10 (15 points), Doom Shield 5 (5), Grapple 5 (5), Battlefield Banner 5 (5), total **30**. At higher budgets examine Grapple 10 (20% Max HP shield), Doom Shield 10 (+200 Block), then damage and other breakpoint upgrades. The existing Stigma full-budget optimizer can choose another legal split; the user may override it. Do not claim that its weights represent observed win rates.
+### Stigma Shards
 
-## Azphel and the four skill boards
+A fresh Global level 45 after the required third Ascension begins with **30 Shards**. An example legal 30-point baseline is:
 
-Azphel's earned Battle Crystals are an **independent budget**; the route must be connected and respect already owned tiles. Solo Abyss weights now emphasize Abnormal Accuracy and PvP Accuracy so stun and damage can land, plus offensive PvP damage and defensive PvP Tolerance / Resist. On the four regular boards the Templar's Poach / Shield Rush / Defiance / Debilitating Smash / Shield Smite / Annihilate / Judgment effective-level milestones are live again. Blue recommended vs gold obtained routes remain separate.
+| Skill | Stigma level | Total cost |
+| --- | ---: | ---: |
+| Shield of Protection | 10 (mobile block) | 15 |
+| Doom Shield | 5 (resets Annihilate) | 5 |
+| Grapple | 5 (Stun chance) | 5 |
+| Executing Blade | 5 (-15s cooldown) | 5 |
+| **Total** | | **30** |
 
-## Rotation / macro (manual decision-making is deliberate)
+When additional points are available, evaluate **Executing Blade 10 (Exposed)**, **Grapple 10 (HP shield)** and **Doom Shield 10 (Block)**. The deterministic planning milestones include Executing Blade 10 and 15, but the joint engine may allocate a different legal rank split if its comparative proxy scores it higher. Never claim the proxy is a measured PvP win-rate optimizer.
 
-1. Approach with cover. Manual Poach or Shield Rush; retain Doom Shield or Grapple as another re-engage after the enemy uses an escape. Be careful around enemy Defiance immunity.
-2. Use Debilitating Smash for the -60% Incoming Heal debuff and manual Shield Smite / Grapple control only when it can land. Use Battlefield Banner for the kill window.
-3. Only while in melee range hold **LMB Vicious Strike + RMB macro E** for safe Judgment / Warding Strike / Pummel. **Q manually** for Debilitating Smash / Annihilate. Manual hotbar has movement, equipped Stigmas, Punishment and Shield Smite. **Defiance (Space)** is reactive.
-4. Do not put pulls, CC, Defiance, Shield of Protection or Punishment charges into the held macro. Its attempts are not guaranteed to follow strict timing/order; measured animation-lock data is still absent.
+### Mastery / Daevanian effective-level goals
 
-## Sources and uncertainty
+Purchasable Mastery caps at rank 10 per skill; effective skill 12/16/20 requires purchased connected boards or owned gear bonuses. Solo Abyss targets:
+- Poach effective 8 option 2 (-20% enemy Status Effect Resist), 12 add option 4 (10% Max HP shield), 16 select option 5 (Stun chance).
+- Shield Rush 8 option 2 (+10m range), 12 option 4 (-10s cooldown), 16 option 5 (+25% Stun chance).
+- Debilitating Smash 8 option 3 (-60% Incoming Heal), 12 option 2 (+3s Debilitate) to keep anti-heal longer.
+- Defiance 8 option 1 (Capture chain), 16 option 5 (+25% PvP Damage Tolerance during Tenacity).
+- Shield Smite 8 option 1 (+1s Stun), 12 option 4 (-2s CD). Annihilate 8 option 2 (+20% Knockdown chance), 12 option 4 (-10s CD).
+- Judgment 16 option 5 (cooldown removal), Punishment 8 option 3 (+30% skill speed), 12 option 4 (mobile).
 
-- [AION2 Vault Templar PvP examples](https://aion2vault.com/builds/templar/pvp/), October 2026: NoBS 1v1 / Xia 5v5 selections are examples, not experimentally verified optimal play.
-- [AION2.gg Templar solo PvP](https://aion2.gg/builds/templar/pvp-solo), Global version 2.0.9.0: useful public build cross-check, not a win-rate analysis.
-- [AION2 Builds Templar PvP armory sampling](https://aion2builds.com/builds/templar-pvp/), November 2026: equipment sample is mixed and not a Templar PvP leaderboard.
-- Repo's `specialties.json`, `stigmas.json`, `classes_data.json`, `azphel_data.json` define accepted Global names, thresholds, effects and board connections.
+Skill target ordering is a policy based on Global effect data and likely ranged encounters, not a per-opponent calibrated optimum. The four regular boards optimize connected +skill node routing; **Azphel** has a separate Battle Crystal budget and PvP accuracy/status/defense weighting. Preserving already obtained tiles remains mandatory.
 
-PvP action/animation locks, enemy resistance, exact skill uptime, ranked matchup results and win rates remain unmeasured. This is a targeted, testable mechanical policy rather than a mathematically proven best build.
+## Research provenance and limits
+
+- [Global skill data: Executing Blade](https://aion2.gaming.tools/skills/12410000), [Grapple](https://aion2.gaming.tools/skills/12220000) and [Punishment](https://aion2.gaming.tools/skills/12090000), Global 2.0.9.0 snapshot (Oct 29).
+- [AION2 Vault Templar macro analysis](https://aion2vault.com/builds/templar/macro/), updated Nov 2, describes riderastolfo's three-skill sequence and its frequency in a public Global player build sample. A macro step in that source represents a hotkey or skill-stack chain; it does **not** certify frame-perfect activation.
+- [AION2 Vault Templar PvP sample](https://aion2vault.com/builds/templar/pvp/) (Oct 18), includes contrasting defensive and group control presets from NoBS and Xia.
+- Repository `specialties.json`, `stigmas.json`, `classes_data.json` and `azphel_data.json` provide the planner's Global tooltip, costs and topology.
+
+Not measured: PvP combat hit chance, actual Root / Stun uptime, animation-cancel opportunities, connection/latency skips, effective DPS against moving players or matchup win rates. Those require same-patch Global combat testing.
