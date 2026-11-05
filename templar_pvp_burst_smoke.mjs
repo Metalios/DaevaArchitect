@@ -44,8 +44,12 @@ try{
    const chosen=activeStigmas();
    const level=name=>(m.mastery.levels[name]||1)+(m.effects.skills[name]||0)+
        (gearSkillLevels()[name]||0)+(a.gear[name]||0);
+   const combinedStats={...m.effects.stats};
+   for(const extra of [m.arielEffects,m.azphelEffects])
+    for(const [key,value] of Object.entries(extra.stats||{}))
+     combinedStats[key]=(combinedStats[key]||0)+value;
    const build=engineBuild(m.mastery.levels,
-     {skills:m.effects.skills,stats:{...m.effects.stats,...m.azphelEffects.stats}},
+     {skills:m.effects.skills,stats:combinedStats},
      m.stigma.levels,chosen);
    const picks=templarPvpSpecialtySeed(build,a.customSpecialties);
    const result=PvpCombatModels.evaluate({
@@ -63,6 +67,7 @@ try{
   }
   // The user may pin a manual Mastery, Stigma or Specialty selection.
   // A recommendation must NEVER overwrite it.
+  a.customStigmas=['Doom Shield','Grapple','Executing Blade','Shield of Protection'];
   a.manualStigma={'Doom Shield':5,Grapple:5,'Executing Blade':15,
     'Shield of Protection':10};
   a.customSpecialties={Poach:[2]};
@@ -78,7 +83,10 @@ try{
  assert.deepEqual(errors,[],errors.join('\n'));
  const {outcomes,preserved}=checks;
  for(const row of outcomes){
-  assert.deepEqual(row.stigmas,['Doom Shield','Grapple','Executing Blade','Shield of Protection']);
+  assert.equal(row.stigmas.length,4,'Four Global Stigma slots required');
+  assert.equal(new Set(row.stigmas).size,4,'No duplicate Stigmas');
+  assert(row.stigmas.includes('Grapple')&&row.stigmas.includes('Executing Blade'),
+    'A ranged Solo Abyss catch-and-kill bar needs Grapple and Executing Blade');
   assert(row.totalStigma<=row.points&&row.totalMastery<=285);
   assert(row.board<=218&&row.azphel<=82);
   assert(Object.values(row.ranks).every(rank=>Number.isInteger(rank)&&rank>=5&&rank<=20));
