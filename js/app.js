@@ -635,6 +635,10 @@ function engineBuild(masteryLevels,boardEffects,stigmaLevels,equipped){
     mastery:masteryLevels,boardSkills:boardEffects.skills,
     boardStats:boardEffects.stats,gearSkills:equippedRanks,
     gearStats,
+    // Arcana main stats are multiplicative divine modifiers, not generic
+    // flat Attack or Crit values. Keep their contribution separate.
+    arcanaDivine:arcanaDivineTotals(gearEquipment(),
+      (slot,item)=>gearIsActive(gearSlot(slot),item)).stats,
     stigma:stigmaLevels,equippedStigmas:equipped,
     context:account().context,pvpOpponent:account().pvpOpponent||'all',
     availableSkills:Object.entries(SKILL_UNLOCKS[state.class]||{})
