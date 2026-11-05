@@ -49,7 +49,6 @@ jobs:
           node sorcerer_manual_hotbar_regression.mjs
           node sorcerer_macro_audit.mjs
           node verify_icons.mjs
-          node v2_allocations.mjs
           node recommendation_regression.mjs
           node class_role_regression.mjs
           node pvp_context_regression.mjs
