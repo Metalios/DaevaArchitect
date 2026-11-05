@@ -30,8 +30,8 @@ try{
   a.currentRanks={};
   a.gear={Judgment:2};
   a.equipment={
-   weapon:{name:'Recorded Longsword',grade:'Unique',skillBonuses:[{skill:'Judgment',levels:1}]},
-   ring1:{name:'Recorded Ring',grade:'Unique',skillBonuses:[{skill:'Judgment',levels:1}]},
+   weapon:{name:'Recorded Longsword',grade:'Unique',skillBonuses:[{skill:'Judgment',levels:3}]},
+   ring1:{name:'Recorded Ring',grade:'Unique',skillBonuses:[{skill:'Judgment',levels:2}]},
    top:{name:'Recorded Chest',grade:'Unique',skillBonuses:[{skill:'Fury',levels:1}],
      statNotes:'Attack +15; PvP Damage Boost 2%'},
    chalice:{name:'Chalice of Vigor',arcanaSet:'Vigor',grade:'Unique',
@@ -123,8 +123,8 @@ try{
   assert(row.stigmas.includes('Grapple')&&row.stigmas.includes('Executing Blade'),
     'A ranged Solo Abyss catch-and-kill bar needs Grapple and Executing Blade');
   assert(row.totalStigma<=row.points&&row.totalMastery<=285);
-  assert.equal(row.judgmentGear,6,
-    'Manual Judgment +2 and four +1 item/Arcana rolls must add');
+  assert.equal(row.judgmentGear,9,
+    'Manual Judgment +2, weapon +3, ring +2 and Arcana +1/+1 must add');
   assert.equal(row.furyGear,1,'Passive soulbind level must count');
   assert.equal(row.arcanaDivine.Time,20);
   assert.equal(row.arcanaDivine.Destiny,20);
