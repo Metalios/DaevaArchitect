@@ -37,11 +37,17 @@ const PvpCombatModels = (() => {
       burst:['Ruinous Blow','Overhead Slam'],contact:['Rush Strike','Leaping Slam','Ankle Slice'],
       control:['Ankle Slice','Leaping Slam','Aerial Snare'],mitigation:['Protection Armor','Survival Willpower'],
       recovery:['Blood Absorption'],escape:['Rush Strike'],team:['Crushing Wave']},
-    templar:{melee:true,pressure:['Judgment','Pummel','Punishment','Debilitating Smash'],
-      burst:['Judgment','Punishment','Annihilate','Shield Smite'],contact:['Poach','Shield Rush'],
-      control:['Poach','Shield Smite'],antiheal:['Debilitating Smash'],
-      mitigation:['Warding Strike','Block Pain','Survival Willpower'],
-      recovery:['Enhance Health','Warding Shield'],team:['Warding Strike','Guarding Seal'],escape:['Poach']},
+    templar:{melee:true,
+      pressure:['Judgment','Pummel','Punishment','Debilitating Smash',
+        'Punishing Benediction','Insulting Roar','Fury'],
+      burst:['Judgment','Punishment','Annihilate','Shield Smite',
+        'Punishing Benediction','Impact Hit'],
+      contact:['Poach','Shield Rush','Flash Rampage'],
+      control:['Poach','Shield Smite','Impact Hit'],antiheal:['Debilitating Smash'],
+      mitigation:['Warding Strike','Ironclad Defense','Guarding Seal',
+        'Block Pain','Survival Willpower'],
+      recovery:['Enhance Health','Warding Shield'],team:['Warding Strike','Guarding Seal'],
+      escape:['Poach','Defiance']},
     assassin:{melee:true,pressure:['Heart Gore','Quick Slice','Insignia Explosion','Shadowstrike'],
       burst:['Insignia Explosion','Heart Gore','Ambush'],contact:['Ambush','Shadowstrike','Infiltrate'],
       control:['Shadow Fall','Ambush'],mitigation:['Determination','Heightened Sixth Sense'],
@@ -154,17 +160,47 @@ const PvpCombatModels = (() => {
   // Verified tooltip options in specialties.json; each modifier requires the
   // effective rank unlock and the option to be actually selected.
   const OPTIONS = Object.freeze({
+    // Option IDs are from Global specialties.json. Every active Templar
+    // Specialty participates, but values are comparative role sensitivities,
+    // not fabricated DPS or percentages of guaranteed CC success.
     templar:{
-      Poach:{1:{contact:.65},2:{control:.6},4:{mitigation:.24},5:{control:.65}},
-      'Shield Rush':{2:{contact:1.05},4:{contact:.32},5:{control:.45}},
-      'Debilitating Smash':{2:{antiheal:.42},3:{antiheal:1.55},4:{burst:.35}},
-      Defiance:{1:{contact:.22,escape:.2},3:{recovery:.25},4:{mitigation:.3,escape:.28},5:{mitigation:.85}},
-      'Shield Smite':{1:{control:.5,burst:.14},3:{control:.2},4:{control:.25},5:{team:.25}},
-      Annihilate:{1:{burst:.4},2:{control:.46,burst:.2},4:{burst:.38}},
-      Judgment:{2:{burst:.25},3:{burst:.33},4:{burst:.4},5:{burst:.55}},
-      Punishment:{3:{burst:.48},4:{burst:.5,contact:.2},5:{burst:.72}},
-      Pummel:{3:{burst:.18},4:{burst:.23},5:{burst:.28}},
-      'Warding Strike':{1:{mitigation:.20},2:{mitigation:.35},4:{mitigation:.38},5:{mitigation:.35,team:.7}}
+      'Shield Smite':{
+        1:{control:.55},2:{recovery:.10},
+        3:{antiheal:.55,burst:.20},4:{burst:.22},5:{control:.25}},
+      Judgment:{
+        1:{recovery:.20},2:{burst:.35},3:{burst:.43},
+        4:{burst:.67},5:{burst:.95}},
+      'Vicious Strike':{
+        1:{pressure:.04},2:{recovery:.18},3:{burst:.20},
+        4:{mitigation:.25},5:{burst:.17}},
+      Pummel:{
+        1:{pressure:.05},2:{recovery:.20},3:{burst:.25},
+        4:{burst:.19},5:{burst:.24}},
+      'Warding Strike':{
+        1:{mitigation:.23},2:{mitigation:.30},3:{recovery:.32},
+        4:{mitigation:.40},5:{mitigation:.35,team:.70}},
+      Punishment:{
+        1:{recovery:.26},2:{pressure:.20},3:{burst:.52},
+        4:{burst:.32,contact:.32},5:{burst:1.00}},
+      Annihilate:{
+        1:{burst:.44},2:{control:.53,burst:.18},
+        3:{burst:.53},4:{burst:.42},5:{pressure:.15}},
+      'Debilitating Smash':{
+        1:{control:.30},2:{antiheal:.45},
+        3:{antiheal:1.70},4:{burst:.48},5:{mitigation:.10,burst:.19}},
+      Poach:{
+        1:{contact:.78},2:{control:.72},
+        3:{contact:.15},4:{mitigation:.40},5:{control:.42}},
+      'Flash Rampage':{
+        1:{recovery:.22},2:{pressure:.04},
+        3:{contact:.45},4:{burst:.29},5:{burst:.30}},
+      'Shield Rush':{
+        1:{contact:.07},2:{contact:1.1},3:{burst:.23},
+        4:{contact:.35},5:{control:.34}},
+      Defiance:{
+        1:{control:.23,escape:.30},2:{escape:.16},
+        3:{recovery:.32},4:{mitigation:.31,escape:.32},
+        5:{mitigation:.93,escape:.22}}
     },
     gladiator:{'Rush Strike':{2:{contact:.7},4:{contact:.5},5:{control:.45}},
       'Ankle Slice':{1:{control:.45},3:{contact:.75},4:{pressure:.35}},
@@ -325,32 +361,59 @@ const PvpCombatModels = (() => {
     // stats remain strongest, but recorded Attack, general damage boost,
     // Critical, Multi-Hit and armor are no longer ignored. Coefficients are
     // bounded comparative sensitivities, NOT invented damage formulas.
-    const power=1+cap(stat('PvPAmplifyDamage')/10000,0,.6)*1.6+
+    // Each recorded Arcana's fixed Empyrean Lord stat grants +0.1% per
+    // point to its paired derived stat. This is an independent multiplier:
+    // never mistakenly add 20 Destruction points as +20 flat Attack.
+    // The below sensitivities are NOT a measured game damage formula.
+    const divine=name=>cap(build.arcanaDivine?.[name],0,1000)*.001;
+    const power=(1+cap(stat('PvPAmplifyDamage')/10000,0,.6)*1.6+
       cap(stat('PvPAddDamage')/500,0,.5)+
       cap(stat('PvPAccuracy')/3000,0,.25)*.3+
       cap(stat('CombatSpeed')/10000,0,.6)*.45+
       cap(stat('AmplifyAllDamage')/10000,0,.6)*.65+
       cap(stat('FixingDamage')/3000,0,.6)*.35+
       cap((stat('Critical')+stat('PvPCritical'))/1600,0,.5)*.22+
-      cap(stat('AdditionalHitRate')/10000,0,.5)*.12;
-    const defense=1+cap(stat('PvPDecreaseDamage')/10000,0,.5)*1.25+
+      cap(stat('AdditionalHitRate')/10000,0,.5)*.12)*
+      (1+divine('Destruction'))*
+      (1+divine('Time')*.7)*
+      (1+divine('Death')*.4)*
+      (1+divine('Wisdom')*.2)*
+      (1+divine('Freedom')*.20)*
+      (1+divine('Illusion')*.20);
+    const defense=(1+cap(stat('PvPDecreaseDamage')/10000,0,.5)*1.25+
       cap(stat('PvPDamageDefense')/4000,0,.7)*.65+
       cap(stat('HPMax')/25000,0,.5)*.5+
       cap(stat('DecreaseDamage')/10000,0,.6)*.6+
       cap(stat('Defense')/7000,0,.6)*.25+
-      cap((stat('CriticalResist')+stat('PvPCriticalResist'))/1600,0,.5)*.16;
+      cap((stat('CriticalResist')+stat('PvPCriticalResist'))/1600,0,.5)*.16)*
+      (1+divine('Justice')*.6)*(1+divine('Life')*.6)*
+      (1+divine('Space')*.3)*(1+divine('Freedom')*.15);
     const cc=1+cap(stat('AbnormalAccuracy')/3000,0,.7)*.45;
-    const resist=1+cap(stat('AbnormalResistance')/3000,0,.7)*.45;
-    const move=1+cap(stat('MoveSpeed')/10000,0,.5);
+    const resist=1+cap(stat('AbnormalResistance')/3000,0,.7)*.45+
+      divine('Destiny')*.12;
+    const move=1+cap(stat('MoveSpeed')/10000,0,.5)+divine('Space');
     const chosen=opponent||build.pvpOpponent||'all';
     const weights=weightsFor(classId,context);
     const rows=opponents(chosen).map(name=>{
       const enemy=OPPONENTS[name];
       const needsEngage=kit.melee&&enemy.ranged;
       // Contact is a normalized matchup index, not measured target uptime.
-      const contact=cap((needsEngage?.44:.85)+m.contact*(needsEngage?.115:.045)+
+      // Once the generic contact index saturates, Shield Rush's verified
+      // +10m range Specialty must still matter against kiting opponents.
+      // This 6% comparative access sensitivity is NOT a measured hit chance.
+      const extendedReach=classId==='templar'&&needsEngage&&
+        selectedOptions(classId,build,'Shield Rush',selectedSpecs).includes(2)?1.06:1;
+      const contactPotential=(needsEngage?.44:.85)+m.contact*(needsEngage?.115:.045)+
         m.control*.045+(!kit.melee?m.escape*.035:0)-
-        (needsEngage?enemy.control*.065:0),.35,1.1)*move;
+        (needsEngage?enemy.control*.065:0);
+      // A hard cap made every Grapple/Shield Rush investment identical in
+      // difficult ranged matchups. Use smooth diminishing returns instead,
+      // retaining the unavoidable difficulty of getting to a kiting target.
+      // This is an uncalibrated contact INDEX, not an uptime prediction.
+      const accessible=classId==='templar'&&needsEngage
+        ?.35+.70*(1-Math.exp(-Math.max(0,contactPotential-.25)/1.1))
+        :cap(contactPotential,.35,1.1);
+      const contact=accessible*move*extendedReach;
       const control=m.control*cc/(1+enemy.defense*.08);
       const offense=m.pressure*power*(kit.melee?contact:.9+contact*.1);
       const healPressure=1+Math.min(.4,m.antiheal*.12*enemy.recovery);

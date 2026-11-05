@@ -138,18 +138,19 @@ const JointProgression = (()=>{
   function optimizeCombined({classId,context,objective,
       mastery,stigma,masteryNames,stigmaNames,masteryBudget,stigmaBudget,
       masteryCost,stigmaCost,masteryCap,scoreBuild,
-      pinMastery=false,pinStigma=false,stigmaFloors={}}){
+      pinMastery=false,pinStigma=false,stigmaFloors={},
+      rounds=2,maxMasteryEvaluations=500,maxStigmaEvaluations=350}){
     const mNames=masteryNames.filter(Boolean),sNames=stigmaNames.filter(Boolean);
     const initialM={...mastery.levels},initialS={...stigma.levels};
     let m={...mastery,levels:initialM},s={...stigma,levels:initialS};
     const trace=[];
     const score=(mr,sr)=>scoreBuild(mr,sr);
     const before=score(initialM,initialS);
-    for(let i=0;i<2;i++){
+    for(let i=0;i<rounds;i++){
       if(!pinMastery){
         const result=improveRanks({names:mNames,initial:m.levels,
           budget:masteryBudget,cost:masteryCost,cap:masteryCap,
-          score:r=>score(r,s.levels),minimum:1,maxEvaluations:500,
+          score:r=>score(r,s.levels),minimum:1,maxEvaluations:maxMasteryEvaluations,
           maxPasses:6,breakpoints:[5,8,10]});
         m={...m,levels:result.levels,spent:result.spent,
           unspent:result.unspent,next:result.next};
@@ -159,7 +160,7 @@ const JointProgression = (()=>{
       if(!pinStigma&&sNames.length){
         const result=improveRanks({names:sNames,initial:s.levels,
           budget:stigmaBudget,cost:stigmaCost,cap:20,
-          score:r=>score(m.levels,r),minimum:0,minRanks:stigmaFloors,maxEvaluations:350,
+          score:r=>score(m.levels,r),minimum:0,minRanks:stigmaFloors,maxEvaluations:maxStigmaEvaluations,
           maxPasses:6,breakpoints:[5,10,15,20]});
         s={...s,levels:result.levels,spent:result.spent,
           unspent:result.unspent,next:result.next};

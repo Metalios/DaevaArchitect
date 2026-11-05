@@ -28,8 +28,19 @@ try{
   a.customAzphelNodes=[];
   a.obtainedNodes=[];
   a.currentRanks={};
-  a.gear={};
-  a.equipment={};
+  a.gear={Judgment:2};
+  a.equipment={
+   weapon:{name:'Recorded Longsword',grade:'Unique',skillBonuses:[{skill:'Judgment',levels:3}]},
+   ring1:{name:'Recorded Ring',grade:'Unique',skillBonuses:[{skill:'Judgment',levels:2}]},
+   top:{name:'Recorded Chest',grade:'Unique',skillBonuses:[{skill:'Fury',levels:1}],
+     statNotes:'Attack +15; PvP Damage Boost 2%'},
+   chalice:{name:'Chalice of Vigor',arcanaSet:'Vigor',grade:'Unique',
+     enhancement:0,skillBonuses:[{skill:'Judgment',levels:1}]},
+   parchment:{name:'Parchment of Magic',arcanaSet:'Magic',grade:'Unique',
+     enhancement:0,skillBonuses:[{skill:'Judgment',levels:1}]},
+   bell:{name:'Bell of Magic',arcanaSet:'Magic',grade:'Unique',
+     enhancement:0,skillBonuses:[{skill:'Punishing Benediction',levels:1}]}
+  };
   a.ariel=0;
   a.azphel=82;
   a.crystals=218;
@@ -58,6 +69,12 @@ try{
    const progression=progressionBoardTargets('templar',a.context);
    outcomes.push({
     points,elapsed,stigmas:chosen,ranks:m.stigma.levels,
+    judgmentGear:build.gearSkills.Judgment,
+    arcanaDivine:build.arcanaDivine,
+    furyGear:build.gearSkills.Fury,
+    pvpBoost:build.gearStats.PvPAmplifyDamage,
+    recordedAttack:build.gearStats.FixingDamage,
+    specialJudgment:specPicks('Judgment',level('Judgment')),
     totalStigma:m.stigma.spent,totalMastery:m.mastery.spent,
     board:m.boards.spent,crystals:a.crystals,azphel:m.azphel.spent,
     score:result.score,specialties:picks,levels:Object.fromEntries(
@@ -65,6 +82,21 @@ try{
     manualPin:m.joint?.trace?.some(x=>x.area==='stigma')===false
    });
   }
+  // Following a connected tile must not reshuffle the recommendations.
+  // Replacing actual Arcana later must refresh the equipment-dependent plan.
+  const before=a.recommendedRouteSnapshot;
+  const originalRoute=JSON.stringify(before.route);
+  const first=before.route[0]?.id;
+  if(first!==undefined)a.obtainedNodes=[first];
+  model();
+  const stableRoute=JSON.stringify(a.recommendedRouteSnapshot.route)===originalRoute;
+  const oldEquipmentKey=a.recommendedRouteSnapshot.equipmentKey;
+  a.equipment.bell={name:'Bell of Vigor',arcanaSet:'Vigor',
+    grade:'Unique',enhancement:0,
+    skillBonuses:[{skill:'Punishing Benediction',levels:1}]};
+  model();
+  const refreshed=a.recommendedRouteSnapshot.equipmentKey!==oldEquipmentKey;
+  const obtainedKept=first===undefined||a.obtainedNodes.includes(first);
   // The user may pin a manual Mastery, Stigma or Specialty selection.
   // A recommendation must NEVER overwrite it.
   a.customStigmas=['Doom Shield','Grapple','Executing Blade','Shield of Protection'];
@@ -78,16 +110,27 @@ try{
    ranks:manual.stigma.levels,poach:specPicks('Poach',
     (manual.mastery.levels.Poach||1)+(manual.effects.skills.Poach||0))
   };
-  return {outcomes,preserved};
+  return {outcomes,preserved,stableRoute,refreshed,obtainedKept};
  });
  assert.deepEqual(errors,[],errors.join('\n'));
- const {outcomes,preserved}=checks;
+ const {outcomes,preserved,stableRoute,refreshed,obtainedKept}=checks;
+ assert(stableRoute,'Obtained tile clicks must not reshuffle the recommendation');
+ assert(refreshed,'Arcana changes must refresh cached board recommendations');
+ assert(obtainedKept,'Replacing gear must preserve obtained board tiles');
  for(const row of outcomes){
   assert.equal(row.stigmas.length,4,'Four Global Stigma slots required');
   assert.equal(new Set(row.stigmas).size,4,'No duplicate Stigmas');
   assert(row.stigmas.includes('Grapple')&&row.stigmas.includes('Executing Blade'),
     'A ranged Solo Abyss catch-and-kill bar needs Grapple and Executing Blade');
   assert(row.totalStigma<=row.points&&row.totalMastery<=285);
+  assert.equal(row.judgmentGear,9,
+    'Manual Judgment +2, weapon +3, ring +2 and Arcana +1/+1 must add');
+  assert.equal(row.furyGear,1,'Passive soulbind level must count');
+  assert.equal(row.arcanaDivine.Time,20);
+  assert.equal(row.arcanaDivine.Destiny,20);
+  assert.equal(row.arcanaDivine.Destruction,20);
+  assert(row.recordedAttack>=15,'Recorded Soul Binding Attack must count');
+  assert(row.pvpBoost>=200,'Recorded 2% PvP Damage Boost must count');
   assert(row.board<=218&&row.azphel<=82);
   assert(Object.values(row.ranks).every(rank=>Number.isInteger(rank)&&rank>=5&&rank<=20));
   assert(Number.isFinite(row.score)&&row.score>0);
