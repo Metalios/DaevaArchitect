@@ -18,13 +18,14 @@ const JointProgression = (()=>{
     return sum;
   },0);
   function improveRanks({names,initial,budget,cost,cap,score,minimum=1,
-      pinned=[],maxEvaluations=700,maxPasses=10}){
+      pinned=[],minRanks={},maxEvaluations=700,maxPasses=10,breakpoints=[]}){
     if(!Array.isArray(names)||!names.length||typeof score!=='function')
       throw Error('Rank optimization requires legal names and a combat scorer');
     const set=new Set(pinned),allowed=new Set(names);
+    const floor=name=>Math.max(minimum,Math.floor(Number(minRanks[name])||minimum));
     const values=Object.fromEntries(names.map(name=>{
       const limit=typeof cap==='function'?cap(name):cap;
-      return [name,clamp(Math.floor(initial[name]??minimum),minimum,limit)];
+      return [name,clamp(Math.floor(initial[name]??minimum),floor(name),limit)];
     }));
     const limit=Math.max(0,Math.floor(budget||0));
     let spent=spend(values,names,cost,minimum);
@@ -69,7 +70,7 @@ const JointProgression = (()=>{
         // Legal point-for-point tradeoffs let the engine reassign ranks
         // even when no unspent currency remains. Evaluate complete builds.
         for(const donor of names){
-          if(donor===recipient||set.has(donor)||values[donor]<=minimum)continue;
+          if(donor===recipient||set.has(donor)||values[donor]<=floor(donor))continue;
           const refund=cost(values[donor]),nextSpent=spent-refund+addition;
           if(nextSpent>limit)continue;
           const candidate={...values,[recipient]:current+1,
@@ -78,6 +79,34 @@ const JointProgression = (()=>{
           if(evaluations>=maxEvaluations)break;
         }
         if(evaluations>=maxEvaluations)break;
+      }
+      // Ranks often have no benefit until the next 8/12/16 effective-skill
+      // Specialty or Stigma 5/10/15/20 unlock. A pure +/-1 search cannot
+      // exchange a complete milestone if fully budgeted. Check affordable
+      // rank bundles as well as single ranks, with the same evaluation cap.
+      for(const recipient of names){
+        if(set.has(recipient)||evaluations>=maxEvaluations)break;
+        const current=values[recipient],maximum=typeof cap==='function'?cap(recipient):cap;
+        const targets=[...new Set(breakpoints)].filter(rank=>rank>current&&rank<=maximum)
+          .sort((a,b)=>a-b).slice(0,2);
+        for(const target of targets){
+          if(evaluations>=maxEvaluations)break;
+          let addition=0;for(let rank=current+1;rank<=target;rank++)addition+=cost(rank);
+          const raised={...values,[recipient]:target};
+          if(spent+addition<=limit)
+            update(raised,spent+addition,{skill:recipient,from:current,to:target});
+          for(const donor of names){
+            if(evaluations>=maxEvaluations)break;
+            if(donor===recipient||set.has(donor)||values[donor]<=floor(donor))continue;
+            const previous=[floor(donor),...breakpoints.filter(rank=>rank<values[donor]&&rank>=floor(donor))]
+              .sort((a,b)=>b-a)[0];
+            if(previous>=values[donor])continue;
+            let refund=0;for(let rank=previous+1;rank<=values[donor];rank++)refund+=cost(rank);
+            if(spent+addition-refund>limit)continue;
+            update({...raised,[donor]:previous},spent+addition-refund,
+              {skill:recipient,from:current,to:target,donor,donorTo:previous});
+          }
+        }
       }
       if(!winner)break;
       Object.assign(values,winner.values);
@@ -109,7 +138,7 @@ const JointProgression = (()=>{
   function optimizeCombined({classId,context,objective,
       mastery,stigma,masteryNames,stigmaNames,masteryBudget,stigmaBudget,
       masteryCost,stigmaCost,masteryCap,scoreBuild,
-      pinMastery=false,pinStigma=false}){
+      pinMastery=false,pinStigma=false,stigmaFloors={}}){
     const mNames=masteryNames.filter(Boolean),sNames=stigmaNames.filter(Boolean);
     const initialM={...mastery.levels},initialS={...stigma.levels};
     let m={...mastery,levels:initialM},s={...stigma,levels:initialS};
@@ -121,7 +150,7 @@ const JointProgression = (()=>{
         const result=improveRanks({names:mNames,initial:m.levels,
           budget:masteryBudget,cost:masteryCost,cap:masteryCap,
           score:r=>score(r,s.levels),minimum:1,maxEvaluations:500,
-          maxPasses:6});
+          maxPasses:6,breakpoints:[5,8,10]});
         m={...m,levels:result.levels,spent:result.spent,
           unspent:result.unspent,next:result.next};
         trace.push({area:'mastery',pass:i+1,evaluations:result.evaluations,
@@ -130,8 +159,8 @@ const JointProgression = (()=>{
       if(!pinStigma&&sNames.length){
         const result=improveRanks({names:sNames,initial:s.levels,
           budget:stigmaBudget,cost:stigmaCost,cap:20,
-          score:r=>score(m.levels,r),minimum:0,maxEvaluations:350,
-          maxPasses:6});
+          score:r=>score(m.levels,r),minimum:0,minRanks:stigmaFloors,maxEvaluations:350,
+          maxPasses:6,breakpoints:[5,10,15,20]});
         s={...s,levels:result.levels,spent:result.spent,
           unspent:result.unspent,next:result.next};
         trace.push({area:'stigma',pass:i+1,evaluations:result.evaluations,
@@ -355,7 +384,7 @@ const JointProgression = (()=>{
       evidence:'conservative comparative mechanics, not measured PvP win-rate or DPS'};
   }
   function optimizeSpecialties({skillNames,effectiveLevel,specData,
-      manual={},score,maxEvaluations=300}){
+      manual={},preferred=null,score,maxEvaluations=300}){
     if(typeof score!=='function'||typeof effectiveLevel!=='function')
       throw Error('Specialty search requires an effective-rank combat model');
     const candidates={};
@@ -385,7 +414,9 @@ const JointProgression = (()=>{
       const level=effectiveLevel(name),key=level>=20?'20':
         level>=16?'16':level>=12?'12':'8';
       const defaultPicks=specData[name].picks?.[key]||[];
-      const selected=manual[name]??defaultPicks;
+      const researched=typeof preferred==='function'
+        ?preferred(name,level,specData[name]):preferred?.[name];
+      const selected=manual[name]??researched??defaultPicks;
       candidates[name]=normalize(name,selected);
     }
     let scoreNow=Number(score(candidates)),evaluations=1,changes=0;

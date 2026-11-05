@@ -8,13 +8,19 @@
  * never display the returned score as DPS, win rate or target-contact time.
  */
 const PvpCombatModels = (() => {
-  const VERSION = 'global-pvp-matchup-proxy-2026-11-03';
+  const VERSION = 'global-pvp-short-engagement-2026-11-05';
   const MODES = Object.freeze({
     pvp: {pressure:.25,burst:.18,contact:.16,control:.12,mitigation:.13,recovery:.09,team:.03,escape:.04},
     'pvp-arena': {pressure:.22,burst:.22,contact:.18,control:.17,mitigation:.12,recovery:.07,team:0,escape:.02},
     'pvp-abyss-solo': {pressure:.20,burst:.17,contact:.18,control:.11,mitigation:.12,recovery:.10,team:0,escape:.12},
     'pvp-abyss-group': {pressure:.21,burst:.14,contact:.10,control:.13,mitigation:.12,recovery:.08,team:.19,escape:.03}
   });
+  const TEMPLAR_SOLO_WEIGHTS=Object.freeze({
+    pressure:.06,burst:.42,contact:.17,control:.14,
+    mitigation:.16,recovery:.01,team:0,escape:.04
+  });
+  const weightsFor=(classId,context)=>classId==='templar'&&
+    context==='pvp-abyss-solo'?TEMPLAR_SOLO_WEIGHTS:MODES[context]||MODES.pvp;
   const OPPONENTS = Object.freeze({
     gladiator:{ranged:0,burst:1.1,control:.8,recovery:.45,defense:1.1},
     templar:{ranged:0,burst:.65,control:.75,recovery:.65,defense:1.35},
@@ -32,7 +38,7 @@ const PvpCombatModels = (() => {
       control:['Ankle Slice','Leaping Slam','Aerial Snare'],mitigation:['Protection Armor','Survival Willpower'],
       recovery:['Blood Absorption'],escape:['Rush Strike'],team:['Crushing Wave']},
     templar:{melee:true,pressure:['Judgment','Pummel','Punishment','Debilitating Smash'],
-      burst:['Judgment','Punishment'],contact:['Poach','Shield Rush'],
+      burst:['Judgment','Punishment','Annihilate','Shield Smite'],contact:['Poach','Shield Rush'],
       control:['Poach','Shield Smite'],antiheal:['Debilitating Smash'],
       mitigation:['Warding Strike','Block Pain','Survival Willpower'],
       recovery:['Enhance Health','Warding Shield'],team:['Warding Strike','Guarding Seal'],escape:['Poach']},
@@ -74,10 +80,11 @@ const PvpCombatModels = (() => {
       'Fracturing Rush':{contact:1.3,escape:.65},'Wrath Wave':{control:.95,team:.75},
       'Armor of Balance':{mitigation:1.1},'Wave Armor':{mitigation:.9}},
     templar:{
-      'Doom Shield':{pressure:.8,burst:.6,mitigation:.6},'Grapple':{contact:1.35,control:1.1},
+      'Doom Shield':{pressure:.7,burst:1.05,mitigation:.5,contact:.45,control:.45},'Grapple':{contact:1.35,control:1.1,burst:.25},
+      'Executing Blade':{pressure:.55,burst:1.65,control:.15},
       'Second Skin':{mitigation:1.3,escape:.35},'Shield of Protection':{mitigation:1.4,pressure:.25},
       "Nezekan's Shield":{mitigation:1.3,team:1.25},
-      'Battlefield Banner':{pressure:1.1,burst:.9,team:.55},
+      'Battlefield Banner':{pressure:.8,burst:1.15,team:.45},
       "Empyrean Lord's Punishment":{burst:1.2,control:.85,contact:.45},
       'Comrade in Arms':{mitigation:.55,team:1.65},
       'Noble Armor':{pressure:.65,team:.4},'Taunt':{control:.2}},
@@ -147,10 +154,18 @@ const PvpCombatModels = (() => {
   // Verified tooltip options in specialties.json; each modifier requires the
   // effective rank unlock and the option to be actually selected.
   const OPTIONS = Object.freeze({
-    templar:{Poach:{1:{contact:.7},2:{control:.6},5:{control:.7}},
-      'Debilitating Smash':{3:{antiheal:1.25},4:{pressure:.5},1:{control:.45}},
-      'Shield Smite':{1:{control:.45},3:{antiheal:.3},5:{team:.25}},
-      'Warding Strike':{4:{mitigation:.5},5:{mitigation:.35,team:.75}}},
+    templar:{
+      Poach:{1:{contact:.65},2:{control:.6},4:{mitigation:.24},5:{control:.65}},
+      'Shield Rush':{2:{contact:1.05},4:{contact:.32},5:{control:.45}},
+      'Debilitating Smash':{2:{antiheal:.42},3:{antiheal:1.55},4:{burst:.35}},
+      Defiance:{1:{contact:.22,escape:.2},3:{recovery:.25},4:{mitigation:.3,escape:.28},5:{mitigation:.85}},
+      'Shield Smite':{1:{control:.5,burst:.14},3:{control:.2},4:{control:.25},5:{team:.25}},
+      Annihilate:{1:{burst:.4},2:{control:.46,burst:.2},4:{burst:.38}},
+      Judgment:{2:{burst:.25},3:{burst:.33},4:{burst:.4},5:{burst:.55}},
+      Punishment:{3:{burst:.48},4:{burst:.5,contact:.2},5:{burst:.72}},
+      Pummel:{3:{burst:.18},4:{burst:.23},5:{burst:.28}},
+      'Warding Strike':{1:{mitigation:.20},2:{mitigation:.35},4:{mitigation:.38},5:{mitigation:.35,team:.7}}
+    },
     gladiator:{'Rush Strike':{2:{contact:.7},4:{contact:.5},5:{control:.45}},
       'Ankle Slice':{1:{control:.45},3:{contact:.75},4:{pressure:.35}},
       'Leaping Slam':{2:{control:.35},5:{control:.5,team:.25}}},
@@ -221,6 +236,26 @@ const PvpCombatModels = (() => {
       const roles=tags?.[name]||{pressure:.25};
       const utility=.48+.047*rank+[5,10,15,20].filter(t=>rank>=t).length*.075;
       for(const [key,value] of Object.entries(roles))m[key]+=(Number(value)||0)*utility;
+      if(classId==='templar'){
+        // These are actual Global tooltip unlocks, not generic rank bonuses.
+        if(name==='Executing Blade'){
+          if(rank>=5)m.burst+=.24; // 45s -> 30s: recurring catch opportunity
+          if(rank>=10){m.burst+=.55;m.control+=.20} // Exposed for 5s
+          if(rank>=15)m.burst+=.48; // guaranteed Critical Hit
+          if(rank>=20)m.burst+=.16; // damage against Impact-type
+        }
+        if(name==='Grapple'){
+          if(rank>=5)m.control+=.18;
+          if(rank>=10)m.mitigation+=.30; // 20% Max HP shield
+          if(rank>=15)m.contact+=.18; // -30s cooldown, next engage
+        }
+        if(name==='Doom Shield'&&rank>=5)m.burst+=.28; // Annihilate reset
+        if(name==='Shield of Protection'){
+          if(rank>=5)m.mitigation+=.28;
+          if(rank>=10){m.mitigation+=.30;m.contact+=.18} // move while blocking
+          if(rank>=20)m.recovery+=.22;
+        }
+      }
     }
     for(const [name,optionEffects] of Object.entries(OPTIONS[classId]||{}))
       for(const id of selectedOptions(classId,build,name,selectedSpecs)){
@@ -234,6 +269,16 @@ const PvpCombatModels = (() => {
     const melee=!!KITS[classId]?.melee,selected=opponents(opponent);
     const ranged=selected.filter(c=>OPPONENTS[c].ranged).length/selected.length;
     const team=context==='pvp-abyss-group';
+    if(classId==='templar'&&context==='pvp-abyss-solo'){
+      // Azphel's 4-point attack corners and 3-point control accuracy nodes
+      // are real kill-window contributors. Keep defensives as a second
+      // priority, not as a false assumption of unlimited sustained fighting.
+      if(/PvPAmplifyDamage|PvPAddDamage/.test(key))return 1.75;
+      if(/AbnormalAccuracy|PvPAccuracy/.test(key))return 1.45+.35*ranged;
+      if(/CombatSpeed/.test(key))return 1.45;
+      if(/PvPDecreaseDamage|PvPDamageDefense|AbnormalResistance/.test(key))return 1.17;
+      if(/CoolTimeDecrease/.test(key))return 1.05;
+    }
     if(/PvE|BossNpc/.test(key))return .02;
     if(/AbnormalAccuracy|StatusEffectAccuracy/.test(key))return 1.1+(melee?ranged*.55:0)+(team?.1:0);
     if(/AbnormalResistance|Willpower/.test(key))return 1.1+selected.reduce((a,c)=>a+OPPONENTS[c].control,0)/selected.length*.15;
@@ -259,7 +304,7 @@ const PvpCombatModels = (() => {
   }
   function stigmaUtility(classId,context,opponent,name,rank){
     if(rank<=0)return 0;
-    const roles=STIGMA[classId]?.[name]||{pressure:.25},w=MODES[context]||MODES.pvp;
+    const roles=STIGMA[classId]?.[name]||{pressure:.25},w=weightsFor(classId,context);
     let weight=0;
     for(const [role,value] of Object.entries(roles)){
       const normalized=role==='antiheal'?.12:(w[role]||0.03);
@@ -276,18 +321,29 @@ const PvpCombatModels = (() => {
     const kit=KITS[classId],m=contributions(classId,build,selectedSpecs);
     const stats=statsOf(build);
     const stat=k=>Math.max(0,stats[k]||0);
+    // Actual gear lines are additive to acquired board stats. PvP-specific
+    // stats remain strongest, but recorded Attack, general damage boost,
+    // Critical, Multi-Hit and armor are no longer ignored. Coefficients are
+    // bounded comparative sensitivities, NOT invented damage formulas.
     const power=1+cap(stat('PvPAmplifyDamage')/10000,0,.6)*1.6+
       cap(stat('PvPAddDamage')/500,0,.5)+
       cap(stat('PvPAccuracy')/3000,0,.25)*.3+
-      cap(stat('CombatSpeed')/10000,0,.6)*.45;
+      cap(stat('CombatSpeed')/10000,0,.6)*.45+
+      cap(stat('AmplifyAllDamage')/10000,0,.6)*.65+
+      cap(stat('FixingDamage')/3000,0,.6)*.35+
+      cap((stat('Critical')+stat('PvPCritical'))/1600,0,.5)*.22+
+      cap(stat('AdditionalHitRate')/10000,0,.5)*.12;
     const defense=1+cap(stat('PvPDecreaseDamage')/10000,0,.5)*1.25+
       cap(stat('PvPDamageDefense')/4000,0,.7)*.65+
-      cap(stat('HPMax')/25000,0,.5)*.5;
+      cap(stat('HPMax')/25000,0,.5)*.5+
+      cap(stat('DecreaseDamage')/10000,0,.6)*.6+
+      cap(stat('Defense')/7000,0,.6)*.25+
+      cap((stat('CriticalResist')+stat('PvPCriticalResist'))/1600,0,.5)*.16;
     const cc=1+cap(stat('AbnormalAccuracy')/3000,0,.7)*.45;
     const resist=1+cap(stat('AbnormalResistance')/3000,0,.7)*.45;
     const move=1+cap(stat('MoveSpeed')/10000,0,.5);
     const chosen=opponent||build.pvpOpponent||'all';
-    const weights=MODES[context];
+    const weights=weightsFor(classId,context);
     const rows=opponents(chosen).map(name=>{
       const enemy=OPPONENTS[name];
       const needsEngage=kit.melee&&enemy.ranged;
@@ -299,8 +355,18 @@ const PvpCombatModels = (() => {
       const offense=m.pressure*power*(kit.melee?contact:.9+contact*.1);
       const healPressure=1+Math.min(.4,m.antiheal*.12*enemy.recovery);
       const pressure=offense*healPressure/(1+enemy.defense*.14);
-      const burst=(m.burst*.8+m.pressure*.2)*power*healPressure*
-        (kit.melee?contact:.96)/(1+enemy.defense*.13);
+      const equipped=build.equippedStigmas||[];
+      const bladeRank=equipped.includes('Executing Blade')?cap(build.stigma?.['Executing Blade'],0,20):0;
+      const grappleRank=equipped.includes('Grapple')?cap(build.stigma?.Grapple,0,20):0;
+      // A 30% Defense reduction is NOT a 30% final damage multiplier.
+      // This bounded proxy rewards landing it before the finisher, and
+      // explicitly rewards the Grapple -> 4m Blade -> Punishment synergy.
+      const expose=classId==='templar'&&bladeRank>0
+        ?1+.075+(bladeRank>=10?.075:0):1;
+      const catchCombo=classId==='templar'&&bladeRank>0&&grappleRank>0
+        ?1+.07*Math.min(1,contact):1;
+      const burst=(m.burst*.87+m.pressure*.13)*power*healPressure*
+        (kit.melee?contact:.96)/(1+enemy.defense*.13)*expose*catchCombo;
       const mit=(defense*(1+.17*m.mitigation)*(1+.05*control))/
         (1+.18*enemy.burst+.08*enemy.control/resist);
       const recovery=m.recovery*(1+.10*m.mitigation)/(1+.06*enemy.burst);
@@ -309,17 +375,24 @@ const PvpCombatModels = (() => {
         (context==='pvp-abyss-group'?control*.25:0);
       const components={pressure,burst,contact:contact*2,control,mitigation:mit,
         recovery,team,escape:safeEscape};
-      const score=Object.entries(weights).reduce(
+      const weighted=Object.entries(weights).reduce(
         (sum,[key,weight])=>sum+weight*Math.max(0,components[key]||0),0);
+      // Solo Abyss is a short kill-window problem: offense with no answer
+      // to the enemy's first burst should not beat a viable mixed build.
+      // A soft floor avoids pretending we know the exact survival threshold.
+      const minimumSurvival=.67+enemy.burst*.17;
+      const survivalFactor=classId==='templar'&&context==='pvp-abyss-solo'
+        ?Math.max(.68,Math.min(1,mit/minimumSurvival)):1;
+      const score=weighted*survivalFactor;
       return {opponent:name,score,components};
     });
     const mean=rows.reduce((sum,row)=>sum+row.score,0)/rows.length;
     const worst=rows.reduce((a,b)=>a.score<=b.score?a:b);
     const score=mean*.75+worst.score*.25;
     return {score,mean,worst:worst.opponent,scenarios:rows,metrics:m,
-      classification:'Comparative Global PvP matchup proxy; not win rate, DPS, crowd-control probability or measured engagement uptime',
+      classification:'Short PvP burst/contact and counter-burst proxy; not measured DPS, time-to-kill, win rate or hit probability',
       provenance:{version:VERSION,assumptions:'Equal opponent scenarios, bounded sensitivity parameters, unmeasured action and CC timing'}};
   }
-  return Object.freeze({VERSION,isPvp,OPPONENTS,MODES,KITS,STIGMA,OPTIONS,
+  return Object.freeze({VERSION,isPvp,OPPONENTS,MODES,weightsFor,KITS,STIGMA,OPTIONS,
     evaluate,opponents,statPriority,skillPriority,stigmaUtility});
 })();

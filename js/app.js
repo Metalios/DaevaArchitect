@@ -271,7 +271,7 @@ function recommendedStigmas(){
      // A simple personal-DPS proxy must not displace a manually researched
      // healing, tanking, CC or group-support Stigma set.
      (!appIsPvpContext(a.context)&&RoleBuildGoals.info(state.class,a.pveObjective))||
-     (state.class==='templar'&&(a.context==='party'||appIsPvpContext(a.context))))return baseline;
+     (state.class==='templar'&&(a.context==='party'||appIsPvpContext(a.context)&&a.context!=='pvp-abyss-solo')))return baseline;
   // Public Global PvP loadouts are candidates, not verified top-ranked builds.
   const observed=appIsPvpContext(a.context)&&typeof PVP_OBSERVATIONS!=='undefined'
     ?PVP_OBSERVATIONS.filter(row=>row.classId===state.class).map(row=>row.stigmas):[];
@@ -281,7 +281,15 @@ function recommendedStigmas(){
     ['Element Enhancement','Arctic Armor','Hibernation','Curse: Tree'],
     ['Element Enhancement','Arctic Armor','Soul Freeze','Steel Barrier']
   ]:[];
-  const candidates=[standard,combat.damageStigmas,combat.survivalStigmas,
+  const templarSolo=state.class==='templar'&&a.context==='pvp-abyss-solo';
+  const candidates=templarSolo?[
+    baseline,
+    ['Doom Shield','Grapple','Executing Blade','Second Skin'],
+    ['Doom Shield','Grapple','Executing Blade',"Nezekan's Shield"],
+    ['Doom Shield','Grapple','Executing Blade','Battlefield Banner'],
+    ['Doom Shield','Grapple','Executing Blade',"Empyrean Lord's Punishment"],
+    ['Grapple','Executing Blade','Shield of Protection',"Nezekan's Shield"]
+  ]:[standard,combat.damageStigmas,combat.survivalStigmas,
     variants[state.class]?.pvp,variants[state.class]?.solo,
     advised?.stigmas,...contextualPvp,...sorcererSwaps,...observed].filter(Array.isArray);
   const key=JSON.stringify([state.class,a.context,a.pveObjective,a.pvpOpponent||'all',
@@ -299,14 +307,22 @@ function recommendedStigmas(){
     const selected=JointProgression.chooseStigmaLoadout({
       baseline,candidates,minimumImprovement:appIsPvpContext(a.context)?0.04:0.12,
       isKnown:name=>!!STIGMAS[state.class]?.[name],
-      rankPlan:names=>optimizeRecommendedStigmas(names,budget('stigma'),
-        state.class,a.context),
-      score:(names,levels)=>ClassCombatModels.evaluate({
-        classId:state.class,context:a.context,
-        objective:a.pveObjective||'performance',
-        build:{...base,stigma:levels,equippedStigmas:names},
-        selectedSpecs:a.customSpecialties||{}
-      }).score
+      rankPlan:names=>templarSolo&&names.join('|')===baseline.join('|')
+        ?allocate(progressionStigmaStages('templar',a.context,names,advised),
+          budget('stigma'),stigmaCost,names,0)
+        :optimizeRecommendedStigmas(names,budget('stigma'),
+          state.class,a.context),
+      score:(names,levels)=>{
+        const candidate={...base,stigma:levels,equippedStigmas:names};
+        const picks=templarSolo
+          ?templarPvpSpecialtySeed(candidate,a.customSpecialties||{})
+          :a.customSpecialties||{};
+        return ClassCombatModels.evaluate({
+          classId:state.class,context:a.context,
+          objective:a.pveObjective||'performance',
+          build:candidate,selectedSpecs:picks
+        }).score;
+      }
     });
     stigmaLoadoutCache={key,names:selected.names};
     return selected.names;
@@ -625,6 +641,28 @@ function engineBuild(masteryLevels,boardEffects,stigmaLevels,equipped){
       .filter(([,at])=>at<=currentLevel()).map(([name])=>name)
   };
 }
+
+function templarPvpSpecialtySeed(build,manual={}){
+ // All score comparisons use the ACTUAL projected purchased ranks, connected
+ // Daevanion bonuses and equipped skill ranks, not fixed default Specialties.
+ const chosen={};
+ for(const [name,entry] of Object.entries(SPECS.templar||{})){
+   const rank=Math.min(40,(build.mastery?.[name]||1)+
+     (build.boardSkills?.[name]||0)+(build.gearSkills?.[name]||0));
+   if(rank<8)continue;
+   const slots=rank>=20?3:rank>=12?2:1;
+   const key=rank>=20?'20':rank>=16?'16':rank>=12?'12':'8';
+   const contextual=typeof adviceSpecialtyChoices==='function'
+     ?adviceSpecialtyChoices('templar',build.context||account().context,name,rank,entry.options)
+     :null;
+   const preferred=Array.isArray(manual[name])?manual[name]:
+     Array.isArray(contextual)?contextual:entry.picks?.[key]||[];
+   chosen[name]=[...new Set(preferred.map(Number))]
+     .filter(id=>entry.options?.[id]&&rank>=(id<=3?8:id===4?12:16))
+     .slice(0,slots);
+ }
+ return chosen;
+}
 function sorcererCombatEligible(){
   return state.class==='sorcerer'&&!appIsPvpContext(account().context)&&typeof GlobalCombatEngine!=='undefined';
 }
@@ -634,6 +672,55 @@ function chooseCombatBoardRoute(provisional,stigma,gearRanks,target,baseCp,actua
   const baseArgs=[data(),baseWeights,provisional.levels,gearRanks,
     baseCp===null?0:target,baseCp,actual,currentLevel(),targets];
   const original=optimizeBoardRoute(...baseArgs);
+  if(state.class==='templar'&&account().context==='pvp-abyss-solo'&&
+     !customMode()&&typeof PvpCombatModels!=='undefined'){
+    const a=account(),crystals=budget('crystals'),names=skillNames(),
+      skills={...baseWeights.skills},stats={...baseWeights.stats};
+    // Evaluate two connected, budget-legal candidate routes against actual
+    // gear and earned Stigma/Mastery/Azphel. This bounded search avoids
+    // the multi-second combinatorial board/Specialty explosion.
+    for(const [name,scale] of Object.entries({
+      Poach:1.65,'Shield Rush':1.7,'Debilitating Smash':1.7,
+      'Shield Smite':1.5,Judgment:1.55,Punishment:1.55,
+      Annihilate:1.45,Defiance:1.25}))
+      skills[name]=(skills[name]||2)*scale;
+    for(const [name,scale] of Object.entries({
+      CombatSpeed:1.8,CoolTimeDecrease:1.3,AmplifyAllDamage:1.6,
+      Critical:1.45,DecreaseDamage:1.05,HPMax:1.05}))
+      stats[name]=(stats[name]||1)*scale;
+    const alternate=optimizeBoardRoute(data(),{...baseWeights,skills,stats},
+      provisional.levels,gearRanks,baseCp===null?0:target,baseCp,
+      actual,currentLevel(),targets);
+    const extras=[boardPlan(a.ariel||0,'ariel'),boardPlan(a.azphel||0,'azphel')]
+      .map(board=>effects(board.owned));
+    const extraStats={};
+    for(const entry of extras)for(const [key,value] of Object.entries(entry.stats||{}))
+      extraStats[key]=(extraStats[key]||0)+value;
+    let best=null;
+    for(const route of [original,alternate]){
+      const fitted=fitConnectedBoardBudget(data(),route.route,crystals);
+      const board=effects(new Set(fitted.route.map(x=>x.id)));
+      const planned=a.manualMastery?provisional:allocate(
+        masteryStages(board.skills),budget('mastery'),masteryCost,
+        names,1,masteryRankCap);
+      const funded=a.manualMastery?planned:spendAvailableMastery(
+        planned,budget('mastery'),masteryCost,masteryRankCap,names,
+        masteryStages(board.skills),baseWeights.skills,board.skills,gearRanks);
+      const mergedStats={...board.stats};
+      for(const [key,value] of Object.entries(extraStats))
+        mergedStats[key]=(mergedStats[key]||0)+value;
+      const build=engineBuild(funded.levels,
+        {skills:board.skills,stats:mergedStats},
+        stigma.levels,activeStigmas());
+      const picks=templarPvpSpecialtySeed(build,a.customSpecialties||{});
+      const value=PvpCombatModels.evaluate({
+        classId:'templar',context:a.context,build,selectedSpecs:picks
+      }).score;
+      if(!best||value>best.score+1e-9)
+        best={score:value,route:{...route,route:fitted.route}};
+    }
+    return best.route;
+  }
   if(!sorcererCombatEligible()||customMode())return original;
   const speedWeights={...baseWeights,stats:{...baseWeights.stats,
     CombatSpeed:Math.max(70,(baseWeights.stats.CombatSpeed||0)*2.5),
@@ -770,7 +857,7 @@ function model(){
     // Board level unlocks are a real change of eligible path; a level
     // increase inside the same unlock band must not shuffle suggestions.
     const contextKey=JSON.stringify([state.class,a.context,a.pvpOpponent||'all',BOARD_NAMES.filter(boardOpen),
-      sorcererCombatEligible()?'global-sorcerer-nightmare-goals-v4':'objective-board-search-v3',a.pveObjective||'performance']);
+      sorcererCombatEligible()?'global-sorcerer-nightmare-goals-v4':state.class==='templar'&&a.context==='pvp-abyss-solo'?'templar-solo-burst-joint-v1':'objective-board-search-v3',a.pveObjective||'performance']);
     const snapshot=a.recommendedRouteSnapshot;
     // Prior to any real purchases, changes to the player's goal, mastery,
     // equipment or Stigmas should still influence the recommended route.
@@ -784,7 +871,7 @@ function model(){
       return item?[slot.id,item.href,item.itemLevel,item.enhancement,item.amplification,item.amplificationCap,item.amplificationBonuses,
         item.fixedStats,item.skillBonuses,item.stones,item.theostone,item.statNotes]:null;
     });
-    const basisKey=JSON.stringify([target,mastery.levels,stigma.levels,gearRanks,
+    const basisKey=JSON.stringify([target,a.ariel||0,a.azphel||0,mastery.levels,stigma.levels,gearRanks,
       gearBasis,activeStigmas(),a.titlesOwned,a.cpAnchor,
       a.customSpecialties||{}]);
     const total=budget('crystals'),spent=obtainedCrystalSpend(false);
@@ -932,11 +1019,16 @@ function model(){
      typeof ClassCombatModels!=='undefined'&&
      ClassCombatModels.profile(state.class)){
     const fixed=engineBuild(finalMastery.levels,combatEffects,stigma.levels,stigmas);
-    const scoring=(masteryRanks,stigmaRanks)=>ClassCombatModels.evaluate({
-      classId:state.class,context:a.context,objective:a.pveObjective||'performance',
-      build:{...fixed,mastery:masteryRanks,stigma:stigmaRanks},
-      selectedSpecs:a.customSpecialties||{}
-    }).score;
+    const scoring=(masteryRanks,stigmaRanks)=>{
+      const proposed={...fixed,mastery:masteryRanks,stigma:stigmaRanks};
+      const picks=state.class==='templar'&&a.context==='pvp-abyss-solo'
+        ?templarPvpSpecialtySeed(proposed,a.customSpecialties||{})
+        :a.customSpecialties||{};
+      return ClassCombatModels.evaluate({
+        classId:state.class,context:a.context,objective:a.pveObjective||'performance',
+        build:proposed,selectedSpecs:picks
+      }).score;
+    };
     const jointKey=JSON.stringify([
       state.class,a.context,a.pveObjective,a.pvpOpponent||'all',currentLevel(),budget('mastery'),
       budget('stigma'),finalMastery.levels,stigma.levels,stigmas,
@@ -951,7 +1043,10 @@ function model(){
         masteryBudget:budget('mastery'),stigmaBudget:budget('stigma'),
         masteryCost,stigmaCost,masteryCap:masteryRankCap,scoreBuild:scoring,
         pinMastery:!!a.manualMastery,
-        pinStigma:!!a.manualStigma||researchedSoloAbyssStigmas||isLeveling()||budget('stigma')<30});
+        pinStigma:!!a.manualStigma||isLeveling()||budget('stigma')<30,
+        stigmaFloors:state.class==='templar'&&a.context==='pvp-abyss-solo'&&
+          !a.manualStigma&&budget('stigma')>=20
+          ?Object.fromEntries(stigmas.map(name=>[name,5])):{}});
       jointResultCache={key:jointKey,result:joint};
       chosenMastery=joint.mastery;
       chosenStigma=joint.stigma;
@@ -974,6 +1069,10 @@ function model(){
         jointSpecialtyCache.result:JointProgression.optimizeSpecialties({
           skillNames:names,specData:SPECS[state.class],
           manual:a.customSpecialties||{},
+          preferred:state.class==='templar'&&appIsPvpContext(a.context)
+            ?(name,rank,entry)=>typeof adviceSpecialtyChoices==='function'
+              ?adviceSpecialtyChoices('templar',a.context,name,rank,entry.options)
+              :null:null,
           effectiveLevel:name=>Math.min(40,
             (chosenMastery.levels[name]||1)+
             (combatEffects.skills[name]||0)+
@@ -1081,7 +1180,7 @@ function renderOverview(m){
     `<b>${mode==='healing'?'Healing':'Fight'} priority:</b> ${esc(p.rule)}`];
   if(m.joint&&!m.joint.error){
     const updates=m.joint.trace?.reduce((sum,step)=>sum+(step.changes||0),0)||0;
-    steps.push(`<b>Combined combat search:</b> Evaluated your recorded gear, effective skills, equipped Stigmas and all six boards together. ${updates} legal rank adjustments after the initial progression allocation. Combat-score comparisons are uncalibrated and are not measured DPS or guaranteed optimal builds.`);
+    steps.push(`<b>Combined combat search:</b> Evaluated your recorded gear, projected effective skills, equipped Stigmas and independent board effects in a bounded comparison. ${updates} legal rank adjustments after the initial progression allocation. This is neither measured DPS nor a guarantee of a globally optimal build.`);
   }
   if(a.context==='solo')steps.push(`<b>Level-45 Solo endgame:</b> This path is for Nightmare bosses and Ascension Trials, not quest leveling. Your selected <b>${esc(a.pveObjective)}</b> goal changes actual Mastery, Stigmas and Daevanion priorities. Expect bosses to move and to resist some control effects; reserve defensive actions for their mechanics.`);
   if(appIsPvpContext(a.context)){
@@ -1093,6 +1192,18 @@ function renderOverview(m){
       selectedSpecs:latestSpecialtyPlan.picks||a.customSpecialties||{}});
     const target=a.pvpOpponent||'all';
     steps.push(`<b>PvP matchup:</b> ${esc(target==='all'?'all eight classes':target)}. Comparative PvP score ${summary.score.toFixed(2)}; weakest tested scenario: ${esc(summary.worst)}. This is a scenario sensitivity proxy, not a win rate or measured DPS. Azphel uses ${a.azphel||0} separate crystals.`);
+    if(state.class==='templar'&&a.context==='pvp-abyss-solo'){
+      const pins=[
+        a.manualMastery?'Mastery':null,
+        a.manualStigma?'Stigma ranks':null,
+        a.customStigmas?'Stigma loadout':null,
+        Object.keys(a.customSpecialties||{}).length?'Specialties':null,
+        a.boardMode==='custom'?'Daevanion boards':null
+      ].filter(Boolean);
+      steps.push('<b>Solo Abyss objective:</b> Prioritize a short ranged catch-and-kill window, healing denial and enough defense to survive the first counterattack; sustained target uptime is not assumed.');
+      if(pins.length)steps.push('<b>Optimization constraints:</b> Your manual '+
+        esc(pins.join(', '))+' selections are preserved. Reset those selections to compare a complete recommended respec.');
+    }
   }
   $('now-steps').innerHTML=steps.map((v,i)=>`<li><span class="step-num">${i+1}</span><span>${v}</span></li>`).join('');
   const next=[];if(m.mastery.next)next.push([`+${m.mastery.next.need} mastery`,`${m.mastery.next.name} rank ${m.mastery.next.rank}`]);if(m.stigma.next)next.push([`+${m.stigma.next.need} stigma`,`${m.stigma.next.name} rank ${m.stigma.next.rank}`]);if(m.boards.next)next.push([`+${m.boards.next.need} PvE crystals`,`${m.boards.next.board}: ${effectText(nodeMap().get(m.boards.next.id).node)}`]);if(appIsPvpContext(a.context)&&m.azphel.next)next.push([`+${m.azphel.next.need} Azphel crystals`,effectText(nodeMap().get(m.azphel.next.id).node)]);
