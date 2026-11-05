@@ -76,3 +76,37 @@ function arcanaValidBonuses(cls,slotId,grade,enhancement,bonuses){
   }
   return upgrades<=arcanaUpgradeBudget(grade,enhancement);
 }
+
+/**
+ * Global Arcana carries a fixed Empyrean Lord stat by card slot and set.
+ * Keep the 8/12/16/20 base points separate from the (unverified) enhancement
+ * stat increase. One point means a 0.1% modifier to each listed derived stat.
+ * Vigor/Magic 2/4-card bonuses are PvE only; never treat them as PvP Attack.
+ */
+const ARCANA_DIVINE_BY_SET=Object.freeze({
+  Vigor:Object.freeze({chalice:'Time',parchment:'Life',compass:'Freedom',
+    bell:'Justice',mirror:'Illusion'}),
+  Magic:Object.freeze({chalice:'Space',parchment:'Destiny',compass:'Death',
+    bell:'Destruction',mirror:'Wisdom'})
+});
+const ARCANA_GRADE_POINTS=Object.freeze({Common:8,Rare:12,Epic:16,Unique:20});
+function arcanaRecordedSet(item){
+  if(item?.arcanaSet==='Vigor'||item?.arcanaSet==='Magic')return item.arcanaSet;
+  const name=String(item?.name||'');
+  if(/\b(?:of|primal) vigor\b/i.test(name))return 'Vigor';
+  if(/\b(?:of )?magic(?: armor)?\b/i.test(name))return 'Magic';
+  return null;
+}
+function arcanaDivineTotals(equipment,active=()=>true){
+  const stats={},sets={Vigor:0,Magic:0},unidentified=[];
+  for(const slot of ['chalice','parchment','compass','bell','mirror']){
+    const item=equipment?.[slot];
+    if(!item||!active(slot,item))continue;
+    const set=arcanaRecordedSet(item),amount=ARCANA_GRADE_POINTS[item.grade]||0;
+    if(!set||!amount){unidentified.push(slot);continue}
+    sets[set]++;
+    const divine=ARCANA_DIVINE_BY_SET[set][slot];
+    stats[divine]=(stats[divine]||0)+amount;
+  }
+  return {stats,sets,unidentified};
+}
