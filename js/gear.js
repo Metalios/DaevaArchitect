@@ -119,8 +119,9 @@ function gearTheostoneEligible(slot,item){
   return ['Epic','Unique'].includes(item?.grade)||!item?.grade;
 }
 // The Global client restricts Soul Binding to certain slots and skill
-// categories. Each normal gear skill line is exactly +1 level. Arcana skill
-// lines are +1..+4 and must pass validation as a WHOLE card (not line-by-line).
+// categories. Most normal gear skill lines are +1, but use the exact bonus
+// entered per equipped item; Arcana skill lines are +1..+4 and must pass
+// validation as a WHOLE card (not line-by-line).
 const GEAR_ACTIVE_SKILL_SLOTS=new Set(['weapon','guard','ring1','ring2']);
 const GEAR_PASSIVE_SKILL_SLOTS=new Set(['helm','pauldrons','top','legs',
   'gloves','shoes','cloak','necklace','earring1','earring2']);
@@ -145,14 +146,14 @@ function gearSkillLevels(){
     if(slot.area==='arcana'&&
       !arcanaValidBonuses(state.class,slot.id,item.grade,item.enhancement,item.skillBonuses||[]))
       continue;
-    const seen=new Set();
+    // Arcana cannot contain duplicate skill names; whole-card validation
+    // already rejects those. On normal equipment, sum every *recorded* bonus
+    // rather than assuming every Soul Binding entry is always +1.
     for(const bonus of (item.skillBonuses||[]).slice(0,
       slot.area==='arcana'?4:gearSkillLineCapacity(slot,item.grade))){
-      if(!pool.has(bonus.skill)||seen.has(bonus.skill)||
-        !Number.isFinite(Number(bonus.levels))||Number(bonus.levels)<=0)continue;
-      seen.add(bonus.skill);
-      // A non-Arcana line cannot become +30 by typing "+30" into the editor.
-      const ranks=slot.area==='arcana'?clamp(bonus.levels,1,4):1;
+      const value=Number(bonus.levels);
+      if(!pool.has(bonus.skill)||!Number.isInteger(value)||value<=0)continue;
+      const ranks=clamp(value,1,slot.area==='arcana'?4:30);
       total[bonus.skill]=(total[bonus.skill]||0)+ranks;
     }
   }
@@ -325,7 +326,7 @@ function gearEditor(){
   const arcanaSet=isArcana?arcanaRecordedSet(item):null;
   const arcanaIdentity=isArcana?`<label>Global Arcana set <small>Determines the card's Empyrean Lord stat</small><select name="arcanaSet" required><option value="" ${!arcanaSet?'selected':''}>Select the card's set</option><option value="Vigor" ${arcanaSet==='Vigor'?'selected':''}>Primal Vigor</option><option value="Magic" ${arcanaSet==='Magic'?'selected':''}>Magic Armor</option></select></label>`:'';
   
-  $('gear-editor').innerHTML=`<div class="gear-selected grade-${gearGrade(item)}"><span class="gear-selected-icon">${gearIcon(item)}</span><div><b>${esc(item.name||'Choose an item or enter one below')}</b><small>${esc(item.grade||type)}${item.requiredLevel?` · Required Lv ${item.requiredLevel}`:''}</small>${source}</div></div>${base?`<div class="gear-base-stats"><b>Base tooltip</b><div>${base}</div></div>`:''}<div class="gear-fields"><label>Item name<input name="name" value="${esc(item.name||'')}" required placeholder="Choose from search or type a name"></label><div class="gear-field-row"><label>Enhancement +<input name="enhancement" type="number" min="0" max="${enhancementMax}" value="${clamp(item.enhancement||0,0,enhancementMax)}"></label><label>Required level<input name="requiredLevel" type="number" min="1" max="45" value="${item.requiredLevel||''}" placeholder="—"></label></div><label>Item level <small>From tooltip; separate from Combat Power</small><input name="itemLevel" type="number" min="0" value="${item.itemLevel||''}" placeholder="—"></label><label>Potential / Soul Binding stats <small>Numeric rolls like Attack +15 or PvP Damage Boost 2% are counted; unrecognized notes are ignored</small><textarea name="statNotes" rows="3" placeholder="e.g. Attack +15, Critical Hit +20">${esc(item.statNotes||'')}</textarea></label>${arcanaIdentity}<div class="gear-skill-fields"><b>${isArcana?`Arcana skill effects · ${lineCount} / 4 slots`:"Rolled skill levels"}</b><p>${isArcana?"Enhancement unlocks new ability lines, then upgrades existing lines. Record only actual rolls; rerolls are not predicted.":"Only add the +levels actually shown on this item."} These update effective Mastery levels.</p>${Array.from({length:lineCount},(_,i)=>i).map(i=>{const bonus=item.skillBonuses?.[i]||{};return `<div class="gear-skill-row"><select name="skill${i}" aria-label="Skill bonus ${i+1}"><option value="">No skill</option>${skills.map(skill=>`<option value="${esc(skill)}" ${bonus.skill===skill?'selected':''}>${esc(skill)}</option>`).join('')}</select><input name="levels${i}" type="number" min="0" max="${isArcana?4:1}" value="${!isArcana&&bonus.skill?1:(bonus.levels||'')}" placeholder="+" aria-label="Bonus levels ${i+1}"></div>`}).join('')}</div><label>Other equipment notes<textarea name="notes" rows="2" placeholder="Set piece, source, or future replacement">${esc(item.notes||'')}</textarea></label></div>`;
+  $('gear-editor').innerHTML=`<div class="gear-selected grade-${gearGrade(item)}"><span class="gear-selected-icon">${gearIcon(item)}</span><div><b>${esc(item.name||'Choose an item or enter one below')}</b><small>${esc(item.grade||type)}${item.requiredLevel?` · Required Lv ${item.requiredLevel}`:''}</small>${source}</div></div>${base?`<div class="gear-base-stats"><b>Base tooltip</b><div>${base}</div></div>`:''}<div class="gear-fields"><label>Item name<input name="name" value="${esc(item.name||'')}" required placeholder="Choose from search or type a name"></label><div class="gear-field-row"><label>Enhancement +<input name="enhancement" type="number" min="0" max="${enhancementMax}" value="${clamp(item.enhancement||0,0,enhancementMax)}"></label><label>Required level<input name="requiredLevel" type="number" min="1" max="45" value="${item.requiredLevel||''}" placeholder="—"></label></div><label>Item level <small>From tooltip; separate from Combat Power</small><input name="itemLevel" type="number" min="0" value="${item.itemLevel||''}" placeholder="—"></label><label>Potential / Soul Binding stats <small>Numeric rolls like Attack +15 or PvP Damage Boost 2% are counted; unrecognized notes are ignored</small><textarea name="statNotes" rows="3" placeholder="e.g. Attack +15, Critical Hit +20">${esc(item.statNotes||'')}</textarea></label>${arcanaIdentity}<div class="gear-skill-fields"><b>${isArcana?`Arcana skill effects · ${lineCount} / 4 slots`:"Rolled skill levels"}</b><p>${isArcana?"Enhancement unlocks new ability lines, then upgrades existing lines. Record only actual rolls; rerolls are not predicted.":"Only add the +levels actually shown on this item."} These update effective Mastery levels. Enter the actual +level shown, even when it is greater than +1.</p>${Array.from({length:lineCount},(_,i)=>i).map(i=>{const bonus=item.skillBonuses?.[i]||{};return `<div class="gear-skill-row"><select name="skill${i}" aria-label="Skill bonus ${i+1}"><option value="">No skill</option>${skills.map(skill=>`<option value="${esc(skill)}" ${bonus.skill===skill?'selected':''}>${esc(skill)}</option>`).join('')}</select><input name="levels${i}" type="number" min="0" max="${isArcana?4:30}" value="${bonus.levels||''}" placeholder="+" aria-label="Bonus levels ${i+1}"></div>`}).join('')}</div><label>Other equipment notes<textarea name="notes" rows="2" placeholder="Set piece, source, or future replacement">${esc(item.notes||'')}</textarea></label></div>`;
   const ampRow=$('gear-editor').querySelector('.gear-field-row');
   if(ampRow)ampRow.insertAdjacentHTML('afterend',gearAmplificationEditor(slot,item));
   gearStonesEditor(gearSlot(gearSlotId),item);
@@ -394,7 +395,7 @@ function initGear(){
     const ampCandidate={...gearDraft,enhancement:actualEnhancement,amplificationCap:userAmpCap};
     const ampRank=actualEnhancement>=15?clamp(values.get('amplification'),0,gearAmplificationCap(slot,ampCandidate)):0;
     const theostone=gearTheostoneEligible(slot,gearDraft)?String(values.get('theostone')||'').trim().slice(0,100):'';
-    gearDraft={...(gearDraft||{}),name,type:gearAllowedType(slot),arcanaSet:slot.area==='arcana'?String(values.get('arcanaSet')||''):null,enhancement:actualEnhancement,amplification:ampRank,amplificationCap:userAmpCap,amplificationBonuses:gearDraft.amplificationBonuses||{},requiredLevel:values.get('requiredLevel')?clamp(values.get('requiredLevel'),1,45):null,itemLevel:values.get('itemLevel')?clamp(values.get('itemLevel'),0,999):null,manastoneSlots:gearStoneFamily(slot)?socketCount:null,stoneType,stones,theostone,statNotes:String(values.get('statNotes')||''),notes:String(values.get('notes')||''),skillBonuses:Array.from({length:slot.area==='arcana'?4:gearSkillLineCapacity(slot,gearDraft.grade)},(_,i)=>({skill:String(values.get(`skill${i}`)||''),levels:clamp(values.get(`levels${i}`),0,slot.area==='arcana'?4:1)})).filter(x=>x.skill&&x.levels)};
+    gearDraft={...(gearDraft||{}),name,type:gearAllowedType(slot),arcanaSet:slot.area==='arcana'?String(values.get('arcanaSet')||''):null,enhancement:actualEnhancement,amplification:ampRank,amplificationCap:userAmpCap,amplificationBonuses:gearDraft.amplificationBonuses||{},requiredLevel:values.get('requiredLevel')?clamp(values.get('requiredLevel'),1,45):null,itemLevel:values.get('itemLevel')?clamp(values.get('itemLevel'),0,999):null,manastoneSlots:gearStoneFamily(slot)?socketCount:null,stoneType,stones,theostone,statNotes:String(values.get('statNotes')||''),notes:String(values.get('notes')||''),skillBonuses:Array.from({length:slot.area==='arcana'?4:gearSkillLineCapacity(slot,gearDraft.grade)},(_,i)=>({skill:String(values.get(`skill${i}`)||''),levels:clamp(values.get(`levels${i}`),0,slot.area==='arcana'?4:30)})).filter(x=>x.skill&&x.levels)};
     if(slot.area==='arcana'&&!['Vigor','Magic'].includes(gearDraft.arcanaSet)){
       $('gear-dialog-title').textContent='Select the Global Arcana set shown on this card';
       return;
