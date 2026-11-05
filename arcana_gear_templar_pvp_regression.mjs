@@ -10,7 +10,7 @@ const SPECS=JSON.parse(read('specialties.json'));
 const STIGMAS=JSON.parse(read('stigmas.json'));
 const state={class:'templar'};
 const accountData={equipment:{
-  weapon:{grade:'Unique',skillBonuses:[{skill:'Judgment',levels:30}]},
+  weapon:{grade:'Unique',skillBonuses:[{skill:'Judgment',levels:2}]},
   ring1:{grade:'Unique',skillBonuses:[{skill:'Judgment',levels:1}]},
   helm:{grade:'Unique',statNotes:'Attack +15, PvP Damage Boost 2%',
     skillBonuses:[{skill:'Judgment',levels:1},{skill:'Fury',levels:1}]},
@@ -36,11 +36,18 @@ vm.runInContext(read('js/arcana_rules.js')+'\n'+read('js/gear.js')+
 const {gearSkillLevels,gearRolledStatTotals,gearSlotSkillPool,
   arcanaDivineTotals,PvpCombatModels:pvp,arcanaValidBonuses}=ctx.check;
 const skills=gearSkillLevels();
-assert.equal(skills.Judgment,4,
-  'Weapon/ring +1 each and valid Chalice/Parchment +1, not weapon +30 or helmet Judgment');
+assert.equal(skills.Judgment,5,
+  'Recorded weapon +2, ring +1 and valid Chalice/Parchment +1 must add; invalid helmet Judgment excluded');
 assert.equal(skills.Fury,1);
 assert.equal(skills.Poach,1);
 assert.equal(skills['Punishing Benediction'],1);
+accountData.equipment.ring1.skillBonuses=[{skill:'Judgment',levels:3}];
+assert.equal(gearSkillLevels().Judgment,7,
+ 'Gear item with recorded +3 must preserve all three levels (not flatten to +1)');
+accountData.equipment.ring1.skillBonuses=[{skill:'Judgment',levels:1}];
+assert.equal(gearSkillLevels().Judgment,5,
+ 'Replacing item bonus with +1 must decrease the effective rank by exactly 2');
+
 const rolls=gearRolledStatTotals().stats;
 assert(rolls.some(row=>row.name==='Attack'&&row.value===15));
 assert(rolls.some(row=>row.name==='PvP Damage Boost'&&row.unit==='%'&&row.value===2));
@@ -57,7 +64,7 @@ const duplicate=[
 assert(!arcanaValidBonuses('templar','chalice','Unique',0,duplicate),
   'A full card may not contain the same skill twice');
 accountData.equipment.chalice.skillBonuses=duplicate;
-assert.equal(gearSkillLevels().Judgment,3,
+assert.equal(gearSkillLevels().Judgment,4,
   'An invalid whole Arcana must give ZERO skill levels, not two line-by-line successes');
 accountData.equipment.chalice.skillBonuses=[
  {skill:'Judgment',levels:1},{skill:'Poach',levels:1}
