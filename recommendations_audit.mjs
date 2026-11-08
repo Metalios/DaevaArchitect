@@ -15,7 +15,7 @@ const ctx={DATA,STIGMAS,SKILL_UNLOCKS:read('skill_unlocks.json'),LEVEL_REWARDS:r
 vm.createContext(ctx);
 vm.runInContext(lib+'\n'+app.slice(0,app.indexOf('function render(){'))+`
 globalThis.api={state,account,adviceFor,adviceSpecialtyChoices,SPECIALTY_CONTEXT,activeStigmas,masteryStages,
- stigmaStages,allocate,masteryCost,masteryRankCap,stigmaCost,skillNames,budget,modifiedBuild};
+ stigmaStages,recommendedStigmaAllocation,allocate,masteryCost,masteryRankCap,stigmaCost,skillNames,budget,modifiedBuild};
 `,ctx);
 let count=0;
 for(const cls of Object.keys(DATA)){
@@ -45,6 +45,35 @@ for(const cls of Object.keys(DATA)){
    assert(!ctx.api.modifiedBuild(),'Changing class, level and context must not mark manually modified');
    count++;
   }
+  // Audit the SAME recommendation function that model() calls, at every
+  // actual leveling step rather than only inspecting a hypothetical stage
+  // allocator with four endgame names.
+  if(mode!=='pvp'){
+   for(let level=1;level<=45;level++){
+    ctx.api.state.class=cls;
+    const a=ctx.api.account();a.journey='leveling';a.context=mode;
+    a.leveling.level=level;a.manualStigma=null;a.customStigmas=null;
+    const {names,allocation:plan}=ctx.api.recommendedStigmaAllocation();
+    const unlocked=Array.from(ctx.api.activeStigmas()).slice(0,ctx.LEVEL_REWARDS[level].slots);
+    assert.deepEqual(Array.from(names),unlocked,cls+' '+mode+' '+level+': locked slot in recommendation');
+    assert.deepEqual(Object.keys(plan.levels),unlocked,cls+' '+mode+' '+level+': hidden Stigma rank');
+    const actual=unlocked.reduce((total,name)=>{
+     const rank=plan.levels[name];
+     assert(Number.isInteger(rank)&&rank>=0&&rank<=20,cls+' '+mode+' '+level+': illegal Stigma rank');
+     for(let n=1;n<=rank;n++)total+=ctx.api.stigmaCost(n);
+     return total;
+    },0);
+    assert.equal(plan.spent,actual,cls+' '+mode+' '+level+': incorrect Stigma point accounting');
+    const available=ctx.api.budget('stigma')-plan.spent;
+    assert(available>=0,cls+' '+mode+' '+level+': overspent Stigma points');
+    for(const name of unlocked){
+     const rank=plan.levels[name];
+     assert(rank===20||ctx.api.stigmaCost(rank+1)>available,
+      cls+' '+mode+' '+level+': affordable Stigma rank left unused ('+available+' points)');
+    }
+    if(level===45)assert.equal(plan.spent,30,cls+' '+mode+': fresh-45 did not spend 30 Stigma points');
+   }
+  }
  }
 }
 // Context-specific Specialty effects must respect actual option/slot gates.
@@ -62,7 +91,7 @@ for(const [cls,modes] of Object.entries(ctx.api.SPECIALTY_CONTEXT||{})){
  }
 }
 console.log('Verified '+specialtyChecks+' role/context-specific Specialty breakpoint selections.');
-console.log('Verified '+count+' researched class/context/level allocations (8 classes × 3 contexts × 10 levels) with legal spending and valid data identifiers.');
+console.log('Verified '+count+' researched class/context/level allocations, plus 720 all-class solo/group leveling Stigma recommendations with no hidden slots or affordable ranks left unspent.');
 
 // Keep connected-board objective invariants in the existing CI audit suite.
 await import('./objective_optimizer_audit.mjs');

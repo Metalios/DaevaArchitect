@@ -555,6 +555,22 @@ function allocate(stages,budget,costFn,names,base,capFn=null){
   const next=firstMiss?{...firstMiss,need:Math.max(1,firstMiss.cost-(budget-spent))}:null;
   return {levels,spent,next};
 }
+// A leveling character can spend Stigma points only in unlocked slots.
+// Keep the complete four-slot loadout saved so it becomes available as
+// levels 22, 27, 32 and 37 unlock the remaining slots. The researched
+// leveling sequence spends ranks progressively, unlike the endgame
+// breakpoint scorer which may defer intermediate (affordable) ranks.
+function recommendedStigmaAllocation(){
+  const names=activeStigmas().slice(0,isLeveling()?levelReward().slots:4);
+  const a=account();
+  const researchedSoloAbyss=state.class==='templar'&&a.context==='pvp-abyss-solo'&&
+    !a.customStigmas&&
+    ['Doom Shield','Grapple','Executing Blade','Shield of Protection']
+      .every(name=>names.includes(name));
+  return {names,allocation:isLeveling()||researchedSoloAbyss
+    ?allocate(stigmaStages(),budget('stigma'),stigmaCost,names,0)
+    :optimizeRecommendedStigmas(names,budget('stigma'))};
+}
 function boardPlan(budget,group='crystals'){
   if(typeof group==='boolean')group=group?'azphel':'crystals';
   const nodes=nodeMap(), owned=new Set(),perBoard=Object.fromEntries(ALL_BOARD_NAMES.map(n=>[n,0]));let spent=0,next=null;
@@ -884,17 +900,9 @@ function enhanceSorcererCombat(master,boardEffects,stigmas){
 function model(){
   const a=account(),names=skillNames(),recommendedMastery=allocate(masteryStages(),budget('mastery'),masteryCost,names,1,isLeveling()?masteryRankCap:null),
     mastery=a.manualMastery?manualAllocation(a.manualMastery,names,budget('mastery'),masteryCost,1,masteryRankCap):recommendedMastery,
-    stigmas=activeStigmas(),
-    researchedSoloAbyssStigmas=state.class==='templar'&&a.context==='pvp-abyss-solo'&&
-      !a.customStigmas&&
-      ['Doom Shield','Grapple','Executing Blade','Shield of Protection']
-        .every(name=>stigmas.includes(name)),
-    // A player-tested catch-and-kill preset has concrete cost milestones.
-    // Do not replace its 30/60/80-point rank route with a generic uncalibrated
-    // survival coefficient. Other modes/customized bars retain adaptive search.
-    recommendedStigma=researchedSoloAbyssStigmas
-      ?allocate(stigmaStages(),budget('stigma'),stigmaCost,stigmas,0)
-      :optimizeRecommendedStigmas(stigmas,budget('stigma')),
+    stigmaRecommendation=recommendedStigmaAllocation(),
+    stigmas=stigmaRecommendation.names,
+    recommendedStigma=stigmaRecommendation.allocation,
     stigma=a.manualStigma?manualAllocation(a.manualStigma,stigmas,budget('stigma'),stigmaCost,0,20):recommendedStigma;
   {
     // Freeze the RECOMMENDED route during each crystal-spending cycle.
