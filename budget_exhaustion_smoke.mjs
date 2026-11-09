@@ -79,7 +79,24 @@ try{
      errors.push('Level 37 discarded a previously funded tile');
    if(lvl37.boardUnused<0)
      errors.push('Leveling route overspent instead of banking crystals');
-   return {initial,updated,lvl36,lvl37,errors};
+   // Level gates cannot be treated as a chance to re-optimize away purchases.
+   a.obtainedNodes=[];a.recommendedRouteSnapshot=null;leveling().level=12;
+   const stageChecks=[];
+   for(const level of [12,20,30,40,45]){
+     leveling().level=level;
+     stageChecks.push({level,...audit()});
+   }
+   const baseline=stageChecks[0].route.join('|');
+   for(let i=1;i<stageChecks.length;i++){
+     const before=stageChecks[i-1],after=stageChecks[i];
+     if(after.route.join('|')!==baseline)
+       errors.push('Board unlock at level '+after.level+' discarded the fresh-45 path');
+     if(before.funded.some(id=>!after.funded.includes(id)))
+       errors.push('Board unlock at level '+after.level+' removed a funded node');
+     if(after.boardSpent<before.boardSpent||after.boardSpent>after.crystals)
+       errors.push('Illegal Daevanion spend at level '+after.level);
+   }
+   return {initial,updated,lvl36,lvl37,stageChecks,errors};
  });
  assert.deepEqual(errors,[],errors.join('\n'));
  assert.deepEqual(output.errors,[],output.errors.join('\n'));
