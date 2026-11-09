@@ -49,9 +49,19 @@ try{
   await page.locator('#stigma-input').fill('34');
   await page.locator('#stigma-input').dispatchEvent('change');
   assert.equal(await page.locator('#stigma-input').inputValue(),'34');
+  const levelingTarget=await page.evaluate(()=>({
+    context:account().context,route:[...model().boards.owned].sort((a,b)=>a-b)
+  }));
   await page.locator('#v2-stage').selectOption('endgame');
   assert.equal(await page.locator('#stigma-input').inputValue(),'34',
     'Visible v2 handoff must preserve the level-45 baseline plus four earned shards');
+  const freshTarget=await page.evaluate(()=>({
+    context:account().context,route:[...model().boards.owned].sort((a,b)=>a-b)
+  }));
+  assert.equal(freshTarget.context,levelingTarget.context,
+    'Handoff changed Solo/Group content and invalidated the leveling destination');
+  assert.deepEqual(freshTarget.route,levelingTarget.route,
+    'Fresh-45 recommended boards must not require undoing the leveling route');
   assert.deepEqual(errors,[]);
   console.log('Fresh-45 Global: eight class defaults, preserved legacy 29, corrected preset and quest-inclusive leveling handoff.');
 }finally{await browser.close()}

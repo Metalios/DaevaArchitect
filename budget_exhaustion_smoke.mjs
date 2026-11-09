@@ -34,7 +34,11 @@ try{
        }
      }
      const free=crystals-m.boards.spent;
-     if(cheapest<=free)errors.push('Budget-fit route left affordable connected Daevanion tile');
+     // Endgame spends every affordable connected point. Leveling may
+     // deliberately bank it for an already chosen fresh-45 target node
+     // on a board that is not yet unlocked (Kinah-safe progression).
+     if(!isLeveling()&&cheapest<=free)
+       errors.push('Budget-fit route left affordable connected Daevanion tile');
      if(m.mastery.spent>points||m.boards.spent>crystals)errors.push('Overspent budgets');
      const affordable=skillNames().some(name=>
        m.mastery.levels[name]<masteryRankCap(name)&&
@@ -43,7 +47,9 @@ try{
      return {points,crystals,masterySpent:m.mastery.spent,
        boardSpent:m.boards.spent,boardUnused:free,
        snapshotBudget:a.recommendedRouteSnapshot?.budget,
-       route:a.recommendedRouteSnapshot?.route?.map(n=>n.id)||[]};
+       forecastBudget:a.recommendedRouteSnapshot?.forecastBudget,
+       route:a.recommendedRouteSnapshot?.route?.map(n=>n.id)||[],
+       funded:[...funded]};
    }
    const initial=audit();
    const acquired=plannedRoute()[0].id;
@@ -63,11 +69,36 @@ try{
    const lvl36=audit();
    leveling().level=37;
    const lvl37=audit();
-   if(lvl36.crystals!==100||lvl37.crystals!==104||lvl37.snapshotBudget!==104)
-     errors.push('Level 36 to 37 did not refresh funded board budget');
-   return {initial,updated,lvl36,lvl37,errors};
+   if(lvl36.crystals!==100||lvl37.crystals!==104||
+      lvl36.forecastBudget!==136||lvl37.forecastBudget!==136)
+     errors.push('Leveling budget or fresh-45 destination was not preserved');
+   if(lvl36.route.join('|')!==lvl37.route.join('|'))
+     errors.push('Level 37 reshuffled the purchased path despite a fixed level-45 target');
+   if(!lvl36.funded.every(id=>lvl37.funded.includes(id))||
+      lvl37.boardSpent<lvl36.boardSpent)
+     errors.push('Level 37 discarded a previously funded tile');
+   if(lvl37.boardUnused<0)
+     errors.push('Leveling route overspent instead of banking crystals');
+   // Level gates cannot be treated as a chance to re-optimize away purchases.
+   a.obtainedNodes=[];a.recommendedRouteSnapshot=null;leveling().level=12;
+   const stageChecks=[];
+   for(const level of [12,20,30,40,45]){
+     leveling().level=level;
+     stageChecks.push({level,...audit()});
+   }
+   const baseline=stageChecks[0].route.join('|');
+   for(let i=1;i<stageChecks.length;i++){
+     const before=stageChecks[i-1],after=stageChecks[i];
+     if(after.route.join('|')!==baseline)
+       errors.push('Board unlock at level '+after.level+' discarded the fresh-45 path');
+     if(before.funded.some(id=>!after.funded.includes(id)))
+       errors.push('Board unlock at level '+after.level+' removed a funded node');
+     if(after.boardSpent<before.boardSpent||after.boardSpent>after.crystals)
+       errors.push('Illegal Daevanion spend at level '+after.level);
+   }
+   return {initial,updated,lvl36,lvl37,stageChecks,errors};
  });
  assert.deepEqual(errors,[],errors.join('\n'));
  assert.deepEqual(output.errors,[],output.errors.join('\n'));
- console.log('Verified endgame 285-Mastery/119→150-crystal update and 36→37 leveling budget exhaustion:',JSON.stringify(output));
+ console.log('Verified endgame budget exhaustion and no-respec 36→37 leveling path continuity:',JSON.stringify(output));
 }finally{await browser.close()}

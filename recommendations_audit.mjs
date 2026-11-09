@@ -13,9 +13,9 @@ const ctx={DATA,STIGMAS,SKILL_UNLOCKS:read('skill_unlocks.json'),LEVEL_REWARDS:r
  PROFILES:vm.runInNewContext(scripts('js/profiles.js')+'\nPROFILES'),
  gearSkillLevels:()=>({}),localStorage:{getItem:()=>null},console};
 vm.createContext(ctx);
-vm.runInContext(lib+'\n'+app.slice(0,app.indexOf('function render(){'))+`
+vm.runInContext(scripts('js/board_budget.js')+'\n'+lib+'\n'+app.slice(0,app.indexOf('function render(){'))+`
 globalThis.api={state,account,adviceFor,adviceSpecialtyChoices,SPECIALTY_CONTEXT,activeStigmas,masteryStages,
- stigmaStages,recommendedStigmaAllocation,allocate,masteryCost,masteryRankCap,stigmaCost,skillNames,budget,modifiedBuild};
+ stigmaStages,recommendedStigmaAllocation,scheduleLevelingBoardRoute,levelingFutureCrystalBudget,levelingEarnedCrystalsAt,allocate,masteryCost,masteryRankCap,stigmaCost,skillNames,budget,modifiedBuild};
 `,ctx);
 let count=0;
 for(const cls of Object.keys(DATA)){
@@ -76,6 +76,59 @@ for(const cls of Object.keys(DATA)){
   }
  }
 }
+// Critical Kinah invariant: purchasing along any leveling preview must
+// remain valid at every subsequent level and at the fresh-45 handoff.
+let boardProgressionChecks=0;
+const opens={Nezekan:12,Zikel:20,Vaizel:30,Triniel:40};
+for(const [cls,character] of Object.entries(DATA))for(const mode of ['solo','party']){
+ ctx.api.state.class=cls;
+ const a=ctx.api.account();
+ a.journey='leveling';a.context=mode;
+ a.leveling={level:12,extraByLevel:{}};
+ a.obtainedNodes=[];a.customStigmas=null;
+ const route=ctx.api.scheduleLevelingBoardRoute(ctx.ROUTES[cls][mode],136);
+ const all=new Map(character.boards.flatMap(board=>
+  board.nodes.map(n=>[n[0],{node:n,board:board.name}])));
+ const starts=new Set(character.boards.flatMap(board=>
+  board.nodes.filter(n=>n[5]===0).map(n=>n[0])));
+ const adjacent=(a,b)=>a.board===b.board&&
+  Math.abs(a.node[1]-b.node[1])+Math.abs(a.node[2]-b.node[2])===1;
+ const selected=new Set(starts);
+ let spent=0;
+ assert(route.length>0,cls+' '+mode+': empty final route');
+ for(const entry of route){
+  const current=all.get(entry.id);
+  assert(current,cls+' '+mode+': unknown board tile');
+  assert(!selected.has(entry.id),cls+' '+mode+': repeated tile');
+  assert([...selected].some(id=>adjacent(current,all.get(id))),
+   cls+' '+mode+': disconnected purchase '+entry.id);
+  selected.add(entry.id);spent+=current.node[5];
+ }
+ assert(spent<=136,cls+' '+mode+': target overspends 136 crystals');
+ let prior=new Set();
+ for(let level=1;level<=45;level++){
+  a.leveling.level=level;
+  const budget=ctx.LEVEL_REWARDS[level].crystals;
+  const bought=new Set(),visited=new Set(starts);
+  let cost=0;
+  // The route is stage-ordered: a funded current-level prefix cannot buy
+  // a late-locked board, and earlier purchases never disappear.
+  for(const item of route){
+   const info=all.get(item.id);
+   if((opens[item.board]??Infinity)>level||cost+info.node[5]>budget)break;
+   assert([...visited].some(id=>adjacent(info,all.get(id))),
+    cls+' '+mode+' '+level+': disconnected stage');
+   visited.add(item.id);cost+=info.node[5];bought.add(item.id);
+  }
+  assert(cost<=budget,cls+' '+mode+' '+level+': exceeded earned crystals');
+  assert([...prior].every(id=>bought.has(id)),
+    cls+' '+mode+' '+level+': refunded an earlier investment');
+  if(level===45)assert.equal(bought.size,route.length,
+    cls+' '+mode+': Lv45 did not fund final route');
+  prior=bought;boardProgressionChecks++;
+ }
+}
+console.log('Verified '+boardProgressionChecks+' staged leveling board previews: connected purchases, level gates, stable earlier investments and a legal 136-crystal fresh-45 goal.');
 // Context-specific Specialty effects must respect actual option/slot gates.
 const allSpecs=ctx.SPECS;let specialtyChecks=0;
 for(const [cls,modes] of Object.entries(ctx.api.SPECIALTY_CONTEXT||{})){

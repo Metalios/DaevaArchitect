@@ -571,6 +571,74 @@ function recommendedStigmaAllocation(){
     ?allocate(stigmaStages(),budget('stigma'),stigmaCost,names,0)
     :optimizeRecommendedStigmas(names,budget('stigma'))};
 }
+// Leveling Daevanion is a single Kinah-safe investment route toward Lv45.
+function levelingFutureCrystalBudget(){
+ return LEVEL_REWARDS[45].crystals+(Number(activeLevelingExtra().crystals)||0);
+}
+function levelingFutureMastery(boardSkills={}){
+ const a=account(),unlocks=SKILL_UNLOCKS[state.class],names=skillNames();
+ const advice=adviceFor(state.class,a.context,a.pveObjective),gear=equippedSkillLevelBonuses();
+ const adjust=(name,target)=>Math.max(1,Math.min(10,target-(boardSkills[name]||0)-(gear[name]||0)));
+ const stages=typeof progressionMasteryStages==='function'
+   ?progressionMasteryStages(state.class,a.context,45,false,advice,unlocks,names,adjust)
+   :masteryStages(boardSkills);
+ const cap=name=>{
+   const at=unlocks[name];if(!at||at>45)return 1;
+   return UNGATED_MASTERY_PASSIVES[state.class]?.includes(name)
+     ?10:Math.min(10,2+Math.floor((45-at)/3));
+ };
+ return allocate(stages,LEVEL_REWARDS[45].mastery+
+   (Number(activeLevelingExtra().mastery)||0),masteryCost,names,1,cap);
+}
+function levelingEarnedCrystalsAt(level){
+ const history=Object.entries(leveling().extraByLevel||{})
+   .filter(([at])=>Number(at)<=Math.min(level,currentLevel()))
+   .sort(([a],[b])=>Number(b)-Number(a));
+ return Math.min(levelingFutureCrystalBudget(),LEVEL_REWARDS[level].crystals+
+   (Number(history[0]?.[1]?.crystals)||0));
+}
+// Fund only eventual Lv45 nodes. Bank points if an optimal final
+// connection is still locked; never plan disposable nodes and respecs.
+function scheduleLevelingBoardRoute(rankedRoute,finalBudget){
+ const cls=data(),fit=fitConnectedBoardBudget(cls,rankedRoute,finalBudget);
+ const nodes=new Map(cls.boards.flatMap(b=>b.nodes.map(x=>[x[0],{board:b.name,node:x}])));
+ const target=new Set(),priority=new Map();let total=0;
+ for(const entry of fit.route){
+   const found=nodes.get(entry.id);
+   if(!found||total+found.node[5]>finalBudget)break;
+   total+=found.node[5];target.add(entry.id);priority.set(entry.id,priority.size);
+ }
+ const visited=new Set(cls.boards.flatMap(b=>b.nodes.filter(x=>x[5]===0).map(x=>x[0])));
+ const neighbors=new Map();
+ for(const b of cls.boards){
+   const coords=new Map(b.nodes.map(x=>[`${x[1]}:${x[2]}`,x[0]]));
+   for(const x of b.nodes)
+     neighbors.set(x[0],[[x[1]-1,x[2]],[x[1]+1,x[2]],
+       [x[1],x[2]-1],[x[1],x[2]+1]]
+       .map(([r,c])=>coords.get(`${r}:${c}`)).filter(id=>id!==undefined));
+ }
+ const route=[];let spent=0;
+ for(let level=12;level<=45;level++){
+   const affordable=levelingEarnedCrystalsAt(level);
+   while(true){
+     let pick=null;
+     for(const id of target){
+       if(visited.has(id))continue;
+       const found=nodes.get(id);
+       if(level<(BOARD_UNLOCKS[found.board]??46)||
+         spent+found.node[5]>affordable||
+         !neighbors.get(id).some(other=>visited.has(other)))continue;
+       if(pick===null||priority.get(id)<priority.get(pick))pick=id;
+     }
+     if(pick===null)break;
+     visited.add(pick);spent+=nodes.get(pick).node[5];
+     route.push({board:nodes.get(pick).board,id:pick,goal:pick});
+   }
+ }
+ if(route.length!==target.size)
+   throw Error('Fresh-45 target contains nodes unreachable during leveling');
+ return route;
+}
 function boardPlan(budget,group='crystals'){
   if(typeof group==='boolean')group=group?'azphel':'crystals';
   const nodes=nodeMap(), owned=new Set(),perBoard=Object.fromEntries(ALL_BOARD_NAMES.map(n=>[n,0]));let spent=0,next=null;
@@ -914,8 +982,10 @@ function model(){
     const gearRanks=equippedSkillLevelBonuses();
     // Board level unlocks are a real change of eligible path; a level
     // increase inside the same unlock band must not shuffle suggestions.
-    const contextKey=JSON.stringify([state.class,a.context,a.pvpOpponent||'all',BOARD_NAMES.filter(boardOpen),
-      sorcererCombatEligible()?'global-sorcerer-nightmare-goals-v4':state.class==='templar'&&a.context==='pvp-abyss-solo'?'templar-solo-effective-gear-arcana-v2':'objective-board-search-v3',a.pveObjective||'performance']);
+    const contextKey=isLeveling()
+      ?JSON.stringify(['leveling-fresh45-kinah-safe-v1',state.class,a.context,a.pveObjective||'performance'])
+      :JSON.stringify([state.class,a.context,a.pvpOpponent||'all',BOARD_NAMES.filter(boardOpen),
+        sorcererCombatEligible()?'global-sorcerer-nightmare-goals-v4':state.class==='templar'&&a.context==='pvp-abyss-solo'?'templar-solo-effective-gear-arcana-v2':'objective-board-search-v3',a.pveObjective||'performance']);
     const snapshot=a.recommendedRouteSnapshot;
     // Prior to any real purchases, changes to the player's goal, mastery,
     // equipment or Stigmas should still influence the recommended route.
@@ -937,18 +1007,23 @@ function model(){
     const exhausted=total>0&&spent>=total;
     const valid=snapshot?.contextKey===contextKey&&
       Array.isArray(snapshot.route)&&snapshot.route.length>0&&
-      snapshot.route.every(x=>nodeMap().has(x.id));
+      snapshot.route.every(x=>nodeMap().has(x.id))&&
+      (!isLeveling()||[...obtainedNodes()]
+        .filter(id=>BOARD_NAMES.includes(nodeMap().get(id)?.board))
+        .every(id=>snapshot.route.some(item=>item.id===id)));
     // Reaching 119/119 triggers precisely ONE route update. It stays
     // stable during later renders, and the next cycle refreshes at 120/120.
-    const changedEarnedBudget=valid&&snapshot.budget!==total;
-    const newBudgetAfterCompletion=valid&&snapshot.completedBudget!==null&&
+    const futureBudget=isLeveling()?levelingFutureCrystalBudget():total;
+    const changedEarnedBudget=valid&&(isLeveling()
+      ?snapshot.forecastBudget!==futureBudget:snapshot.budget!==total);
+    const newBudgetAfterCompletion=!isLeveling()&&valid&&snapshot.completedBudget!==null&&
       snapshot.completedBudget!==undefined&&total>snapshot.completedBudget;
     // Freeze during individual tile clicks, but do not freeze obsolete
     // recommendations when the actual physical gear or Arcana changes.
-    const changedEquipment=valid&&snapshot.equipmentKey!==equipmentKey;
+    const changedEquipment=!isLeveling()&&valid&&snapshot.equipmentKey!==equipmentKey;
     const update=!valid||changedEquipment||changedEarnedBudget||newBudgetAfterCompletion||
-      (exhausted&&snapshot.completedBudget!==total)||
-      (spent===0&&snapshot.basisKey!==basisKey);
+      (!isLeveling()&&((exhausted&&snapshot.completedBudget!==total)||
+        (spent===0&&snapshot.basisKey!==basisKey)));
     const routeCacheKey=JSON.stringify([contextKey,basisKey,total,
       [...obtainedNodes()].sort((x,y)=>x-y),a.boardMode||'recommended',
       a.customNodes||[],a.customSpecialties||{},budget('mastery'),
@@ -965,13 +1040,22 @@ function model(){
       }:null;
        if(!computed&&!appIsPvpContext(a.context) && typeof PveBuildOptimizer!=='undefined'){
          try {
-           const boardData=data(), baseWeights=activeWeights(), crystalBudget=budget('crystals');
+           const boardData=data(),baseWeights=activeWeights(),
+              crystalBudget=isLeveling()?futureBudget:budget('crystals'),
+              futureMastery=isLeveling()?levelingFutureMastery():mastery,
+              futureLevel=isLeveling()?45:currentLevel();
            const objective=PVE_OBJECTIVES[a.pveObjective]?a.pveObjective:'performance';
            const scoreFinal=candidate=>{
              const boardEffects=effects(candidate.selected);
-             const proposed=a.manualMastery?mastery:allocate(masteryStages(boardEffects.skills),
-               budget('mastery'),masteryCost,names,1,isLeveling()?masteryRankCap:null);
-             const build=engineBuild(proposed.levels,boardEffects,stigma.levels,activeStigmas());
+             const proposed=isLeveling()?levelingFutureMastery(boardEffects.skills)
+                :a.manualMastery?mastery:allocate(masteryStages(boardEffects.skills),
+                  budget('mastery'),masteryCost,names,1,null);
+              const futureStigmas=isLeveling()
+                ?allocate(progressionStigmaStages(state.class,a.context,activeStigmas(),
+                  adviceFor(state.class,a.context,a.pveObjective)),
+                  30+(Number(activeLevelingExtra().stigma)||0),
+                  stigmaCost,activeStigmas(),0).levels:stigma.levels;
+              const build=engineBuild(proposed.levels,boardEffects,futureStigmas,activeStigmas());
              const structuralTie=candidate.score*.0000005;
              if(state.class==='sorcerer'&&sorcererCombatEligible()&&
                  !['survivability','control'].includes(objective)&&
@@ -983,10 +1067,8 @@ function model(){
                // for the selected funded route in enhanceSorcererCombat.
                // This is a fixed-policy comparative score, not a promise
                // of globally optimal DPS for each candidate.
-               const scenarios=isLeveling()?GlobalCombatEngine.ENCOUNTERS:
-                 GlobalCombatEngine.scenariosFor(a.context,objective);
-               const candidateBuild=!isLeveling()
-                 ?{...build,macroLayout:'flow',objective}:build;
+               const scenarios=GlobalCombatEngine.scenariosFor(a.context,objective);
+               const candidateBuild={...build,macroLayout:'flow',objective};
                const candidateSpecs={};
                for(const [name,entry] of Object.entries(SPECS.sorcerer||{})){
                  const level=GlobalCombatEngine.effective(candidateBuild,name);
@@ -1010,9 +1092,9 @@ function model(){
              return candidate.score;
            };
            computed=PveBuildOptimizer.optimize({classData:boardData,classId:state.class,context:a.context,
-             objective,baseWeights,mastery:mastery.levels,gear:gearRanks,
-             locked:[...actual].filter(id=>BOARD_NAMES.includes(nodeMap().get(id)?.board)),
-             crystalBudget,characterLevel:currentLevel(),
+             objective,baseWeights,mastery:futureMastery.levels,gear:gearRanks,
+              locked:[...actual].filter(id=>BOARD_NAMES.includes(nodeMap().get(id)?.board)),
+              crystalBudget,characterLevel:futureLevel,
              skillTargets:typeof progressionBoardTargets==='function'?progressionBoardTargets(state.class,a.context,a.pveObjective):{},
              scoreFinal});
            a.lastObjectiveAnalysis=computed.diagnostics;
@@ -1021,7 +1103,12 @@ function model(){
            console.warn('Objective search failed; preserving baseline recommendation',error);
          }
        }
-      if(!computed)computed=chooseCombatBoardRoute(mastery,stigma,gearRanks,target,baseCp,actual);
+      if(!computed)computed=isLeveling()&&!appIsPvpContext(a.context)
+         ?optimizeBoardRoute(data(),activeWeights(),levelingFutureMastery().levels,
+           gearRanks,0,null,actual,45,
+           typeof progressionBoardTargets==='function'
+             ?progressionBoardTargets(state.class,a.context,a.pveObjective):{})
+         :chooseCombatBoardRoute(mastery,stigma,gearRanks,target,baseCp,actual);
       if(!cached){
         rememberObjectiveRoute(routeCacheKey,{
           route:computed.route,initialFocus:computed.initialFocus,
@@ -1031,12 +1118,14 @@ function model(){
       if(computed.diagnostics)a.lastObjectiveAnalysis=computed.diagnostics;
       // The optimizer returns a complete future path. Budget fitting only
       // changes recommendation order, never board connectivity or costs.
-      const fitted=customMode()?computed.route:
-        fitConnectedBoardBudget(data(),computed.route,total).route;
+      const fitted=customMode()?computed.route:isLeveling()&&!appIsPvpContext(a.context)
+         ?scheduleLevelingBoardRoute(computed.route,futureBudget)
+         :fitConnectedBoardBudget(data(),computed.route,total).route;
       liveRoute=fitted;liveRouteBasis={initialFocus:computed.initialFocus,baseCp:computed.baseCp};
       a.recommendedRouteSnapshot={
         contextKey,basisKey,equipmentKey,route:fitted,budget:total,
-        initialFocus:computed.initialFocus,baseCp:computed.baseCp,
+         forecastBudget:futureBudget,
+         initialFocus:computed.initialFocus,baseCp:computed.baseCp,
         completedBudget:exhausted?total:null
       };
       // Persist the route, not just the obtained marks, so refresh/reopen
@@ -1761,7 +1850,7 @@ function renderBoards(m){
   $('board-section-description').textContent=customMode()
     ? 'Single-click any node to preview its effects. Double-click a purchasable node to mark it obtained; use Edit selected node to change your custom planned path.'
     : isLeveling()
-      ? `Only boards unlocked by level ${currentLevel()} are included. Single-click a tile to preview; double-click to mark obtained. Blue rings are recommended, gold rings are obtained.`
+      ? `This is one progression route toward fresh 45; only boards unlocked by level ${currentLevel()} are shown. Some crystals may be banked for future unlocks to avoid Kinah-paid respecs. Blue rings are recommended, gold rings are obtained.`
       : 'Single-click to preview a node. Double-click to mark it obtained; blue rings show the stable recommended path, gold rings show actual purchases. Planned amounts stay in each board tab.';
   renderGlobalBoardRoute(m,nodes);
   const arielEligibility=arielAccess(a.gearRating,a.ariel,currentLevel());
@@ -1808,7 +1897,9 @@ function renderBoards(m){
   const method=isAriel?'Ariel uses a connected heuristic PvE/boss-stat route. Exact server-optimal purchase order is unverified.':isAz?ROUTES[state.class].methods.azphel:ROUTES[state.class].methods[appIsPvpContext(a.context)?'pvp':a.context];
   const cpRoute=profile().kind!=='healer'&&Number(a.goalTarget)>0;
   const cpBasis=cpRoute?(liveRouteBasis?.baseCp===null?'Your gear is not recorded fully enough for CP calibration, so this route follows class/context mechanics without CP weighting.':'A complete recorded loadout can give a secondary CP-goal influence after class/context priorities.'):'The route follows researched class and context priorities using only gear bonuses you entered.';
-  $('route-footnote').textContent=customMode()?`Custom mode uses the connected tiles you selected, in click order. Raising your crystal total lets you add more; lowering it makes later tiles unfunded until the budget returns. Marked obtained tiles are recorded separately from planned tiles. Azphel has its own currency and no skill levels.`:`${method}. The recommended path remains fixed through the current crystal-spending cycle and refreshes after your total is marked obtained; switching class/context or unlocking new boards starts a new cycle. No equipment is assumed. Each crystal total funds a prefix; save crystals when the next tile costs more than you have. ${cpBasis} Marked tiles are carried into the route first, using connecting nodes where needed. This is an approximate scoring model, not a proven combat optimum. Azphel has its own currency and no skill levels.`;
+  $('route-footnote').textContent=isLeveling()&&!customMode()
+    ?'One connected fresh-45 target (136 baseline PvE crystals plus extras already earned). Purchases follow board unlocks and earned points. Gold tiles remain committed; crystals may be saved for future unlocks instead of wasting Kinah on resets. Level-ups and equipment changes do not automatically reshuffle this route. Explicit recalculation, changed role or increased future budget may update remaining blue tiles.'
+    :customMode()?`Custom mode uses the connected tiles you selected, in click order. Raising your crystal total lets you add more; lowering it makes later tiles unfunded until the budget returns. Marked obtained tiles are recorded separately from planned tiles. Azphel has its own currency and no skill levels.`:`${method}. The recommended path remains fixed through the current crystal-spending cycle and refreshes after your total is marked obtained; switching class/context or unlocking new boards starts a new cycle. No equipment is assumed. Each crystal total funds a prefix; save crystals when the next tile costs more than you have. ${cpBasis} Marked tiles are carried into the route first, using connecting nodes where needed. This is an approximate scoring model, not a proven combat optimum. Azphel has its own currency and no skill levels.`;
   const weights=isAz||isAriel?{skills:{},stats:activeWeights()?.stats||{}}:activeWeights();
   const topSkills=Object.entries(weights.skills||{}).sort((x,y)=>y[1]-x[1]).slice(0,3).map(x=>x[0]);
   const topStats=Object.entries(weights.stats||{}).filter(([key])=>isAz?key.startsWith('PvP')||key.startsWith('Abnormal'):isAriel?key.startsWith('PvE')||key.startsWith('Boss'):!key.startsWith('PvP')).sort((x,y)=>y[1]-x[1]).slice(0,3).map(([key])=>data().stats[key]?.name||key);
@@ -1916,7 +2007,8 @@ $('level-slider').addEventListener('input',e=>setLevel(e.target.value));
 $('level-minus').addEventListener('click',()=>setLevel(currentLevel()-1));
 $('level-plus').addEventListener('click',()=>setLevel(currentLevel()+1));
 $('level-milestones').addEventListener('click',e=>{const b=e.target.closest('[data-milestone]');if(b)setLevel(b.dataset.milestone)});
-$('handoff-button').addEventListener('click',()=>{if(!isLeveling()||currentLevel()<45)return;const a=account(),totals=Object.fromEntries(['mastery','stigma','crystals'].map(key=>[key,budget(key)]));Object.assign(a,totals);a.journey='endgame';a.context=a.endgameContext||'party';state.preview=a.crystals;state.tab='overview';render()});
+$('handoff-button').addEventListener('click',()=>{if(!isLeveling()||currentLevel()<45)return;const a=account(),totals=Object.fromEntries(['mastery','stigma','crystals'].map(key=>[key,budget(key)]));Object.assign(a,totals);a.levelingContext=a.context;a.endgameContext=a.context;
+  a.journey='endgame';state.preview=a.crystals;state.tab='overview';render()});
 for(const [id,key,max] of [['mastery-input','mastery',462],['stigma-input','stigma',300],['crystal-input','crystals',570]]){
   const update=e=>{const value=clamp(e.target.value,isLeveling()?levelReward()[key]:0,max);if(isLeveling())setLevelingBudget(key,value);else account()[key]=value;if(key==='crystals'&&!['Azphel','Ariel'].includes(state.board))state.preview=budget('crystals');render()};
   $(id).addEventListener('input',e=>{if(e.target.value==='')return;const value=clamp(e.target.value,isLeveling()?levelReward()[key]:0,max);if(isLeveling())setLevelingBudget(key,value);else account()[key]=value;save()});
