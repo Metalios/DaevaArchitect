@@ -580,7 +580,7 @@ function levelingFutureMastery(boardSkills={}){
  const advice=adviceFor(state.class,a.context,a.pveObjective),gear=equippedSkillLevelBonuses();
  const adjust=(name,target)=>Math.max(1,Math.min(10,target-(boardSkills[name]||0)-(gear[name]||0)));
  const stages=typeof progressionMasteryStages==='function'
-   ?progressionMasteryStages(state.class,a.context,45,true,advice,unlocks,names,adjust)
+   ?progressionMasteryStages(state.class,a.context,45,false,advice,unlocks,names,adjust)
    :masteryStages(boardSkills);
  const cap=name=>{
    const at=unlocks[name];if(!at||at>45)return 1;
@@ -1052,7 +1052,8 @@ function model(){
                   budget('mastery'),masteryCost,names,1,null);
               const futureStigmas=isLeveling()
                 ?allocate(progressionStigmaStages(state.class,a.context,activeStigmas(),
-                  adviceFor(state.class,a.context,a.pveObjective)),30,
+                  adviceFor(state.class,a.context,a.pveObjective)),
+                  30+(Number(activeLevelingExtra().stigma)||0),
                   stigmaCost,activeStigmas(),0).levels:stigma.levels;
               const build=engineBuild(proposed.levels,boardEffects,futureStigmas,activeStigmas());
              const structuralTie=candidate.score*.0000005;
@@ -2006,7 +2007,8 @@ $('level-slider').addEventListener('input',e=>setLevel(e.target.value));
 $('level-minus').addEventListener('click',()=>setLevel(currentLevel()-1));
 $('level-plus').addEventListener('click',()=>setLevel(currentLevel()+1));
 $('level-milestones').addEventListener('click',e=>{const b=e.target.closest('[data-milestone]');if(b)setLevel(b.dataset.milestone)});
-$('handoff-button').addEventListener('click',()=>{if(!isLeveling()||currentLevel()<45)return;const a=account(),totals=Object.fromEntries(['mastery','stigma','crystals'].map(key=>[key,budget(key)]));Object.assign(a,totals);a.journey='endgame';a.context=a.endgameContext||'party';state.preview=a.crystals;state.tab='overview';render()});
+$('handoff-button').addEventListener('click',()=>{if(!isLeveling()||currentLevel()<45)return;const a=account(),totals=Object.fromEntries(['mastery','stigma','crystals'].map(key=>[key,budget(key)]));Object.assign(a,totals);a.levelingContext=a.context;a.endgameContext=a.context;
+  a.journey='endgame';state.preview=a.crystals;state.tab='overview';render()});
 for(const [id,key,max] of [['mastery-input','mastery',462],['stigma-input','stigma',300],['crystal-input','crystals',570]]){
   const update=e=>{const value=clamp(e.target.value,isLeveling()?levelReward()[key]:0,max);if(isLeveling())setLevelingBudget(key,value);else account()[key]=value;if(key==='crystals'&&!['Azphel','Ariel'].includes(state.board))state.preview=budget('crystals');render()};
   $(id).addEventListener('input',e=>{if(e.target.value==='')return;const value=clamp(e.target.value,isLeveling()?levelReward()[key]:0,max);if(isLeveling())setLevelingBudget(key,value);else account()[key]=value;save()});
