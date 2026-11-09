@@ -908,7 +908,8 @@ function enhanceSorcererCombat(master,boardEffects,stigmas){
     prepared.objective=a.pveObjective;
   }
   const objective=PVE_OBJECTIVES[a.pveObjective]?a.pveObjective:'performance';
-  const scenarios=GlobalCombatEngine.scenariosFor(a.context,objective);
+  const scenarios=isLeveling()?GlobalCombatEngine.ENCOUNTERS:
+    GlobalCombatEngine.scenariosFor(a.context,objective);
   const key=JSON.stringify([state.class,a.context,objective,currentLevel(),prepared,
     a.manualMastery,a.customSpecialties,budget('mastery')]);
   let result=combatResultCache.key===key?combatResultCache.result:null;
@@ -1006,7 +1007,10 @@ function model(){
     const exhausted=total>0&&spent>=total;
     const valid=snapshot?.contextKey===contextKey&&
       Array.isArray(snapshot.route)&&snapshot.route.length>0&&
-      snapshot.route.every(x=>nodeMap().has(x.id));
+      snapshot.route.every(x=>nodeMap().has(x.id))&&
+      (!isLeveling()||[...obtainedNodes()]
+        .filter(id=>BOARD_NAMES.includes(nodeMap().get(id)?.board))
+        .every(id=>snapshot.route.some(item=>item.id===id)));
     // Reaching 119/119 triggers precisely ONE route update. It stays
     // stable during later renders, and the next cycle refreshes at 120/120.
     const futureBudget=isLeveling()?levelingFutureCrystalBudget():total;
@@ -1062,8 +1066,7 @@ function model(){
                // for the selected funded route in enhanceSorcererCombat.
                // This is a fixed-policy comparative score, not a promise
                // of globally optimal DPS for each candidate.
-               const scenarios=isLeveling()?GlobalCombatEngine.ENCOUNTERS:
-                 GlobalCombatEngine.scenariosFor(a.context,objective);
+               const scenarios=GlobalCombatEngine.scenariosFor(a.context,objective);
                const candidateBuild={...build,macroLayout:'flow',objective};
                const candidateSpecs={};
                for(const [name,entry] of Object.entries(SPECS.sorcerer||{})){
@@ -1846,7 +1849,7 @@ function renderBoards(m){
   $('board-section-description').textContent=customMode()
     ? 'Single-click any node to preview its effects. Double-click a purchasable node to mark it obtained; use Edit selected node to change your custom planned path.'
     : isLeveling()
-      ? `Only boards unlocked by level ${currentLevel()} are included. Single-click a tile to preview; double-click to mark obtained. Blue rings are recommended, gold rings are obtained.`
+      ? `This is one progression route toward fresh 45; only boards unlocked by level ${currentLevel()} are shown. Some crystals may be banked for future unlocks to avoid Kinah-paid respecs. Blue rings are recommended, gold rings are obtained.`
       : 'Single-click to preview a node. Double-click to mark it obtained; blue rings show the stable recommended path, gold rings show actual purchases. Planned amounts stay in each board tab.';
   renderGlobalBoardRoute(m,nodes);
   const arielEligibility=arielAccess(a.gearRating,a.ariel,currentLevel());
@@ -1893,7 +1896,9 @@ function renderBoards(m){
   const method=isAriel?'Ariel uses a connected heuristic PvE/boss-stat route. Exact server-optimal purchase order is unverified.':isAz?ROUTES[state.class].methods.azphel:ROUTES[state.class].methods[appIsPvpContext(a.context)?'pvp':a.context];
   const cpRoute=profile().kind!=='healer'&&Number(a.goalTarget)>0;
   const cpBasis=cpRoute?(liveRouteBasis?.baseCp===null?'Your gear is not recorded fully enough for CP calibration, so this route follows class/context mechanics without CP weighting.':'A complete recorded loadout can give a secondary CP-goal influence after class/context priorities.'):'The route follows researched class and context priorities using only gear bonuses you entered.';
-  $('route-footnote').textContent=customMode()?`Custom mode uses the connected tiles you selected, in click order. Raising your crystal total lets you add more; lowering it makes later tiles unfunded until the budget returns. Marked obtained tiles are recorded separately from planned tiles. Azphel has its own currency and no skill levels.`:`${method}. The recommended path remains fixed through the current crystal-spending cycle and refreshes after your total is marked obtained; switching class/context or unlocking new boards starts a new cycle. No equipment is assumed. Each crystal total funds a prefix; save crystals when the next tile costs more than you have. ${cpBasis} Marked tiles are carried into the route first, using connecting nodes where needed. This is an approximate scoring model, not a proven combat optimum. Azphel has its own currency and no skill levels.`;
+  $('route-footnote').textContent=isLeveling()&&!customMode()
+    ?'One connected fresh-45 target (136 baseline PvE crystals plus extras already earned). Purchases follow board unlocks and earned points. Gold tiles remain committed; crystals may be saved for future unlocks instead of wasting Kinah on resets. Level-ups and equipment changes do not automatically reshuffle this route. Explicit recalculation, changed role or increased future budget may update remaining blue tiles.'
+    :customMode()?`Custom mode uses the connected tiles you selected, in click order. Raising your crystal total lets you add more; lowering it makes later tiles unfunded until the budget returns. Marked obtained tiles are recorded separately from planned tiles. Azphel has its own currency and no skill levels.`:`${method}. The recommended path remains fixed through the current crystal-spending cycle and refreshes after your total is marked obtained; switching class/context or unlocking new boards starts a new cycle. No equipment is assumed. Each crystal total funds a prefix; save crystals when the next tile costs more than you have. ${cpBasis} Marked tiles are carried into the route first, using connecting nodes where needed. This is an approximate scoring model, not a proven combat optimum. Azphel has its own currency and no skill levels.`;
   const weights=isAz||isAriel?{skills:{},stats:activeWeights()?.stats||{}}:activeWeights();
   const topSkills=Object.entries(weights.skills||{}).sort((x,y)=>y[1]-x[1]).slice(0,3).map(x=>x[0]);
   const topStats=Object.entries(weights.stats||{}).filter(([key])=>isAz?key.startsWith('PvP')||key.startsWith('Abnormal'):isAriel?key.startsWith('PvE')||key.startsWith('Boss'):!key.startsWith('PvP')).sort((x,y)=>y[1]-x[1]).slice(0,3).map(([key])=>data().stats[key]?.name||key);
