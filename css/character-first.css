@@ -524,3 +524,28 @@ body.v5-active select:focus-visible{
   display:flex!important;
  }
 }
+
+/* Medium viewport: the approved classic rail has higher-specificity column
+   placement. Force a true two-column editor + full-width insight row in the
+   character-first preview, never overlapping Gear with Mastery. */
+@media (min-width:1100px) and (max-width:1550px){
+ body.v2-active.v2-has-class.v5-active.v5-view-overview:not(.v2-secondary):not(.v2-board-expanded) .v2-workspace{
+  display:grid!important;
+  grid-template-columns:minmax(0,1fr) minmax(0,1.03fr)!important;
+  grid-template-rows:minmax(560px,auto) auto!important;
+  height:auto!important;min-height:0!important;
+  gap:10px!important;
+ }
+ body.v2-active.v2-has-class.v5-active.v5-view-overview:not(.v2-secondary):not(.v2-board-expanded) .v2-workspace>.v2-left{
+  display:flex!important;grid-column:1!important;grid-row:1!important;
+  height:100%!important;min-height:0!important;overflow:auto!important;
+ }
+ body.v2-active.v2-has-class.v5-active.v5-view-overview:not(.v2-secondary):not(.v2-board-expanded) .v2-workspace>.v2-center{
+  display:flex!important;grid-column:2!important;grid-row:1!important;
+  height:100%!important;min-height:0!important;overflow:auto!important;
+ }
+ body.v2-active.v2-has-class.v5-active.v5-view-overview:not(.v2-secondary):not(.v2-board-expanded) .v2-workspace>.v2-right{
+  display:flex!important;grid-column:1/-1!important;grid-row:2!important;
+  height:auto!important;min-height:0!important;overflow:visible!important;
+ }
+}
