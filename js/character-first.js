@@ -72,7 +72,10 @@
     }
     const editor = next === 'boards' ? 'boards' :
       next === 'skills' ? 'mastery' : next === 'stigma' ? 'stigma' : 'gear';
-    if (window.innerWidth < 1100 && next !== 'overview') {
+    // The original editor rail remains the internal source of truth at every
+    // breakpoint, not just on mobile. Otherwise CSS selected Gear at 1280px
+    // while the new navigation claimed to show Skills or Stigmas.
+    if (next !== 'overview') {
       internalEditorClick = true;
       try { document.querySelector('[data-v3-editor="'+editor+'"]')?.click(); }
       finally { internalEditorClick = false; }
