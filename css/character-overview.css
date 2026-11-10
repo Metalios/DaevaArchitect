@@ -426,3 +426,26 @@ body.v5-active .v6-reco-highlight>.v6-link{
   width:100%;max-width:none;
  }
 }
+
+/* Visual-review cleanup for artwork composition: reveal the face in the
+   banner, and mask the original mockup's tiny footer text in the crop. */
+body.v5-active .v6-doll-art:after{
+ content:"";position:absolute;bottom:-1px;left:-1px;right:-1px;height:49px;
+ background:linear-gradient(0deg,var(--v5-header),transparent 98%);
+ pointer-events:none;
+}
+body.v5-active .v6-hero-portrait{
+ top:0;left:4%;height:168px;
+ background-position:center,50% 9px;
+ background-size:cover,auto 238px;
+}
+body.v5-active .v6-hero-portrait:after{
+ background:linear-gradient(0deg,var(--v5-header),transparent 55%);
+}
+@media(min-width:1600px) and (min-height:900px){
+ body.v5-active .v6-hero-portrait{
+  top:0;left:5%;width:300px;height:170px;
+  background-position:center,50% 10px;
+  background-size:cover,auto 260px;
+ }
+}
