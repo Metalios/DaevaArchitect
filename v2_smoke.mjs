@@ -469,7 +469,7 @@ try{
   assert.equal(await page.locator('#v6-progress .v6-next-gate').count(),1,
     width+': next Gear Rating / level milestone is missing');
   assert.match(await page.locator('#v6-progress').innerText(),
-    /Mastery[\\s\\S]*Stigmas[\\s\\S]*PvE Daevanian[\\s\\S]*Azphel[\\s\\S]*Ariel/,
+    /Mastery[\s\S]*Stigmas[\s\S]*PvE Daevanian[\s\S]*Azphel[\s\S]*Ariel/,
     width+': all five distinct progression systems must be visible');
   assert.match(await page.locator('#v6-target-context').innerText(),
     /purchased Daevanian nodes/i,
@@ -492,10 +492,12 @@ try{
       portraitSources.add(state.src);
       assert.equal(await page.locator('#v6-progress .v6-meter').count(),5,
         c+': progression milestones did not update');
-      if(['templar','sorcerer'].includes(c))
+      if(['templar','sorcerer'].includes(c)){
+        fs.mkdirSync('v2-previews',{recursive:true});
         await page.screenshot({
           path:'v2-previews/class-portrait-'+c+'-1920.png',fullPage:false
         });
+      }
     }
     assert.equal(portraitSources.size,8,'Every Global class must have distinct portrait artwork');
     await page.locator('#v2-class').selectOption('templar');
