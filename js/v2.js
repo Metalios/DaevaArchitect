@@ -169,6 +169,10 @@ function mount(){
  const boardTabs=$('board-tabs'),boardDock=make('div','v2-board-dock');
  boardTabs.before(boardDock);
  boardDock.append(boardTabs,boardControls);
+ // Share the existing crystal tracker row instead of stealing vertical
+ // viewport space from the 15×15 board (especially at 1080p).
+ const modeSwitch=boardControls.querySelector('.v2-board-mode-switch');
+ if(modeSwitch)$('board-crystal-counter').append(modeSwitch);
  const quickActions=boardControls.querySelector('.v2-board-secondary-actions');
  const primaryActions=boardControls.querySelector('.v2-board-primary-actions');
  quickActions.insertBefore($('v2-board-restore'),quickActions.firstChild);
