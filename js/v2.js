@@ -558,7 +558,7 @@ function bind(){
  $('v2-context').addEventListener('change',e=>setContext(e.target.value));
  $('v2-save').addEventListener('click',()=>{save();message='Saved to this browser.';$('v2-board-notice').textContent=message});
  $('v2-share').addEventListener('click',()=>$('share-build-button').click());
- nav.addEventListener('click',e=>{const b=e.target.closest('[data-v2-tab]');if(!b)return;state.tab=b.dataset.v2Tab==='workspace'?'mastery':b.dataset.v2Tab;render();if(state.tab!=='mastery')extra.scrollIntoView({block:'start',behavior:'smooth'})});
+ nav.addEventListener('click',e=>{const b=e.target.closest('[data-v2-tab]');if(!b)return;state.tab=b.dataset.v2Tab==='workspace'?'mastery':b.dataset.v2Tab;render();if(state.tab!=='mastery'&&!document.body.classList.contains('v5-active'))extra.scrollIntoView({block:'start',behavior:'smooth'})});
  $('v2-reset-allocations').addEventListener('click',restore);
  $('v2-master-restore').addEventListener('click',()=>{account().manualMastery=null;render()});
  for(const [id,tab] of [['v2-active-filter','active'],['v2-passive-filter','passive']]){

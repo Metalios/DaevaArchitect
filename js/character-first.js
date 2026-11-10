@@ -29,7 +29,7 @@
   let view = 'overview';
   let internalEditorClick = false;
   const shell = () => document.querySelector('#planner-content');
-  const views = ['overview','equipment','skills','stigma','arcana','boards','rotation','titles'];
+  const views = ['overview','equipment','skills','stigma','arcana','boards','rotation','titles','sources'];
   const titleByContext = {
     solo:'Solo PvE', party:'Group PvE', pvp:'General PvP',
     'pvp-arena':'Arena PvP', 'pvp-abyss-solo':'Solo Abyss PvP',
@@ -58,13 +58,15 @@
     view = next;
     document.body.classList.remove(...views.map(v => 'v5-view-'+v));
     document.body.classList.add('v5-view-'+next);
+    if (typeof window.syncV7==='function') window.syncV7();
     document.querySelectorAll('[data-v5-view]').forEach(button => {
       const active = button.dataset.v5View === next;
       button.classList.toggle('active', active);
       button.setAttribute('aria-current', active ? 'page' : 'false');
     });
-    if (next === 'rotation' || next === 'titles') {
+    if (next === 'rotation' || next === 'titles' || next === 'sources') {
       document.querySelector('[data-v2-tab="'+next+'"]')?.click();
+      requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'instant'}));
       return;
     }
     if (document.body.classList.contains('v2-secondary')) {
@@ -72,7 +74,10 @@
     }
     const editor = next === 'boards' ? 'boards' :
       next === 'skills' ? 'mastery' : next === 'stigma' ? 'stigma' : 'gear';
-    if (window.innerWidth < 1100 && next !== 'overview') {
+    // The original editor rail remains the internal source of truth at every
+    // breakpoint, not just on mobile. Otherwise CSS selected Gear at 1280px
+    // while the new navigation claimed to show Skills or Stigmas.
+    if (next !== 'overview') {
       internalEditorClick = true;
       try { document.querySelector('[data-v3-editor="'+editor+'"]')?.click(); }
       finally { internalEditorClick = false; }
@@ -89,6 +94,10 @@
       if (tabs) tabs.scrollLeft = 0;
     }
     update();
+    // Every detailed section is a page-like workspace. Preserve its controls
+    // but reset the document viewport on tab changes, not the internal board
+    // canvas scroll position or the saved character data.
+    requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'instant'}));
   }
   function button(label, target, icon) {
     return '<button type="button" data-v5-view="'+target+'"><span aria-hidden="true">'+icon+
@@ -114,6 +123,7 @@
       button('Daevanian','boards','⬡')+
       button('Rotation / macro','rotation','↝')+
       button('Titles','titles','♛')+
+      button('Research notes','sources','◉')+
       '<button type="button" id="v5-open-compare"><span aria-hidden="true">⇆</span><span>Compare build</span></button>'+
       '</nav><div class="v5-sidebar-divider"></div>'+
       '<div class="v5-side-context"><h2>Build scenarios</h2>'+
@@ -145,6 +155,8 @@
       '<button data-v5-view="arcana">Arcana</button>'+
       '<button data-v5-view="boards">Daevanian boards</button>'+
       '<button data-v5-view="rotation">Rotation / macro</button>'+
+      '<button data-v5-view="titles">Titles</button>'+
+      '<button data-v5-view="sources">Research</button>'+
       '<button id="v5-tab-compare">Compare</button>';
     mast.after(tabs);
     const rail = document.createElement('section');rail.className='v5-recommendations';
