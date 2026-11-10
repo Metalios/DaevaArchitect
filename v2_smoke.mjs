@@ -436,7 +436,7 @@ try{
  }
  // Character-first redesign is opt-in; verify it uses the existing live
  // builder instead of a static mock and that the classic design is unaffected.
- for(const [width,height] of [[1920,1080],[390,844]]){
+ for(const [width,height] of [[1920,1080],[1280,900],[390,844]]){
   const page=await browser.newPage({viewport:{width,height},deviceScaleFactor:1});
   page.on('pageerror',error=>errors.push('character-first '+width+': '+error.message));
   await page.goto('http://127.0.0.1:'+server.address().port+'/?layout=character',
@@ -455,6 +455,12 @@ try{
   await page.locator('#v5-theme').selectOption('abyss');
   assert.equal(await page.locator('body').getAttribute('data-v5-skin'),'abyss',
    width+': color theme did not apply');
+  if(width>=1100){
+   assert.equal(await page.locator('#mastery').isVisible(),true,
+    width+': Mastery panel must remain visible in the multi-column overview');
+   assert.equal(await page.locator('.v5-recommendations').isVisible(),true,
+    width+': Recommendations missing from overview');
+  }
   await page.locator('.v5-page-tabs [data-v5-view="boards"]').click();
   assert.equal(await page.locator('#boards').isVisible(),true,
    width+': live Daevanian editor missing from redesign');
@@ -472,6 +478,7 @@ try{
   assert.equal(await page.locator('#v2-comparison').evaluate(el=>el.open),true,
    width+': comparison must invoke the real existing build comparison');
   await page.locator('#v2-comparison-close').click();
+  await page.locator('#v5-theme').selectOption('aether');
   fs.mkdirSync('v2-previews',{recursive:true});
   await page.screenshot({path:'v2-previews/character-first-'+width+'.png',
    fullPage:width===390});
