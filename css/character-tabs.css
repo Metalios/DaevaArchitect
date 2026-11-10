@@ -326,3 +326,19 @@ body.v5-active #v2-comparison h3{font:normal 18px Georgia,serif;color:var(--v5-g
  }
  body.v5-active .v7-editor-header h2{font-size:21px}
 }
+
+/* A number of historic approved-layout rules force both sections to
+   display:flex!important at desktop widths. These view-state exclusions
+   must outrank those rules, regardless of the internal editor rail state. */
+body.v2-active.v2-has-class.v5-active.v5-view-stigma:not(.v2-secondary):not(.v2-board-expanded)
+ .v2-workspace>.v2-center #mastery,
+body.v2-active.v2-has-class.v5-active.v5-view-skills:not(.v2-secondary):not(.v2-board-expanded)
+ .v2-workspace>.v2-center #stigma{
+ display:none!important;
+}
+body.v2-active.v2-has-class.v5-active.v5-view-stigma:not(.v2-secondary):not(.v2-board-expanded)
+ .v2-workspace>.v2-center #stigma,
+body.v2-active.v2-has-class.v5-active.v5-view-skills:not(.v2-secondary):not(.v2-board-expanded)
+ .v2-workspace>.v2-center #mastery{
+ display:block!important;
+}
