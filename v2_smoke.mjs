@@ -483,8 +483,14 @@ try{
         src:el.currentSrc,classId:el.dataset.class,alt:el.alt
       }));
       assert.equal(state.classId,c,'Class illustration did not follow class '+c);
-      assert(state.src.includes('/'+c+'-portrait.webp'),
-        'Class '+c+' has the wrong portrait URL: '+state.src);
+      assert(state.src.includes('/assets/class-art/'+c+'.svg'),
+        'Class '+c+' has the wrong bundled portrait URL: '+state.src);
+      await page.waitForFunction(cls=>{
+        const image=document.querySelector('.v6-doll-art img.v6-class-illustration');
+        return image&&image.dataset.class===cls&&image.complete&&image.naturalWidth>0;
+      },c,{timeout:6000});
+      assert.equal(await page.locator('.v6-doll-art.v6-art-loaded').count(),1,
+        c+': bundled original portrait failed to decode');
       assert(state.alt.toLowerCase().includes(c),
         'Class portrait has incorrect accessibility label for '+c);
       assert.equal(await page.locator('body').getAttribute('data-v6-class'),c,
