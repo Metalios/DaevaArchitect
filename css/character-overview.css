@@ -365,3 +365,12 @@ body.v5-active .v6-hero-portrait:after{
  content:"";position:absolute;inset:0;
  background:linear-gradient(0deg,var(--v5-header),transparent 45%);
 }
+
+/* The historic v2 workspace sets display:grid!important under a highly
+   specific selector. Suppress it only on the new overview, not editor tabs. */
+body.v2-active.v2-has-class.v5-active.v5-view-overview:not(.v2-secondary):not(.v2-board-expanded) .v2-workspace{
+ display:none!important;
+}
+body.v2-active.v2-has-class.v5-active.v5-view-overview:not(.v2-secondary):not(.v2-board-expanded) .v5-compare-strip{
+ display:none!important;
+}
