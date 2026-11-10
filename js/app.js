@@ -673,13 +673,51 @@ function renderGlobalBoardRoute(m,nodes){
 }
 function effects(owned){const skills={},stats={},nodes=nodeMap();for(const id of owned){const n=nodes.get(id).node;for(const [key,v] of n[6]){if(typeof key==='number'){const name=data().skills[key]?.name||String(key);skills[name]=(skills[name]||0)+v}else stats[key]=(stats[key]||0)+v}}return {skills,stats}}
 function effectText(n){if(!n||!n[6]?.length)return 'Start node';return n[6].map(([key,v])=>{if(typeof key==='number')return `${data().skills[key]?.name||key} +${v} level`;const meta=data().stats[key];return `${meta?.name||key} +${v/(meta?.div||1)}${meta?.pct?'%':''}`}).join(' · ')}
-function nodeShort(n){if(n[5]===0||n[5]===4)return '✦';if(typeof n[6]?.[0]?.[0]==='number')return n[5]===2?'P':'S';return ({FixingDamage:'ATK',Critical:'CR',Defense:'DEF',HPMax:'HP',MPMax:'MP',HealBoost:'HEAL'})[n[6]?.[0]?.[0]]||'·'}
+// The two advanced Global boards have no skill nodes. Previously every
+// Azphel/Ariel stat node rendered as a dot (or a generic star for core nodes).
+// Use the game's node-grade artwork on every stat tile, with readable, distinct
+// stat labels that remain available if third-party artwork cannot be loaded.
+const BOARD_STAT_LABELS=Object.freeze({
+  FixingDamage:'ATK',Critical:'CRIT',CriticalResist:'C-RES',
+  Defense:'DEF',HPMax:'HP',MPMax:'MP',HealBoost:'HEAL',
+  CombatSpeed:'SPD',CoolTimeDecrease:'CDR',
+  AmplifyAllDamage:'DMG',DecreaseDamage:'TOL',
+  AmplifyCriticalDamage:'C-DMG',DecreaseCriticalDamage:'C-TOL',
+  AdditionalHitRate:'MULTI',AdditionalHitResistRate:'M-RES',
+  PvPAddDamage:'P-ATK',PvPDamageDefense:'P-DEF',
+  PvPCritical:'P-CRT',PvPCriticalResist:'P-CRE',
+  PvPAccuracy:'P-ACC',PvPEvasion:'P-EVA',
+  PvPAmplifyDamage:'P-DMG',PvPDecreaseDamage:'P-TOL',
+  AbnormalAccuracy:'CC+',AbnormalResistance:'CC-R',
+  PvEAddDamage:'E-ATK',PvEDamageDefense:'E-DEF',
+  PvEAccuracy:'E-ACC',PvEEvasion:'E-EVA',
+  PvEAmplifyDamage:'E-DMG',PvEDecreaseDamage:'E-TOL',
+  BossNpcAddDamage:'B-ATK',BossNpcDefense:'B-DEF',
+  BossNpcAmplifyDamage:'B-DMG',BossNpcDecreaseDamage:'B-TOL'
+});
+function nodeShort(n){
+  if(n[5]===0)return '✦';
+  const key=n[6]?.[0]?.[0];
+  if(typeof key==='number')return n[5]===2?'P':'S';
+  return BOARD_STAT_LABELS[key]||String(key||'STAT').replace(/[^A-Z]/g,'').slice(0,5)||'STAT';
+}
 function nodeVisual(n){
   const key=n[6]?.[0]?.[0],name=typeof key==='number'?data().skills[key]?.name:null;
   const icon=name?gameSkillIconUrl(state.class,name):'';
-  if(!icon)return `<span>${nodeShort(n)}</span>`;
-  const backup='https://aion2.app/db-item-icons/'+gameSkillIconFile(state.class,name).replace(/\.png$/i,'.webp');
-  return `<span class="node-icon-fallback" aria-hidden="true">${nodeShort(n)}</span><img class="node-game-icon" src="${icon}" alt="" loading="lazy" decoding="async" data-backup="${backup}" onerror="if(!this.dataset.triedBackup){this.dataset.triedBackup='1';this.src=this.dataset.backup}else{this.hidden=true}">`;
+  if(icon){
+    const backup='https://aion2.app/db-item-icons/'+gameSkillIconFile(state.class,name).replace(/\.png$/i,'.webp');
+    return `<span class="node-icon-fallback" aria-hidden="true">${nodeShort(n)}</span><img class="node-game-icon" src="${icon}" alt="" loading="lazy" decoding="async" data-backup="${backup}" onerror="if(!this.dataset.triedBackup){this.dataset.triedBackup='1';this.src=this.dataset.backup}else{this.hidden=true}">`;
+  }
+  if(n[5]===0)return '<span class="node-start-symbol" aria-hidden="true">✦</span>';
+  const tier=Number(n[5]);
+  const label=esc(nodeShort(n));
+  if(tier>=1&&tier<=4){
+    // Source: published AION 2 grade artwork. Labels are our own semantic
+    // fallback and identify distinct stats rather than showing 153 dots.
+    const art=`https://aion2.app/icons/daevanion/icon_node_${tier}_on.png`;
+    return `<span class="node-stat-fallback" aria-hidden="true">${label}</span><img class="node-stat-game-icon" src="${art}" alt="" loading="lazy" decoding="async" onerror="this.hidden=true"><span class="node-stat-label" aria-hidden="true">${label}</span>`;
+  }
+  return `<span class="node-stat-fallback" aria-hidden="true">${label}</span>`;
 }
 
 // Engine adapter: preserve the saved account schema and budget accounting.
