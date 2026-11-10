@@ -58,6 +58,7 @@
     view = next;
     document.body.classList.remove(...views.map(v => 'v5-view-'+v));
     document.body.classList.add('v5-view-'+next);
+    if (typeof window.syncV7==='function') window.syncV7();
     document.querySelectorAll('[data-v5-view]').forEach(button => {
       const active = button.dataset.v5View === next;
       button.classList.toggle('active', active);
