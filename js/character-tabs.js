@@ -65,6 +65,9 @@
     document.getElementById('v7-editor-description').textContent=data.description;
     header.dataset.editor=page;
   }
+  // The main navigation changes CSS view state without calling render().
+  // Allow it to refresh this header immediately on every tab click.
+  window.syncV7 = update;
   const previous=window.syncV5;
   window.syncV5 = function(m){
     if(typeof previous==='function') previous(m);
