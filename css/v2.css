@@ -1688,29 +1688,55 @@
  .v2-active #v2-status{min-width:130px}
 }
 
-/* Persistent board-plan choice: the legacy board-mode panel is hidden in v2,
-   so the active mode must be visible in the actual sticky Daevanion dock. */
-.v2-active .v2-board-dock .v2-board-mode-switch{
- display:flex;align-items:center;gap:6px;width:100%;min-width:0;
- padding:2px 0 8px;border-bottom:1px solid #35516c;
+/* Board-plan choice shares the crystal tracker height rather than reducing the
+   15x15 board viewport. Both modes remain immediately visible. */
+.v2-active .v2-right #boards>.board-crystal-tracker{
+ grid-template-columns:minmax(0,1fr) auto auto;
+ column-gap:8px;
 }
-.v2-active .v2-board-dock .v2-board-mode-title{
- flex:1 1 auto;min-width:0;font-size:12px;font-weight:700;color:#c8dcec;
+.v2-active .v2-right .board-crystal-tracker .board-crystal-tracker-copy{
+ grid-column:1;grid-row:1/3;
 }
-.v2-active .v2-board-dock .v2-board-mode-switch button{
- flex:0 1 auto;min-width:0;padding:8px 12px;border-radius:6px;
+.v2-active .v2-right .board-crystal-tracker .board-crystal-value{
+ grid-column:3;grid-row:1;
+}
+.v2-active .v2-right .board-crystal-tracker .board-crystal-remaining{
+ grid-column:3;grid-row:2;
+}
+.v2-active .v2-right .board-crystal-tracker .v2-board-mode-switch{
+ grid-column:2;grid-row:1/3;display:flex;align-items:center;
+ gap:4px;justify-self:end;min-width:0;
+}
+.v2-active .v2-right .board-crystal-tracker .v2-board-mode-title{
+ /* The button group has its own accessible name. */
+ display:none;
+}
+.v2-active .v2-right .board-crystal-tracker .v2-board-mode-switch button{
+ flex:0 1 auto;min-width:0;padding:6px 8px;border-radius:5px;
  border:1px solid #436b8a;background:#112b43;color:#c5d9ea;
- font-size:12px;font-weight:650;white-space:nowrap;cursor:pointer;
+ font-size:11px;font-weight:700;white-space:nowrap;cursor:pointer;
 }
-.v2-active .v2-board-dock .v2-board-mode-switch button.active,
-.v2-active .v2-board-dock .v2-board-mode-switch button[aria-pressed="true"]{
+.v2-active .v2-right .board-crystal-tracker .v2-board-mode-switch button.active,
+.v2-active .v2-right .board-crystal-tracker .v2-board-mode-switch button[aria-pressed="true"]{
  background:#23577d;border-color:#8ab6df;color:#fff;
 }
-.v2-active .v2-board-dock .v2-board-mode-switch button:focus-visible{
+.v2-active .v2-right .board-crystal-tracker .v2-board-mode-switch button:focus-visible{
  outline:2px solid #9cdbff;outline-offset:2px;
 }
-@media(max-width:700px){
- .v2-active .v2-board-dock .v2-board-mode-switch{flex-wrap:wrap;}
- .v2-active .v2-board-dock .v2-board-mode-title{flex-basis:100%;}
- .v2-active .v2-board-dock .v2-board-mode-switch button{flex:1 1 0;}
+@media(max-width:1699px){
+ .v2-active .v2-right #boards>.board-crystal-tracker{
+  grid-template-columns:minmax(0,1fr) auto;
+ }
+ .v2-active .v2-right .board-crystal-tracker .board-crystal-value{
+  grid-column:2;grid-row:1;
+ }
+ .v2-active .v2-right .board-crystal-tracker .board-crystal-remaining{
+  grid-column:2;grid-row:2;
+ }
+ .v2-active .v2-right .board-crystal-tracker .v2-board-mode-switch{
+  grid-column:1/-1;grid-row:3;justify-self:stretch;
+ }
+ .v2-active .v2-right .board-crystal-tracker .v2-board-mode-switch button{
+  flex:1 1 0;
+ }
 }
