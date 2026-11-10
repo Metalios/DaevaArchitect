@@ -29,7 +29,7 @@
   let view = 'overview';
   let internalEditorClick = false;
   const shell = () => document.querySelector('#planner-content');
-  const views = ['overview','equipment','skills','stigma','arcana','boards','rotation','titles'];
+  const views = ['overview','equipment','skills','stigma','arcana','boards','rotation','titles','sources'];
   const titleByContext = {
     solo:'Solo PvE', party:'Group PvE', pvp:'General PvP',
     'pvp-arena':'Arena PvP', 'pvp-abyss-solo':'Solo Abyss PvP',
@@ -63,7 +63,7 @@
       button.classList.toggle('active', active);
       button.setAttribute('aria-current', active ? 'page' : 'false');
     });
-    if (next === 'rotation' || next === 'titles') {
+    if (next === 'rotation' || next === 'titles' || next === 'sources') {
       document.querySelector('[data-v2-tab="'+next+'"]')?.click();
       return;
     }
@@ -117,6 +117,7 @@
       button('Daevanian','boards','⬡')+
       button('Rotation / macro','rotation','↝')+
       button('Titles','titles','♛')+
+      button('Research notes','sources','◉')+
       '<button type="button" id="v5-open-compare"><span aria-hidden="true">⇆</span><span>Compare build</span></button>'+
       '</nav><div class="v5-sidebar-divider"></div>'+
       '<div class="v5-side-context"><h2>Build scenarios</h2>'+
@@ -148,6 +149,8 @@
       '<button data-v5-view="arcana">Arcana</button>'+
       '<button data-v5-view="boards">Daevanian boards</button>'+
       '<button data-v5-view="rotation">Rotation / macro</button>'+
+      '<button data-v5-view="titles">Titles</button>'+
+      '<button data-v5-view="sources">Research</button>'+
       '<button id="v5-tab-compare">Compare</button>';
     mast.after(tabs);
     const rail = document.createElement('section');rail.className='v5-recommendations';
