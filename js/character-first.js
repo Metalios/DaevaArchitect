@@ -66,6 +66,7 @@
     });
     if (next === 'rotation' || next === 'titles' || next === 'sources') {
       document.querySelector('[data-v2-tab="'+next+'"]')?.click();
+      requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'instant'}));
       return;
     }
     if (document.body.classList.contains('v2-secondary')) {
