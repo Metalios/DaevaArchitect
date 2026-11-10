@@ -571,7 +571,7 @@ try{
       width+': '+tab+' causes horizontal overflow: '+JSON.stringify(horizontal));
     await page.screenshot({
       path:'v2-previews/character-tab-'+tab+'-'+width+'.png',
-      fullPage:width===390
+      fullPage:false
     });
   }
   await page.locator('.v7-editor-header [data-v5-view="overview"]').click();
