@@ -482,6 +482,14 @@ try{
    assert(panelLayout.gear>=320&&panelLayout.skills>=320,
     '1280px overview cards too narrow: '+JSON.stringify(panelLayout));
   }
+  // A paperdoll slot is a real editor action, not a decorative mock button.
+  await page.locator('#v6-left-slots [data-v6-slot="weapon"]').click();
+  await page.locator('#gear-dialog').waitFor({state:'visible'});
+  assert.match(await page.locator('#gear-dialog-title').innerText(),/weapon/i,
+    width+': paperdoll slot did not open its real equipment editor');
+  await page.locator('#gear-dialog-close').click();
+  await page.locator('.v5-page-tabs [data-v5-view="overview"]').click();
+  await page.locator('#v6-overview').waitFor({state:'visible'});
   await page.locator('.v5-page-tabs [data-v5-view="boards"]').click();
   assert.equal(await page.locator('#boards').isVisible(),true,
    width+': live Daevanian editor missing from redesign');
