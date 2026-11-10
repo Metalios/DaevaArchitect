@@ -460,6 +460,20 @@ try{
     width+': Mastery panel must remain visible in the multi-column overview');
    assert.equal(await page.locator('.v5-recommendations').isVisible(),true,
     width+': Recommendations missing from overview');
+   if(width===1280){
+    const areas=await page.evaluate(()=>{
+     const rect=selector=>document.querySelector(selector).getBoundingClientRect().toJSON();
+     const gear=rect('.v2-workspace>.v2-left'),skills=rect('.v2-workspace>.v2-center'),
+       insight=rect('.v2-workspace>.v2-right');
+     const overlap=Math.max(0,Math.min(gear.right,skills.right)-Math.max(gear.left,skills.left))*
+       Math.max(0,Math.min(gear.bottom,skills.bottom)-Math.max(gear.top,skills.top));
+     return {gear,skills,insight,overlap};
+    });
+    assert(areas.gear.width>=330&&areas.skills.width>=330,
+      '1280px character-first editors are too narrow: '+JSON.stringify(areas));
+    assert(areas.overlap<=2,
+      '1280px Equipment and Mastery overlap: '+JSON.stringify(areas));
+   }
   }
   await page.locator('.v5-page-tabs [data-v5-view="boards"]').click();
   assert.equal(await page.locator('#boards').isVisible(),true,
