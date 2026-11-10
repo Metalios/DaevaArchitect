@@ -196,6 +196,14 @@
       if (event.target.closest('#v5-open-compare,#v5-tab-compare,#v5-compare-bottom,#v5-compare-rail'))
         openCompare();
     });
+    // Opening Compare can horizontally scroll compact top navigation.
+    // Restore the selected Overview tab after the dialog closes.
+    $('v2-comparison-close')?.addEventListener('click', () => {
+      if (view === 'overview') requestAnimationFrame(() => {
+        const tabs = document.querySelector('.v5-page-tabs');
+        if (tabs) tabs.scrollLeft = 0;
+      });
+    });
     $('v5-theme').addEventListener('change', event => setTheme(event.target.value));
     setTheme(selectedTheme());
     update(model());
