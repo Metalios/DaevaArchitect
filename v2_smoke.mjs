@@ -511,6 +511,72 @@ try{
    fullPage:width===390});
   await page.screenshot({path:'v2-previews/character-overview-'+width+'.png',
    fullPage:width===390});
+  // Walk the real character-first workspace through every section. Prior PRs
+  // verified only Overview and Boards and missed conflicting desktop editor
+  // state, old CSS rail rules and the hidden Arcana editor.
+  for(const [tab,activeSelector,editor] of [
+    ['equipment','#gear','gear'],
+    ['skills','#mastery','mastery'],
+    ['stigma','#stigma','stigma'],
+    ['arcana','#gear-arcana-grid','gear'],
+    ['boards','#boards','boards'],
+    ['rotation','#rotation',null],
+    ['titles','#titles',null],
+    ['sources','#sources',null]
+  ]){
+    await page.locator('.v5-page-tabs [data-v5-view="'+tab+'"]').click();
+    const banner=page.locator('.v7-editor-header');
+    assert.equal(await banner.isVisible(),true,
+      width+': '+tab+' workspace header missing');
+    assert.equal(await page.locator(activeSelector).isVisible(),true,
+      width+': '+tab+' target editor is hidden');
+    assert.equal(await page.locator('#v6-overview').isVisible(),false,
+      width+': overview incorrectly appears beneath '+tab);
+    assert.equal(await page.locator('body').evaluate((el,tab)=>
+      el.classList.contains('v5-view-'+tab),tab),true,
+      width+': tab state is out of sync for '+tab);
+    if(editor){
+      assert.equal(await page.locator('#v2-workspace').getAttribute('data-editor'),editor,
+        width+': legacy editor selection not synchronized for '+tab);
+      assert.equal(await page.locator('body').evaluate(el=>
+        el.classList.contains('v2-secondary')),false,
+        width+': secondary page state not cleared for '+tab);
+    }else{
+      assert.equal(await page.locator('body').evaluate(el=>
+        el.classList.contains('v2-secondary')),true,
+        width+': secondary state missing for '+tab);
+    }
+    if(tab==='arcana'){
+      assert.equal(await page.locator('#gear-doll-grid').isVisible(),false,
+        width+': Arcana must not duplicate the Equipment paper doll');
+      assert.equal(await page.locator('#gear-arcana-grid').isVisible(),true,
+        width+': Arcana cards must be visible');
+    }
+    if(tab==='skills'){
+      assert.equal(await page.locator('#stigma').isVisible(),false,
+        width+': Stigma panel duplicated inside Mastery');
+    }
+    if(tab==='stigma'){
+      assert.equal(await page.locator('#mastery').isVisible(),false,
+        width+': Mastery panel duplicated inside Stigma editor');
+    }
+    if(tab==='boards'){
+      assert.equal(await page.locator('#board-grid .node').count(),153,
+        width+': switching back to boards lost its 153 nodes');
+    }
+    const horizontal=await page.evaluate(()=>({
+      content:document.documentElement.scrollWidth,viewport:window.innerWidth
+    }));
+    assert(horizontal.content<=horizontal.viewport+10,
+      width+': '+tab+' causes horizontal overflow: '+JSON.stringify(horizontal));
+    await page.screenshot({
+      path:'v2-previews/character-tab-'+tab+'-'+width+'.png',
+      fullPage:width===390
+    });
+  }
+  await page.locator('.v7-editor-header [data-v5-view="overview"]').click();
+  assert.equal(await page.locator('#v6-overview').isVisible(),true,
+    width+': returning from detailed editor did not restore the overview');
   await page.close();
  }
  assert.equal(errors.length,0,errors.join('\n'));
