@@ -147,7 +147,9 @@ function nextStigmaMilestone(m,a){
   const owned=m.stigma.levels[name]||0;
   if(rank<=owned)continue;
   const need=stigmaTotal(rank)-stigmaTotal(owned);
-  return {label:name+' Lv '+rank,detail:need+' additional Stigma point'+(need===1?'':'s')+' for this rank milestone',target:'stigma'};
+  const free=Math.max(0,budget('stigma')-(m.stigma.spent||0));
+  const qualifier=need>free?'; '+(free?'reallocate or earn more':'requires reallocation or more earned points'): '; within your recorded free budget';
+  return {label:name+' Lv '+rank,detail:need+' Stigma points needed'+qualifier,target:'stigma'};
  }
  return {label:'Stigma milestones planned',detail:'Review equipped choices and timing.',target:'stigma'};
 }
@@ -174,6 +176,16 @@ function nextGearMilestone(a){
  return next
   ?{label:'GR '+num(next.level),detail:num(next.level-rating)+' GR remaining · '+next.description,target:'equipment'}
   :{label:'Known GR milestones reached',detail:'Your current rating is '+num(rating)+'; verify current content gates in game.',target:'equipment'};
+}
+function nextPlannedBoardNode(group){
+ const acquired=obtainedNodes(),nodes=nodeMap();
+ const route=plannedRoute(group);
+ for(const step of route){
+  const entry=nodes.get(step.id);
+  if(!entry||entry.node[5]===0||acquired.has(step.id)||!boardOpen(entry.board))continue;
+  return 'Next '+entry.board+' node · '+entry.node[5]+' crystal'+(entry.node[5]===1?'':'s');
+ }
+ return 'No further connected planned nodes';
 }
 function targetCard(label,spent,total,detail,target,kind='planned'){
  const budgetValue=Math.max(0,Number(total)||0),invested=Math.max(0,Number(spent)||0);
@@ -202,11 +214,11 @@ function renderProgressTargets(m,a){
   targetCard('Stigmas',m.stigma.spent,budget('stigma'),
    stigma.label+' · '+stigma.detail,'stigma'),
   targetCard('PvE Daevanian',purchased,boardBudget,
-   'Actually obtained · '+num(m.boards.spent||0)+' crystals in planned route','boards','obtained'),
+   nextPlannedBoardNode('crystals')+' · '+num(m.boards.spent||0)+' planned','boards','obtained'),
   targetCard('Azphel',azPurchased,azBudget,
-   levelNote||'Actually obtained on PvP board','boards','obtained'),
+   levelNote||nextPlannedBoardNode('azphel'),'boards','obtained'),
   targetCard('Ariel',arPurchased,arBudget,
-   levelNote||'Actually obtained on PvE board','boards','obtained')
+   levelNote||nextPlannedBoardNode('ariel'),'boards','obtained')
  ];
  $('v6-progress').innerHTML=cards.join('')+
   '<div class="v6-next-gate"><div><small>GEAR / CONTENT MILESTONE</small>'+
