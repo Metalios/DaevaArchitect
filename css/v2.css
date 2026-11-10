@@ -1740,3 +1740,50 @@
   flex:1 1 0;
  }
 }
+
+/* Visible, game-sourced node-grade artwork for every Daevanion stat tile.
+   Ariel and Azphel contain stat nodes only: a dot glyph cannot represent them.
+   The short stat label stays legible at the minimum supported 40px tile size. */
+.v2-right .node .node-stat-game-icon{
+  display:block;
+  position:absolute;
+  inset:1px;
+  width:calc(100% - 2px);
+  height:calc(100% - 2px);
+  object-fit:contain;
+  z-index:1;
+  pointer-events:none;
+}
+.v2-right .node .node-stat-game-icon[hidden]{display:none!important}
+.v2-right .node .node-stat-fallback{
+  display:grid;
+  place-items:center;
+  position:absolute;
+  inset:0;
+  z-index:0;
+  color:#e8d5ad;
+  font:800 10px/1.1 system-ui,sans-serif;
+  text-align:center;
+  letter-spacing:-.02em;
+  pointer-events:none;
+}
+.v2-right .node .node-stat-label{
+  position:absolute;
+  z-index:2;
+  bottom:1px;
+  left:2px;
+  right:2px;
+  overflow:hidden;
+  padding:1px 0 0;
+  border-radius:2px;
+  background:rgba(4,15,25,.8);
+  color:#fff3d7;
+  font:800 8px/1.1 system-ui,sans-serif;
+  letter-spacing:0;
+  text-align:center;
+  white-space:nowrap;
+  pointer-events:none;
+}
+.v2-right .node .node-stat-label[hidden]{display:none!important}
+.v2-right .node .node-stat-game-icon:focus-visible{outline:none}
+.v2-right .node .node-start-symbol{display:grid;place-items:center;width:100%;height:100%;font-size:18px}
