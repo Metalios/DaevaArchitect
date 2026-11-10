@@ -151,6 +151,22 @@ function nextStigmaMilestone(m,a){
  }
  return {label:'Stigma milestones planned',detail:'Review equipped choices and timing.',target:'stigma'};
 }
+function nextLevelingMilestone(){
+ const level=currentLevel(),choices=[];
+ for(const [name,at] of Object.entries(SKILL_UNLOCKS[state.class]||{}))
+  if(at>level&&at<=45)choices.push({level:at,label:'Skill unlock: '+name});
+ for(const [board,at] of Object.entries(BOARD_UNLOCKS))
+  if(at>level&&at<=45)choices.push({level:at,label:board+' board unlock'});
+ for(let at=level+1;at<=45;at++){
+  if((LEVEL_REWARDS[at]?.slots||0)>(LEVEL_REWARDS[at-1]?.slots||0))
+   choices.push({level:at,label:'Stigma slot '+LEVEL_REWARDS[at].slots+' unlock'});
+ }
+ choices.sort((a,b)=>a.level-b.level||a.label.localeCompare(b.label));
+ const next=choices[0];
+ return next
+  ?{label:'Level '+next.level,detail:next.label+' · '+(next.level-level)+' level'+(next.level-level===1?'':'s')+' away'}
+  :{label:'Level 45 cap',detail:'All level-based unlocks are available; continue earned currency and board progression.'};
+}
 function nextGearMilestone(a){
  const rating=Number(a.gearRating)||0;
  if(!rating)return {label:'Enter your Gear Rating',detail:'Unlock the next content-gate comparison.',target:'equipment'};
@@ -179,6 +195,7 @@ function renderProgressTargets(m,a){
  const boardBudget=budget('crystals'),azBudget=isLeveling()?0:Number(a.azphel)||0,
   arBudget=isLeveling()?0:Number(a.ariel)||0;
  const levelNote=isLeveling()?'Unlocks at Lv 45':'';
+ const levelGoal=isLeveling()?nextLevelingMilestone():null;
  const cards=[
   targetCard('Mastery',m.mastery.spent,budget('mastery'),
    mastery.label+' · '+mastery.detail,'skills'),
@@ -193,8 +210,8 @@ function renderProgressTargets(m,a){
  ];
  $('v6-progress').innerHTML=cards.join('')+
   '<div class="v6-next-gate"><div><small>GEAR / CONTENT MILESTONE</small>'+
-  '<strong>'+esc(isLeveling()?'Next level':gear.label)+'</strong><p>'+
-  esc(isLeveling()?'Level '+Math.min(45,currentLevel()+1)+' progression · available rewards and board unlocks depend on level.':gear.detail)+
+  '<strong>'+esc(levelGoal?.label||gear.label)+'</strong><p>'+
+  esc(levelGoal?.detail||gear.detail)+
   '</p></div><button type="button" data-v5-view="'+(isLeveling()?'skills':'equipment')+'">Review ↗</button></div>';
  const nextGaps=[
   Math.max(0,budget('mastery')-(m.mastery.spent||0)),
