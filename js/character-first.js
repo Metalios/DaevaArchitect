@@ -27,6 +27,7 @@
 
   let ready = false;
   let view = 'overview';
+  let internalEditorClick = false;
   const shell = () => document.querySelector('#planner-content');
   const views = ['overview','equipment','skills','stigma','arcana','boards','rotation','titles'];
   const titleByContext = {
@@ -71,8 +72,10 @@
     }
     const editor = next === 'boards' ? 'boards' :
       next === 'skills' ? 'mastery' : next === 'stigma' ? 'stigma' : 'gear';
-    if (window.innerWidth < 1100) {
-      document.querySelector('[data-v3-editor="'+editor+'"]')?.click();
+    if (window.innerWidth < 1100 && next !== 'overview') {
+      internalEditorClick = true;
+      try { document.querySelector('[data-v3-editor="'+editor+'"]')?.click(); }
+      finally { internalEditorClick = false; }
     }
     if (next === 'arcana') {
       const details = document.querySelector('#gear .v2-gear-advanced');
@@ -80,6 +83,10 @@
     }
     if (next === 'boards') {
       $('v2-board-fit')?.click();
+    }
+    if (next === 'overview') {
+      const tabs = document.querySelector('.v5-page-tabs');
+      if (tabs) tabs.scrollLeft = 0;
     }
     update();
   }
@@ -176,6 +183,12 @@
       $('v2-open-comparison')?.click();
     };
     host.addEventListener('click', event => {
+      const legacyEditor = event.target.closest('[data-v3-editor]');
+      if (legacyEditor && !internalEditorClick) {
+        const mapped = {gear:'equipment',mastery:'skills',stigma:'stigma',boards:'boards'}[legacyEditor.dataset.v3Editor];
+        if (mapped) switchView(mapped);
+        return;
+      }
       const target = event.target.closest('[data-v5-view]');
       if (target) { switchView(target.dataset.v5View);return; }
       const context = event.target.closest('[data-v5-context]');
