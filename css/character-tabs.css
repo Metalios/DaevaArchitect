@@ -384,3 +384,52 @@ body.v2-active.v2-has-class.v5-active.v5-view-stigma:not(.v2-secondary):not(.v2-
  height:auto!important;min-height:0!important;max-height:none!important;
  overflow:visible!important;
 }
+
+/* Make the Global Arcana screen a focused five-card editor.
+   Unrelated fixed-gear readouts and currency controls belong in Equipment or
+   the quickbar, not the Arcana-only tab. */
+body.v2-active.v5-active.v5-view-arcana #gear>.gear-main,
+body.v2-active.v5-active.v5-view-arcana #gear>.controls,
+body.v2-active.v5-active.v5-view-arcana #gear .v4-equipment-stats{
+ display:none!important;
+}
+body.v2-active.v5-active.v5-view-arcana #gear>.v2-gear-advanced>.gear-side{
+ display:block!important;min-height:0!important;
+}
+body.v2-active.v5-active.v5-view-arcana #gear-arcana-grid .gear-slot{
+ min-height:170px!important;display:flex!important;
+ flex-direction:column;align-items:center;justify-content:center;
+ gap:11px;padding:17px 12px;border:1px solid var(--v5-edge);
+ border-radius:10px;background:
+ radial-gradient(circle at center 35%,var(--v5-gold-soft),transparent 60%),
+ linear-gradient(140deg,var(--v5-raised),var(--v5-header));
+ text-align:center;
+}
+body.v2-active.v5-active.v5-view-arcana #gear-arcana-grid .gear-slot:hover{
+ border-color:var(--v5-gold);box-shadow:0 0 18px var(--v5-gold-soft);
+}
+body.v5-active.v5-view-arcana #gear-arcana-grid .gear-slot-icon{
+ width:70px;height:70px;display:grid;place-items:center;
+ border:1px solid var(--v5-gold);border-radius:50%;
+ background:radial-gradient(circle,var(--v5-gold-soft),var(--v5-header));
+}
+body.v5-active.v5-view-arcana #gear-arcana-grid .gear-slot-icon img{
+ width:58px;height:58px;object-fit:contain;
+}
+body.v5-active.v5-view-arcana #gear-arcana-grid .gear-slot-copy{
+ max-width:100%;min-width:0;text-align:center;
+}
+body.v5-active.v5-view-arcana #gear-arcana-grid .gear-slot-copy small{
+ font-size:10px;color:var(--v5-accent);letter-spacing:.1em;
+}
+body.v5-active.v5-view-arcana #gear-arcana-grid .gear-slot-copy b{
+ font-size:13px;white-space:normal;
+}
+@media(max-width:510px){
+ body.v5-active.v5-view-arcana #gear-arcana-grid .gear-slot{
+  min-height:145px!important;padding:10px 4px;
+ }
+ body.v5-active.v5-view-arcana #gear-arcana-grid .gear-slot-icon{
+  width:58px;height:58px;
+ }
+}
