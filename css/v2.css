@@ -1687,3 +1687,30 @@
  .v2-active .v2-brand{min-width:195px}
  .v2-active #v2-status{min-width:130px}
 }
+
+/* Persistent board-plan choice: the legacy board-mode panel is hidden in v2,
+   so the active mode must be visible in the actual sticky Daevanion dock. */
+.v2-active .v2-board-dock .v2-board-mode-switch{
+ display:flex;align-items:center;gap:6px;width:100%;min-width:0;
+ padding:2px 0 8px;border-bottom:1px solid #35516c;
+}
+.v2-active .v2-board-dock .v2-board-mode-title{
+ flex:1 1 auto;min-width:0;font-size:12px;font-weight:700;color:#c8dcec;
+}
+.v2-active .v2-board-dock .v2-board-mode-switch button{
+ flex:0 1 auto;min-width:0;padding:8px 12px;border-radius:6px;
+ border:1px solid #436b8a;background:#112b43;color:#c5d9ea;
+ font-size:12px;font-weight:650;white-space:nowrap;cursor:pointer;
+}
+.v2-active .v2-board-dock .v2-board-mode-switch button.active,
+.v2-active .v2-board-dock .v2-board-mode-switch button[aria-pressed="true"]{
+ background:#23577d;border-color:#8ab6df;color:#fff;
+}
+.v2-active .v2-board-dock .v2-board-mode-switch button:focus-visible{
+ outline:2px solid #9cdbff;outline-offset:2px;
+}
+@media(max-width:700px){
+ .v2-active .v2-board-dock .v2-board-mode-switch{flex-wrap:wrap;}
+ .v2-active .v2-board-dock .v2-board-mode-title{flex-basis:100%;}
+ .v2-active .v2-board-dock .v2-board-mode-switch button{flex:1 1 0;}
+}
