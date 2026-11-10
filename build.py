@@ -115,7 +115,7 @@ out_dir = root / 'dist'
 (out_dir / 'js').mkdir(parents=True, exist_ok=True)
 (out_dir / 'css').mkdir(parents=True, exist_ok=True)
 (out_dir / 'assets').mkdir(parents=True, exist_ok=True)
-for name in ('profiles.js', 'titles.js', 'ariel_data.js', 'ariel_progression.js', 'arcana_rules.js', 'gear.js', 'amplification.js', 'cp.js', 'board_optimizer.js', 'icon_catalog.js', 'recommendations.js', 'progression.js', 'leveling_rotation.js', 'app.js', 'share.js', 'v2.js', 'character-first.js'):
+for name in ('profiles.js', 'titles.js', 'ariel_data.js', 'ariel_progression.js', 'arcana_rules.js', 'gear.js', 'amplification.js', 'cp.js', 'board_optimizer.js', 'icon_catalog.js', 'recommendations.js', 'progression.js', 'leveling_rotation.js', 'app.js', 'share.js', 'v2.js', 'character-first.js', 'character-overview.js'):
     shutil.copy2(root / 'js' / name, out_dir / 'js' / name)
 shutil.copy2(root / 'js' / 'board_budget.js', out_dir / 'js' / 'board_budget.js')
 (out_dir / 'js' / 'optimizer').mkdir(parents=True, exist_ok=True)
@@ -140,6 +140,7 @@ shutil.copy2(root / 'css' / 'leveling.css', out_dir / 'css' / 'leveling.css')
 shutil.copy2(root / 'css' / 'fidelity.css', out_dir / 'css' / 'fidelity.css')
 shutil.copy2(root / 'css' / 'approved-target.css', out_dir / 'css' / 'approved-target.css')
 shutil.copy2(root / 'css' / 'character-first.css', out_dir / 'css' / 'character-first.css')
+shutil.copy2(root / 'css' / 'character-overview.css', out_dir / 'css' / 'character-overview.css')
 for asset in (root / 'assets').rglob('*'):
     if asset.is_file():
         destination = out_dir / 'assets' / asset.relative_to(root / 'assets')

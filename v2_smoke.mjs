@@ -455,26 +455,41 @@ try{
   await page.locator('#v5-theme').selectOption('abyss');
   assert.equal(await page.locator('body').getAttribute('data-v5-skin'),'abyss',
    width+': color theme did not apply');
-  if(width>=1100){
-   assert.equal(await page.locator('#mastery').isVisible(),true,
-    width+': Mastery panel must remain visible in the multi-column overview');
-   assert.equal(await page.locator('.v5-recommendations').isVisible(),true,
-    width+': Recommendations missing from overview');
-   if(width===1280){
-    const areas=await page.evaluate(()=>{
-     const rect=selector=>document.querySelector(selector).getBoundingClientRect().toJSON();
-     const gear=rect('.v2-workspace>.v2-left'),skills=rect('.v2-workspace>.v2-center'),
-       insight=rect('.v2-workspace>.v2-right');
-     const overlap=Math.max(0,Math.min(gear.right,skills.right)-Math.max(gear.left,skills.left))*
-       Math.max(0,Math.min(gear.bottom,skills.bottom)-Math.max(gear.top,skills.top));
-     return {gear,skills,insight,overlap};
-    });
-    assert(areas.gear.width>=330&&areas.skills.width>=330,
-      '1280px character-first editors are too narrow: '+JSON.stringify(areas));
-    assert(areas.overlap<=2,
-      '1280px Equipment and Mastery overlap: '+JSON.stringify(areas));
-   }
+  // New faithful overview uses real-data, summary-first modules. Detailed
+  // Mastery, equipment and the complete board remain mounted behind tabs.
+  await page.locator('#v6-overview').waitFor({state:'visible'});
+  assert.equal(await page.locator('#v6-active .v6-skill').count(),8,
+    width+': the overview must show eight actual class skill icons');
+  assert.equal(await page.locator('#v6-stigma .v6-stigma-tile').count(),4,
+    width+': Global must show exactly four Stigma slots');
+  assert.equal(await page.locator('#v6-arcana .v6-arcana-tile').count(),5,
+    width+': Global must show exactly five Arcana slots');
+  assert.equal(await page.locator('#v6-progress .v6-meter').count(),5,
+    width+': planner progression bars are missing');
+  assert.equal(await page.locator('#v6-compare-dock').isVisible(),true,
+    width+': full-width three-way comparison summary is missing');
+  assert.equal(await page.locator('#mastery').isVisible(),false,
+    width+': heavy Mastery editor should not fill the overview');
+  if(width===1280){
+   const panelLayout=await page.evaluate(()=>{
+    const el=s=>document.querySelector(s).getBoundingClientRect();
+    const a=el('.v6-gear'),b=el('.v6-abilities');
+    const overlap=Math.max(0,Math.min(a.right,b.right)-Math.max(a.left,b.left))*
+      Math.max(0,Math.min(a.bottom,b.bottom)-Math.max(a.top,b.top));
+    return {overlap,gear:a.width,skills:b.width};
+   });
+   assert(panelLayout.overlap<=2,'1280px overview cards overlap: '+JSON.stringify(panelLayout));
+   assert(panelLayout.gear>=320&&panelLayout.skills>=320,
+    '1280px overview cards too narrow: '+JSON.stringify(panelLayout));
   }
+  // A paperdoll slot is a real editor action, not a decorative mock button.
+  await page.locator('#v6-left-slots [data-v6-slot="weapon"]').click();
+  await page.locator('#gear-dialog').waitFor({state:'visible'});
+  assert.match(await page.locator('#gear-dialog-title').innerText(),/weapon/i,
+    width+': paperdoll slot did not open its real equipment editor');
+  await page.locator('#gear-dialog-close').click();
+  await page.locator('.v5-page-tabs [data-v5-view="overview"]').click();
+  await page.locator('#v6-overview').waitFor({state:'visible'});
   await page.locator('.v5-page-tabs [data-v5-view="boards"]').click();
   assert.equal(await page.locator('#boards').isVisible(),true,
    width+': live Daevanian editor missing from redesign');
@@ -482,12 +497,10 @@ try{
   assert.equal(await page.locator('#board-grid .node').count(),153,
    width+': Azphel nodes missing in character-first editor');
   await page.locator('.v5-page-tabs [data-v5-view="overview"]').click();
-  if(width>=1100){
-   assert.equal(await page.locator('.v5-recommendations').isVisible(),true,
-    width+': recommendation rail is missing');
-   assert.equal(await page.locator('#gear').isVisible(),true,
-    width+': equipment editor is missing');
-  }
+  assert.equal(await page.locator('#v6-overview').isVisible(),true,
+   width+': dashboard did not return from Daevanion editor');
+  assert.equal(await page.locator('#boards').isVisible(),false,
+   width+': the board editor must not crowd the summary overview');
   await page.locator('#v5-tab-compare').click();
   assert.equal(await page.locator('#v2-comparison').evaluate(el=>el.open),true,
    width+': comparison must invoke the real existing build comparison');
@@ -495,6 +508,8 @@ try{
   await page.locator('#v5-theme').selectOption('aether');
   fs.mkdirSync('v2-previews',{recursive:true});
   await page.screenshot({path:'v2-previews/character-first-'+width+'.png',
+   fullPage:width===390});
+  await page.screenshot({path:'v2-previews/character-overview-'+width+'.png',
    fullPage:width===390});
   await page.close();
  }
