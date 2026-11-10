@@ -8,10 +8,10 @@ const num=v=>Number(v||0).toLocaleString('en-US',{maximumFractionDigits:2});
 const contexts={solo:'Solo PvE',party:'Group PvE',pvp:'General PvP','pvp-arena':'Arena PvP','pvp-abyss-solo':'Solo Abyss PvP','pvp-abyss-group':'Group Abyss PvP'};
 const CLASS_PORTRAITS=Object.freeze(Object.fromEntries(
  ['gladiator','templar','assassin','ranger','sorcerer','spiritmaster','cleric','chanter']
- .map(key=>[key,'https://aion2pilot.com/images/'+key+'-portrait.webp'])
+ .map(key=>[key,'./assets/class-art/'+key+'.svg'])
 ));
-// Official AION 2 class artwork mirrored by Aion2Pilot, © NCSOFT.
-// These are class *representatives*, not the user's imported avatar.
+// Original illustrations of the eight AION 2 Global class archetypes.
+// Images are bundled, work offline and are not imported player avatars.
 function updateClassArt(){
  const cls=state?.class;
  if(!CLASS_PORTRAITS[cls])return;
