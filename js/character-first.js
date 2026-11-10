@@ -198,8 +198,6 @@
     });
     $('v5-theme').addEventListener('change', event => setTheme(event.target.value));
     setTheme(selectedTheme());
-    if (window.innerWidth < 1100)
-      document.querySelector('[data-v3-editor="gear"]')?.click();
     update(model());
   }
 
