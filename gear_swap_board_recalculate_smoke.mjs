@@ -124,8 +124,10 @@ try {
       a.recommendedRouteSnapshot={...snapshot,route:[snapshot.route[0]]};
       liveRoute=a.recommendedRouteSnapshot.route;
       a.customNodes=[first.id];
-      a.customAzphelNodes=[azphelRoute()[0].id];
-      a.customArielNodes=[arielRoute()[0].id];
+      // Use known connected route entries independent of the zero-point
+      // special-board budgets in this smoke-test fixture.
+      a.customAzphelNodes=[ROUTES[state.class].azphel[0].id];
+      a.customArielNodes=[legacyArielRoute()[0].id];
     };
     poison();
     document.querySelector('#board-mode-recommended').click();
