@@ -460,3 +460,55 @@ body.v5-active select:focus-visible{
 @media (prefers-reduced-motion:reduce){
  body.v5-active *{scroll-behavior:auto!important;transition-duration:0s!important;animation-duration:0s!important}
 }
+
+/* At medium widths, the original v2 editor rail normally hides two columns.
+   Override that only in this opt-in three-panel overview. */
+@media (min-width:1100px) and (max-width:1550px){
+ body.v5-active.v5-view-overview:not(.v2-secondary) .v2-workspace>.v2-left{
+  display:flex!important;grid-column:1!important;grid-row:1!important;
+ }
+ body.v5-active.v5-view-overview:not(.v2-secondary) .v2-workspace>.v2-center{
+  display:flex!important;grid-column:2!important;grid-row:1!important;
+ }
+ body.v5-active.v5-view-overview:not(.v2-secondary) .v2-workspace>.v2-right{
+  display:flex!important;grid-column:1/-1!important;grid-row:2!important;
+ }
+}
+/* Mobile overview is a concise command center, not a 4,300px stack of all
+   advanced editors. The real editors are one tap away via the top navigation. */
+@media (max-width:1099px){
+ body.v5-active.v5-view-overview:not(.v2-secondary) .v2-workspace{
+  display:flex!important;flex-direction:column;gap:9px;
+ }
+ body.v5-active.v5-view-overview:not(.v2-secondary) .v2-workspace>.v3-editor-switch,
+ body.v5-active.v5-view-overview:not(.v2-secondary) .v2-workspace>.v2-left,
+ body.v5-active.v5-view-overview:not(.v2-secondary) .v2-workspace>.v2-center{
+  display:none!important;
+ }
+ body.v5-active.v5-view-overview:not(.v2-secondary) .v2-workspace>.v2-right{
+  display:flex!important;order:0;
+ }
+ body.v5-active.v5-view-overview .v5-recommendations{
+  min-height:0!important;gap:13px;
+ }
+ body.v5-active.v5-view-overview .v5-compare-strip{margin-top:9px}
+ body.v5-active.v5-view-equipment .v2-workspace>.v2-left,
+ body.v5-active.v5-view-arcana .v2-workspace>.v2-left,
+ body.v5-active.v5-view-skills .v2-workspace>.v2-center,
+ body.v5-active.v5-view-stigma .v2-workspace>.v2-center,
+ body.v5-active.v5-view-boards .v2-workspace>.v2-right{
+  display:flex!important;flex-direction:column;
+ }
+ body.v5-active.v5-view-equipment .v2-workspace>.v2-center,
+ body.v5-active.v5-view-equipment .v2-workspace>.v2-right,
+ body.v5-active.v5-view-arcana .v2-workspace>.v2-center,
+ body.v5-active.v5-view-arcana .v2-workspace>.v2-right,
+ body.v5-active.v5-view-skills .v2-workspace>.v2-left,
+ body.v5-active.v5-view-skills .v2-workspace>.v2-right,
+ body.v5-active.v5-view-stigma .v2-workspace>.v2-left,
+ body.v5-active.v5-view-stigma .v2-workspace>.v2-right,
+ body.v5-active.v5-view-boards .v2-workspace>.v2-left,
+ body.v5-active.v5-view-boards .v2-workspace>.v2-center{
+  display:none!important;
+ }
+}
