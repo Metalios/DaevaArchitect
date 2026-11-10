@@ -6,6 +6,38 @@ const $=id=>document.getElementById(id);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const num=v=>Number(v||0).toLocaleString('en-US',{maximumFractionDigits:2});
 const contexts={solo:'Solo PvE',party:'Group PvE',pvp:'General PvP','pvp-arena':'Arena PvP','pvp-abyss-solo':'Solo Abyss PvP','pvp-abyss-group':'Group Abyss PvP'};
+const CLASS_PORTRAITS=Object.freeze(Object.fromEntries(
+ ['gladiator','templar','assassin','ranger','sorcerer','spiritmaster','cleric','chanter']
+ .map(key=>[key,'./assets/class-art/'+key+'.svg'])
+));
+// Original illustrations of the eight AION 2 Global class archetypes.
+// Images are bundled, work offline and are not imported player avatars.
+function updateClassArt(){
+ const cls=state?.class;
+ if(!CLASS_PORTRAITS[cls])return;
+ document.body.dataset.v6Class=cls;
+ for(const selector of ['.v6-doll-art','.v6-hero-portrait']){
+  const parent=document.querySelector(selector);
+  if(!parent)continue;
+  parent.dataset.classLabel=profile().name;
+  let img=parent.querySelector('img.v6-class-illustration');
+  if(!img){
+   img=document.createElement('img');img.className='v6-class-illustration';
+   img.decoding='async';img.loading='eager';
+   img.addEventListener('load',()=>parent.classList.toggle('v6-art-loaded',img.naturalWidth>0));
+   img.addEventListener('error',()=>parent.classList.remove('v6-art-loaded'));
+   parent.append(img);
+  }
+  if(img.dataset.class!==cls){
+   img.dataset.class=cls;
+   parent.classList.remove('v6-art-loaded');
+   img.alt=selector==='.v6-doll-art'?profile().name+' — AION 2 class illustration':'';
+   img.src=CLASS_PORTRAITS[cls];
+  }
+ }
+ const doll=document.querySelector('.v6-doll-art');
+ if(doll)doll.setAttribute('aria-label',profile().name+' class artwork (illustration, not actual character appearance)');
+}
 let dashboard;
 const btn=(target,label)=>'<button type="button" data-v5-view="'+target+'" class="v6-link">'+label+' <span aria-hidden="true">↗</span></button>';
 function mount(){
@@ -37,7 +69,8 @@ function mount(){
     '<p id="v6-reco-text"></p></div>'+btn('skills','Review plan')+'</div>'+
    '<p class="v6-honest-note">Evidence-weighted advice; not a measured damage or survival gain.</p></section>'+
   '<section class="v6-panel"><header class="v6-heading"><h2><span>◎</span> Progression Targets</h2><small id="v6-goals"></small></header>'+
-   '<div id="v6-progress" class="v6-progress"></div></section>'+
+   '<div id="v6-progress" class="v6-progress"></div>'+
+   '<p class="v6-target-context" id="v6-target-context"></p></section>'+
   '<section class="v6-panel"><header class="v6-heading"><h2><span>⚖</span> Build Comparison</h2><button id="v6-compare" type="button" class="v6-link">Open compare ↗</button></header>'+
    '<div class="v6-comparison-head"><span>System</span><span>Invested</span><span>Earned</span></div><div id="v6-diff" class="v6-diff"></div></section>'+
  '</aside>';
@@ -94,6 +127,113 @@ function mergedStats(){
   ['↝','Combat Speed',lookup(['Combat Speed'])],['◈','PvE Damage',lookup(['PvE Damage Boost'])]
  ];
 }
+// A milestone is meaningful only when its source and type are explicit:
+// projected effective Mastery vs actually purchased Stigma/Daevanion nodes.
+function nextMasteryMilestone(m,a){
+ const targets=typeof progressionBreakpoints==='function'
+  ?progressionBreakpoints(state.class,a.context,a.pveObjective||'performance'):[];
+ for(const [name,goal] of targets){
+  if(!Object.values(data().skills).some(x=>x.name===name))continue;
+  const level=skillLevelBreakdown(name,m).withPlan;
+  if(level<goal)return {label:name+' Lv '+goal,detail:(goal-level)+' projected effective level'+(goal-level===1?'':'s')+' to go',target:'skills'};
+ }
+ return {label:'Key skill breakpoints planned',detail:'Check purchased bonuses and equipped Specialties.',target:'skills'};
+}
+function nextStigmaMilestone(m,a){
+ const equipped=activeStigmas();
+ const stages=typeof progressionStigmaStages==='function'
+  ?progressionStigmaStages(state.class,a.context,equipped,adviceFor(state.class,a.context,a.pveObjective)):[];
+ for(const [name,rank] of stages||[]){
+  const owned=m.stigma.levels[name]||0;
+  if(rank<=owned)continue;
+  const need=stigmaTotal(rank)-stigmaTotal(owned);
+  const free=Math.max(0,budget('stigma')-(m.stigma.spent||0));
+  const qualifier=need>free?'; '+(free?'reallocate or earn more':'requires reallocation or more earned points'): '; within your recorded free budget';
+  return {label:name+' Lv '+rank,detail:need+' Stigma points needed'+qualifier,target:'stigma'};
+ }
+ return {label:'Stigma milestones planned',detail:'Review equipped choices and timing.',target:'stigma'};
+}
+function nextLevelingMilestone(){
+ const level=currentLevel(),choices=[];
+ for(const [name,at] of Object.entries(SKILL_UNLOCKS[state.class]||{}))
+  if(at>level&&at<=45)choices.push({level:at,label:'Skill unlock: '+name});
+ for(const [board,at] of Object.entries(BOARD_UNLOCKS))
+  if(at>level&&at<=45)choices.push({level:at,label:board+' board unlock'});
+ for(let at=level+1;at<=45;at++){
+  if((LEVEL_REWARDS[at]?.slots||0)>(LEVEL_REWARDS[at-1]?.slots||0))
+   choices.push({level:at,label:'Stigma slot '+LEVEL_REWARDS[at].slots+' unlock'});
+ }
+ choices.sort((a,b)=>a.level-b.level||a.label.localeCompare(b.label));
+ const next=choices[0];
+ return next
+  ?{label:'Level '+next.level,detail:next.label+' · '+(next.level-level)+' level'+(next.level-level===1?'':'s')+' away'}
+  :{label:'Level 45 cap',detail:'All level-based unlocks are available; continue earned currency and board progression.'};
+}
+function nextGearMilestone(a){
+ const rating=Number(a.gearRating)||0;
+ if(!rating)return {label:'Enter your Gear Rating',detail:'Unlock the next content-gate comparison.',target:'equipment'};
+ const next=(typeof PROGRESSION_ITEM_LEVEL!=='undefined'?PROGRESSION_ITEM_LEVEL:[]).find(x=>x.level>rating);
+ return next
+  ?{label:'GR '+num(next.level),detail:num(next.level-rating)+' GR remaining · '+next.description,target:'equipment'}
+  :{label:'Known GR milestones reached',detail:'Your current rating is '+num(rating)+'; verify current content gates in game.',target:'equipment'};
+}
+function nextPlannedBoardNode(group){
+ const acquired=obtainedNodes(),nodes=nodeMap();
+ const route=plannedRoute(group);
+ for(const step of route){
+  const entry=nodes.get(step.id);
+  if(!entry||entry.node[5]===0||acquired.has(step.id)||!boardOpen(entry.board))continue;
+  return 'Next '+entry.board+' node · '+entry.node[5]+' crystal'+(entry.node[5]===1?'':'s');
+ }
+ return 'No further connected planned nodes';
+}
+function targetCard(label,spent,total,detail,target,kind='planned'){
+ const budgetValue=Math.max(0,Number(total)||0),invested=Math.max(0,Number(spent)||0);
+ const remaining=Math.max(0,budgetValue-invested),percent=budgetValue?Math.min(100,Math.round(invested/budgetValue*100)):0;
+ return '<div class="v6-meter v6-target" data-v6-target-kind="'+kind+'">'+
+   '<div class="v6-target-top"><strong>'+esc(label)+'</strong>'+
+   '<span>'+num(invested)+' / '+num(budgetValue)+'</span></div>'+
+   '<progress value="'+invested+'" max="'+Math.max(1,budgetValue)+'" aria-label="'+esc(label)+(kind==='obtained'?' obtained':' allocated')+'"></progress>'+
+   '<p>'+esc(detail)+'</p>'+
+   '<button type="button" data-v5-view="'+target+'">'+
+   (remaining?num(remaining)+' remaining':'Review '+label)+' ↗</button></div>';
+}
+function renderProgressTargets(m,a){
+ const mastery=nextMasteryMilestone(m,a),stigma=nextStigmaMilestone(m,a),
+  gear=nextGearMilestone(a);
+ const purchased=typeof obtainedCrystalSpend==='function'?obtainedCrystalSpend('crystals'):0,
+  azPurchased=typeof obtainedCrystalSpend==='function'?obtainedCrystalSpend('azphel'):0,
+  arPurchased=typeof obtainedCrystalSpend==='function'?obtainedCrystalSpend('ariel'):0;
+ const boardBudget=budget('crystals'),azBudget=isLeveling()?0:Number(a.azphel)||0,
+  arBudget=isLeveling()?0:Number(a.ariel)||0;
+ const levelNote=isLeveling()?'Unlocks at Lv 45':'';
+ const levelGoal=isLeveling()?nextLevelingMilestone():null;
+ const cards=[
+  targetCard('Mastery',m.mastery.spent,budget('mastery'),
+   mastery.label+' · '+mastery.detail,'skills'),
+  targetCard('Stigmas',m.stigma.spent,budget('stigma'),
+   stigma.label+' · '+stigma.detail,'stigma'),
+  targetCard('PvE Daevanian',purchased,boardBudget,
+   nextPlannedBoardNode('crystals')+' · '+num(m.boards.spent||0)+' planned','boards','obtained'),
+  targetCard('Azphel',azPurchased,azBudget,
+   levelNote||nextPlannedBoardNode('azphel'),'boards','obtained'),
+  targetCard('Ariel',arPurchased,arBudget,
+   levelNote||nextPlannedBoardNode('ariel'),'boards','obtained')
+ ];
+ $('v6-progress').innerHTML=cards.join('')+
+  '<div class="v6-next-gate"><div><small>GEAR / CONTENT MILESTONE</small>'+
+  '<strong>'+esc(levelGoal?.label||gear.label)+'</strong><p>'+
+  esc(levelGoal?.detail||gear.detail)+
+  '</p></div><button type="button" data-v5-view="'+(isLeveling()?'skills':'equipment')+'">Review ↗</button></div>';
+ const nextGaps=[
+  Math.max(0,budget('mastery')-(m.mastery.spent||0)),
+  Math.max(0,budget('stigma')-(m.stigma.spent||0)),
+  Math.max(0,boardBudget-purchased)
+ ];
+ $('v6-goals').textContent=nextGaps.every(x=>!x)?'Core budgets accounted for':'Next upgrades';
+ $('v6-target-context').textContent=
+  'Gold = purchased Daevanian nodes; planned routes are not assumed purchased. Skill levels include projected bonuses.';
+}
 function progress(label,spent,total){
  const max=Math.max(1,total);return '<div class="v6-meter"><div><span>'+esc(label)+'</span>'+
   '<span>'+num(spent)+' / '+num(total)+'</span></div><progress max="'+max+'" value="'+Math.min(max,spent)+
@@ -103,6 +243,7 @@ function update(m){
  if(!dashboard||!state?.class)return;m||=model();
  const a=account(),eq=gearEquipment(),recorded=GEAR_SLOTS.filter(s=>['left','right'].includes(s.area)&&eq[s.id]).length;
  $('v6-class').textContent=profile().name+' · Lv '+currentLevel();
+ updateClassArt();
  $('v6-gear-count').textContent=recorded+' / 20 recorded pieces';
  $('v6-left-slots').innerHTML=slotMarkup(['weapon','helm','top','gloves','shoes'],eq);
  $('v6-right-slots').innerHTML=slotMarkup(['necklace','earring1','ring1','bracelet1','amulet'],eq);
@@ -130,8 +271,7 @@ function update(m){
  }).join('');
  const rows=[['Mastery',m.mastery.spent,budget('mastery')],['Stigmas',m.stigma.spent,budget('stigma')],
   ['Daevanian',m.boards.spent||0,budget('crystals')],['Azphel',m.azphel?.spent||0,a.azphel||0],['Ariel',m.ariel?.spent||0,a.ariel||0]];
- $('v6-progress').innerHTML=rows.map(([n,s,t])=>progress(n,s,t)).join('');
- $('v6-goals').textContent=rows.filter(([n,s,t])=>t>0&&s>=t).length+' / '+rows.length+' allocated';
+ renderProgressTargets(m,a);
  $('v6-diff').innerHTML=rows.map(([n,s,t])=>'<div><span>'+esc(n)+'</span><b>'+num(s)+'</b><small>'+num(t)+'</small></div>').join('');
  $('v6-reco-title').textContent=(contexts[a.context]||'Current context')+' · Recommended';
  $('v6-reco-text').textContent=(adviceFor(state.class,a.context,a.pveObjective)?.why||

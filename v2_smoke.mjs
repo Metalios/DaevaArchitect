@@ -466,6 +466,48 @@ try{
     width+': Global must show exactly five Arcana slots');
   assert.equal(await page.locator('#v6-progress .v6-meter').count(),5,
     width+': planner progression bars are missing');
+  assert.equal(await page.locator('#v6-progress .v6-next-gate').count(),1,
+    width+': next Gear Rating / level milestone is missing');
+  assert.match(await page.locator('#v6-progress').innerText(),
+    /Mastery[\s\S]*Stigmas[\s\S]*PvE Daevanian[\s\S]*Azphel[\s\S]*Ariel/,
+    width+': all five distinct progression systems must be visible');
+  assert.match(await page.locator('#v6-target-context').innerText(),
+    /purchased Daevanian nodes/i,
+    width+': observed purchases must not be presented as the planned route');
+  if(width===1920){
+    const portraitSources=new Set();
+    for(const c of ['gladiator','templar','assassin','ranger','sorcerer','spiritmaster','cleric','chanter']){
+      await page.locator('#v2-class').selectOption(c);
+      const selector='.v6-doll-art img.v6-class-illustration';
+      const state=await page.locator(selector).evaluate(el=>({
+        src:el.currentSrc,classId:el.dataset.class,alt:el.alt
+      }));
+      assert.equal(state.classId,c,'Class illustration did not follow class '+c);
+      assert(state.src.includes('/assets/class-art/'+c+'.svg'),
+        'Class '+c+' has the wrong bundled portrait URL: '+state.src);
+      await page.waitForFunction(cls=>{
+        const image=document.querySelector('.v6-doll-art img.v6-class-illustration');
+        return image&&image.dataset.class===cls&&image.complete&&image.naturalWidth>0;
+      },c,{timeout:6000});
+      assert.equal(await page.locator('.v6-doll-art.v6-art-loaded').count(),1,
+        c+': bundled original portrait failed to decode');
+      assert(state.alt.toLowerCase().includes(c),
+        'Class portrait has incorrect accessibility label for '+c);
+      assert.equal(await page.locator('body').getAttribute('data-v6-class'),c,
+        'Class-specific theme identity did not update for '+c);
+      portraitSources.add(state.src);
+      assert.equal(await page.locator('#v6-progress .v6-meter').count(),5,
+        c+': progression milestones did not update');
+      if(['templar','sorcerer'].includes(c)){
+        fs.mkdirSync('v2-previews',{recursive:true});
+        await page.screenshot({
+          path:'v2-previews/class-portrait-'+c+'-1920.png',fullPage:false
+        });
+      }
+    }
+    assert.equal(portraitSources.size,8,'Every Global class must have distinct portrait artwork');
+    await page.locator('#v2-class').selectOption('templar');
+  }
   assert.equal(await page.locator('#v6-compare-dock').isVisible(),true,
     width+': full-width three-way comparison summary is missing');
   assert.equal(await page.locator('#mastery').isVisible(),false,
