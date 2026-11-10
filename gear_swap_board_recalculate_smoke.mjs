@@ -1,5 +1,6 @@
 // Browser regression: a new equipment item owns new roll data. A requested
-// board recalculation must invalidate the old route, but not purchased tiles.
+// board recalculation must invalidate the old route, but not purchased tiles
+// or an alternate manually planned custom route.
 import {chromium} from 'playwright';
 import {pathToFileURL} from 'node:url';
 import path from 'node:path';
@@ -123,13 +124,14 @@ try {
       a.recommendedRouteSnapshot={...snapshot,route:[snapshot.route[0]]};
       liveRoute=a.recommendedRouteSnapshot.route;
       a.customNodes=[first.id];
-      a.customAzphelNodes=[-123];
+      a.customAzphelNodes=[azphelRoute()[0].id];
+      a.customArielNodes=[arielRoute()[0].id];
     };
     poison();
     document.querySelector('#board-mode-recommended').click();
     const normal={
       recalculated:a.recommendedRouteSnapshot?.route.length>1,
-      customCleared:!a.customNodes.length&&!a.customAzphelNodes.length,
+      customPreserved:a.customNodes.includes(first.id)&&a.customAzphelNodes.length===1&&a.customArielNodes.length===1,
       obtainedKept:a.obtainedNodes.includes(obtained),mode:a.boardMode
     };
     poison();
@@ -137,19 +139,44 @@ try {
     document.querySelector('#v2-board-restore').click();
     const v2={
       recalculated:a.recommendedRouteSnapshot?.route.length>1,
-      customCleared:!a.customNodes.length&&!a.customAzphelNodes.length,
+      customPreserved:a.customNodes.includes(first.id)&&a.customAzphelNodes.length===1&&a.customArielNodes.length===1,
       obtainedKept:a.obtainedNodes.includes(obtained),mode:a.boardMode
     };
-    return {normal,v2};
+    // Verify that the V2 controls visibly switch between the independent
+    // recommended and custom plans. Merely changing the view must not
+    // modify either plan or the actual in-game purchased nodes.
+    const customBefore={
+      pve:[...a.customNodes],azphel:[...a.customAzphelNodes],
+      ariel:[...a.customArielNodes]
+    };
+    document.querySelector('#v2-mode-custom').click();
+    const customVisible=a.boardMode==='custom'&&
+      document.querySelector('#v2-mode-custom').getAttribute('aria-pressed')==='true';
+    document.querySelector('#v2-mode-recommended').click();
+    const recommendedVisible=a.boardMode==='recommended'&&
+      document.querySelector('#v2-mode-recommended').getAttribute('aria-pressed')==='true';
+    const customAfter={
+      pve:[...a.customNodes],azphel:[...a.customAzphelNodes],
+      ariel:[...a.customArielNodes]
+    };
+    return {normal,v2,modeSwitch:{
+      customVisible,recommendedVisible,customBefore,customAfter,
+      obtainedKept:a.obtainedNodes.includes(obtained)
+    }};
   });
-  for(const [label,result] of Object.entries(board)){
+  for(const [label,result] of [['normal',board.normal],['v2',board.v2]]){
     assert(result.recalculated,label+' reused the stale route');
-    assert(result.customCleared,label+' retained discarded custom planned nodes');
+    assert(result.customPreserved,label+' erased a saved alternate custom route');
     assert(result.obtainedKept,label+' deleted an obtained tile');
     assert.equal(result.mode,'recommended');
   }
+  assert(board.modeSwitch.customVisible,'Custom mode switch did not activate');
+  assert(board.modeSwitch.recommendedVisible,'Recommended mode switch did not activate');
+  assert.deepEqual(board.modeSwitch.customAfter,board.modeSwitch.customBefore,
+    'Switching visible board modes changed the saved custom routes');
+  assert(board.modeSwitch.obtainedKept,'Mode switch deleted an obtained tile');
   assert.deepEqual(errors,[],'Browser runtime errors');
-  console.log('Gear replacement clears prior rolls, same item preserves rolls, and both recommended board actions recalculate without deleting obtained tiles.');
+  console.log('Gear rolls reset correctly, both board actions recalculate while retaining purchased/custom nodes, and V2 mode switching preserves independent plans.');
 } finally {
   await browser.close();
 }
