@@ -449,3 +449,159 @@ body.v5-active .v6-hero-portrait:after{
   background-size:cover,auto 260px;
  }
 }
+
+/* AION 2 Global class-specific portrait layer. The remote images are eight
+   distinct official class showcase portraits; credit remains with NCSOFT.
+   Never reuse the Templar illustration when another class is selected. */
+body.v5-active .v6-doll-art,
+body.v5-active .v6-hero-portrait{
+ position:absolute;isolation:isolate;
+ background-image:none!important;
+}
+body.v5-active .v6-doll-art:before,
+body.v5-active .v6-doll-art:after,
+body.v5-active .v6-hero-portrait:after{
+ display:none!important;
+}
+body.v5-active .v6-doll-art .v6-class-illustration,
+body.v5-active .v6-hero-portrait .v6-class-illustration{
+ display:block;width:100%;height:100%;max-width:none;
+ object-fit:contain;object-position:center bottom;
+ position:absolute;inset:0;opacity:0;visibility:hidden;
+ filter:drop-shadow(0 5px 23px rgba(0,0,0,.45));
+ transition:opacity .14s ease;
+}
+body.v5-active .v6-doll-art.v6-art-loaded .v6-class-illustration,
+body.v5-active .v6-hero-portrait.v6-art-loaded .v6-class-illustration{
+ opacity:1;visibility:visible;
+}
+body.v5-active .v6-doll-art:not(.v6-art-loaded):before,
+body.v5-active .v6-hero-portrait:not(.v6-art-loaded):before{
+ display:grid!important;place-items:center;
+ content:attr(data-class-label);
+ position:absolute;inset:12% 10%;padding:10px;
+ font:normal 25px Georgia,serif;text-align:center;
+ color:var(--v5-gold);text-shadow:0 0 24px var(--v5-glow);
+ border:1px solid color-mix(in srgb,var(--v5-edge) 55%,transparent);
+ border-radius:50%;background:radial-gradient(circle,var(--v5-accent-soft),transparent 72%);
+}
+/* Context tint helps distinguish the eight archetypes even when artwork
+   is unavailable due to network restrictions or user privacy settings. */
+body.v5-active[data-v6-class="gladiator"]{--v6-archetype:#e2998b}
+body.v5-active[data-v6-class="templar"]{--v6-archetype:#e9ca93}
+body.v5-active[data-v6-class="assassin"]{--v6-archetype:#c49af2}
+body.v5-active[data-v6-class="ranger"]{--v6-archetype:#a4d6ab}
+body.v5-active[data-v6-class="sorcerer"]{--v6-archetype:#938ffc}
+body.v5-active[data-v6-class="spiritmaster"]{--v6-archetype:#b5e2e9}
+body.v5-active[data-v6-class="cleric"]{--v6-archetype:#f3dcaa}
+body.v5-active[data-v6-class="chanter"]{--v6-archetype:#a5e4da}
+body.v5-active .v6-doll{
+ box-shadow:inset 0 0 35px color-mix(in srgb,var(--v6-archetype,#e9ca93) 12%,transparent);
+}
+body.v5-active .v6-doll-art .v6-class-illustration{
+ object-position:center 48%;
+}
+body.v5-active .v6-hero-portrait .v6-class-illustration{
+ object-position:center 23%;
+}
+/* Progression targets: show what to pursue next, not just how many points
+   the optimizer allocated. Purchased boards and planned effects stay separate. */
+body.v5-active.v5-view-overview .v6-overview{
+ height:auto!important;min-height:690px!important;
+}
+body.v5-active.v5-view-overview .v6-insights{
+ grid-template-rows:minmax(146px,auto) minmax(320px,auto) minmax(145px,auto)!important;
+ align-items:stretch;
+}
+body.v5-active .v6-progress{
+ display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:7px!important;padding:10px 12px 8px!important;
+}
+body.v5-active .v6-target{
+ min-height:92px;min-width:0;
+ padding:8px 9px;
+ border:1px solid var(--v5-edge);border-radius:7px;
+ background:radial-gradient(ellipse at top left,var(--v5-accent-soft),transparent 90%),var(--v5-header);
+}
+body.v5-active .v6-target[data-v6-target-kind="obtained"]{
+ border-color:color-mix(in srgb,var(--v5-gold) 45%,var(--v5-edge));
+}
+body.v5-active .v6-target-top{
+ display:flex;align-items:baseline;justify-content:space-between;
+ gap:4px;margin-bottom:6px;
+}
+body.v5-active .v6-target-top strong{
+ color:var(--v5-text);font-weight:800;font-size:10px;
+}
+body.v5-active .v6-target-top span{
+ color:var(--v5-accent);font-size:10px;font-weight:750;
+ white-space:nowrap;font-variant-numeric:tabular-nums;
+}
+body.v5-active .v6-target[data-v6-target-kind="obtained"] .v6-target-top span{
+ color:var(--v5-gold);
+}
+body.v5-active .v6-target progress{
+ height:5px!important;
+}
+body.v5-active .v6-target[data-v6-target-kind="obtained"] progress::-webkit-progress-value{
+ background:var(--v5-gold)!important;
+}
+body.v5-active .v6-target[data-v6-target-kind="obtained"] progress::-moz-progress-bar{
+ background:var(--v5-gold)!important;
+}
+body.v5-active .v6-target p{
+ color:var(--v5-muted);font-size:9px;line-height:1.35;
+ margin:6px 0 3px;
+}
+body.v5-active .v6-target button{
+ padding:3px 0;border:0;background:none;
+ color:var(--v5-accent);font:800 9px/1.25 system-ui,sans-serif;
+ text-align:left;cursor:pointer;
+}
+body.v5-active .v6-target button:hover{text-decoration:underline}
+body.v5-active .v6-next-gate{
+ display:flex;grid-column:1/-1;align-items:center;justify-content:space-between;
+ min-width:0;gap:8px;padding:8px 10px;border:1px solid var(--v5-edge);
+ border-radius:7px;background:var(--v5-gold-soft);
+}
+body.v5-active .v6-next-gate div{min-width:0}
+body.v5-active .v6-next-gate small{
+ color:var(--v5-gold);font-size:8px;font-weight:900;letter-spacing:.09em;
+}
+body.v5-active .v6-next-gate strong{
+ display:block;color:var(--v5-text);font-size:11px;
+ margin:3px 0 1px;
+}
+body.v5-active .v6-next-gate p{
+ margin:0;color:var(--v5-muted);font-size:9px;line-height:1.35;
+}
+body.v5-active .v6-next-gate button{
+ flex:none;border:1px solid var(--v5-gold);border-radius:5px;
+ background:transparent;color:var(--v5-gold);
+ padding:7px;font-size:10px;font-weight:800;cursor:pointer;
+}
+body.v5-active .v6-target-context{
+ margin:0 12px 9px;color:var(--v5-muted);
+ font-size:9px;line-height:1.4;
+}
+@media(min-width:1600px) and (min-height:900px){
+ body.v5-active.v5-view-overview .v6-overview{
+  min-height:725px!important;
+ }
+}
+@media(max-width:1599px){
+ body.v5-active.v5-view-overview .v6-insights{
+  grid-template-rows:auto!important;
+ }
+}
+@media(max-width:480px){
+ body.v5-active .v6-progress{
+  grid-template-columns:minmax(0,1fr);
+ }
+ body.v5-active .v6-next-gate{grid-column:1}
+ body.v5-active .v6-target{min-height:0}
+ body.v5-active .v6-target-context{font-size:9px}
+}
+@media(prefers-reduced-motion:reduce){
+ body.v5-active .v6-class-illustration{transition:none!important}
+}
