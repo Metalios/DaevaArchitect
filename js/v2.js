@@ -72,6 +72,11 @@ const master=make('div','v2-master-editor',`
  <details class="v2-advanced-skills"><summary>Advanced skill cards & bonus adjustments</summary></details>`);
 const stigmas=make('div','v2-stigmas',`<div id="v2-stigma-list" class="v2-stigma-cards"></div><div class="v2-stigma-summary"><span>13 class Stigmas in catalog · select a card to edit</span><strong id="v2-stigma-remaining"></strong></div><div class="v2-stigma-breakpoints">Perk levels <span>⑤ First</span><span>⑩ Second</span><span>⑮ Third</span><span>⑳ Fourth</span></div><button type="button" id="v2-stigma-reset">Restore recommended Stigmas</button><div id="v2-stigma-panel" class="v2-in-panel-flyout" role="region" aria-label="Stigma loadout editor" hidden></div>`);
 const boardControls=make('div','v2-board-controls',`
+ <div class="v2-board-mode-switch" role="group" aria-label="Daevanion planning mode">
+  <span class="v2-board-mode-title">Board plan</span>
+  <button type="button" id="v2-mode-recommended" aria-pressed="true">Recommended</button>
+  <button type="button" id="v2-mode-custom" aria-pressed="false">Custom</button>
+ </div>
  <div class="v2-board-callout"><b>Daevanion path planner</b><span><b>Blue</b> = recommendation, <b>gold</b> = marked obtained. Recalculate does not erase purchases. Reset selections removes marks and custom choices after confirmation.</span></div>
  <div class="v2-board-primary-actions" role="group" aria-label="Daevanion planning actions">
    <button type="button" id="v2-board-restore" title="Re-evaluate with the current character, points and recorded equipment">Recalculate path</button>
@@ -164,6 +169,10 @@ function mount(){
  const boardTabs=$('board-tabs'),boardDock=make('div','v2-board-dock');
  boardTabs.before(boardDock);
  boardDock.append(boardTabs,boardControls);
+ // Share the existing crystal tracker row instead of stealing vertical
+ // viewport space from the 15×15 board (especially at 1080p).
+ const modeSwitch=boardControls.querySelector('.v2-board-mode-switch');
+ if(modeSwitch)$('board-crystal-counter').append(modeSwitch);
  const quickActions=boardControls.querySelector('.v2-board-secondary-actions');
  const primaryActions=boardControls.querySelector('.v2-board-primary-actions');
  quickActions.insertBefore($('v2-board-restore'),quickActions.firstChild);
@@ -434,6 +443,12 @@ function sync(m){
  if(lastClass!==state.class){lastClass=state.class;specialtyOpen=false;stigmaSlotOpen=-1;skillTab='active';skill=''}
  const a=account();
  $('v2-class').value=state.class;$('v2-level').value=currentLevel();$('v2-level').disabled=!isLeveling();
+ for(const [id,chosen] of [['v2-mode-recommended',!customMode()],['v2-mode-custom',customMode()]]){
+  const button=$(id);
+  if(button){button.classList.toggle('active',chosen);button.setAttribute('aria-pressed',String(chosen));}
+ }
+ $('v2-board-restore').textContent=customMode()?'Recalculate recommendation':'Recalculate path';
+ $('v2-board-restore').title=customMode()?'Recalculate and display the recommended route without deleting your saved custom plan':'Refresh the recommended route using current inputs';
  $('v2-stage').value=a.journey;$('v2-context').value=a.context;
  const roleChoices=RoleBuildGoals.available(state.class,a.context);
  const roleSelect=$('v2-objective'),roleGoal=RoleBuildGoals.normalize(state.class,a.context,a.pveObjective);
@@ -609,6 +624,12 @@ function bind(){
  a.boardMode='custom';}
  setCustomNode(entry.node[0]);message=boardEditNotice;render();
  });
+ for(const [id,mode] of [['v2-mode-recommended','recommended'],['v2-mode-custom','custom']]){
+  $(id).addEventListener('click',()=>{
+   if(account().boardMode===mode)return;
+   $(mode==='recommended'?'board-mode-recommended':'board-mode-custom').click();
+  });
+ }
  $('v2-board-restore').addEventListener('click',()=>{
    const report=recalculateRecommendedBoards();
    message=report.message;
