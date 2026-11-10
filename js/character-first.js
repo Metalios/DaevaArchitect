@@ -94,6 +94,10 @@
       if (tabs) tabs.scrollLeft = 0;
     }
     update();
+    // Every detailed section is a page-like workspace. Preserve its controls
+    // but reset the document viewport on tab changes, not the internal board
+    // canvas scroll position or the saved character data.
+    requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'instant'}));
   }
   function button(label, target, icon) {
     return '<button type="button" data-v5-view="'+target+'"><span aria-hidden="true">'+icon+
