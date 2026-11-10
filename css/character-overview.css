@@ -374,3 +374,55 @@ body.v2-active.v2-has-class.v5-active.v5-view-overview:not(.v2-secondary):not(.v
 body.v2-active.v2-has-class.v5-active.v5-view-overview:not(.v2-secondary):not(.v2-board-expanded) .v5-compare-strip{
  display:none!important;
 }
+
+/* Visual-review corrections: match the intended highlighted recommendation
+   structure, instead of letting the crown, body and call to action collapse
+   into CSS-grid auto-placement. */
+body.v5-active .v6-reco-highlight{
+ display:flex!important;flex-direction:column!important;
+ align-items:stretch;position:relative;gap:8px!important;
+ padding:12px 12px 12px 40px!important;
+}
+body.v5-active .v6-reco-highlight .v6-crown{
+ position:absolute;top:11px;left:11px;float:none;margin:0;
+ font-size:23px;line-height:1;
+}
+body.v5-active .v6-reco-highlight>div{min-width:0;width:100%}
+body.v5-active .v6-reco-highlight>div b{
+ display:block;font-size:12px;line-height:1.3;
+}
+body.v5-active .v6-reco-highlight>div p{
+ display:block;margin:5px 0 0;line-height:1.4;
+}
+body.v5-active .v6-reco-highlight>.v6-link{
+ display:flex;align-items:center;justify-content:center;gap:5px;
+ min-height:32px;min-width:110px;max-width:190px;
+ margin-top:2px;padding:8px 11px!important;
+ border:1px solid var(--v5-gold)!important;
+ background:var(--v5-gold)!important;
+ color:#172332!important;white-space:normal;text-align:center;
+}
+@media(min-width:1600px) and (min-height:900px){
+ body.v5-active.v5-view-overview .v6-overview{
+  height:620px!important;min-height:620px!important;
+ }
+ body.v5-active .v6-insights{
+  grid-template-rows:minmax(170px,auto) minmax(195px,auto) minmax(178px,1fr);
+ }
+ body.v5-active .v6-insights>.v6-panel:last-child{
+  overflow:auto;scrollbar-width:thin;
+ }
+ body.v5-active .v6-masthead .v5-character-copy{
+  padding-left:300px;
+ }
+ body.v5-active .v6-hero-portrait{
+  left:5%;top:-9px;width:300px;height:170px;
+  background-position:center,50% -22px;
+  background-size:cover,auto 275px;
+ }
+}
+@media(max-width:600px){
+ body.v5-active .v6-reco-highlight>.v6-link{
+  width:100%;max-width:none;
+ }
+}
