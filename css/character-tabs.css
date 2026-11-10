@@ -367,3 +367,20 @@ body.v5-active.v5-view-arcana #gear>.v2-gear-advanced>.gear-side>.panel:first-ch
 body.v5-active.v5-view-arcana #gear>.v2-gear-advanced>.gear-side>.panel:not(:first-child){
  display:none!important;
 }
+
+/* The older three-column overview hard-capped Stigmas to 210px and
+   flex-basis:210px, which clips the larger four-card dedicated editor. */
+body.v2-active.v2-has-class.v5-active.v5-view-stigma:not(.v2-secondary):not(.v2-board-expanded)
+ .v2-workspace>.v2-center #stigma{
+ position:relative!important;
+ display:block!important;flex:0 0 auto!important;
+ width:100%;height:auto!important;min-height:365px!important;
+ max-height:none!important;overflow:visible!important;
+ padding-bottom:22px!important;z-index:auto!important;
+ background:var(--v7-panel)!important;
+}
+body.v2-active.v2-has-class.v5-active.v5-view-stigma:not(.v2-secondary):not(.v2-board-expanded)
+ .v2-workspace>.v2-center .v2-stigmas{
+ height:auto!important;min-height:0!important;max-height:none!important;
+ overflow:visible!important;
+}
