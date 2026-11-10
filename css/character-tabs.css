@@ -1,0 +1,328 @@
+/*
+ * Character-first editor workspaces (AION 2 Global).
+ * A single responsive editor shell across Equipment, Mastery, Stigmas,
+ * Arcana, Daevanian, Rotation, Titles and Research.
+ * This stylesheet is opt-in; the original layout is never modified.
+ */
+body.v5-active{
+ --v7-border:color-mix(in srgb,var(--v5-edge) 77%,var(--v5-accent) 23%);
+ --v7-panel:linear-gradient(160deg,var(--v5-surface),var(--v5-header));
+ --v7-elevated:color-mix(in srgb,var(--v5-raised) 70%,var(--v5-header) 30%);
+}
+body.v5-active .v7-editor-header{display:none}
+body.v5-active:not(.v5-view-overview) .v7-editor-header{
+ display:flex;align-items:center;justify-content:space-between;
+ gap:16px;padding:15px 19px;margin:0 0 12px;
+ border:1px solid var(--v7-border);border-radius:10px;
+ background:radial-gradient(ellipse 70% 110% at 0 100%,var(--v5-accent-soft),transparent 70%),var(--v7-panel);
+ box-shadow:inset 0 1px rgba(219,240,255,.06);
+}
+body.v5-active .v7-editor-title-block{min-width:0;flex:1}
+body.v5-active .v7-editor-header h2{
+ font:normal clamp(20px,1.6vw,27px)/1.2 Georgia,serif;
+ color:var(--v5-text);margin:4px 0 5px;
+}
+body.v5-active .v7-editor-header p{
+ margin:0;font-size:11px;line-height:1.5;color:var(--v5-muted);
+ max-width:760px;
+}
+body.v5-active .v7-editor-eyebrow{
+ color:var(--v5-accent);font-size:9px;font-weight:900;
+ letter-spacing:.17em;text-transform:uppercase;
+}
+body.v5-active .v7-editor-actions{display:flex;gap:9px;flex:none;align-items:center}
+body.v5-active .v7-editor-actions button{
+ min-height:38px;padding:9px 12px;border:1px solid var(--v5-edge);
+ border-radius:6px;background:var(--v7-elevated);color:var(--v5-text);
+ font-size:11px;font-weight:800;white-space:nowrap;cursor:pointer;
+}
+body.v5-active .v7-editor-actions button:hover{border-color:var(--v5-accent)}
+body.v5-active .v7-editor-actions .v7-compare{
+ background:var(--v5-gold);color:var(--v5-header);border-color:var(--v5-gold);
+}
+body.v5-active:not(.v5-view-overview) .v5-page-tabs{
+ border-radius:8px;margin-bottom:10px;
+}
+body.v5-active:not(.v5-view-overview) .v5-compare-strip,
+body.v5-active:not(.v5-view-overview) .v6-compare-dock{
+ display:none!important;
+}
+body.v5-active .v2-workspace>.v3-editor-switch{
+ display:none!important;
+}
+/* Turn the legacy responsive rail into a single editor per top-level tab.
+ * No shared grid row placement from the old 1100px-1699px breakpoints. */
+body.v2-active.v2-has-class.v5-active:not(.v5-view-overview):not(.v2-secondary):not(.v2-board-expanded) .v2-workspace{
+ display:block!important;
+ width:100%!important;height:auto!important;min-height:0!important;
+ max-height:none!important;overflow:visible!important;
+ padding:0!important;margin:0!important;
+ grid-template-columns:minmax(0,1fr)!important;
+ grid-template-rows:auto!important;
+}
+body.v2-active.v2-has-class.v5-active:not(.v5-view-overview):not(.v2-secondary):not(.v2-board-expanded) .v2-workspace>.v2-column{
+ grid-column:auto!important;grid-row:auto!important;
+ width:100%!important;min-width:0!important;
+ max-width:none!important;max-height:none!important;min-height:0!important;
+ height:auto!important;overflow:visible!important;
+ padding:0!important;margin:0!important;
+}
+/* When selecting a new tab, show only its real editor. */
+body.v2-active.v2-has-class.v5-active.v5-view-equipment:not(.v2-secondary) .v2-workspace>.v2-left,
+body.v2-active.v2-has-class.v5-active.v5-view-arcana:not(.v2-secondary) .v2-workspace>.v2-left,
+body.v2-active.v2-has-class.v5-active.v5-view-skills:not(.v2-secondary) .v2-workspace>.v2-center,
+body.v2-active.v2-has-class.v5-active.v5-view-stigma:not(.v2-secondary) .v2-workspace>.v2-center,
+body.v2-active.v2-has-class.v5-active.v5-view-boards:not(.v2-secondary) .v2-workspace>.v2-right{
+ display:block!important;
+}
+body.v2-active.v2-has-class.v5-active.v5-view-equipment:not(.v2-secondary) .v2-workspace>.v2-center,
+body.v2-active.v2-has-class.v5-active.v5-view-equipment:not(.v2-secondary) .v2-workspace>.v2-right,
+body.v2-active.v2-has-class.v5-active.v5-view-arcana:not(.v2-secondary) .v2-workspace>.v2-center,
+body.v2-active.v2-has-class.v5-active.v5-view-arcana:not(.v2-secondary) .v2-workspace>.v2-right,
+body.v2-active.v2-has-class.v5-active.v5-view-skills:not(.v2-secondary) .v2-workspace>.v2-left,
+body.v2-active.v2-has-class.v5-active.v5-view-skills:not(.v2-secondary) .v2-workspace>.v2-right,
+body.v2-active.v2-has-class.v5-active.v5-view-stigma:not(.v2-secondary) .v2-workspace>.v2-left,
+body.v2-active.v2-has-class.v5-active.v5-view-stigma:not(.v2-secondary) .v2-workspace>.v2-right,
+body.v2-active.v2-has-class.v5-active.v5-view-boards:not(.v2-secondary) .v2-workspace>.v2-left,
+body.v2-active.v2-has-class.v5-active.v5-view-boards:not(.v2-secondary) .v2-workspace>.v2-center{
+ display:none!important;
+}
+/* Common premium surface, preserving internal catalogs and live form controls. */
+body.v5-active:not(.v5-view-overview) .v2-workspace .tab-panel,
+body.v5-active.v2-secondary .v2-extra>.tab-panel.active{
+ display:block;
+ width:100%;max-width:none;min-width:0;
+ border:1px solid var(--v7-border)!important;
+ border-radius:11px!important;
+ padding:19px!important;margin:0!important;
+ background:var(--v7-panel)!important;color:var(--v5-text)!important;
+ box-shadow:0 9px 30px rgba(0,0,0,.20);
+}
+body.v5-active:not(.v5-view-overview) .tab-panel>.section-title{
+ display:flex;align-items:center;justify-content:space-between;
+ gap:10px;padding:0 0 13px;margin:0 0 14px;
+ border-bottom:1px solid var(--v7-border);
+}
+body.v5-active:not(.v5-view-overview) .tab-panel>.section-title h2{
+ font:normal clamp(18px,1.5vw,23px)/1.24 Georgia,serif;
+ color:var(--v5-text);
+}
+body.v5-active:not(.v5-view-overview) .tab-panel>.section-title p{
+ font-size:11px;line-height:1.45;color:var(--v5-muted);
+}
+body.v5-active:not(.v5-view-overview) .tab-panel .panel{
+ border:1px solid var(--v5-edge)!important;border-radius:9px!important;
+ background:var(--v7-elevated)!important;color:var(--v5-text)!important;
+}
+body.v5-active:not(.v5-view-overview) .tab-panel input,
+body.v5-active:not(.v5-view-overview) .tab-panel select{
+ border-radius:6px;border-color:var(--v5-edge);
+ color:var(--v5-text);background:var(--v5-header);
+}
+body.v5-active:not(.v5-view-overview) .tab-panel :is(button,a):focus-visible{
+ outline:2px solid var(--v5-accent);outline-offset:2px;
+}
+/* Equipment: keep both the character paper doll and detailed-stat sidebar.
+   It is deliberately wider than the old compact three-panel editor. */
+body.v5-active.v5-view-equipment #gear{
+ display:block!important;height:auto!important;max-height:none!important;
+ overflow:visible!important;min-height:0!important;
+}
+body.v5-active.v5-view-equipment #gear .gear-intro{
+ display:grid!important;min-height:0!important;margin-bottom:12px;
+}
+body.v5-active.v5-view-equipment #gear .gear-main{
+ display:grid!important;grid-template-columns:minmax(350px,1.15fr) minmax(290px,.85fr)!important;
+ align-items:start;gap:12px;overflow:visible;
+}
+body.v5-active.v5-view-equipment #gear .gear-paperdoll{
+ padding:14px;border:1px solid var(--v5-edge);border-radius:9px;
+}
+body.v5-active.v5-view-equipment #gear .gear-doll-grid{min-width:0}
+body.v5-active.v5-view-equipment #gear .gear-side{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:10px;align-content:start;min-width:0;
+}
+body.v5-active.v5-view-equipment #gear .gear-side>.panel:first-child{
+ grid-column:1/-1;
+}
+body.v5-active.v5-view-equipment #gear .gear-cp{
+ display:grid!important;margin:0 0 13px;
+}
+body.v5-active.v5-view-equipment .v2-left{display:block!important}
+/* Mastery: large, scrollable breakdown table, with separate specialty details. */
+body.v5-active.v5-view-skills #mastery{
+ display:block!important;min-height:0!important;
+ height:auto!important;max-height:none!important;
+ overflow:visible!important;
+}
+body.v5-active.v5-view-skills #stigma{display:none!important}
+body.v5-active.v5-view-skills #mastery .v2-master-editor{
+ width:100%;max-width:none;min-height:0;overflow:visible;
+}
+body.v5-active.v5-view-skills #mastery #v2-skill-list{
+ max-height:min(68dvh,810px);overflow-y:auto;scrollbar-width:thin;
+}
+body.v5-active.v5-view-skills #mastery .v2-in-panel-flyout:not([hidden]){
+ position:relative;z-index:1;max-height:none!important;
+ width:100%;overflow:visible;
+}
+/* Stigma: four prominent cards; don't also show Mastery or old board panel. */
+body.v5-active.v5-view-stigma #mastery{display:none!important}
+body.v5-active.v5-view-stigma #stigma{
+ display:block!important;min-height:340px!important;height:auto!important;
+ max-height:none!important;overflow:visible!important;
+}
+body.v5-active.v5-view-stigma #v2-stigma-list{
+ display:grid!important;
+ grid-template-columns:repeat(4,minmax(0,1fr))!important;
+ gap:12px!important;
+}
+body.v5-active.v5-view-stigma #v2-stigma-list .v2-stigma-card{
+ min-width:0;min-height:190px;padding:16px 9px;
+ border-radius:9px;border:1px solid var(--v5-edge);
+ background:radial-gradient(circle at 50% 20%,var(--v5-accent-soft),var(--v5-header));
+}
+body.v5-active.v5-view-stigma #v2-stigma-panel:not([hidden]){
+ display:block!important;min-height:0;max-height:none!important;
+ overflow:visible!important;
+}
+/* Dedicated Arcana: equipment editor is retained, but hide all other gear.
+   All five real Arcana cards can be clicked to edit actual rolls and upgrades. */
+body.v5-active.v5-view-arcana #gear{
+ display:block!important;height:auto!important;overflow:visible!important;
+ min-height:0!important;
+}
+body.v5-active.v5-view-arcana #gear>.section-title,
+body.v5-active.v5-view-arcana #gear>.gear-intro,
+body.v5-active.v5-view-arcana #gear>.gear-cp,
+body.v5-active.v5-view-arcana #gear>.gear-credit,
+body.v5-active.v5-view-arcana #gear .gear-paperdoll,
+body.v5-active.v5-view-arcana #gear .gear-side>.panel:not(:first-child),
+body.v5-active.v5-view-arcana #gear .v2-gear-advanced{
+ display:none!important;
+}
+body.v5-active.v5-view-arcana #gear .gear-main,
+body.v5-active.v5-view-arcana #gear .gear-side{
+ display:block!important;grid-template-columns:minmax(0,1fr)!important;
+ min-width:0;max-width:none!important;overflow:visible!important;
+}
+body.v5-active.v5-view-arcana #gear .gear-side>.panel:first-child{
+ display:block!important;max-width:none!important;
+ padding:25px!important;min-height:280px;
+ background:radial-gradient(ellipse at 20% 10%,var(--v5-gold-soft),transparent 70%),var(--v7-elevated)!important;
+}
+body.v5-active.v5-view-arcana #gear .gear-side>.panel:first-child h3{
+ color:var(--v5-text);font:normal 24px Georgia,serif;
+ margin-bottom:9px;
+}
+body.v5-active.v5-view-arcana #gear-arcana-grid{
+ display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;
+ gap:14px!important;margin-top:21px;
+}
+/* Daevanian: one large connected board, with inspector always in the same
+   surface. No tiny board squeezed next to equipment/skill editors. */
+body.v5-active.v5-view-boards #boards{
+ display:flex!important;flex-direction:column;
+ width:100%!important;height:auto!important;min-height:690px!important;
+ max-height:none!important;overflow:visible!important;
+}
+body.v5-active.v5-view-boards .v2-right .v5-recommendations{
+ display:none!important;
+}
+body.v5-active.v5-view-boards #boards .board-layout{
+ display:grid!important;
+ grid-template-columns:minmax(0,1fr) minmax(245px,330px)!important;
+ min-height:580px;align-items:stretch;gap:12px;
+}
+body.v5-active.v5-view-boards #boards .board-scroll{
+ min-height:550px!important;height:clamp(550px,70dvh,870px)!important;
+ max-height:none!important;overflow:auto!important;
+}
+body.v5-active.v5-view-boards #boards .board-side{
+ position:static!important;display:block!important;
+ width:auto!important;height:auto!important;
+ max-height:none!important;overflow-y:auto;
+}
+/* Rotation, Titles and Research: same card and typography as other workspaces. */
+body.v5-active.v2-secondary .v2-extra{
+ display:block!important;max-width:none!important;width:100%;
+ padding:0!important;margin:0!important;min-height:0!important;
+}
+body.v5-active.v2-secondary .v2-extra>.tab-panel.active{
+ display:block!important;max-width:none!important;
+}
+body.v5-active.v2-secondary .v2-extra .panel{
+ background:var(--v7-elevated)!important;border-color:var(--v5-edge)!important;
+ color:var(--v5-text)!important;border-radius:9px;
+}
+body.v5-active.v2-secondary .v2-extra .rotation-columns{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;
+}
+body.v5-active.v2-secondary .v2-extra #titles .title-controls,
+body.v5-active.v2-secondary .v2-extra #rotation .rotation-hero{
+ border-color:var(--v5-edge)!important;
+ background:var(--v5-accent-soft)!important;
+}
+/* Main comparison modal is also part of the redesign, not an old browser popup. */
+body.v5-active #v2-comparison{
+ width:min(1000px,calc(100vw - 32px));max-height:calc(100dvh - 36px);
+ padding:24px;border:1px solid var(--v5-gold);
+ border-radius:12px;color:var(--v5-text);
+ background:radial-gradient(ellipse at 10% 0,var(--v5-accent-soft),transparent 45%),var(--v5-surface);
+ box-shadow:0 25px 100px rgba(0,0,0,.75);
+}
+body.v5-active #v2-comparison::backdrop{
+ background:rgba(1,7,13,.79);backdrop-filter:blur(4px);
+}
+body.v5-active #v2-comparison h2{font:normal 25px Georgia,serif}
+body.v5-active #v2-comparison h3{font:normal 18px Georgia,serif;color:var(--v5-gold)}
+/* Viewport breakpoints, no independent 'legacy editor' navigation. */
+@media(max-width:1300px){
+ body.v5-active.v5-view-equipment #gear .gear-main{
+  grid-template-columns:minmax(0,1fr)!important;
+ }
+ body.v5-active.v5-view-equipment #gear .gear-side{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+ }
+ body.v5-active.v5-view-stigma #v2-stigma-list{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ }
+ body.v5-active.v5-view-arcana #gear-arcana-grid{
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+ }
+}
+@media(max-width:850px){
+ body.v5-active:not(.v5-view-overview) .v7-editor-header{
+  align-items:flex-start;flex-direction:column;padding:13px 14px;
+ }
+ body.v5-active .v7-editor-actions{width:100%;flex-wrap:wrap}
+ body.v5-active .v7-editor-actions button{flex:1 1 auto}
+ body.v5-active:not(.v5-view-overview) .v2-workspace .tab-panel,
+ body.v5-active.v2-secondary .v2-extra>.tab-panel.active{
+  padding:12px!important;
+ }
+ body.v5-active.v5-view-boards #boards .board-layout{
+  grid-template-columns:minmax(0,1fr)!important;
+ }
+ body.v5-active.v5-view-boards #boards .board-scroll{
+  height:clamp(385px,66dvh,690px)!important;
+  min-height:385px!important;
+ }
+ body.v5-active.v5-view-boards #boards .board-side{max-height:none}
+ body.v5-active.v2-secondary .v2-extra .rotation-columns{
+  grid-template-columns:minmax(0,1fr);
+ }
+ body.v5-active.v5-view-stigma #v2-stigma-list{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ }
+}
+@media(max-width:510px){
+ body.v5-active.v5-view-equipment #gear .gear-side{
+  grid-template-columns:minmax(0,1fr);
+ }
+ body.v5-active.v5-view-arcana #gear-arcana-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+ }
+ body.v5-active .v7-editor-header h2{font-size:21px}
+}
