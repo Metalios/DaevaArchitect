@@ -342,3 +342,28 @@ body.v2-active.v2-has-class.v5-active.v5-view-skills:not(.v2-secondary):not(.v2-
  .v2-workspace>.v2-center #mastery{
  display:block!important;
 }
+
+/* The v2 engine moves the real Arcana grid inside <details
+   class="v2-gear-advanced">. Its owner must be shown in the dedicated Arcana
+   view rather than hiding it as an optional section of Equipment. */
+body.v2-active.v5-active.v5-view-arcana:not(.v2-secondary) #gear>.v2-gear-advanced{
+ display:block!important;visibility:visible!important;
+ width:100%;min-width:0;max-width:none;max-height:none!important;
+ margin:0!important;padding:0!important;border:0!important;
+ background:transparent!important;overflow:visible!important;
+}
+body.v5-active.v5-view-arcana #gear>.v2-gear-advanced>summary,
+body.v5-active.v5-view-arcana #gear>.v2-gear-advanced>:not(.gear-side):not(summary){
+ display:none!important;
+}
+body.v2-active.v5-active.v5-view-arcana #gear>.v2-gear-advanced>.gear-side{
+ display:block!important;visibility:visible!important;
+ width:100%;max-width:none!important;margin:0!important;
+ padding:0!important;overflow:visible!important;
+}
+body.v5-active.v5-view-arcana #gear>.v2-gear-advanced>.gear-side>.panel:first-child{
+ display:block!important;min-height:300px;
+}
+body.v5-active.v5-view-arcana #gear>.v2-gear-advanced>.gear-side>.panel:not(:first-child){
+ display:none!important;
+}
