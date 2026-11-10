@@ -19,6 +19,7 @@ function updateClassArt(){
  for(const selector of ['.v6-doll-art','.v6-hero-portrait']){
   const parent=document.querySelector(selector);
   if(!parent)continue;
+  parent.dataset.classLabel=profile().name;
   let img=parent.querySelector('img.v6-class-illustration');
   if(!img){
    img=document.createElement('img');img.className='v6-class-illustration';
@@ -132,7 +133,7 @@ function nextMasteryMilestone(m,a){
  const targets=typeof progressionBreakpoints==='function'
   ?progressionBreakpoints(state.class,a.context,a.pveObjective||'performance'):[];
  for(const [name,goal] of targets){
-  if(!data().skills.some?.(x=>x.name===name) && !Object.values(data().skills).some(x=>x.name===name))continue;
+  if(!Object.values(data().skills).some(x=>x.name===name))continue;
   const level=skillLevelBreakdown(name,m).withPlan;
   if(level<goal)return {label:name+' Lv '+goal,detail:(goal-level)+' projected effective level'+(goal-level===1?'':'s')+' to go',target:'skills'};
  }
