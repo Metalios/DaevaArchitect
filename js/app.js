@@ -2068,9 +2068,9 @@ $('skill-grid').addEventListener('change',e=>{
   }
 });
 $('board-tabs').addEventListener('click',e=>{const b=e.target.closest('[data-board]');if(b&&boardOpen(b.dataset.board)){state.board=b.dataset.board;state.preview=['Azphel','Ariel'].includes(state.board)?(account()[state.board.toLowerCase()]||0):budget('crystals');state.node=null;renderBoards(model())}});
-// Explicit "Recommended" is a recalculation request even when the mode is
-// already recommended. Keep actual gold purchased marks; clear only the
-// discarded custom plan and stale, cached blue recommendation snapshot.
+// Explicit recalculation refreshes the active recommended route without
+// erasing purchased marks OR the separately saved custom plan. Switching
+// between recommended and custom must never silently discard either.
 function recalculateRecommendedBoards(){
   const a=account(),wasCustom=customMode(),crystals=budget('crystals');
   // Read the current rendered plan before invalidating its memoized route.
@@ -2080,9 +2080,8 @@ function recalculateRecommendedBoards(){
     .filter(step=>step.total<=crystals).map(step=>step.id);
   const actual=obtainedNodes(),spentActual=obtainedCrystalSpend(false);
   a.boardMode='recommended';
-  a.customNodes=[];
-  a.customAzphelNodes=[];
-  a.customArielNodes=[];
+  // The custom route is an alternate saved plan, not a scratchpad to erase
+  // every time the player previews or recalculates recommendations.
   a.recommendedRouteSnapshot=null;
   // Explicit Recalculate is NOT a cache hit: honor the user's request to
   // perform a fresh route search even for an identical input fingerprint.
@@ -2111,7 +2110,7 @@ function recalculateRecommendedBoards(){
   const reason=changed
     ?`Updated funded route: ${added.length} new tile${added.length===1?'':'s'}, ${removed.length} removed${removed.length===1?'':'s'}${reordered?' and changed purchase order':''}.`
     :wasCustom
-      ?'Your custom plan was replaced, but the funded recommended tiles are identical.'
+      ?'Showing recommendations; your custom plan remains saved.'
       :'The recommended path is unchanged because the current inputs produce the same ranked result.';
   const nextLabel=next?` Next unobtained: ${next.board}, ${effectText(next.node)}.`:
     remaining?' No new blue tile is currently affordable or the available board is complete.':' All funded tiles are marked obtained.';
@@ -2128,7 +2127,14 @@ function recalculateRecommendedBoards(){
   return lastBoardRecalculation;
 }
 $('board-mode-recommended').addEventListener('click',()=>{
-  recalculateRecommendedBoards();
+  if(customMode()){
+    account().boardMode='recommended';
+    boardEditNotice='';
+    boardRecalculationNotice='Showing the recommended route. Your custom plan and obtained nodes are preserved.';
+    state.node=null;
+  }else{
+    recalculateRecommendedBoards();
+  }
   render();
 });
 $('board-mode-custom').addEventListener('click',()=>{account().boardMode='custom';boardEditNotice='Select a connected tile on any unlocked board, or copy the current recommendation.';render()});
