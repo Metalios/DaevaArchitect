@@ -127,6 +127,27 @@ try{
   assert.equal(await more.evaluate(el=>el.open),false);
   await page.locator('#board-tabs [data-board="Zikel"]').click();
   assert.match(await page.locator('#board-map-title').textContent(),/Zikel/,width+': board switch failed');
+  // Ariel and Azphel contain no class skill nodes. Every paid tile must
+  // render a grade-art icon and readable stat label instead of the old dot.
+  for(const name of ['Ariel','Azphel']){
+   await page.locator('#board-tabs [data-board="'+name+'"]').click();
+   assert.equal(await page.locator('#board-grid .node').count(),153,
+     width+': '+name+' board shape was altered');
+   const symbols=await page.locator('#board-grid .node img.node-stat-game-icon').count();
+   const labels=await page.locator('#board-grid .node .node-stat-label').count();
+   assert.equal(symbols,152,width+': '+name+' is missing paid-node artwork');
+   assert.equal(labels,152,width+': '+name+' is missing readable stat labels');
+   const art=await page.locator('#board-grid .node img.node-stat-game-icon')
+     .evaluateAll(imgs=>[...new Set(imgs.map(img=>img.src))]);
+   assert.equal(art.length,4,width+': '+name+' must have four grades of node artwork');
+   assert(art.every(src=>/^https:\/\/aion2\.app\/icons\/daevanion\/icon_node_[1-4]_on\.png$/.test(src)),
+     width+': '+name+' artwork URL is malformed');
+   const statLabels=await page.locator('#board-grid .node .node-stat-label').allTextContents();
+   assert(statLabels.every(label=>label.trim()&&!['·','✦'].includes(label)),
+     width+': '+name+' still contains generic stat-dot placeholders');
+   assert(new Set(statLabels).size>=8,width+': '+name+' stat effects are not distinguishable');
+  }
+  await page.locator('#board-tabs [data-board="Zikel"]').click();
   await page.locator('#v2-board-fit').click();
   const fitZoom=Number((await page.locator('#v2-zoom-label').innerText()).replace('px',''));
   assert(fitZoom>=40&&fitZoom<=52,width+': Fit must never shrink below readable node size');
