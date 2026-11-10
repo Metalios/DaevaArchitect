@@ -1787,3 +1787,45 @@
 .v2-right .node .node-stat-label[hidden]{display:none!important}
 .v2-right .node .node-stat-game-icon:focus-visible{outline:none}
 .v2-right .node .node-start-symbol{display:grid;place-items:center;width:100%;height:100%;font-size:18px}
+
+/* The same nodeVisual() is reused in selected-node detail and purchase chips.
+   Keep image, label and offline fallback on one layer rather than three rows. */
+.v2-right .selected-node .selected-icon:has(.node-stat-game-icon),
+.v2-right .route-step-icon:has(.node-stat-game-icon){
+  position:relative;
+  overflow:hidden;
+}
+.v2-right .selected-node .selected-icon .node-stat-game-icon,
+.v2-right .route-step-icon .node-stat-game-icon{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  z-index:1;
+}
+.v2-right .selected-node .selected-icon .node-stat-game-icon[hidden],
+.v2-right .route-step-icon .node-stat-game-icon[hidden]{display:none!important}
+.v2-right .selected-node .selected-icon .node-stat-fallback,
+.v2-right .route-step-icon .node-stat-fallback{
+  position:absolute;
+  inset:0;
+  display:grid;
+  place-items:center;
+  z-index:0;
+  font:800 10px system-ui,sans-serif;
+}
+.v2-right .selected-node .selected-icon .node-stat-label,
+.v2-right .route-step-icon .node-stat-label{
+  position:absolute;
+  bottom:0;
+  left:1px;
+  right:1px;
+  z-index:2;
+  background:rgba(4,15,25,.85);
+  color:#fff3d7;
+  font:800 8px/1.15 system-ui,sans-serif;
+  text-align:center;
+}
+.v2-right .selected-node .selected-icon .node-stat-label[hidden],
+.v2-right .route-step-icon .node-stat-label[hidden]{display:none!important}
