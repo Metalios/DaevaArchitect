@@ -605,3 +605,15 @@ body.v5-active .v6-target-context{
 @media(prefers-reduced-motion:reduce){
  body.v5-active .v6-class-illustration{transition:none!important}
 }
+
+/* Keep each class character in the entire paper-doll window, rather than
+   letterboxing a small square image halfway down a tall equipment panel. */
+body.v5-active .v6-doll-art .v6-class-illustration{
+ object-fit:cover!important;object-position:center 28%!important;
+}
+body.v5-active .v6-doll-art{
+ inset:5% 11% 3%!important;
+}
+body.v5-active .v6-hero-portrait .v6-class-illustration{
+ object-fit:cover!important;object-position:center 24%!important;
+}
