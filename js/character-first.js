@@ -88,7 +88,7 @@
       '</span><span>'+label+'</span></button>';
   }
   function mount() {
-    if (ready || !window.state?.class || !shell() || !$('v2-workspace')) return;
+    if (ready || !state?.class || !shell() || !$('v2-workspace')) return;
     ready = true;
     document.body.classList.add('v5-active','v5-view-overview');
     setTheme(selectedTheme());
@@ -189,11 +189,11 @@
   }
 
   function update(m) {
-    if (!ready || !window.state?.class) return;
-    const build = window.account(), profile = window.PROFILES[state.class];
-    const level = window.currentLevel();
+    if (!ready || !state?.class) return;
+    const build = account(), profile = PROFILES[state.class];
+    const level = currentLevel();
     const display = profile?.name || state.class;
-    const editing = window.modifiedBuild();
+    const editing = modifiedBuild();
     $('v5-character-title').textContent = display+' · Level '+level;
     $('v5-character-line').textContent =
       [profile?.role,titleByContext[build.context]||build.context,
@@ -202,14 +202,14 @@
       button.classList.toggle('active',button.dataset.v5Context===build.context);
       button.setAttribute('aria-pressed',String(button.dataset.v5Context===build.context));
     });
-    const objectives = window.adviceFor(state.class,build.context,build.pveObjective);
+    const objectives = adviceFor(state.class,build.context,build.pveObjective);
     $('v5-recommend-title').textContent = titleByContext[build.context] || 'Class recommendations';
     $('v5-recommend-why').textContent = (objectives?.why || 'Review Mastery, Stigmas, and connected Daevanian path.') .slice(0,350);
     // Model is already calculated by render(); don't force another optimizer run.
     const rows = [
-      {name:'Mastery',spent:m?.mastery?.spent||0,total:window.budget('mastery')},
-      {name:'Stigmas',spent:m?.stigma?.spent||0,total:window.budget('stigma')},
-      {name:'PvE Daevanian',spent:m?.boards?.spent||0,total:window.budget('crystals')},
+      {name:'Mastery',spent:m?.mastery?.spent||0,total:budget('mastery')},
+      {name:'Stigmas',spent:m?.stigma?.spent||0,total:budget('stigma')},
+      {name:'PvE Daevanian',spent:m?.boards?.spent||0,total:budget('crystals')},
       {name:'Azphel',spent:m?.azphel?.spent||0,total:build.azphel||0},
       {name:'Ariel',spent:m?.ariel?.spent||0,total:build.ariel||0}
     ];
@@ -224,10 +224,10 @@
       row.append(text,meter);return row;
     }));
     const equipmentCount=Object.values(build.equipment||{}).filter(Boolean).length;
-    $('v5-recorded-count').textContent=equipmentCount+' / '+window.GEAR_SLOTS.length+' slots';
+    $('v5-recorded-count').textContent=equipmentCount+' / '+GEAR_SLOTS.length+' slots';
     $('v5-current-cp').textContent=$('gear-cp-estimate')?.textContent?.trim()||'—';
     $('v5-current-cp-caption').textContent='Estimated CP · not the server value';
-    $('v5-planned-spend').textContent=(m?.boards?.spent||0)+' / '+window.budget('crystals');
+    $('v5-planned-spend').textContent=(m?.boards?.spent||0)+' / '+budget('crystals');
     $('v5-planned-spend-caption').textContent=build.boardMode==='custom'?'Custom connected board route':'Recommended connected board route';
     document.querySelectorAll('[data-v5-view]').forEach(button => {
       const active=button.dataset.v5View===view;
@@ -236,6 +236,6 @@
     });
   }
   window.syncV5 = update;
-  if (window.state?.class) mount();
+  if (state?.class) mount();
   document.querySelector('#class-buttons')?.addEventListener('click', () => requestAnimationFrame(mount));
 })();
