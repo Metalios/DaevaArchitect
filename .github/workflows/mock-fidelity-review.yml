@@ -59,12 +59,13 @@ jobs:
           node board_recalculation_feedback_smoke.mjs
           node gear_swap_board_recalculate_smoke.mjs
           node v2_smoke.mjs
+          node class_layout_audit.mjs
       - name: Upload responsive screenshots
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: mock-fidelity-screenshots
-          path: v2-previews/*.png
+          path: v2-previews/**/*.png
           if-no-files-found: ignore
       - name: Upload tested site
         if: success()
