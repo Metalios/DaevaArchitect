@@ -25,7 +25,7 @@ try {
   await page.locator('[data-gear-slot="top"]').first().click();
   const first=page.locator('#gear-results [data-gear-result]').first();
   const originalHref=await first.getAttribute('data-gear-result');
-  await first.click();
+  await first.evaluate(el=>el.click());
   await page.locator('[name="enhancement"]').fill('11');
   await page.locator('[name="statNotes"]').fill('Attack +31 from Soul Binding');
   await page.locator('[name="notes"]').fill('Old armor annotations');
@@ -33,9 +33,9 @@ try {
   await page.locator('[name="levels0"]').fill('4');
   await page.locator('[name="stoneSlots"]').fill('1');
   await page.locator('[name="stoneType"]').selectOption('Superior');
-  await page.locator('[name="stoneStat0"]').fill('HP');
-  await page.locator('[name="stoneValue0"]').fill('150');
-  await page.locator('[name="stoneGrade0"]').selectOption('Epic');
+  await page.locator('[name="stoneStat0"]').selectOption('HP');
+  await page.locator('[name="stoneValue0"]').selectOption('100');
+  assert.equal(await page.locator('[data-stone-row="0"] .gear-stone-quality').textContent(),'Epic');
   const formDiag=await page.evaluate(()=>{
     const f=document.querySelector('#gear-form');
     const data=new FormData(f);
@@ -61,7 +61,7 @@ try {
   await page.locator('#gear-results [data-gear-result]').first().click();
   assert.equal(await page.locator('[name="enhancement"]').inputValue(),'11');
   assert.equal(await page.locator('[name="levels0"]').inputValue(),'4');
-  assert.equal(await page.locator('[name="stoneValue0"]').inputValue(),'150');
+  assert.equal(await page.locator('[name="stoneValue0"]').inputValue(),'100');
 
   // Choose a distinct item in the same slot. Every old item-specific value
   // should be blank immediately, before any remote tooltip completes.
