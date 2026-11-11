@@ -58,6 +58,30 @@ try{
     return {legend:legend.textContent,recommended:recommended.dataset.node};
   });
   assert(board.legend.includes('Recommended')||board.legend.includes('Blue'),'Board legend is missing recommended meaning');
+  // Theme colors must not tint the playing surface: recommended blue, obtained
+  // gold, and next white are highlights only, not full tile backgrounds.
+  for(const skin of ['aether','abyss','solar']){
+    await page.locator('#v5-theme').selectOption(skin);
+    const palette=await page.evaluate(()=>{
+      const css=selector=>getComputedStyle(document.querySelector(selector));
+      const canvas=css('#boards .board-scroll');
+      const header=css('#boards .board-map-head');
+      const neutral=css('#board-grid .node.stat:not(.unique):not(.planned):not(.obtained)');
+      const recommended=css('#board-grid .node.board-suggested:not(.next):not(.obtained)');
+      const legend=css('.board-map-head .board-legend i.recommended');
+      return {canvas:canvas.backgroundImage,header:header.backgroundColor,
+        neutral:neutral.backgroundColor,highlight:recommended.outlineColor,
+        highlightedTile:recommended.backgroundColor,legend:legend.borderTopColor};
+    });
+    assert(palette.canvas.includes('rgb(23, 26, 29)')&&palette.canvas.includes('rgb(11, 13, 15)'),
+      skin+': smoke-charcoal canvas lost: '+JSON.stringify(palette));
+    assert.equal(palette.header,'rgb(20, 23, 27)',skin+': blue board header not neutralized');
+    assert.equal(palette.neutral,'rgb(26, 31, 36)',skin+': base tiles not charcoal');
+    assert.equal(palette.highlight,'rgb(51, 170, 255)',skin+': recommendation ring missing');
+    assert.equal(palette.highlightedTile,'rgb(27, 33, 39)',skin+': recommended tile has saturated fill');
+    assert.equal(palette.legend,'rgb(51, 170, 255)',skin+': legend does not match board highlights');
+  }
+
   // Mark a legal recommended tile, then verify purchased status remains distinct.
   await page.evaluate(()=>{
     const candidate=document.querySelector('#board-grid .node.board-suggested:not(.obtained)');
