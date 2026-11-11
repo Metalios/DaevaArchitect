@@ -651,51 +651,55 @@ body.v5-active .v6-hero-portrait .v6-class-illustration{
 }
 
 
-/* 2026 character-first equipment alignment: one real, complete 20-slot
-   condensed inspect diagram. The original five-per-rail preview was missing
-   Guard, Pauldrons, Legs, Cloak, Belt, second accessories and both runes.
-   Hold the equipment canvas to a fixed visual window; otherwise the tallest
-   overview column makes the image grow vertically and bottom-aligns the art. */
+/* Overview compact-Inspect: share the Equipment tab's two-by-five grouped
+   slot order. Both sides contain ten real, separately editable slots.
+   The player-facing character render stays vertically centered regardless of
+   the height of neighboring Overview cards. */
 body.v5-active .v6-gear-grid{
-  align-items:start;
-  grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);
+ display:flex;flex-direction:column;align-items:stretch;
+ gap:12px;padding:11px 12px 0;min-height:0;
 }
 body.v5-active .v6-doll{
-  height:clamp(535px,56dvh,610px)!important;
-  min-height:535px!important;
-  max-height:610px!important;
-  align-self:start;
-  background:
-    radial-gradient(ellipse 45% 38% at 50% 45%,var(--v5-accent-soft),transparent 92%),
-    radial-gradient(ellipse 60% 70% at 50% 48%,rgba(148,191,198,.04),transparent 80%),
-    linear-gradient(150deg,rgba(24,62,80,.2),rgba(3,14,26,.9));
+ position:relative;isolation:isolate;align-self:stretch;
+ width:100%;height:clamp(455px,49dvh,530px)!important;
+ min-height:455px!important;max-height:530px!important;
+ background:
+  radial-gradient(ellipse 36% 46% at 50% 46%,var(--v5-accent-soft),transparent 94%),
+  linear-gradient(155deg,rgba(18,47,65,.42),rgba(4,16,28,.94));
+ overflow:hidden;
 }
 body.v5-active .v6-doll-labels{
-  position:absolute;z-index:4;top:10px;left:7px;right:7px;
-  display:flex;align-items:start;justify-content:space-between;gap:7px;
-  pointer-events:none;
+ position:absolute;z-index:4;top:15px;left:13px;right:13px;
+ display:flex;justify-content:space-between;align-items:start;
+ gap:12px;pointer-events:none;
 }
 body.v5-active .v6-doll-labels span{
-  max-width:47%;color:var(--v5-muted);font:800 8px/1.2 system-ui,sans-serif;
-  letter-spacing:.04em;text-transform:uppercase;
+ max-width:40%;color:var(--v5-muted);
+ font:850 9px/1.25 system-ui,sans-serif;
+ letter-spacing:.07em;text-transform:uppercase;
 }
 body.v5-active .v6-doll-labels span:last-child{text-align:right}
 body.v5-active .v6-doll-left,
 body.v5-active .v6-doll-right{
-  display:grid;grid-template-rows:repeat(10,minmax(0,1fr));
-  align-items:stretch;gap:4px;
-  top:43px;bottom:42px;
-  width:clamp(40px,17%,56px);
+ position:absolute;z-index:3;top:51%;bottom:auto;
+ transform:translateY(-50%);
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ grid-template-rows:repeat(5,minmax(0,1fr));
+ flex-direction:initial;justify-content:initial;align-items:stretch;
+ gap:5px;
+ width:clamp(92px,22%,138px);
+ height:clamp(290px,72%,367px);
 }
-body.v5-active .v6-doll-left{left:7px}
-body.v5-active .v6-doll-right{right:7px}
+body.v5-active .v6-doll-left{left:11px}
+body.v5-active .v6-doll-right{right:11px}
 body.v5-active .v6-doll .v6-slot{
-  display:grid;place-items:center;
-  width:100%;height:100%;min-height:0;min-width:0;flex:none;
-  padding:2px;border:1px solid #3e7187;border-radius:5px;
-  background:radial-gradient(circle at 50% 22%,rgba(36,83,106,.8),rgba(8,23,36,.98));
-  box-shadow:inset 0 0 0 1px rgba(152,194,208,.1);
-  overflow:hidden;
+ position:relative;display:grid;place-items:center;
+ width:100%;height:100%;min-width:0;min-height:0;
+ flex:none;padding:2px;
+ border:2px solid #3d708b;border-radius:5px;
+ background:radial-gradient(circle at 50% 25%,#17425a,#071826 77%);
+ box-shadow:inset 0 0 0 1px rgba(163,210,218,.17);
+ color:#d9ebec;overflow:hidden;
 }
 body.v5-active .v6-doll .v6-slot.filled.grade-unique{border-color:#d6ae52}
 body.v5-active .v6-doll .v6-slot.filled.grade-epic{border-color:#5babeb}
@@ -703,92 +707,119 @@ body.v5-active .v6-doll .v6-slot.filled.grade-rare{border-color:#62bf83}
 body.v5-active .v6-doll .v6-slot.filled.grade-special{border-color:#49c4ac}
 body.v5-active .v6-doll .v6-slot:hover,
 body.v5-active .v6-doll .v6-slot:focus-visible{
-  border-color:#f9d28c;outline:2px solid #f9d28c;outline-offset:1px;
-  z-index:5;
+ border-color:#f7da9b;outline:2px solid #e5c27d;outline-offset:1px;
+ z-index:5;
 }
 body.v5-active .v6-doll .v6-slot .gear-empty-icon{
-  font-size:19px;opacity:.68;
+ font-size:26px;color:#7ca4b9;opacity:.76;
 }
 body.v5-active .v6-doll .v6-slot img{
-  max-height:calc(100% - 11px);object-fit:contain;
+ max-width:100%;max-height:calc(100% - 16px);
+ object-fit:contain;
 }
 body.v5-active .v6-doll .v6-slot small{
-  left:0;right:0;bottom:0;
-  padding:1px;
-  border-top:1px solid rgba(106,144,166,.4);
-  background:rgba(5,18,28,.92);
-  color:#d7e8f0;
-  font:750 7px/1.1 system-ui,sans-serif;
-  text-overflow:ellipsis;
+ position:absolute;left:0;right:0;bottom:0;
+ background:rgba(5,18,28,.93);border-top:1px solid #6f92a455;
+ color:#e1eff5;padding:1px 2px;
+ font:800 8px/1.15 system-ui,sans-serif;
+ white-space:nowrap;text-overflow:ellipsis;
 }
 body.v5-active .v6-doll .v6-slot strong{
-  top:1px;bottom:auto;right:1px;
-  font:900 10px/1.1 system-ui,sans-serif;
-  color:#fff3d2;
+ position:absolute;top:1px;right:1px;bottom:auto;
+ font:900 10px/1.1 system-ui,sans-serif;
+ color:#fff5d8;
 }
 body.v5-active .v6-doll .v6-slot .gear-amp-diamonds{
-  position:absolute;left:1px;top:1px;bottom:auto;
-  z-index:4;max-width:85%;padding:0 1px;
-  font-size:7px;white-space:nowrap;
+ position:absolute;z-index:4;left:1px;top:1px;bottom:auto;
+ padding:0 1px;max-width:80%;
+ font-size:7px;white-space:nowrap;
 }
 body.v5-active .v6-doll-ring{
-  top:16%;width:68%;left:16%;opacity:.28;
-  pointer-events:none;
+ top:11%;left:25%;width:50%;opacity:.22;pointer-events:none;
 }
 body.v5-active .v6-doll-caption{
-  bottom:7px;left:53px;right:53px;pointer-events:none;
-  z-index:4;
+ z-index:4;left:25%;right:25%;bottom:8px;
+ pointer-events:none;max-width:50%;
 }
-body.v5-active .v6-doll-caption b{font-size:12px}
+body.v5-active .v6-doll-caption b{font-size:13px}
 body.v5-active .v6-doll-caption small{font-size:9px}
 
-/* Optical normalization: scale by the CHARACTER HEIGHT, not the PNG width.
-   Ranger's broad bow previously made the character less than half the size
-   of other classes; full-body drawings now occupy a comparable vertical area.
-   Gear slots stay above the artwork and remain fully clickable. */
+/* The gear summary is BELOW the complete Inspect composition, not squeezed
+   beside the figure. Its values are still computed from actual gear records. */
+body.v5-active .v6-stats{
+ width:100%;min-width:0;padding:1px 2px 4px;
+}
+body.v5-active .v6-stats h3{margin:0 0 9px}
+body.v5-active #v6-stat-rows{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:0 15px;
+}
+body.v5-active .v6-stat{
+ min-width:0;grid-template-columns:18px minmax(0,1fr) auto;
+ padding:7px 3px;font-size:11px;
+}
+body.v5-active .v6-stats-foot{margin-top:10px}
+body.v5-active .v6-gear-footer{margin-top:auto;padding-top:12px}
+
+/* Normalize by portrait HEIGHT rather than source width, as the Ranger's
+   bow extends much wider than any other class and previously shrank the
+   Ranger to less than half the body size of the other seven figures. */
 body.v5-active .v6-doll-art{
-  inset:0!important;position:absolute!important;overflow:hidden;
-  pointer-events:none;filter:none;
+ inset:0!important;position:absolute!important;
+ overflow:hidden;pointer-events:none;filter:none;
 }
 body.v5-active .v6-doll-art .v6-class-illustration{
-  position:absolute!important;
-  inset:auto!important;top:50%!important;
-  left:calc(50% + var(--v6-doll-offset-x,0px))!important;
-  width:auto!important;
-  height:min(455px,calc(100% - 80px))!important;
-  max-height:none!important;max-width:none!important;
-  object-fit:contain!important;object-position:center center!important;
-  transform:translate(-50%,-50%) scale(var(--v6-doll-scale,1))!important;
-  transform-origin:center center;
-  filter:drop-shadow(0 8px 13px rgba(0,0,0,.5));
+ position:absolute!important;
+ inset:auto!important;
+ top:50%!important;
+ left:calc(50% + var(--v6-doll-offset-x,0px))!important;
+ width:auto!important;height:min(465px,calc(100% - 60px))!important;
+ max-height:none!important;max-width:none!important;
+ object-fit:contain!important;object-position:center!important;
+ transform:translate(-50%,-50%) scale(var(--v6-doll-scale,1))!important;
+ transform-origin:center center;
+ filter:drop-shadow(0 8px 14px rgba(0,0,0,.55));
 }
 body.v5-active[data-v6-class="gladiator"]{--v6-doll-offset-x:-14px}
 body.v5-active[data-v6-class="templar"]{--v6-doll-offset-x:13px}
 body.v5-active[data-v6-class="assassin"]{--v6-doll-offset-x:-3px}
-body.v5-active[data-v6-class="ranger"]{--v6-doll-offset-x:36px;--v6-doll-scale:.96;--v6-hero-scale:1.28}
+body.v5-active[data-v6-class="ranger"]{
+ --v6-doll-offset-x:36px;--v6-doll-scale:.96;
+ --v6-hero-scale:1.28;
+}
 body.v5-active[data-v6-class="sorcerer"]{--v6-doll-offset-x:8px}
 body.v5-active[data-v6-class="spiritmaster"]{--v6-doll-offset-x:7px}
 body.v5-active[data-v6-class="cleric"]{--v6-doll-offset-x:18px}
 body.v5-active[data-v6-class="chanter"]{--v6-doll-offset-x:-8px}
-/* The narrow header is deliberately a bust crop, independent of the
-   complete standing figure in Overview. Normalize the Ranger's wider source. */
 body.v5-active .v6-hero-portrait{overflow:hidden}
 body.v5-active .v6-hero-portrait .v6-class-illustration{
-  transform:scale(var(--v6-hero-scale,1))!important;
-  transform-origin:center 20%;
-  object-fit:cover!important;
-  object-position:center 8%!important;
-}
-@media(max-width:1099px){
-  body.v5-active .v6-gear-grid{grid-template-columns:minmax(0,1.15fr) minmax(150px,.85fr)}
+ object-fit:cover!important;object-position:center 8%!important;
+ transform:scale(var(--v6-hero-scale,1))!important;
+ transform-origin:center 20%;
 }
 @media(max-width:600px){
-  body.v5-active .v6-gear-grid{display:flex;flex-direction:column;gap:9px}
-  body.v5-active .v6-doll{
-    min-height:535px!important;height:535px!important;max-height:535px!important;
-    align-self:stretch;
-  }
-  body.v5-active .v6-doll-art .v6-class-illustration{
-    height: min(435px,calc(100% - 70px))!important;
-  }
+ body.v5-active .v6-gear-grid{
+  display:flex;flex-direction:column;gap:10px;
+ }
+ body.v5-active .v6-doll{
+  height:455px!important;min-height:455px!important;max-height:455px!important;
+ }
+ body.v5-active .v6-doll-left,
+ body.v5-active .v6-doll-right{
+  width:clamp(86px,24%,102px);
+  height:288px;gap:3px;
+ }
+ body.v5-active .v6-doll-left{left:6px}
+ body.v5-active .v6-doll-right{right:6px}
+ body.v5-active .v6-doll-labels{left:7px;right:7px}
+ body.v5-active .v6-doll-labels span{font-size:7px}
+ body.v5-active .v6-doll .v6-slot small{font-size:7px}
+ body.v5-active .v6-doll-art .v6-class-illustration{
+  height: min(408px,calc(100% - 50px))!important;
+ }
+ body.v5-active #v6-stat-rows{gap:0 8px}
+ body.v5-active .v6-stat{
+  grid-template-columns:16px minmax(0,1fr) auto;
+  gap:4px;padding:8px 1px;font-size:10px;
+ }
 }
