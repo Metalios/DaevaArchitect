@@ -30,6 +30,7 @@ try{
     const record=await page.evaluate(()=>{
       const nodes=[...document.querySelectorAll('.v6-doll-art img.v6-class-illustration,.v6-hero-portrait img.v6-class-illustration')];
       return nodes.map(img=>({
+        target:img.closest('.v6-doll-art')?'doll':'hero',
         path:new URL(img.src).pathname,
         width:img.naturalWidth,height:img.naturalHeight,
         visible:getComputedStyle(img).visibility,
@@ -44,7 +45,8 @@ try{
       assert.equal(image.visible,'visible',cls+': image did not become visible');
       assert.equal(image.class,cls,cls+': wrong class image displayed');
     }
-    assert.equal(record[0].fit,'contain',cls+': equipment doll should not crop off weapons');
+    assert.equal(record.find(image=>image.target==='doll')?.fit,'contain',cls+': equipment doll should not crop off weapons');
+    assert.equal(record.find(image=>image.target==='hero')?.fit,'cover',cls+': header should use cropped class bust');
     art.add(record[0].path);
   }
   assert.equal(art.size,8,'Classes re-used the same art');
