@@ -450,9 +450,9 @@ body.v5-active .v6-hero-portrait:after{
  }
 }
 
-/* AION 2 Global class-specific portrait layer. The remote images are eight
-   distinct official class showcase portraits; credit remains with NCSOFT.
-   Never reuse the Templar illustration when another class is selected. */
+/* AION 2 Global class-specific art. Eight high-resolution, transparent
+   NCSOFT promotional character layers are bundled locally as lossless WebP.
+   Each class retains its own character and the user's look is not inferred. */
 body.v5-active .v6-doll-art,
 body.v5-active .v6-hero-portrait{
  position:absolute;isolation:isolate;
@@ -606,16 +606,18 @@ body.v5-active .v6-target-context{
  body.v5-active .v6-class-illustration{transition:none!important}
 }
 
-/* Keep each class character in the entire paper-doll window, rather than
-   letterboxing a small square image halfway down a tall equipment panel. */
+/* Keep full-body transparent class art visible. Some weapons extend far
+   beyond the character; contain avoids clipping Ranger's bow and shields. */
 body.v5-active .v6-doll-art .v6-class-illustration{
- object-fit:cover!important;object-position:center 28%!important;
+ object-fit:contain!important;object-position:center bottom!important;
+ image-rendering:auto;
 }
 body.v5-active .v6-doll-art{
  inset:5% 11% 3%!important;
 }
 body.v5-active .v6-hero-portrait .v6-class-illustration{
- object-fit:cover!important;object-position:center 24%!important;
+ object-fit:cover!important;object-position:center 12%!important;
+ image-rendering:auto;
 }
 
 /* Reserve a real art column in the character banner: character armor must
@@ -628,7 +630,7 @@ body.v5-active .v6-hero-portrait .v6-class-illustration{
   width:260px!important;left:2.4%!important;height:170px!important;top:0!important;
  }
  body.v5-active .v6-hero-portrait .v6-class-illustration{
-  object-position:center 11%!important;
+  object-position:center 8%!important;
  }
 }
 @media(min-width:1100px) and (max-width:1599px){
