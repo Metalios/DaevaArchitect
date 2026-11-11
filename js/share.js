@@ -68,6 +68,7 @@
     }
     if(Array.isArray(raw.customStigmas)&&raw.customStigmas.length===4&&new Set(raw.customStigmas).size===4&&raw.customStigmas.every(name=>typeof name==='string'&&STIGMAS[cls][name]))
       result.customStigmas=[...raw.customStigmas];
+    result.customMacros=typeof CustomMacroEditor!=='undefined'?CustomMacroEditor.sanitizeCollection(raw.customMacros,cls):{};
     result.customSpecialties={};
     for(const [name,choices] of Object.entries(raw.customSpecialties||{})){
       const options=SPECS[cls]?.[name]?.options;
