@@ -651,37 +651,56 @@ body.v5-active .v5-resources #pvp-variant-control select{
  body.v5-active .v5-resources #pvp-variant-control{grid-column:auto}
 }
 
+/* Smoke-black Daevanion canvas. Only progression states receive bright colors;
+   the board and empty tiles stay charcoal across all three character themes.
+   Keep this scoped to the character-first UI, leaving classic styles intact. */
+body.v5-active .v2-right #boards .board-layout .board-scroll{
+ background:radial-gradient(circle at 50% 46%,#171a1d 0%,#111315 60%,#0b0d0f 100%)!important;
+ border-color:#353b42!important;
+ box-shadow:inset 0 0 32px rgba(0,0,0,.22)!important;
+}
+body.v5-active .v2-right #boards .board-map-head{
+ background:#14171b!important;
+ border-color:#343b43!important;
+}
+body.v5-active .v2-right #boards .board-map-head .board-legend{
+ border-top-color:#373e46!important;
+}
+body.v5-active .v2-right #boards .board-grid{
+ background:transparent!important;
+}
+
 /* Daevanian readability: ring semantics over a neutral canvas, not a brown
    full-tile overlay. Keep full-size game artwork in the selected-node inspector,
    while short stat abbreviations make small 15x15 tiles distinguishable. */
 body.v5-active .board-grid .node{
- background:#102839!important;border:1px solid #56748a!important;
+ background:#1a1f24!important;border:1px solid #46515c!important;
  color:#d6e7ef!important;box-shadow:none;
 }
 body.v5-active .board-grid .node.unique{
- background:#18334a!important;border-color:#81a5b5!important;
+ background:#20262c!important;border-color:#73808c!important;
 }
 body.v5-active .board-grid .node.board-suggested:not(.obtained){
- background:#16476b!important;
- border-color:#77cdff!important;
- outline:3px solid #39aeff!important;
+ background:#1b2127!important;
+ border-color:#6aa7d0!important;
+ outline:3px solid #33aaff!important;
  outline-offset:-1px;
- box-shadow:0 0 0 2px #0b304d,0 0 11px #39aeff65!important;
+ box-shadow:0 0 0 2px #0f2230,0 0 8px rgba(51,170,255,.35)!important;
 }
 body.v5-active .board-grid .node.obtained{
- background:#153244!important;
- border-color:#ffe19b!important;
- outline:3px solid #ffd066!important;
+ background:#1c2126!important;
+ border-color:#e0bd72!important;
+ outline:3px solid #ffcf68!important;
  outline-offset:-1px;
- box-shadow:0 0 0 2px #284251,0 0 10px #e7bd6275!important;
+ box-shadow:0 0 0 2px #332713,0 0 8px rgba(255,207,104,.28)!important;
 }
 body.v5-active .board-grid .node.planned:not(.obtained):not(.board-suggested){
- background:#204c60!important;
+ background:#232b32!important;
 }
 body.v5-active .board-grid .node.next:not(.obtained){
- outline:3px solid #f3fbff!important;
+ outline:3px solid #f4fbff!important;
  outline-offset:0;
- box-shadow:0 0 0 2px #166ba2,0 0 14px #b1e9ff!important;
+ box-shadow:0 0 0 2px #123041,0 0 10px rgba(190,235,255,.45)!important;
 }
 body.v5-active .board-grid .node.selected{
  filter:none!important;
@@ -708,7 +727,7 @@ body.v5-active .board-grid .node.obtained .node-stat-fallback{
  color:#ffe8b0!important;
 }
 body.v5-active .board-grid .node.start{
- background:#215370!important;
+ background:#252d34!important;
 }
 body.v5-active .board-grid .node.skill .node-game-icon{
  filter:none!important;opacity:.95!important;
@@ -735,11 +754,11 @@ body.v5-active .board-map-head .board-legend{
  font-size:11px;
 }
 body.v5-active .board-map-head .board-legend i.recommended{
- background:#194261!important;border:3px solid #39aeff!important;
+ background:#1a1f24!important;border:3px solid #33aaff!important;
 }
 body.v5-active .board-map-head .board-legend i.obtained{
- background:#183244!important;border:3px solid #ffd066!important;
+ background:#1a1f24!important;border:3px solid #ffcf68!important;
 }
 body.v5-active .board-map-head .board-legend i.next{
- background:#12527a!important;border:3px solid #f3fbff!important;
+ background:#1a1f24!important;border:3px solid #f4fbff!important;
 }
