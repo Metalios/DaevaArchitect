@@ -58,8 +58,10 @@ function mount(){
  '<section class="v6-panel v6-gear" aria-label="Equipment and stats overview">'+
   '<header class="v6-heading"><h2><span>♜</span> Equipment &amp; Stats</h2>'+btn('equipment','Edit equipment')+'</header>'+
   '<div class="v6-gear-grid"><div class="v6-doll">'+
-    '<div class="v6-doll-ring" aria-hidden="true"></div><div class="v6-doll-art" role="img" aria-label="Decorative Daevanion guardian portrait"></div>'+
-    '<div class="v6-doll-left" id="v6-left-slots"></div><div class="v6-doll-right" id="v6-right-slots"></div>'+
+    '<div class="v6-doll-ring" aria-hidden="true"></div><div class="v6-doll-art" role="img" aria-label="Class artwork behind equipped gear"></div>'+
+    '<div class="v6-doll-labels" aria-hidden="true"><span>WEAPONS &amp; ARMOR</span><span>ACCESSORIES</span></div>'+
+    '<div class="v6-doll-left" id="v6-left-slots" role="group" aria-label="Weapons and armor equipment slots"></div>'+
+    '<div class="v6-doll-right" id="v6-right-slots" role="group" aria-label="Accessory equipment slots"></div>'+
     '<div class="v6-doll-caption"><b id="v6-class">Templar</b><small id="v6-gear-count"></small></div>'+
    '</div><div class="v6-stats"><h3>Recorded Gear Stats <span title="Only known equipment bonuses, not full in-game totals">ⓘ</span></h3>'+
     '<div id="v6-stat-rows"></div><small class="v6-stats-foot">Known equipment bonuses only. Full character totals require verified data.</small></div></div>'+
@@ -113,10 +115,13 @@ function mount(){
 function slotMarkup(ids,eq){
  return ids.map(id=>{
    const slot=gearSlot(id),item=eq[id],lv=item?.enhancement||0;
-   return '<button type="button" data-v6-slot="'+esc(id)+'" class="v6-slot grade-'+esc(gearGrade(item))+
+   return '<button type="button" data-v6-slot="'+esc(id)+'" class="v6-slot '+
+     (item?'filled ':'')+'grade-'+esc(gearGrade(item))+
      '" title="'+esc(slot?.name||id)+': '+esc(item?.name||'Empty')+'" aria-label="Edit '+
-     esc(slot?.name||id)+'">'+gearIcon(item)+(lv?'<strong>+'+num(lv)+'</strong>':'')+
-     '<small>'+esc(slot?.name||id)+'</small></button>';
+     esc(slot?.name||id)+(item?' — '+esc(item.name):' — empty slot')+'">'+gearIcon(item)+
+     (lv?'<strong>+'+num(lv)+'</strong>':'')+
+     (item?gearAmplificationDiamonds(slot,item):'')+
+     '<small>'+esc(GEAR_TILE_LABELS[id]||slot?.name||id)+'</small></button>';
  }).join('');
 }
 function skillMarkup(skills,m){
@@ -255,8 +260,10 @@ function update(m){
  $('v6-class').textContent=profile().name+' · Lv '+currentLevel();
  updateClassArt();
  $('v6-gear-count').textContent=recorded+' / 20 recorded pieces';
- $('v6-left-slots').innerHTML=slotMarkup(['weapon','helm','top','gloves','shoes'],eq);
- $('v6-right-slots').innerHTML=slotMarkup(['necklace','earring1','ring1','bracelet1','amulet'],eq);
+ // Overview and full Equipment Inspect share the exact same 20-slot layout.
+ // No manually maintained subset, so all pieces remain visible and editable.
+ $('v6-left-slots').innerHTML=slotMarkup(GEAR_INSPECT_LEFT,eq);
+ $('v6-right-slots').innerHTML=slotMarkup(GEAR_INSPECT_RIGHT,eq);
  $('v6-stat-rows').innerHTML=mergedStats().map(([icon,name,s])=>'<div class="v6-stat"><i aria-hidden="true">'+icon+
   '</i><span>'+name+'</span><b>'+ (s?'+ '+num(s.value)+(s.unit||''):'—')+'</b></div>').join('');
  const cp=$('gear-cp-estimate')?.textContent?.trim()||'—',gr=Number(a.gearRating)>0?num(a.gearRating):'—';
