@@ -13,7 +13,9 @@ try{
   const url=pathToFileURL(path.resolve('dist/index.html'));
   url.searchParams.set('layout','character');
   await page.goto(url.href);
-  await page.evaluate(()=>{state.class='templar';render();});
+  if(!await page.locator('body.v5-active').count()){
+    await page.locator('#class-buttons [data-class="templar"]').click();
+  }
   await page.waitForFunction(()=>document.body.classList.contains('v5-active'));
   const panel=page.locator('#v5-resources');
   assert(await panel.isVisible(),'Resource editor is missing from new layout');
