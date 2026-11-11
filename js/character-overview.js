@@ -68,7 +68,7 @@ function mount(){
    '<div class="v6-reco-highlight"><span class="v6-crown">♛</span><div><b id="v6-reco-title">Group PvE</b>'+
     '<p id="v6-reco-text"></p></div>'+btn('skills','Review plan')+'</div>'+
    '<p class="v6-honest-note">Evidence-weighted advice; not a measured damage or survival gain.</p></section>'+
-  '<section class="v6-panel"><header class="v6-heading"><h2><span>◎</span> Progression Targets</h2><small id="v6-goals"></small></header>'+
+  '<section class="v6-panel"><header class="v6-heading"><h2><span>◎</span> Progression Targets</h2><button type="button" class="v6-link" data-v5-edit-resources aria-label="Edit earned Mastery, Stigma and Daevanian point totals">Edit earned points</button><small id="v6-goals"></small></header>'+
    '<div id="v6-progress" class="v6-progress"></div>'+
    '<p class="v6-target-context" id="v6-target-context"></p></section>'+
   '<section class="v6-panel"><header class="v6-heading"><h2><span>⚖</span> Build Comparison</h2><button id="v6-compare" type="button" class="v6-link">Open compare ↗</button></header>'+
