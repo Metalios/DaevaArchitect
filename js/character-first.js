@@ -159,6 +159,32 @@
       '<button data-v5-view="sources">Research</button>'+
       '<button id="v5-tab-compare">Compare</button>';
     mast.after(tabs);
+    // Keep the existing editable budget inputs as the single source of truth.
+    // They were previously trapped inside Equipment, which is hidden on Overview
+    // and on other character-first pages. Move (never clone) them above every tab.
+    const resourcePanel = document.createElement('section');
+    resourcePanel.id = 'v5-resources';
+    resourcePanel.className = 'v5-resources';
+    resourcePanel.setAttribute('aria-labelledby','v5-resources-title');
+    resourcePanel.innerHTML = '<header class="v5-resources-head"><div>'+
+      '<span class="v5-overline">YOUR EARNED CURRENCY</span>'+
+      '<h2 id="v5-resources-title">Available progression points</h2>'+
+      '<p>Enter total earned, including already spent. Skill ranks and purchased board tiles are tracked separately.</p></div>'+
+      '<button type="button" id="v5-resource-jump" data-v5-edit-resources>Update point totals</button></header>';
+    tabs.after(resourcePanel);
+    const inputs = $('planner-content').querySelector('#gear .controls');
+    if (inputs) {
+      inputs.id = 'v5-resource-inputs';
+      resourcePanel.append(inputs);
+      // Existing input events, validation, leveling budgets, and share/save logic
+      // stay attached to the original DOM elements.
+      const masteryLabel = inputs.querySelector('label[for="mastery-input"]');
+      const stigmaLabel = inputs.querySelector('label[for="stigma-input"]');
+      const crystalLabel = inputs.querySelector('label[for="crystal-input"]');
+      if(masteryLabel)masteryLabel.textContent='Mastery points';
+      if(stigmaLabel)stigmaLabel.textContent='Stigma points';
+      if(crystalLabel)crystalLabel.textContent='PvE Daevanian crystals';
+    }
     const rail = document.createElement('section');rail.className='v5-recommendations';
     rail.setAttribute('aria-label','Recommendations and progression');
     rail.innerHTML = '<div class="v5-rail-head"><div><span class="v5-overline">BUILD INTELLIGENCE</span>'+
@@ -199,6 +225,12 @@
       if (legacyEditor && !internalEditorClick) {
         const mapped = {gear:'equipment',mastery:'skills',stigma:'stigma',boards:'boards'}[legacyEditor.dataset.v3Editor];
         if (mapped) switchView(mapped);
+        return;
+      }
+      if (event.target.closest('[data-v5-edit-resources]')) {
+        const panel=$('v5-resources');
+        panel?.scrollIntoView({behavior:'smooth',block:'start'});
+        $('mastery-input')?.focus({preventScroll:true});
         return;
       }
       const target = event.target.closest('[data-v5-view]');

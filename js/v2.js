@@ -186,7 +186,6 @@ function mount(){
    boardControls.querySelector('.v2-board-method'),$('v2-optimizer-evidence'),
    $('boards').querySelector('.timeline'),
    $('boards').querySelector('#route-footnote'),
-   $('boards').querySelector('.board-map-head .board-legend'),
    $('boards').querySelector('.board-icon-credit')
  ])if(item)moreBody.append(item);
  const inspector=make('button','v2-inspector-toggle','Tile details');
@@ -197,6 +196,11 @@ function mount(){
  const inspectorPanel=$('boards').querySelector('.board-side');
  if(inspectorPanel)inspectorPanel.id='v2-board-inspector';
  quickActions.append(inspector,more);
+ // The blue recommendation / gold purchased / next-node legend must remain
+ // visible directly above the board instead of being hidden in More tools.
+ const visibleLegend=$('boards').querySelector('.board-legend');
+ const boardHeader=$('boards').querySelector('.board-map-head');
+ if(visibleLegend&&boardHeader)boardHeader.append(visibleLegend);
  // Recalculation/ownership notices stay visible, outside the More menu.
  const side=$('boards').querySelector('.board-side');
  if(side){

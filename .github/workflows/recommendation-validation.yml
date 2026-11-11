@@ -74,6 +74,7 @@ jobs:
           node goal_route_smoke.mjs
           node mastery_board_gear_smoke.mjs
           node board_macro_usability_smoke.mjs
+          node character_resources_board_smoke.mjs
           node customization_smoke.mjs
           node board_crystal_cycle_smoke.mjs
           node board_recalculation_feedback_smoke.mjs
