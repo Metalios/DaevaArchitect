@@ -793,10 +793,12 @@ body.v5-active[data-v6-class="cleric"]{--v6-doll-offset-x:18px}
 body.v5-active[data-v6-class="chanter"]{--v6-doll-offset-x:-8px}
 body.v5-active .v6-hero-portrait{overflow:hidden}
 body.v5-active .v6-hero-portrait .v6-class-illustration{
- object-fit:cover!important;object-position:center 8%!important;
- transform:scale(var(--v6-hero-scale,1))!important;
+ /* Show the top of the artwork: the prior crop clipped several hairstyles. */
+ object-fit:cover!important;object-position:center 0%!important;
+ transform:translateY(var(--v6-hero-offset-y,10px)) scale(var(--v6-hero-scale,1))!important;
  transform-origin:center 20%;
 }
+body.v5-active[data-v6-class="ranger"]{--v6-hero-offset-y:16px}
 @media(max-width:600px){
  body.v5-active .v6-gear-grid{
   display:flex;flex-direction:column;gap:10px;
