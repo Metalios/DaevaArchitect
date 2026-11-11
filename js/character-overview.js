@@ -8,10 +8,11 @@ const num=v=>Number(v||0).toLocaleString('en-US',{maximumFractionDigits:2});
 const contexts={solo:'Solo PvE',party:'Group PvE',pvp:'General PvP','pvp-arena':'Arena PvP','pvp-abyss-solo':'Solo Abyss PvP','pvp-abyss-group':'Group Abyss PvP'};
 const CLASS_PORTRAITS=Object.freeze(Object.fromEntries(
  ['gladiator','templar','assassin','ranger','sorcerer','spiritmaster','cleric','chanter']
- .map(key=>[key,'./assets/class-art/'+key+'.svg'])
+ .map(key=>[key,'./assets/class-renders/'+key+'.webp'])
 ));
-// Original illustrations of the eight AION 2 Global class archetypes.
-// Images are bundled, work offline and are not imported player avatars.
+// Class-specific, full-resolution AION 2 NCSOFT promotional character layers.
+// Local lossless WebP with alpha, not player-imported avatar data. Source and
+// reuse attribution: assets/class-renders/SOURCES.md.
 function updateClassArt(){
  const cls=state?.class;
  if(!CLASS_PORTRAITS[cls])return;
@@ -25,18 +26,27 @@ function updateClassArt(){
    img=document.createElement('img');img.className='v6-class-illustration';
    img.decoding='async';img.loading='eager';
    img.addEventListener('load',()=>parent.classList.toggle('v6-art-loaded',img.naturalWidth>0));
-   img.addEventListener('error',()=>parent.classList.remove('v6-art-loaded'));
+   // Keep the previous local illustration as an offline fallback for
+   // incomplete builds, without introducing third-party runtime requests.
+   img.addEventListener('error',()=>{
+    parent.classList.remove('v6-art-loaded');
+    if(img.dataset.fallback!==img.dataset.class){
+     img.dataset.fallback=img.dataset.class;
+     img.src='./assets/class-art/'+img.dataset.class+'.svg';
+    }
+   });
    parent.append(img);
   }
   if(img.dataset.class!==cls){
    img.dataset.class=cls;
+   img.dataset.fallback='';
    parent.classList.remove('v6-art-loaded');
-   img.alt=selector==='.v6-doll-art'?profile().name+' — AION 2 class illustration':'';
+   img.alt=selector==='.v6-doll-art'?profile().name+' — official AION 2 promotional class artwork':'';
    img.src=CLASS_PORTRAITS[cls];
   }
  }
  const doll=document.querySelector('.v6-doll-art');
- if(doll)doll.setAttribute('aria-label',profile().name+' class artwork (illustration, not actual character appearance)');
+ if(doll)doll.setAttribute('aria-label',profile().name+' official promotional class artwork (not your imported character appearance)');
 }
 let dashboard;
 const btn=(target,label)=>'<button type="button" data-v5-view="'+target+'" class="v6-link">'+label+' <span aria-hidden="true">↗</span></button>';
