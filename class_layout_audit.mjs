@@ -38,6 +38,47 @@ try {
     }));
    });
    console.log('ART_REVIEW '+JSON.stringify({width,cls,shapes}));
+   // Visual integrity: same 20 IDs/order as Equipment Inspect, 2×5 tiles on
+   // each side, vertically centered full-body figure and no clipped widgets.
+   const geometry=await page.evaluate(()=>{
+     const root=document.querySelector('.v6-gear'),
+       doll=document.querySelector('.v6-doll'),
+       image=doll.querySelector('img.v6-class-illustration');
+     const left=[...document.querySelectorAll('#v6-left-slots .v6-slot')],
+       right=[...document.querySelectorAll('#v6-right-slots .v6-slot')];
+     const rect=el=>el.getBoundingClientRect();
+     const center=el=>{const r=rect(el);return r.y+r.height/2};
+     return {
+       left:left.map(el=>el.dataset.v6Slot),
+       right:right.map(el=>el.dataset.v6Slot),
+       expectedLeft:[...GEAR_INSPECT_LEFT],
+       expectedRight:[...GEAR_INSPECT_RIGHT],
+       centerDelta:Math.abs(center(image)-center(doll)),
+       imageHeight:rect(image).height,
+       railCols:getComputedStyle(document.querySelector('.v6-doll-left')).gridTemplateColumns.split(' ').length,
+       firstTileLeft:rect(left[0]).x,
+       secondTileLeft:rect(left[1]).x,
+       firstTileTop:rect(left[0]).y,
+       thirdTileTop:rect(left[2]).y,
+       figureHeight:rect(doll).height,
+       statsCols:getComputedStyle(document.querySelector('#v6-stat-rows')).gridTemplateColumns.split(' ').length,
+       statsCount:document.querySelector('#v6-stat-rows').children.length,
+       overflow:root.scrollWidth-root.clientWidth,
+       figureOverflow:rect(image).top<rect(doll).top-2||rect(image).bottom>rect(doll).bottom+2
+     };
+   });
+   assert.deepEqual(geometry.left,geometry.expectedLeft,width+' '+cls+': Overview weapons/armor differ from Equipment tab');
+   assert.deepEqual(geometry.right,geometry.expectedRight,width+' '+cls+': Overview accessories differ from Equipment tab');
+   assert.equal(geometry.railCols,2,width+' '+cls+': each group must have 2 tile columns');
+   assert(geometry.secondTileLeft>geometry.firstTileLeft+20,width+' '+cls+': tiles are still in a vertical list');
+   assert(geometry.thirdTileTop>geometry.firstTileTop+20,width+' '+cls+': group should have five rows');
+   assert(geometry.centerDelta<18,width+' '+cls+': full-body class art is not centered');
+   assert(geometry.imageHeight>=350,width+' '+cls+': character image is scaled too small');
+   assert(!geometry.figureOverflow,width+' '+cls+': full-body figure is cut off vertically');
+   assert.equal(geometry.statsCols,2,width+' '+cls+': stats preview should be beneath figure in 2 columns');
+   assert.equal(geometry.statsCount,8,width+' '+cls+': missing equipment stat rows');
+   assert(geometry.overflow<=6,width+' '+cls+': Overview equipment card overflows horizontally');
+
    const gear=page.locator('.v6-gear');
    await gear.screenshot({path:shots+'/'+cls+'-overview-'+width+'.png'});
    if(width===1920){
