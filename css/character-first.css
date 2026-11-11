@@ -549,3 +549,197 @@ body.v5-active select:focus-visible{
   height:auto!important;min-height:0!important;overflow:visible!important;
  }
 }
+
+
+/* Character-first: earned resources are editable in every view instead of
+   being trapped inside an invisible Equipment panel. The controls are MOVED,
+   not copied; original planner validation and persistence remain authoritative. */
+body.v5-active .v5-resources{
+ margin:10px 0 11px;
+ padding:12px 14px 14px;
+ border:1px solid var(--v5-edge);
+ border-radius:9px;
+ background:linear-gradient(135deg,var(--v5-surface),var(--v5-header));
+ scroll-margin-top:85px;
+}
+body.v5-active .v5-resources-head{
+ display:flex;align-items:center;justify-content:space-between;
+ gap:10px;flex-wrap:wrap;margin-bottom:9px;
+}
+body.v5-active .v5-resources-head h2{
+ font:600 17px/1.25 system-ui,sans-serif;
+ margin:3px 0;color:var(--v5-text);
+}
+body.v5-active .v5-resources-head p{
+ font:400 11px/1.4 system-ui,sans-serif;
+ color:var(--v5-muted);margin:2px 0 0;
+}
+body.v5-active .v5-resources-head button{
+ padding:8px 11px;border:1px solid var(--v5-edge);
+ background:var(--v5-accent-soft);color:var(--v5-text);
+ border-radius:7px;font:750 11px/1.3 system-ui,sans-serif;
+}
+body.v5-active .v5-resources #v5-resource-inputs{
+ display:grid!important;
+ grid-template-columns:repeat(6,minmax(0,1fr));
+ align-items:stretch;gap:8px;
+ margin:0;padding:0;border:0;border-radius:0;
+ background:transparent;box-shadow:none;position:static;
+ width:100%;
+}
+body.v5-active .v5-resources #v5-resource-inputs>.control{
+ display:flex;flex-direction:column;justify-content:center;
+ flex:none;min-width:0;min-height:76px;
+ margin:0;padding:9px 10px;
+ border:1px solid var(--v5-edge);border-radius:7px;
+ box-shadow:none;background:var(--v5-raised);
+}
+body.v5-active .v5-resources #v5-resource-inputs>.control[hidden],
+body.v5-active .v5-resources #v5-resource-inputs>.control:nth-child(4){
+ display:none!important;
+}
+body.v5-active .v5-resources .control label,
+body.v5-active .v5-resources .control .label{
+ margin:0 0 5px;
+ color:var(--v5-muted);
+ font:750 10px/1.2 system-ui,sans-serif;
+ letter-spacing:.035em;text-transform:none;
+}
+body.v5-active .v5-resources .control input[type="number"]{
+ width:100%;max-width:none;min-width:0;
+ min-height:33px;padding:5px 8px;
+ background:var(--v5-header);border:1px solid var(--v5-edge);
+ border-radius:5px;box-shadow:none;
+ font:750 16px/1.25 system-ui,sans-serif;
+ font-variant-numeric:tabular-nums;color:var(--v5-text);
+}
+body.v5-active .v5-resources .control input[type="number"]:focus-visible{
+ outline:2px solid var(--v5-accent);outline-offset:2px;
+ background:var(--v5-header);
+}
+body.v5-active .v5-resources .control .inputrow{gap:5px}
+body.v5-active .v5-resources .control .unit{font-size:10px;color:var(--v5-muted)}
+body.v5-active .v5-resources .control small{
+ display:block;color:var(--v5-muted);
+ font:400 9px/1.3 system-ui,sans-serif;
+ margin-top:4px;overflow-wrap:anywhere;
+}
+body.v5-active .v5-resources #pvp-variant-control{
+ grid-column:span 2;
+}
+body.v5-active .v5-resources #pvp-variant-control select{
+ width:100%;min-height:32px;min-width:0;
+ background:var(--v5-header);border:1px solid var(--v5-edge);
+ color:var(--v5-text);border-radius:5px;
+}
+@media(max-width:1450px){
+ body.v5-active .v5-resources #v5-resource-inputs{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+ }
+}
+@media(max-width:760px){
+ body.v5-active .v5-resources #v5-resource-inputs{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+ }
+ body.v5-active .v5-resources{padding:10px}
+ body.v5-active .v5-resources-head button{width:100%}
+}
+@media(max-width:410px){
+ body.v5-active .v5-resources #v5-resource-inputs{
+  grid-template-columns:1fr;
+ }
+ body.v5-active .v5-resources #pvp-variant-control{grid-column:auto}
+}
+
+/* Daevanian readability: ring semantics over a neutral canvas, not a brown
+   full-tile overlay. Keep full-size game artwork in the selected-node inspector,
+   while short stat abbreviations make small 15x15 tiles distinguishable. */
+body.v5-active .board-grid .node{
+ background:#102839!important;border:1px solid #56748a!important;
+ color:#d6e7ef!important;box-shadow:none;
+}
+body.v5-active .board-grid .node.unique{
+ background:#18334a!important;border-color:#81a5b5!important;
+}
+body.v5-active .board-grid .node.board-suggested:not(.obtained){
+ background:#16476b!important;
+ border-color:#77cdff!important;
+ outline:3px solid #39aeff!important;
+ outline-offset:-1px;
+ box-shadow:0 0 0 2px #0b304d,0 0 11px #39aeff65!important;
+}
+body.v5-active .board-grid .node.obtained{
+ background:#153244!important;
+ border-color:#ffe19b!important;
+ outline:3px solid #ffd066!important;
+ outline-offset:-1px;
+ box-shadow:0 0 0 2px #284251,0 0 10px #e7bd6275!important;
+}
+body.v5-active .board-grid .node.planned:not(.obtained):not(.board-suggested){
+ background:#204c60!important;
+}
+body.v5-active .board-grid .node.next:not(.obtained){
+ outline:3px solid #f3fbff!important;
+ outline-offset:0;
+ box-shadow:0 0 0 2px #166ba2,0 0 14px #b1e9ff!important;
+}
+body.v5-active .board-grid .node.selected{
+ filter:none!important;
+}
+body.v5-active .board-grid .node.selected:focus-visible{
+ outline:3px solid #f5fbff!important;
+ outline-offset:2px;
+}
+body.v5-active .board-grid .node .node-stat-game-icon{
+ display:none!important;
+}
+body.v5-active .board-grid .node .node-stat-label{
+ display:none!important;
+}
+body.v5-active .board-grid .node .node-stat-fallback{
+ z-index:2!important;
+ color:#eaf6ff!important;
+ font:850 clamp(8px,calc(var(--v2-node,40px) * .24),12px)/1 system-ui,sans-serif!important;
+ letter-spacing:.01em!important;
+ padding:2px;
+ text-shadow:0 1px 2px #061625;
+}
+body.v5-active .board-grid .node.obtained .node-stat-fallback{
+ color:#ffe8b0!important;
+}
+body.v5-active .board-grid .node.start{
+ background:#215370!important;
+}
+body.v5-active .board-grid .node.skill .node-game-icon{
+ filter:none!important;opacity:.95!important;
+}
+body.v5-active .board-grid .node.skill:not(.planned):not(.obtained):not(.board-suggested) .node-game-icon{
+ filter:grayscale(.55)!important;opacity:.55!important;
+}
+body.v5-active .board-grid .node.obtained:after{
+ background:#ffdc86;color:#142735;
+}
+body.v5-active .board-grid .node .queue-badge{
+ background:#e9f6ff;color:#092b45;
+ border-radius:0 0 5px 0;
+ font-size:10px;
+}
+body.v5-active .board-grid .node.next .queue-badge{
+ background:#fff;color:#073455;
+}
+body.v5-active .board-map-head .board-legend{
+ display:flex!important;gap:9px;align-items:center;
+ flex-wrap:wrap;margin:7px 0 0;
+ border-top:1px solid var(--v5-edge);
+ padding-top:8px;color:var(--v5-text);
+ font-size:11px;
+}
+body.v5-active .board-map-head .board-legend i.recommended{
+ background:#194261!important;border:3px solid #39aeff!important;
+}
+body.v5-active .board-map-head .board-legend i.obtained{
+ background:#183244!important;border:3px solid #ffd066!important;
+}
+body.v5-active .board-map-head .board-legend i.next{
+ background:#12527a!important;border:3px solid #f3fbff!important;
+}
