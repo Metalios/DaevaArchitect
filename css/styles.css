@@ -483,3 +483,32 @@ body[data-theme=sanctum] #mastery{--m-card:#fffdfa;--m-card-feature:#f7faf4;--m-
 .gear-amplification-editor .gear-amp-editor-stars{min-height:22px;display:flex;align-items:center}
 .gear-amp-editor-stars .gear-amp-diamonds{font-size:18px;gap:4px;letter-spacing:0}
 @media(max-width:390px){.gear-amplification-controls{grid-template-columns:1fr}}
+
+
+/* Editable custom AION 2 in-game macro and recorded stone outcomes */
+.custom-macro-editor{margin-block:1rem;display:grid;gap:1rem}
+.custom-macro-heading{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+.custom-macro-heading h3{margin:0 0 .3rem}
+.custom-macro-heading p{margin:0;max-width:60ch;opacity:.8}
+.custom-macro-heading button,.custom-macro-add{min-height:2.5rem;padding:.55rem .85rem;border:1px solid currentColor;border-radius:.5rem;cursor:pointer;background:transparent;color:inherit}
+.custom-macro-heading .primary{background:#276a92;color:#fff;border-color:#276a92}
+.custom-macro-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,17rem),1fr));gap:.75rem}
+.custom-macro-column,.custom-macro-steps{display:grid;align-content:start;gap:.65rem;min-width:0;border:1px solid rgba(132,162,180,.25);border-radius:.7rem;padding:1rem}
+.custom-macro-column h4,.custom-macro-steps h4{margin:0}
+.custom-macro-column small{opacity:.78}
+.custom-macro-row{display:flex;align-items:center;gap:.35rem;min-width:0}
+.custom-macro-row select{min-width:0;flex:1;max-width:100%;padding:.55rem .35rem;border-radius:.45rem}
+.custom-macro-row button{border-radius:.35rem;border:1px solid rgba(132,162,180,.45);background:transparent;color:inherit;min-width:1.9rem;min-height:2rem;cursor:pointer}
+.custom-macro-row button:disabled{opacity:.3;cursor:not-allowed}
+.custom-macro-index{font-variant-numeric:tabular-nums;min-width:1.2rem;text-align:center;opacity:.7}
+.custom-macro-delay{display:flex;align-items:center;gap:.3rem;font-size:.8rem;white-space:nowrap}
+.custom-macro-delay input{width:4.5rem;min-width:0;padding:.4rem;border-radius:.4rem}
+.custom-macro-weave{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap}
+.custom-macro-weave select{max-width:22rem;min-width:10rem;padding:.55rem}
+.custom-macro-warning{margin:0;border-inline-start:3px solid #b99a58;padding:.35rem .75rem}
+.custom-macro-manual summary{cursor:pointer;font-weight:600;padding:.5rem}
+.custom-macro-manual[open] .custom-macro-grid{margin-top:.75rem}
+.gear-stone-row label{display:grid;gap:.2rem;min-width:0}
+.gear-stone-row select{width:100%;min-width:0}
+.gear-stone-quality{font-size:.8rem;font-weight:600;min-width:4.5rem}
+@media(max-width:650px){.custom-macro-heading{align-items:stretch}.custom-macro-heading button{width:100%}.custom-macro-row{flex-wrap:wrap}.custom-macro-row select{flex-basis:45%}.custom-macro-delay{flex-basis:45%}}
