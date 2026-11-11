@@ -51,7 +51,9 @@ try{
   }
   assert.equal(art.size,8,'Classes re-used the same art');
   await page.setViewportSize({width:390,height:844});
-  await page.locator('#v2-class').selectOption('templar');
+  // Mobile intentionally collapses the header selector into Build Settings;
+  // use the existing class-picker event rather than clicking hidden UI.
+  await page.evaluate(()=>document.querySelector('#class-buttons [data-class="templar"]').click());
   await page.waitForFunction(()=>{
     const img=document.querySelector('.v6-doll-art img.v6-class-illustration');
     return img?.complete&&img.naturalWidth>=800;
