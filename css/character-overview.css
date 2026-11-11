@@ -649,3 +649,177 @@ body.v5-active .v6-hero-portrait .v6-class-illustration{
   width:135px!important;left:2%!important;height:140px!important;
  }
 }
+
+
+/* Overview compact-Inspect: share the Equipment tab's two-by-five grouped
+   slot order. Both sides contain ten real, separately editable slots.
+   The player-facing character render stays vertically centered regardless of
+   the height of neighboring Overview cards. */
+body.v5-active .v6-gear-grid{
+ display:flex;flex-direction:column;align-items:stretch;
+ gap:12px;padding:11px 12px 0;min-height:0;
+}
+body.v5-active .v6-doll{
+ position:relative;isolation:isolate;align-self:stretch;
+ width:100%;height:clamp(455px,49dvh,530px)!important;
+ min-height:455px!important;max-height:530px!important;
+ background:
+  radial-gradient(ellipse 36% 46% at 50% 46%,var(--v5-accent-soft),transparent 94%),
+  linear-gradient(155deg,rgba(18,47,65,.42),rgba(4,16,28,.94));
+ overflow:hidden;
+}
+body.v5-active .v6-doll-labels{
+ position:absolute;z-index:4;top:15px;left:13px;right:13px;
+ display:flex;justify-content:space-between;align-items:start;
+ gap:12px;pointer-events:none;
+}
+body.v5-active .v6-doll-labels span{
+ max-width:40%;color:var(--v5-muted);
+ font:850 9px/1.25 system-ui,sans-serif;
+ letter-spacing:.07em;text-transform:uppercase;
+}
+body.v5-active .v6-doll-labels span:last-child{text-align:right}
+body.v5-active .v6-doll-left,
+body.v5-active .v6-doll-right{
+ position:absolute;z-index:3;top:51%;bottom:auto;
+ transform:translateY(-50%);
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ grid-template-rows:repeat(5,minmax(0,1fr));
+ flex-direction:initial;justify-content:initial;align-items:stretch;
+ gap:5px;
+ width:clamp(92px,22%,138px);
+ height:clamp(290px,72%,367px);
+}
+body.v5-active .v6-doll-left{left:11px}
+body.v5-active .v6-doll-right{right:11px}
+body.v5-active .v6-doll .v6-slot{
+ position:relative;display:grid;place-items:center;
+ width:100%;height:100%;min-width:0;min-height:0;
+ flex:none;padding:2px;
+ border:2px solid #3d708b;border-radius:5px;
+ background:radial-gradient(circle at 50% 25%,#17425a,#071826 77%);
+ box-shadow:inset 0 0 0 1px rgba(163,210,218,.17);
+ color:#d9ebec;overflow:hidden;
+}
+body.v5-active .v6-doll .v6-slot.filled.grade-unique{border-color:#d6ae52}
+body.v5-active .v6-doll .v6-slot.filled.grade-epic{border-color:#5babeb}
+body.v5-active .v6-doll .v6-slot.filled.grade-rare{border-color:#62bf83}
+body.v5-active .v6-doll .v6-slot.filled.grade-special{border-color:#49c4ac}
+body.v5-active .v6-doll .v6-slot:hover,
+body.v5-active .v6-doll .v6-slot:focus-visible{
+ border-color:#f7da9b;outline:2px solid #e5c27d;outline-offset:1px;
+ z-index:5;
+}
+body.v5-active .v6-doll .v6-slot .gear-empty-icon{
+ font-size:26px;color:#7ca4b9;opacity:.76;
+}
+body.v5-active .v6-doll .v6-slot img{
+ max-width:100%;max-height:calc(100% - 16px);
+ object-fit:contain;
+}
+body.v5-active .v6-doll .v6-slot small{
+ position:absolute;left:0;right:0;bottom:0;
+ background:rgba(5,18,28,.93);border-top:1px solid #6f92a455;
+ color:#e1eff5;padding:1px 2px;
+ font:800 8px/1.15 system-ui,sans-serif;
+ white-space:nowrap;text-overflow:ellipsis;
+}
+body.v5-active .v6-doll .v6-slot strong{
+ position:absolute;top:1px;right:1px;bottom:auto;
+ font:900 10px/1.1 system-ui,sans-serif;
+ color:#fff5d8;
+}
+body.v5-active .v6-doll .v6-slot .gear-amp-diamonds{
+ position:absolute;z-index:4;left:1px;top:1px;bottom:auto;
+ padding:0 1px;max-width:80%;
+ font-size:7px;white-space:nowrap;
+}
+body.v5-active .v6-doll-ring{
+ top:11%;left:25%;width:50%;opacity:.22;pointer-events:none;
+}
+body.v5-active .v6-doll-caption{
+ z-index:4;left:25%;right:25%;bottom:8px;
+ pointer-events:none;max-width:50%;
+}
+body.v5-active .v6-doll-caption b{font-size:13px}
+body.v5-active .v6-doll-caption small{font-size:9px}
+
+/* The gear summary is BELOW the complete Inspect composition, not squeezed
+   beside the figure. Its values are still computed from actual gear records. */
+body.v5-active .v6-stats{
+ width:100%;min-width:0;padding:1px 2px 4px;
+}
+body.v5-active .v6-stats h3{margin:0 0 9px}
+body.v5-active #v6-stat-rows{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:0 15px;
+}
+body.v5-active .v6-stat{
+ min-width:0;grid-template-columns:18px minmax(0,1fr) auto;
+ padding:7px 3px;font-size:11px;
+}
+body.v5-active .v6-stats-foot{margin-top:10px}
+body.v5-active .v6-gear-footer{margin-top:auto;padding-top:12px}
+
+/* Normalize by portrait HEIGHT rather than source width, as the Ranger's
+   bow extends much wider than any other class and previously shrank the
+   Ranger to less than half the body size of the other seven figures. */
+body.v5-active .v6-doll-art{
+ inset:0!important;position:absolute!important;
+ overflow:hidden;pointer-events:none;filter:none;
+}
+body.v5-active .v6-doll-art .v6-class-illustration{
+ position:absolute!important;
+ inset:auto!important;
+ top:50%!important;
+ left:calc(50% + var(--v6-doll-offset-x,0px))!important;
+ width:auto!important;height:min(465px,calc(100% - 60px))!important;
+ max-height:none!important;max-width:none!important;
+ object-fit:contain!important;object-position:center!important;
+ transform:translate(-50%,-50%) scale(var(--v6-doll-scale,1))!important;
+ transform-origin:center center;
+ filter:drop-shadow(0 8px 14px rgba(0,0,0,.55));
+}
+body.v5-active[data-v6-class="gladiator"]{--v6-doll-offset-x:-14px}
+body.v5-active[data-v6-class="templar"]{--v6-doll-offset-x:13px}
+body.v5-active[data-v6-class="assassin"]{--v6-doll-offset-x:-3px}
+body.v5-active[data-v6-class="ranger"]{
+ --v6-doll-offset-x:36px;--v6-doll-scale:.96;
+ --v6-hero-scale:1.28;
+}
+body.v5-active[data-v6-class="sorcerer"]{--v6-doll-offset-x:8px}
+body.v5-active[data-v6-class="spiritmaster"]{--v6-doll-offset-x:7px}
+body.v5-active[data-v6-class="cleric"]{--v6-doll-offset-x:18px}
+body.v5-active[data-v6-class="chanter"]{--v6-doll-offset-x:-8px}
+body.v5-active .v6-hero-portrait{overflow:hidden}
+body.v5-active .v6-hero-portrait .v6-class-illustration{
+ object-fit:cover!important;object-position:center 8%!important;
+ transform:scale(var(--v6-hero-scale,1))!important;
+ transform-origin:center 20%;
+}
+@media(max-width:600px){
+ body.v5-active .v6-gear-grid{
+  display:flex;flex-direction:column;gap:10px;
+ }
+ body.v5-active .v6-doll{
+  height:455px!important;min-height:455px!important;max-height:455px!important;
+ }
+ body.v5-active .v6-doll-left,
+ body.v5-active .v6-doll-right{
+  width:clamp(86px,24%,102px);
+  height:288px;gap:3px;
+ }
+ body.v5-active .v6-doll-left{left:6px}
+ body.v5-active .v6-doll-right{right:6px}
+ body.v5-active .v6-doll-labels{left:7px;right:7px}
+ body.v5-active .v6-doll-labels span{font-size:7px}
+ body.v5-active .v6-doll .v6-slot small{font-size:7px}
+ body.v5-active .v6-doll-art .v6-class-illustration{
+  height: min(408px,calc(100% - 50px))!important;
+ }
+ body.v5-active #v6-stat-rows{gap:0 8px}
+ body.v5-active .v6-stat{
+  grid-template-columns:16px minmax(0,1fr) auto;
+  gap:4px;padding:8px 1px;font-size:10px;
+ }
+}
