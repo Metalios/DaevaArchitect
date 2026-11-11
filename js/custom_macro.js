@@ -163,7 +163,7 @@ const CustomMacroEditor = (() => {
     if (!array) return;
     if (action === 'add') {
       if (array.length >= (kind === 'step' ? MAX_STEPS : MAX_ROW)) return;
-      array.push(kind === 'step' ? {key: 'Q', delay: 10} : '');
+      array.push(kind === 'step' ? {key: 'Q', delay: 10} : [...skillsFor(state.class)].find(name => available.has(name) && !array.includes(name)) || [...skillsFor(state.class)][0]);
     } else if (action === 'remove') array.splice(index, 1);
     else if (action === 'up' && index > 0) [array[index - 1], array[index]] = [array[index], array[index - 1]];
     else if (action === 'down' && index < array.length - 1) [array[index + 1], array[index]] = [array[index], array[index + 1]];
