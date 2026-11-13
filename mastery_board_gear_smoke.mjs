@@ -1,3 +1,4 @@
+import {useLegacyRecommendations} from './legacy_recommendation_test_setup.mjs';
 // Verify a skill's point-funded Mastery rank and two distinct board states
 // on AION 2 Global's leveling and endgame budgets, plus narrow inspect view.
 import {chromium} from 'playwright';
@@ -10,6 +11,7 @@ try{
  const page=await browser.newPage({viewport:{width:1280,height:900}});
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto(pathToFileURL(path.resolve('dist/index.html')).href);
+ await useLegacyRecommendations(page);
  const result=await page.evaluate(()=>{
   state.class='sorcerer';
   const a=account();a.journey='leveling';a.context='solo';a.leveling={level:34,extraByLevel:{}};
