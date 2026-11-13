@@ -1,3 +1,4 @@
+import {useLegacyRecommendations} from './legacy_recommendation_test_setup.mjs';
 import {chromium} from 'playwright';
 import {pathToFileURL} from 'node:url';
 import path from 'node:path';
@@ -7,6 +8,7 @@ const browser=await chromium.launch({headless:true});
 const page=await browser.newPage();
 const errors=[];page.on('pageerror',e=>errors.push(e.message));
 await page.goto(pathToFileURL(path.resolve('dist/index.html')).href);
+ await useLegacyRecommendations(page);
 for(const cls of ['templar','gladiator','assassin','ranger','sorcerer','spiritmaster','cleric','chanter']){
   await page.evaluate(cls=>{state.class=cls;render()},cls);
   const result=await page.evaluate(()=>{
