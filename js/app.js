@@ -174,11 +174,13 @@ function specialBoardRoute(name){
   let route;
   if(typeof JointProgression!=='undefined'){
     try{
-      const totals={},fixed=[...gearFixedTotals().stats,...gearSocketTotals().stats];
+      const totals={},fixed=[...gearFixedTotals().stats,...gearSocketTotals().stats,
+        ...gearRolledStatTotals().stats,
+        ...gearAmplificationTotals().stats.map(row=>({name:row.stat,value:row.value,unit:row.unit||''}))];
       for(const [key,meta] of Object.entries(data().stats))
         totals[key]=fixed.filter(row=>row.name===meta.name).reduce((sum,row)=>
           sum+(Number(row.value)||0)*(row.unit==='%'?100:1),0);
-      const weights=activeWeights().stats;
+      const weights=activeWeights(context).stats;
       route=JointProgression.rankConnectedBoard({
         board,context,objective,pvpOpponent:a.pvpOpponent||'all',classId:state.class,role:profile().kind,stats:totals,
         budget:name==='Ariel'?(a.ariel||0):(a.azphel||0),
@@ -228,10 +230,10 @@ function setCustomNode(id){
 }
 let boardEditNotice='',boardRecalculationNotice='';
 let lastBoardRecalculation=null;
-function activeWeights(){
-  const ctx=account().context;
+function activeWeights(context=account().context){
+  const ctx=context;
   const base=ROUTES[state.class].weights[appIsPvpContext(ctx)?'pvp':ctx];
-  const advised=typeof adviceFor==='function'?adviceFor(state.class,account().context,account().pveObjective):null;
+  const advised=typeof adviceFor==='function'?adviceFor(state.class,ctx,account().pveObjective):null;
   if(!advised)return base;
   const skills={...base.skills};
   // Strongest supported class/core skill recommendations lead board optimization,
@@ -248,6 +250,12 @@ function activeWeights(){
     'pvp-abyss-group':{PvPDamageDefense:1.65,PvPCriticalResist:1.3,AbnormalResistance:1.4,CoolTimeDecrease:1.2,HPMax:1.35}
   }[ctx]||{};
   for(const [name,scale] of Object.entries(pvpStatScale))stats[name]=(stats[name]||0)*scale;
+  // Opponent-specific resistance, accuracy and engagement are relevant to
+  // standard Daevanion boards as well as Azphel. Do not apply these bonuses
+  // to Ariel when its effective context is PvE.
+  if(appIsPvpContext(ctx)&&typeof PvpCombatModels!=='undefined')
+    for(const key of Object.keys(stats))
+      stats[key]*=PvpCombatModels.statPriority(state.class,ctx,account().pvpOpponent||'all',key);
   return {...base,skills,stats};
 }
 function recommendedStigmas(){
@@ -317,11 +325,8 @@ function recommendedStigmas(){
         const picks=templarSolo
           ?templarPvpSpecialtySeed(candidate,a.customSpecialties||{})
           :a.customSpecialties||{};
-        return ClassCombatModels.evaluate({
-          classId:state.class,context:a.context,
-          objective:a.pveObjective||'performance',
-          build:candidate,selectedSpecs:picks
-        }).score;
+        return contextCombatScore(state.class,a.context,candidate,picks,
+          a.pveObjective||'performance');
       }
     });
     stigmaLoadoutCache={key,names:selected.names};
@@ -784,6 +789,17 @@ function engineBuild(masteryLevels,boardEffects,stigmaLevels,equipped){
   };
 }
 
+/** One scoring policy for each class across ranks, Stigmas, Specialties and
+ * board candidates. PvP always uses the selected opponent and fight venue;
+ * PvE uses the class/role model. Neither score is measured combat output. */
+function contextCombatScore(classId,context,build,selectedSpecs={},objective='performance'){
+  if(typeof PvpCombatModels!=='undefined'&&PvpCombatModels.isPvp(context))
+    return PvpCombatModels.evaluate({classId,context,build,selectedSpecs,
+      opponent:build.pvpOpponent||'all'}).score;
+  return ClassCombatModels.evaluate({classId,context,objective,build,
+    selectedSpecs}).score;
+}
+
 function templarPvpSpecialtySeed(build,manual={}){
  // All score comparisons use the ACTUAL projected purchased ranks, connected
  // Daevanion bonuses and equipped skill ranks, not fixed default Specialties.
@@ -814,6 +830,49 @@ function chooseCombatBoardRoute(provisional,stigma,gearRanks,target,baseCp,actua
   const baseArgs=[data(),baseWeights,provisional.levels,gearRanks,
     baseCp===null?0:target,baseCp,actual,currentLevel(),targets];
   const original=optimizeBoardRoute(...baseArgs);
+  // All eight classes, all four PvP venues: compare legal connected board
+  // candidates using the SAME opponent-conditioned model that later scores
+  // their Stigma, Mastery and Specialty ranks. The standard board is a
+  // different currency pool from Azphel and Ariel.
+  if(appIsPvpContext(account().context)&&
+     !(state.class==='templar'&&account().context==='pvp-abyss-solo')&&
+     typeof PvpCombatModels!=='undefined'){
+    const a=account(),context=a.context,opponent=a.pvpOpponent||'all',
+      names=skillNames(),crystals=budget('crystals');
+    const matchupSkills={...baseWeights.skills},matchupStats={...baseWeights.stats};
+    for(const name of Object.keys(matchupSkills))
+      matchupSkills[name]*=PvpCombatModels.skillPriority(state.class,context,opponent,name);
+    for(const key of Object.keys(matchupStats))
+      matchupStats[key]*=PvpCombatModels.statPriority(state.class,context,opponent,key);
+    const alternate=optimizeBoardRoute(data(),
+      {...baseWeights,skills:matchupSkills,stats:matchupStats},
+      provisional.levels,gearRanks,baseCp===null?0:target,
+      baseCp,actual,currentLevel(),targets);
+    const otherStats={};
+    for(const plan of [boardPlan(a.ariel||0,'ariel'),boardPlan(a.azphel||0,'azphel')]){
+      const extra=effects(plan.owned);
+      for(const [key,value] of Object.entries(extra.stats||{}))
+        otherStats[key]=(otherStats[key]||0)+value;
+    }
+    let best=null;
+    for(const candidate of [original,alternate]){
+      const fitted=fitConnectedBoardBudget(data(),candidate.route,crystals);
+      const board=effects(new Set(fitted.route.map(step=>step.id)));
+      const funded=a.manualMastery?provisional:allocate(
+        masteryStages(board.skills),budget('mastery'),masteryCost,
+        names,1,masteryRankCap);
+      const stats={...board.stats};
+      for(const [key,value] of Object.entries(otherStats))
+        stats[key]=(stats[key]||0)+value;
+      const build=engineBuild(funded.levels,
+        {skills:board.skills,stats},stigma.levels,activeStigmas());
+      const score=contextCombatScore(state.class,context,build,
+        a.customSpecialties||{},'performance');
+      if(!best||score>best.score+1e-9)
+        best={score,route:{...candidate,route:fitted.route}};
+    }
+    return best.route;
+  }
   if(state.class==='templar'&&account().context==='pvp-abyss-solo'&&
      !customMode()&&typeof PvpCombatModels!=='undefined'){
     const a=account(),crystals=budget('crystals'),names=skillNames(),
@@ -1213,10 +1272,8 @@ function model(){
       const picks=state.class==='templar'&&a.context==='pvp-abyss-solo'
         ?templarPvpSpecialtySeed(proposed,a.customSpecialties||{})
         :a.customSpecialties||{};
-      return ClassCombatModels.evaluate({
-        classId:state.class,context:a.context,objective:a.pveObjective||'performance',
-        build:proposed,selectedSpecs:picks
-      }).score;
+      return contextCombatScore(state.class,a.context,proposed,picks,
+        a.pveObjective||'performance');
     };
     const jointKey=JSON.stringify([
       state.class,a.context,a.pveObjective,a.pvpOpponent||'all',currentLevel(),budget('mastery'),
@@ -1233,6 +1290,8 @@ function model(){
         masteryCost,stigmaCost,masteryCap:masteryRankCap,scoreBuild:scoring,
         pinMastery:!!a.manualMastery,
         pinStigma:!!a.manualStigma||isLeveling()||budget('stigma')<30,
+        maxMasteryEvaluations:appIsPvpContext(a.context)?220:500,
+        maxStigmaEvaluations:appIsPvpContext(a.context)?150:350,
         stigmaFloors:state.class==='templar'&&a.context==='pvp-abyss-solo'&&
           !a.manualStigma&&budget('stigma')>=20
           ?Object.fromEntries(stigmas.map(name=>[name,5])):{}});
@@ -1266,11 +1325,8 @@ function model(){
             (chosenMastery.levels[name]||1)+
             (combatEffects.skills[name]||0)+
             (fixed.gearSkills[name]||0)),
-          score:picks=>ClassCombatModels.evaluate({
-            classId:state.class,context:a.context,
-            objective:a.pveObjective||'performance',
-            build:fixed,selectedSpecs:picks
-          }).score
+          score:picks=>contextCombatScore(state.class,a.context,fixed,picks,
+            a.pveObjective||'performance')
         });
       jointSpecialtyCache={key,result:specialtyOptimization};
     }catch(error){
@@ -2073,7 +2129,17 @@ $('azphel-input').addEventListener('input',e=>{account().azphel=clamp(e.target.v
 $('azphel-input').addEventListener('change',e=>{account().azphel=clamp(e.target.value,0,232);if(state.board==='Azphel')state.preview=account().azphel;render()});
 function setContext(ctx){
  if(!['party','solo',...Object.keys(PVP_CONTEXT_LABELS)].includes(ctx)||isLeveling()&&appIsPvpContext(ctx))return;
+ const previous=account().context;
  account().context=ctx;account()[isLeveling()?'levelingContext':'endgameContext']=ctx;
+ if(previous!==ctx){
+   lastBoardRecalculation=null;
+   const a=account();
+   const pinned=!!a.manualMastery||!!a.manualStigma||!!a.customStigmas||
+     Object.keys(a.customSpecialties||{}).length>0||customMode();
+   boardRecalculationNotice=pinned
+     ?'Scenario updated. Your customized allocations remain pinned; restore recommendations to compare a full respec.'
+     :'Scenario updated: recalculated all recommended allocations for this class.';
+ }
  if(!appIsPvpContext(ctx))
    account().pveObjective=RoleBuildGoals.normalize(state.class,ctx,account().pveObjective);
  // Azphel remains visible in every build context.
@@ -2087,6 +2153,8 @@ $('pvp-opponent-select').addEventListener('change',e=>{
   if(!['all','ranged','melee',...Object.keys(PvpCombatModels.OPPONENTS)].includes(value))return;
   account().pvpOpponent=value;
   account().recommendedRouteSnapshot=null;liveRoute=null;
+  lastBoardRecalculation=null;
+  boardRecalculationNotice='Matchup updated: recommendations now use the selected opponent across Mastery, Stigmas and Daevanion.';
   render();
 });
 $('macro-bind').addEventListener('change',e=>{account().macroBind=e.target.value;render()});
