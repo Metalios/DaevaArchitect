@@ -160,7 +160,7 @@ function activeRoute(){
   // A previous class's cached route must never enter this class's grid.
   // Custom-first rendering can skip the optimizer, so stale liveRoute
   // cannot be replaced by model() as it was in older recommended-only builds.
-  const cached=Array.isArray(liveRoute)&&liveRoute.every(step=>
+  const cached=account().buildMode==='recommended'&&Array.isArray(liveRoute)&&liveRoute.every(step=>
     valid.get(step.id)?.board===step.board);
   const route=cached?liveRoute:ROUTES[state.class][appIsPvpContext(ctx)?'pvp':ctx];
   return isLeveling()?route.filter(x=>boardOpen(x.board)):route;
