@@ -280,7 +280,7 @@ try{
   assert.equal(await page.locator('#v2-stigma-panel [data-v2-stigma-choice]').count(),13);
   if(width===1920)await page.screenshot({path:'v2-previews/stigma-flyout-1920.png',fullPage:true});
   await page.locator('#v2-stigma-panel [data-v2-stigma-rank][data-dir="-1"]').click();
-  assert.match(await page.locator('#v2-status').innerText(),/Modified progression/);
+  assert.match(await page.locator('#v2-status').innerText(),/Custom build/);
   await page.locator('#v2-stigma-done').click();
   assert.equal(await page.locator('#v2-stigma-panel').isVisible(),false);
   await page.locator('#v2-stigma-reset').click();
