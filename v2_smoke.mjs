@@ -1,3 +1,4 @@
+import {useLegacyRecommendations} from './legacy_recommendation_test_setup.mjs';
 // Browser smoke test for the v2 build composer. Requires: npm install playwright
 // and npx playwright install chromium. No changes to the user's saved browser data.
 import assert from 'node:assert/strict';
@@ -83,6 +84,7 @@ try{
   page.on('pageerror',error=>errors.push(width+': '+error.message));
   const port=server.address().port;
   await page.goto('http://127.0.0.1:'+port+'/',{waitUntil:'domcontentloaded'});
+ await useLegacyRecommendations(page);
   await page.locator('#class-buttons [data-class="templar"]').click();
   await page.locator('#v2-skill-list .v2-skill').first()
     .waitFor({state:width<1700?'attached':'visible'});
@@ -315,6 +317,7 @@ try{
   const page=await browser.newPage({viewport:{width,height},deviceScaleFactor:1});
   page.on('pageerror',error=>errors.push(width+': '+error.message));
   await page.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'domcontentloaded'});
+ await useLegacyRecommendations(page);
   await page.locator('#class-buttons [data-class="templar"]').click();
   // Mobile initially shows Daevanion, so Mastery is mounted but hidden.
   // Verify it is populated before explicitly selecting the Mastery editor.
@@ -363,6 +366,7 @@ try{
   const page=await browser.newPage({viewport:{width,height},deviceScaleFactor:1});
   page.on('pageerror',error=>errors.push(width+'x'+height+': '+error.message));
   await page.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'domcontentloaded'});
+ await useLegacyRecommendations(page);
   await page.locator('#class-buttons [data-class="templar"]').click();
   await page.waitForFunction(()=>document.querySelector('#v2-board-fit')?.getAttribute('aria-pressed')==='true');
   const initial=await page.evaluate(()=>{
