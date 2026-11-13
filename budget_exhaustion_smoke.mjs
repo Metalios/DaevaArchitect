@@ -12,7 +12,7 @@ try{
  const output=await page.evaluate(()=>{
    state.class='sorcerer';const a=account();
    a.context='party';a.journey='endgame';a.mastery=285;a.crystals=119;
-   a.manualMastery=null;a.manualStigma=null;a.boardMode='recommended';
+   a.buildMode='recommended';a.manualMastery=null;a.manualStigma=null;a.customStigmas=null;a.boardMode='recommended';
    a.customNodes=[];a.obtainedNodes=[];a.recommendedRouteSnapshot=null;
    a.customSpecialties={};a.gear={};a.equipment={};
    const errors=[];
