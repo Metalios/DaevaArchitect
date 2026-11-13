@@ -1,3 +1,4 @@
+import {useLegacyRecommendations} from './legacy_recommendation_test_setup.mjs';
 // Regression for recalculation behavior after a shared-build import.
 // The optimizer may return identical tiles; the UI must report that fact,
 // not make the button appear inert. Actual gold purchases remain separate.
@@ -12,6 +13,7 @@ try {
   const errors=[];
   page.on('pageerror',err=>errors.push(err.message));
   await page.goto(pathToFileURL(path.resolve('dist/index.html')).href);
+ await useLegacyRecommendations(page);
   const first=await page.evaluate(()=>{
     state.class='templar';
     const a=account();
@@ -176,6 +178,7 @@ try {
   const second=await browser.newPage({viewport:{width:1280,height:900}});
   try{
     await second.goto(shared);
+ await useLegacyRecommendations(second);
     await second.locator('#shared-build-load').click();
     await second.locator('#v2-board-restore').click();
     assert.match(await second.locator('#v2-board-notice').innerText(),/Recalculated:/);
