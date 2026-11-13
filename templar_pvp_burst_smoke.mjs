@@ -1,3 +1,4 @@
+import {useLegacyRecommendations} from './legacy_recommendation_test_setup.mjs';
 // Full compiled-client smoke: Templar Solo Abyss ranks, gear-sensitive
 // Daevanion, independent Azphel and conditional Specialties at two budgets.
 // This does NOT claim to measure real player DPS, TTK, CC landing or win rate.
@@ -13,6 +14,7 @@ try{
  const errors=[];
  page.on('pageerror',error=>errors.push(error.message));
  await page.goto(pathToFileURL(path.resolve('dist/index.html')).href);
+ await useLegacyRecommendations(page);
  const checks=await page.evaluate(()=>{
   state.class='templar';
   const a=account();
