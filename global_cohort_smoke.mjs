@@ -1,3 +1,4 @@
+import {useLegacyRecommendations} from './legacy_recommendation_test_setup.mjs';
 // Check measured Global cohort and local calibration controls in the
 // actual static browser build. Synthetic recordings test plumbing only.
 import assert from 'node:assert/strict';
@@ -10,6 +11,7 @@ try{
   const errors=[];
   page.on('pageerror',error=>errors.push(error.message));
   await page.goto(pathToFileURL(path.resolve('dist/index.html')).href);
+ await useLegacyRecommendations(page);
   const state=await page.evaluate(()=>{
     const target=document.getElementById('global-cohort-summary');
     return {
