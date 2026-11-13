@@ -1,3 +1,4 @@
+import {useLegacyRecommendations} from './legacy_recommendation_test_setup.mjs';
 // End-to-end joint recommendation contract: real app with all six boards
 // and actual browser state. Run after python build.py:
 // node joint_progression_smoke.mjs
@@ -11,6 +12,7 @@ try{
   const page=await browser.newPage({viewport:{width:1365,height:900}});
   const pageErrors=[];page.on('pageerror',error=>pageErrors.push(error.message));
   await page.goto(pathToFileURL(path.resolve('dist/index.html')).href);
+ await useLegacyRecommendations(page);
   const result=await page.evaluate(()=>{
     const problems=[],classes=['templar','gladiator','assassin','ranger',
       'sorcerer','spiritmaster','cleric','chanter'];
