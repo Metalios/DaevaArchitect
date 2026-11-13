@@ -12,7 +12,7 @@ try{
  await page.goto(pathToFileURL(path.resolve('dist/index.html')).href);
  const board=await page.evaluate(()=>{
   state.class='sorcerer';const a=account();a.journey='leveling';a.context='solo';
-  leveling().level=34;a.boardMode='recommended';a.obtainedNodes=[];a.manualMastery=null;
+  leveling().level=34;a.buildMode='recommended';a.boardMode='recommended';a.obtainedNodes=[];a.manualMastery=null;a.manualStigma=null;a.customStigmas=null;
   state.board='Nezekan';state.tab='boards';render();
   const failures=[],button=document.querySelector('#board-grid .node.queued');
   if(!button)throw Error('No recommended queued tiles at Global level 34');
