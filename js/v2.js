@@ -298,7 +298,7 @@ function skillsView(m){
          <span class="v2-spec-number">${id}</span><span><b>${esc(description)}</b><small>${locked?`Opens at effective Lv ${gate}`:selected?'In this plan':advisedPick?'Recommended for this stage':'Available'}</small></span>
          <strong>${selected?'✓':locked?'🔒':'+'}</strong></button>`;
      }).join('')}</div>`}
-     <div class="v2-flyout-foot"><button type="button" id="v2-spec-restore" ${a.customSpecialties?.[skill]?'':'disabled'}>Use recommended Specialties</button><button type="button" id="v2-spec-done">Done</button></div>
+     <div class="v2-flyout-foot"><button type="button" id="v2-spec-restore" ${recommended.length&&JSON.stringify(picks)!==JSON.stringify(recommended)?'':'disabled'}>Use recommended Specialties</button><button type="button" id="v2-spec-done">Done</button></div>
      </div>`;
  }
  const masteryLeft=Math.max(0,budget('mastery')-m.mastery.spent);
