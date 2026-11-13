@@ -387,7 +387,7 @@ function actionsView(m){
  // Keep Compare builds, class-specific combat evidence and guidance
  // accessible in the collapsed upgrade drawer, rather than deleting them.
  next.querySelector('.v4-next-content')?.append(note,combatEvidence);
- $('v2-status').innerHTML=account().buildMode==='custom'?'<b class="modified">● Custom build</b><small>Your allocations stay editable</small>':'<b>● Legacy recommended path</b><small>Apply to make an editable copy</small>';
+ $('v2-status').innerHTML=account().buildMode==='custom'?'<b class="modified">● Custom build</b><small>Your allocations stay editable</small>':modifiedBuild()?'<b class="modified">● Modified progression</b><small>Legacy recommendation with pinned edits</small>':'<b>● Legacy recommended path</b><small>Apply to make an editable copy</small>';
  $('v2-reset-allocations').hidden=false;
  $('v2-board-notice').textContent=lastBoardRecalculation?.message||message||'';
  $('v2-board-notice').hidden=!$('v2-board-notice').textContent;
