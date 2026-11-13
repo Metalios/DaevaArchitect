@@ -1438,7 +1438,8 @@ function renderLevelControls(){
 function renderOverview(m){
   if(isLeveling()){renderLevelingOverview(m);return}
   const a=account(),p=profile(),ordered=masteryStages().map(x=>x[0]).filter((v,i,s)=>s.indexOf(v)===i),top=ordered.slice(0,4);
-  $('overview-title').textContent=`${p.name}: recommended path`;$('overview-subtitle').textContent=p.summary;
+  $('overview-title').textContent=`${p.name}: ${a.buildMode==='custom'?'custom build':'recommended path'}`;
+  $('overview-subtitle').textContent=a.buildMode==='custom'?'All selections belong to you. Preview or apply recommendations only when you choose.':p.summary;
   const kpis=[['Top target',top[0]?`Lv ${effective(top[0],m)}`:'—',top[0]||''],['PvE crystals',`${m.boards.spent} / ${a.crystals}`,`${m.boards.perBoard.Nezekan} Nezekan · ${m.boards.perBoard.Zikel} Zikel`],['Stigma bar',`${m.stigma.spent} / ${a.stigma}`,'Four context-specific slots'],['Ready points',`${a.mastery-m.mastery.spent} · ${a.stigma-m.stigma.spent} · ${a.crystals-m.boards.spent}`,'Unspent Mastery · Stigma · PvE crystals']];
   $('kpis').innerHTML=kpis.map(([label,value,detail])=>`<div class="kpi"><div class="k-label">${esc(label)}</div><strong>${esc(value)}</strong><small>${esc(detail)}</small></div>`).join('');
   const gearCount=GEAR_SLOTS.filter(slot=>['left','right'].includes(slot.area)&&gearEquipment()[slot.id]).length;
@@ -1446,9 +1447,9 @@ function renderOverview(m){
   $('build-flow').innerHTML=`<button type="button" data-flow-tab="gear"><small>01 / establish your loadout</small><b>Equipment</b><span>${gearCount} / 20 slots recorded · grades, stats and skill rolls</span></button><button type="button" data-flow-tab="boards"><small>02 / route your crystals</small><b>Daevanion</b><span>${m.boards.spent} / ${a.crystals} PvE crystals in the plan</span></button><button type="button" data-flow-tab="mastery"><small>03 / finish the kit</small><b>Mastery & Stigmas</b><span>Use gear and board bonuses to check specialty levels</span></button>`;
   const mode=p.kind==='healer'?'healing':'damage';
   const steps=[`<b>Gear:</b> ${gearCount} / 20 slots recorded. Equip current pieces first; fixed stats, enhancement and rolled skill levels change the final build.`,
-    `<b>Daevanion:</b> ${BOARD_NAMES.map(n=>`${n} ${m.boards.perBoard[n]}`).join(' · ')}. Follow the connected ${appIsPvpContext(a.context)?'PvP-oriented':'PvE'} route at ${a.crystals} crystals.`,
+    `<b>Daevanion:</b> ${BOARD_NAMES.map(n=>`${n} ${m.boards.perBoard[n]}`).join(' · ')}. ${a.buildMode==='custom'?'Your connected node selections are editable.':'Follow the recommended connected '+(appIsPvpContext(a.context)?'PvP-oriented':'PvE')+' route.'}`,
     `<b>Mastery:</b> ${top.map(n=>`${esc(n)} Lv ${m.mastery.levels[n]||1}`).join(' · ')}. Check specialty unlocks using gear and board bonuses.`,
-    `<b>Stigmas:</b> ${activeStigmas().map(n=>`${esc(n)} Lv ${m.stigma.levels[n]||0}`).join(' · ')}. ${esc(p.swap)}`,
+    `<b>Stigmas:</b> ${activeStigmas().filter(Boolean).map(n=>`${esc(n)} Lv ${m.stigma.levels[n]||0}`).join(' · ')||'No Stigmas selected'}. ${a.buildMode==='custom'?'Equip up to four Stigmas in the editor.':esc(p.swap)}`,
     `<b>${mode==='healing'?'Healing':'Fight'} priority:</b> ${esc(p.rule)}`];
   if(m.joint&&!m.joint.error){
     const updates=m.joint.trace?.reduce((sum,step)=>sum+(step.changes||0),0)||0;
