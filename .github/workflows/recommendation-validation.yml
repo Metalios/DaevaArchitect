@@ -67,6 +67,7 @@ jobs:
         run: |
           npm install --no-save playwright@1.56.0
           npx playwright install --with-deps chromium
+          node custom_first_smoke.mjs
           node budget_exhaustion_smoke.mjs
           node combat_optimizer_smoke.mjs
           node leveling_macro_smoke.mjs
