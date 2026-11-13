@@ -1,3 +1,4 @@
+import {useLegacyRecommendations} from './legacy_recommendation_test_setup.mjs';
 // Regression for user-owned per-mode macro state and tier-validated stone rolls.
 import {chromium} from 'playwright';
 import {pathToFileURL} from 'node:url';
@@ -10,6 +11,7 @@ try{
   const errors=[];
   page.on('pageerror',e=>errors.push(e.message));
   await page.goto(pathToFileURL(path.resolve('dist/index.html')).href);
+ await useLegacyRecommendations(page);
   const initial=await page.evaluate(()=>{
     state.class='templar';
     const a=account();
