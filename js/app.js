@@ -155,7 +155,16 @@ function toggleBoardObtained(id){
 }
 let liveRoute=null,liveRouteKey='',liveRouteBasis=null;
 function appIsPvpContext(mode){return typeof mode==='string'&&/^pvp(?:-|$)/.test(mode)}
-function activeRoute(){const ctx=account().context;const route=liveRoute||ROUTES[state.class][appIsPvpContext(ctx)?'pvp':ctx];return isLeveling()?route.filter(x=>boardOpen(x.board)):route}
+function activeRoute(){
+  const ctx=account().context,valid=nodeMap();
+  // A previous class's cached route must never enter this class's grid.
+  // Custom-first rendering can skip the optimizer, so stale liveRoute
+  // cannot be replaced by model() as it was in older recommended-only builds.
+  const cached=Array.isArray(liveRoute)&&liveRoute.every(step=>
+    valid.get(step.id)?.board===step.board);
+  const route=cached?liveRoute:ROUTES[state.class][appIsPvpContext(ctx)?'pvp':ctx];
+  return isLeveling()?route.filter(x=>boardOpen(x.board)):route;
+}
 function customMode(){return account().boardMode==='custom'}
 function customIds(group='crystals'){if(typeof group==='boolean')group=group?'azphel':'crystals';const valid=nodeMap(),key=group==='azphel'?'customAzphelNodes':group==='ariel'?'customArielNodes':'customNodes';return (account()[key]||[]).filter(id=>valid.has(id)&&(valid.get(id).board==='Azphel'?'azphel':valid.get(id).board==='Ariel'?'ariel':'crystals')===group&&(!isLeveling()||boardOpen(valid.get(id).board)))}
 function plannedRoute(group='crystals'){if(typeof group==='boolean')group=group?'azphel':'crystals';return customMode()?customIds(group).map(id=>({board:nodeMap().get(id).board,id})):group==='azphel'?azphelRoute():group==='ariel'?arielRoute():activeRoute()}
