@@ -1,3 +1,4 @@
+import {useLegacyRecommendations} from './legacy_recommendation_test_setup.mjs';
 // Browser regression: a new equipment item owns new roll data. A requested
 // board recalculation must invalidate the old route, but not purchased tiles
 // or an alternate manually planned custom route.
@@ -17,6 +18,7 @@ try {
   // Real tooltip fetching has separate behavior from saved-roll semantics.
   await page.route('https://aion2data.com/tooltip**',route=>route.abort());
   await page.goto(pathToFileURL(path.resolve('dist/index.html')).href);
+ await useLegacyRecommendations(page);
   await page.locator('#class-buttons [data-class="templar"]').click();
   // Medium desktop now uses a persistent editor rail; open Equipment first.
   await page.locator('[data-v3-editor="gear"]').click();
