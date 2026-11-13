@@ -664,7 +664,7 @@ function bind(){
    a.boardMode='custom';a.buildMode='custom';
    a.recommendedRouteSnapshot=null;
    lastBoardRecalculation=null;
-   const report={message:`Reset selections: cleared ${gold} obtained gold tile${gold===1?'':'s'} and ${custom} custom tile${custom===1?'':'s'} across supported boards. Recalculated the recommended path from your current build. Earned points, equipment, Mastery and Stigmas were preserved.`;
+   const report={message:`Reset selections: cleared ${gold} obtained gold tile${gold===1?'':'s'} and ${custom} custom tile${custom===1?'':'s'} across supported boards. Your custom board plan is now empty; Mastery, Stigmas, equipment and point totals were preserved.`};
    lastBoardRecalculation=report;
    boardRecalculationNotice=report.message;
    message=report.message;
