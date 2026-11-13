@@ -14,7 +14,7 @@ try{
     state.class='sorcerer';const a=account();
     a.journey='leveling';a.context='solo';
     a.leveling={level:36,extraByLevel:{}};
-    a.obtainedNodes=[];a.manualMastery=null;a.manualStigma=null;
+    a.buildMode='recommended';a.obtainedNodes=[];a.manualMastery=null;a.manualStigma=null;a.customStigmas=null;
     a.customSpecialties={};a.boardMode='recommended';
     a.gear={};a.equipment={};a.recommendedRouteSnapshot=null;
     const audit=()=>{

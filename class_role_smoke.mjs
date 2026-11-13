@@ -1,3 +1,4 @@
+import {useLegacyRecommendations} from './legacy_recommendation_test_setup.mjs';
 // Browser integration: class-aware role goals actually change the displayed
 // four Stigmas, Mastery emphasis, and the active role objective.
 import assert from 'node:assert/strict';
@@ -9,6 +10,7 @@ try{
  const page=await browser.newPage({viewport:{width:1360,height:900}});
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto(pathToFileURL(path.resolve('dist/index.html')).href);
+ await useLegacyRecommendations(page);
  const catalog=await page.evaluate(()=>{
   const result={};
   for(const cls of CLASS_ORDER){

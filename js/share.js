@@ -42,6 +42,15 @@
     result.faction=raw.faction==='asmodian'?'asmodian':'elyos';
     result.macroBind=['RMB','Mouse 4','MMB','M'].includes(raw.macroBind)?raw.macroBind:'RMB';
     result.boardMode=raw.boardMode==='custom'?'custom':'recommended';
+    // Older shared URLs can carry an auto-recommended plan. Convert it into
+    // an editable snapshot after loading rather than auto-updating on import.
+    const ownedChoices=raw.manualMastery&&typeof raw.manualMastery==='object'||
+      raw.manualStigma&&typeof raw.manualStigma==='object'||
+      Array.isArray(raw.customStigmas)||
+      Object.keys(raw.customSpecialties||{}).length>0||
+      Object.keys(raw.customMacros||{}).length>0||
+      raw.boardMode==='custom';
+    result.buildMode=raw.buildMode==='custom'||ownedChoices?'custom':'recommended';
     result.leveling={level:clamp(raw.leveling?.level??1,1,45),extraByLevel:{}};
     for(const [level,extra] of Object.entries(raw.leveling?.extraByLevel||{}))if(/^\d{1,2}$/.test(level)&&Number(level)>=1&&Number(level)<=45&&extra&&typeof extra==='object')result.leveling.extraByLevel[level]={mastery:numeric(extra.mastery,462),stigma:numeric(extra.stigma,300),crystals:numeric(extra.crystals,570)};
     const entries=[...DATA[cls].boards,ARIEL[cls],AZPHEL[cls]].flatMap(board=>board.nodes.map(node=>({id:node[0],board:board.name,node}))),byId=new Map(entries.map(entry=>[entry.id,entry]));
@@ -66,7 +75,8 @@
       result.manualStigma={};
       for(const [name,value] of Object.entries(raw.manualStigma))if(STIGMAS[cls][name])result.manualStigma[name]=clamp(value,0,20);
     }
-    if(Array.isArray(raw.customStigmas)&&raw.customStigmas.length===4&&new Set(raw.customStigmas).size===4&&raw.customStigmas.every(name=>typeof name==='string'&&STIGMAS[cls][name]))
+    if(Array.isArray(raw.customStigmas)&&raw.customStigmas.length===4&&raw.customStigmas.every(name=>name===null||typeof name==='string'&&STIGMAS[cls][name])&&
+      new Set(raw.customStigmas.filter(Boolean)).size===raw.customStigmas.filter(Boolean).length)
       result.customStigmas=[...raw.customStigmas];
     result.customMacros=typeof CustomMacroEditor!=='undefined'?CustomMacroEditor.sanitizeCollection(raw.customMacros,cls):{};
     result.customSpecialties={};
@@ -102,7 +112,22 @@
   });
   $('share-dialog-close').addEventListener('click',()=>$('share-dialog').close());
   $('share-copy-button').addEventListener('click',async()=>{try{await navigator.clipboard.writeText($('share-url').value);$('share-status').textContent='Build link copied.'}catch(_){$('share-url').select();$('share-status').textContent='Select and copy the link from the field.'}});
-  $('shared-build-load').addEventListener('click',()=>{if(!incoming)return;const cls=incoming.cls;state.class=cls;state.accounts[cls]=safeAccount(incoming.account,cls);state.gearView=['inventory','inspect'].includes(incoming.gearView)?incoming.gearView:null;state.tab=['overview','gear','boards','mastery','stigma','rotation','titles','sources'].includes(incoming.tab)?incoming.tab:'overview';state.board=ALL_BOARD_NAMES.includes(incoming.board)?incoming.board:'Nezekan';theme=['aether','sanctum','abyss'].includes(incoming.theme)?incoming.theme:'aether';try{localStorage.setItem('daeva-architect-theme',theme)}catch(_){}if(!boardOpen(state.board))state.board='Nezekan';state.preview=['Azphel','Ariel'].includes(state.board)?(account()[state.board.toLowerCase()]||0):budget('crystals');state.node=null;$('shared-build-banner').hidden=true;incoming=null;clearSharedFragment();render();document.querySelector('.tabs')?.scrollIntoView({behavior:'smooth',block:'start'})});
+  $('shared-build-load').addEventListener('click',()=>{if(!incoming)return;const cls=incoming.cls;state.class=cls;state.accounts[cls]=safeAccount(incoming.account,cls);state.gearView=['inventory','inspect'].includes(incoming.gearView)?incoming.gearView:null;state.tab=['overview','gear','boards','mastery','stigma','rotation','titles','sources'].includes(incoming.tab)?incoming.tab:'overview';state.board=ALL_BOARD_NAMES.includes(incoming.board)?incoming.board:'Nezekan';theme=['aether','sanctum','abyss'].includes(incoming.theme)?incoming.theme:'aether';try{localStorage.setItem('daeva-architect-theme',theme)}catch(_){}if(!boardOpen(state.board))state.board='Nezekan';state.preview=['Azphel','Ariel'].includes(state.board)?(account()[state.board.toLowerCase()]||0):budget('crystals');state.node=null;
+    if(account().buildMode==='recommended')applyRecommendedBuild();
+    else {
+      const a=account();
+      if(a.boardMode==='recommended'){
+        // Legacy mixed plans could have user-edited ranks plus a live
+        // recommended board. Freeze those board nodes without touching ranks.
+        const proposal=previewRecommendedBuild();
+        a.customNodes=proposal.customNodes;
+        a.customAzphelNodes=proposal.customAzphelNodes;
+        a.customArielNodes=proposal.customArielNodes;
+        a.boardMode='custom';
+      }
+      a.buildMode='custom';
+    }
+    $('shared-build-banner').hidden=true;incoming=null;clearSharedFragment();render();document.querySelector('.tabs')?.scrollIntoView({behavior:'smooth',block:'start'})});
   $('shared-build-dismiss').addEventListener('click',()=>{incoming=null;$('shared-build-banner').hidden=true;clearSharedFragment()});
   window.addEventListener('hashchange',inspectSharedFragment);
   inspectSharedFragment();

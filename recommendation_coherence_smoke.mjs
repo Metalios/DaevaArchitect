@@ -1,3 +1,4 @@
+import {useLegacyRecommendations} from './legacy_recommendation_test_setup.mjs';
 // Validate that visible current-level rotation skills agree with the actual
 // recommended equipped Stigmas and data skill unlocks. No DPS claims.
 import {chromium} from 'playwright';
@@ -11,6 +12,7 @@ try{
  const errors=[];
  page.on('pageerror',error=>errors.push(error.message));
  await page.goto(pathToFileURL(path.resolve('dist/index.html')).href);
+ await useLegacyRecommendations(page);
  const result=await page.evaluate(()=>{
   const failures=[],classes=['templar','gladiator','assassin','ranger','sorcerer','spiritmaster','cleric','chanter'];
   let checked=0;

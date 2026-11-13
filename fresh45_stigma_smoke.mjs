@@ -1,3 +1,4 @@
+import {useLegacyRecommendations} from './legacy_recommendation_test_setup.mjs';
 // Global 45 Stigma total: 29 level-up shards plus the Ascension reward.
 // Test actual client UI, reset button, leveling handoff and saved data safety.
 import assert from 'node:assert/strict';
@@ -10,6 +11,7 @@ try{
   const page=await browser.newPage({viewport:{width:1280,height:800}});
   const errors=[];page.on('pageerror',error=>errors.push(error.message));
   await page.goto(pathToFileURL(path.resolve('dist/index.html')).href);
+ await useLegacyRecommendations(page);
   const all=await page.evaluate(()=>{
     const classes=['templar','gladiator','assassin','ranger',
       'sorcerer','spiritmaster','cleric','chanter'];

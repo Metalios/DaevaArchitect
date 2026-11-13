@@ -1,3 +1,4 @@
+import {useLegacyRecommendations} from './legacy_recommendation_test_setup.mjs';
 // Regression for recalculation behavior after a shared-build import.
 // The optimizer may return identical tiles; the UI must report that fact,
 // not make the button appear inert. Actual gold purchases remain separate.
@@ -12,6 +13,7 @@ try {
   const errors=[];
   page.on('pageerror',err=>errors.push(err.message));
   await page.goto(pathToFileURL(path.resolve('dist/index.html')).href);
+ await useLegacyRecommendations(page);
   const first=await page.evaluate(()=>{
     state.class='templar';
     const a=account();
@@ -137,8 +139,8 @@ try {
   assert.deepEqual(resetAll.marked,[]);
   assert.deepEqual(resetAll.custom,[]);
   assert.deepEqual(resetAll.customAz,[]);
-  assert.equal(resetAll.boardMode,'recommended');
-  assert(resetAll.snapshot,'Reset should recalculate the default blue path');
+  assert.equal(resetAll.boardMode,'custom');
+  assert.equal(resetAll.snapshot,false,'Reset must not silently recreate a recommended plan');
   assert.deepEqual(resetAll.after,resetAll.original);
   assert.match(resetAll.message,/Reset selections: cleared 2 obtained gold tiles and 2 custom tiles/);
   assert.match(await page.locator('.v2-board-method').textContent(),/not an exhaustive combat search/);
@@ -148,6 +150,9 @@ try {
   // of the recommendation fingerprint, not merely the gear summary.
   const gearReplan=await page.evaluate(()=>{
     const a=account(),slot=gearSlot('top');
+    // Explicitly opt in to the recommendation engine for fingerprint checks.
+    a.buildMode='recommended';a.boardMode='recommended';a.manualMastery=null;
+    a.manualStigma=null;a.customStigmas=null;a.recommendedRouteSnapshot=null;
     if(!slot)throw Error('No top gear slot found');
     const item=GEAR_CATALOG.items.find(x=>x.type===gearAllowedType(slot));
     if(!item)throw Error('No top catalog item found');
@@ -176,9 +181,13 @@ try {
   const second=await browser.newPage({viewport:{width:1280,height:900}});
   try{
     await second.goto(shared);
+ await useLegacyRecommendations(second);
     await second.locator('#shared-build-load').click();
-    await second.locator('#v2-board-restore').click();
-    assert.match(await second.locator('#v2-board-notice').innerText(),/Recalculated:/);
+    await second.locator('#v2-preview-recommended').click();
+    assert(await second.locator('#v2-comparison').isVisible(),
+      'Imported build should preview a non-destructive recommendation');
+    await second.locator('#v2-comparison-reset').click();
+    assert.equal(await second.evaluate(()=>account().buildMode),'custom');
   }finally{await second.close()}
   console.log('PASS: unchanged route explained; increased budget re-evaluated; custom plan reset; obtained marks preserved until confirmed clear; shared build recalculation works.');
 }finally{await browser.close()}

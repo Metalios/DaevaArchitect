@@ -1,3 +1,4 @@
+import {useLegacyRecommendations} from './legacy_recommendation_test_setup.mjs';
 // Global Daevanion UI: keep planned allocations in tabs while tracking real
 // spent crystals separately. Single click previews; native double-click buys.
 // Blue suggestions do not shuffle until the entered budget is fully recorded.
@@ -11,6 +12,7 @@ try{
  const page=await browser.newPage({viewport:{width:1280,height:900}});
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto(pathToFileURL(path.resolve('dist/index.html')).href);
+ await useLegacyRecommendations(page);
  const initial=await page.evaluate(()=>{
    state.class='templar';
    const a=account();a.journey='endgame';a.context='solo';a.crystals=119;

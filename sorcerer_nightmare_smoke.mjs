@@ -1,3 +1,4 @@
+import {useLegacyRecommendations} from './legacy_recommendation_test_setup.mjs';
 // Browser acceptance: actual DaevaArchitect model(), not just recommendations.
 // Checks fresh45 Solo Nightmare goals change funded ranks, Stigmas and boards.
 import {chromium} from 'playwright';
@@ -9,6 +10,7 @@ try{
  const page=await browser.newPage({viewport:{width:1440,height:900}});
  const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await page.goto(pathToFileURL(path.resolve('dist/index.html')).href);
+ await useLegacyRecommendations(page);
  const results=await page.evaluate(()=>{
   state.class='sorcerer';
   const a=account();

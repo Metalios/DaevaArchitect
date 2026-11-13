@@ -1,3 +1,4 @@
+import {useLegacyRecommendations} from './legacy_recommendation_test_setup.mjs';
 // Browser smoke test for the v2 build composer. Requires: npm install playwright
 // and npx playwright install chromium. No changes to the user's saved browser data.
 import assert from 'node:assert/strict';
@@ -83,6 +84,7 @@ try{
   page.on('pageerror',error=>errors.push(width+': '+error.message));
   const port=server.address().port;
   await page.goto('http://127.0.0.1:'+port+'/',{waitUntil:'domcontentloaded'});
+ await useLegacyRecommendations(page);
   await page.locator('#class-buttons [data-class="templar"]').click();
   await page.locator('#v2-skill-list .v2-skill').first()
     .waitFor({state:width<1700?'attached':'visible'});
@@ -182,7 +184,7 @@ try{
   const square=await page.locator('#board-grid .node').first().evaluate(el=>Math.abs(el.getBoundingClientRect().width-el.getBoundingClientRect().height)<1);
   assert(square,width+': Daevanion tiles must be square');
   assert((await page.locator('#board-grid .node.recommended').count())>0,width+': missing recommendation overlay');
-  assert.match(await page.locator('#v2-status').innerText(),/Following recommended/);
+  assert.match(await page.locator('#v2-status').innerText(),/Legacy recommended path/);
   // Medium widths have an explicit editor rail. Inspect Gear in its
   // visible editor instead of trying to click an intentionally hidden panel.
   if(width<1700)await page.locator('[data-v3-editor="gear"]').click();
@@ -234,7 +236,7 @@ try{
   // Inputs are not a build decision.
   await page.locator('#mastery-input').fill('220');
   await page.locator('#mastery-input').press('Tab');
-  assert.match(await page.locator('#v2-status').innerText(),/Following recommended/,width+': points marked custom');
+  assert.match(await page.locator('#v2-status').innerText(),/Legacy recommended path/,width+': points marked custom');
   if(width<1700)await page.locator('[data-v3-editor="mastery"]').click();
   if(width>=1920){
     const cardColumns=await page.locator('#v2-stigma-list').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length);
@@ -261,7 +263,7 @@ try{
   await page.locator('#v2-skill-list [data-v2-rank="Pummel"][data-dir="-1"]').click();
   assert.match(await page.locator('#v2-status').innerText(),/Modified progression/);
   await page.locator('#v2-reset-allocations').click();
-  assert.match(await page.locator('#v2-status').innerText(),/Following recommended/);
+  assert.match(await page.locator('#v2-status').innerText(),/Custom build/);
   if(width<1700){
    await page.locator('[data-v3-editor="stigma"]').click();
    assert.equal(await page.locator('#stigma').isVisible(),true);
@@ -278,7 +280,7 @@ try{
   assert.equal(await page.locator('#v2-stigma-panel [data-v2-stigma-choice]').count(),13);
   if(width===1920)await page.screenshot({path:'v2-previews/stigma-flyout-1920.png',fullPage:true});
   await page.locator('#v2-stigma-panel [data-v2-stigma-rank][data-dir="-1"]').click();
-  assert.match(await page.locator('#v2-status').innerText(),/Modified progression/);
+  assert.match(await page.locator('#v2-status').innerText(),/Custom build/);
   await page.locator('#v2-stigma-done').click();
   assert.equal(await page.locator('#v2-stigma-panel').isVisible(),false);
   await page.locator('#v2-stigma-reset').click();
@@ -315,6 +317,7 @@ try{
   const page=await browser.newPage({viewport:{width,height},deviceScaleFactor:1});
   page.on('pageerror',error=>errors.push(width+': '+error.message));
   await page.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'domcontentloaded'});
+ await useLegacyRecommendations(page);
   await page.locator('#class-buttons [data-class="templar"]').click();
   // Mobile initially shows Daevanion, so Mastery is mounted but hidden.
   // Verify it is populated before explicitly selecting the Mastery editor.
@@ -363,6 +366,7 @@ try{
   const page=await browser.newPage({viewport:{width,height},deviceScaleFactor:1});
   page.on('pageerror',error=>errors.push(width+'x'+height+': '+error.message));
   await page.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'domcontentloaded'});
+ await useLegacyRecommendations(page);
   await page.locator('#class-buttons [data-class="templar"]').click();
   await page.waitForFunction(()=>document.querySelector('#v2-board-fit')?.getAttribute('aria-pressed')==='true');
   const initial=await page.evaluate(()=>{

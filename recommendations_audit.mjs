@@ -31,7 +31,7 @@ for(const cls of Object.keys(DATA)){
   assert(advice.why.length>=30,cls+' '+mode+': rationale missing');
   for(const level of [1,12,20,22,23,27,32,37,40,45]){
    ctx.api.state.class=cls;
-   const a=ctx.api.account();a.journey='leveling';a.context=mode;a.leveling.level=level;
+   const a=ctx.api.account();a.buildMode='recommended';a.boardMode='recommended';a.journey='leveling';a.context=mode;a.leveling.level=level;
    a.manualMastery=null;a.manualStigma=null;a.customStigmas=null;a.customSpecialties={};
    a.gear={};
    const selected=Array.from(ctx.api.activeStigmas());
@@ -51,7 +51,7 @@ for(const cls of Object.keys(DATA)){
   if(mode!=='pvp'){
    for(let level=1;level<=45;level++){
     ctx.api.state.class=cls;
-    const a=ctx.api.account();a.journey='leveling';a.context=mode;
+    const a=ctx.api.account();a.buildMode='recommended';a.boardMode='recommended';a.journey='leveling';a.context=mode;
     a.leveling.level=level;a.manualStigma=null;a.customStigmas=null;
     const {names,allocation:plan}=ctx.api.recommendedStigmaAllocation();
     const unlocked=Array.from(ctx.api.activeStigmas()).slice(0,ctx.LEVEL_REWARDS[level].slots);

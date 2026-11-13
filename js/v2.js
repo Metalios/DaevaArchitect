@@ -27,7 +27,7 @@ settingsToggle.type='button';
 settingsToggle.setAttribute('aria-expanded','false');
 settingsToggle.setAttribute('aria-label','Show or hide character build settings');
 quick.append(settingsToggle);
-const nav=make('nav','v2-nav',`<button type="button" data-v2-tab="workspace">Build workspace</button><button type="button" data-v2-tab="rotation">Rotation & macro</button><button type="button" data-v2-tab="titles">Titles</button><button type="button" data-v2-tab="sources">Research notes</button><button type="button" id="v2-reset-allocations">Restore recommended allocations</button>`);
+const nav=make('nav','v2-nav',`<button type="button" data-v2-tab="workspace">Build workspace</button><button type="button" data-v2-tab="rotation">Rotation & macro</button><button type="button" data-v2-tab="titles">Titles</button><button type="button" data-v2-tab="sources">Research notes</button><button type="button" id="v2-new-blank">New blank build</button><button type="button" id="v2-preview-recommended">Preview recommendation</button><button type="button" id="v2-reset-allocations">Apply recommendation</button>`);
 const work=make('div','v2-workspace');work.id='v2-workspace';
 // Approved target: keep all existing editors mounted and their state intact.
 // Only the panel visibility/layout changes when switching editors.
@@ -95,7 +95,7 @@ const boardControls=make('div','v2-board-controls',`
  </details>
  <p id="v2-optimizer-evidence" class="v2-optimizer-evidence" aria-live="polite"></p>
  <p id="v2-board-notice" role="status" aria-live="polite"></p>`);
-const modal=make('dialog','v2-comparison',`<div class="v2-compare-head"><h2>Your build vs. recommended</h2><button type="button" id="v2-comparison-close">✕</button></div><p>Compared at the same class, level, play context, and point totals. Recorded equipment skill-level bonuses and the estimated CP baseline can influence the Daevanion route; full gear stat optimization is not implemented.</p><div id="v2-comparison-body"></div><button type="button" id="v2-comparison-reset">Restore recommended allocations (keep gear)</button>`);modal.id='v2-comparison';
+const modal=make('dialog','v2-comparison',`<div class="v2-compare-head"><h2>Your build vs. recommended</h2><button type="button" id="v2-comparison-close">✕</button></div><p>Compared at the same class, level, play context, and point totals. Recorded equipment skill-level bonuses and the estimated CP baseline can influence the Daevanion route; full gear stat optimization is not implemented.</p><div id="v2-comparison-body"></div><button type="button" id="v2-comparison-reset">Apply this recommendation (editable copy, keep gear)</button>`);modal.id='v2-comparison';
 const archetype=make('p','v2-archetype');
 const slim=make('div','v2-slim-heading',`<span id="v2-master-status"></span><button type="button" id="v2-master-restore">Restore ranks</button>`);
 const stigmaStatus=make('span','v2-stigma-status');stigmaStatus.id='v2-stigma-status';
@@ -298,7 +298,7 @@ function skillsView(m){
          <span class="v2-spec-number">${id}</span><span><b>${esc(description)}</b><small>${locked?`Opens at effective Lv ${gate}`:selected?'In this plan':advisedPick?'Recommended for this stage':'Available'}</small></span>
          <strong>${selected?'✓':locked?'🔒':'+'}</strong></button>`;
      }).join('')}</div>`}
-     <div class="v2-flyout-foot"><button type="button" id="v2-spec-restore" ${a.customSpecialties?.[skill]?'':'disabled'}>Use recommended Specialties</button><button type="button" id="v2-spec-done">Done</button></div>
+     <div class="v2-flyout-foot"><button type="button" id="v2-spec-restore" ${recommended.length&&JSON.stringify(picks)!==JSON.stringify(recommended)?'':'disabled'}>Use recommended Specialties</button><button type="button" id="v2-spec-done">Done</button></div>
      </div>`;
  }
  const masteryLeft=Math.max(0,budget('mastery')-m.mastery.spent);
@@ -307,7 +307,7 @@ function skillsView(m){
    m.mastery.next?` · next rank costs ${m.mastery.next.cost} (need ${m.mastery.next.need} more)`:
      ' · all legal skill ranks capped';
  $('v2-master-status').textContent=`Mastery: ${m.mastery.spent} / ${budget('mastery')} points allocated · ${masteryLeft} unspent${masteryReason}`;
- $('v2-master-restore').disabled=!a.manualMastery;
+ $('v2-master-restore').disabled=!a.manualMastery||!Object.values(a.manualMastery).some(n=>Number(n)>1);
 }
 function stigmasView(m){
  const slots=isLeveling()?levelReward().slots:4,load=activeStigmas(),names=Object.keys(STIGMAS[state.class]),
@@ -316,29 +316,29 @@ function stigmasView(m){
   if(i>=slots)return `<div class="v2-stigma-card locked"><span class="v2-stigma-locked-art">🔒</span><strong>Slot ${i+1}</strong><small>Opens at Lv ${[22,27,32,37][i]}</small></div>`;
   const name=load[i],level=m.stigma.levels[name]||0;
   return `<button type="button" data-v2-open-stigma="${i}" class="v2-stigma-card ${stigmaSlotOpen===i?'chosen':''}" aria-expanded="${stigmaSlotOpen===i}" aria-controls="v2-stigma-panel">
-    ${gameSkillIconMarkup(state.class,name,'v2-stigma-art')}<strong>${esc(name)}</strong><small>Lv ${level} / 20</small>
+    ${name?gameSkillIconMarkup(state.class,name,'v2-stigma-art'):'<span class="v2-stigma-art">+</span>'}<strong>${name?esc(name):'Empty Stigma slot'}</strong><small>${name?'Lv '+level+' / 20':'Choose a Stigma'}</small>
     <span class="v2-stigma-card-action">${stigmaSlotOpen===i?'Editing':'Edit loadout ›'}</span>
    </button>`;
  }).join('');
  $('stigma-heading').textContent='Stigma loadout';
  $('v2-stigma-status').textContent=`${slots}/4 slots · ${m.stigma.spent}/${budget('stigma')} planned`;
  $('v2-stigma-remaining').textContent=`${Math.max(0,budget('stigma')-m.stigma.spent)} points unspent`;
- $('v2-stigma-reset').disabled=!account().manualStigma&&!account().customStigmas;
+ $('v2-stigma-reset').disabled=activeStigmas().every(name=>!name)&&!Object.values(account().manualStigma||{}).some(Number);
  const panel=$('v2-stigma-panel');
  if(stigmaSlotOpen<0||stigmaSlotOpen>=slots){panel.hidden=true;panel.innerHTML='';return}
  const selected=load[stigmaSlotOpen],lv=m.stigma.levels[selected]||0,
-       stigma=STIGMAS[state.class][selected],perks=stigma?.perks||{};
+       stigma=selected?STIGMAS[state.class][selected]:null,perks=stigma?.perks||{};
  const used=new Map(load.slice(0,slots).map((name,i)=>[name,i]));
  panel.hidden=false;
  panel.innerHTML=`<header class="v2-flyout-head"><span class="v2-flyout-eyebrow">EDIT STIGMA · SLOT ${stigmaSlotOpen+1}</span>
    <button type="button" class="v2-flyout-close" id="v2-stigma-close" aria-label="Close Stigma editor">✕</button>
-   <div class="v2-flyout-skill-title">${gameSkillIconMarkup(state.class,selected,'v2-flyout-art')}<div><h3>${esc(selected)}</h3><small>${slots} unlocked Stigma slots · ${budget('stigma')-m.stigma.spent} unspent points</small></div></div></header>
+   <div class="v2-flyout-skill-title">${selected?gameSkillIconMarkup(state.class,selected,'v2-flyout-art'):'<span class="v2-flyout-art">+</span>'}<div><h3>${selected?esc(selected):'Empty Stigma slot'}</h3><small>${slots} unlocked Stigma slots · ${budget('stigma')-m.stigma.spent} unspent points</small></div></div></header>
    <div class="v2-flyout-content">
      <p class="v2-flyout-guidance">${esc(advised?.why||'Stigma loadout is based on the selected class and context.')}</p>
      <div class="v2-stigma-level-editor"><span>Equipped Stigma rank</span>
         <button type="button" data-v2-stigma-rank="${stigmaSlotOpen}" data-dir="-1" ${lv<=0?'disabled':''} aria-label="Decrease Stigma rank">−</button>
         <strong>Lv ${lv} / 20</strong>
-        <button type="button" data-v2-stigma-rank="${stigmaSlotOpen}" data-dir="1" ${lv>=20||m.stigma.spent+stigmaCost(lv+1)>budget('stigma')?'disabled':''} aria-label="Increase Stigma rank">+</button>
+        <button type="button" data-v2-stigma-rank="${stigmaSlotOpen}" data-dir="1" ${!selected||lv>=20||m.stigma.spent+stigmaCost(lv+1)>budget('stigma')?'disabled':''} aria-label="Increase Stigma rank">+</button>
      </div>
      <p class="v2-stigma-base">${esc(stigma?.base||'Check Global client tooltip for this Stigma effect.')}</p>
      <div class="v2-stigma-milestones">${[5,10,15,20].map(rank=>`<div class="${lv>=rank?'on':''}"><b>Lv ${rank} ${lv>=rank?'✓':''}</b><span>${esc(perks[rank]||'No verified effect text')}</span></div>`).join('')}</div>
@@ -350,7 +350,7 @@ function stigmasView(m){
           ${gameSkillIconMarkup(state.class,name,'v2-stigma-picker-art')}<span><b>${esc(name)}</b>
           <small>${inOther?`Equipped slot ${idx+1} · swaps positions`:isCurrent?'Currently equipped':esc(desc.slice(0,86))}</small></span></button>`;
      }).join('')}</div>
-     <div class="v2-flyout-foot"><button type="button" id="v2-stigma-restore">Use recommended Stigmas</button><button type="button" id="v2-stigma-done">Done</button></div>
+     <div class="v2-flyout-foot"><button type="button" id="v2-stigma-restore">Apply suggested Stigmas</button><button type="button" id="v2-stigma-done">Done</button></div>
    </div>`;
 }
 function actionsView(m){
@@ -387,8 +387,8 @@ function actionsView(m){
  // Keep Compare builds, class-specific combat evidence and guidance
  // accessible in the collapsed upgrade drawer, rather than deleting them.
  next.querySelector('.v4-next-content')?.append(note,combatEvidence);
- $('v2-status').innerHTML=modifiedBuild()?'<b class="modified">● Modified progression</b><small>Custom allocation</small>':'<b>● Following recommended</b><small>Your own gear stays separate</small>';
- $('v2-reset-allocations').hidden=!modifiedBuild();
+ $('v2-status').innerHTML=account().buildMode==='custom'?'<b class="modified">● Custom build</b><small>Your allocations stay editable</small>':modifiedBuild()?'<b class="modified">● Modified progression</b><small>Legacy recommendation with pinned edits</small>':'<b>● Legacy recommended path</b><small>Apply to make an editable copy</small>';
+ $('v2-reset-allocations').hidden=false;
  $('v2-board-notice').textContent=lastBoardRecalculation?.message||message||'';
  $('v2-board-notice').hidden=!$('v2-board-notice').textContent;
  const n=nodeMap().get(state.node);
@@ -506,24 +506,35 @@ function sync(m){
  if(typeof window.syncV5==='function')window.syncV5(m);
 }
 function restore(){
- const a=account();a.manualMastery=null;a.manualStigma=null;a.customStigmas=null;a.customSpecialties={};
- recalculateRecommendedBoards();
- message='Recommended allocations recalculated. Your earned points, equipment and obtained Daevanion tiles were preserved.';render();
+ const chosen=applyRecommendedBuild();
+ message='Applied recommendation as an independent, editable build. Your gear, earned currency and obtained purchases were preserved.';
+ render();
 }
 function compare(){
- const m=model(),baseline=allocate(masteryStages(),budget('mastery'),masteryCost,skillNames(),1,masteryRankCap),
- names=skillNames(),diff=names.filter(n=>m.mastery.levels[n]!==baseline.levels[n]);
- const picked=activeStigmas(),stig=optimizeRecommendedStigmas(picked,budget('stigma'));
- const changes=picked.filter(n=>(m.stigma.levels[n]||0)!==(stig.levels[n]||0));
- const recommendedLoadout=recommendedStigmas();
- const loadoutChanged=picked.some((n,i)=>n!==recommendedLoadout[i]);
- const reason=(typeof adviceFor==='function'?adviceFor(state.class,account().context,account().pveObjective)?.why:null)||'Balance damage and survival according to class.';
- $('v2-comparison-body').innerHTML=`<h3>Mastery</h3>${diff.length?diff.map(n=>`<p>${esc(n)} · Recommended ${baseline.levels[n]} → Your ${m.mastery.levels[n]}</p>`).join(''):'<p>No Mastery rank differences.</p>'}
- <h3>Stigmas</h3><p>Breakpoint-optimized ranks with a research-informed loadout (${esc(account().context)}): ${recommendedLoadout.map(esc).join(' · ')}</p>
- ${loadoutChanged?`<p>Your equipped Stigmas: ${picked.map(esc).join(' · ')}</p>`:'<p>Your Stigma choices match the recommended loadout.</p>'}
- ${changes.length?changes.map(n=>`<p>${esc(n)} · Suggested investment Lv ${stig.levels[n]||0} → Your Lv ${m.stigma.levels[n]||0}</p>`).join(''):'<p>No equipped Stigma level differences.</p>'}
- <h3>Why this context?</h3><p>${esc(reason)}</p>
- <h3>Daevanion</h3><p>${account().boardMode==='custom'?'Custom connected route; recommended tile highlights remain available.':'Following the recommended connected route.'}</p>`;
+ const m=model(),proposal=previewRecommendedBuild(),original=proposal.planned,
+   names=skillNames(),diff=names.filter(name=>(m.mastery.levels[name]||1)!==(proposal.mastery[name]||1)),
+   actualStigmas=activeStigmas().filter(Boolean),
+   proposedStigmas=proposal.stigmas.filter(Boolean),
+   stigmaNames=[...new Set([...actualStigmas,...proposedStigmas])],
+   stigmaDiff=stigmaNames.filter(name=>(m.stigma.levels[name]||0)!==(proposal.stigma[name]||0)),
+   reason=adviceFor(state.class,account().context,account().pveObjective)?.why||
+     'Class and scenario progression priorities';
+ const boardLine=(label,ids)=>label+': '+ids.length+' connected selected tiles';
+ $('v2-comparison-body').innerHTML=
+   '<p><b>Preview only.</b> Nothing is changed until you explicitly apply this recommendation. Applying creates a fully editable copy.</p>'+
+   '<h3>Mastery</h3>'+
+   (diff.length?diff.slice(0,24).map(name=>'<p>'+esc(name)+': current Lv '+
+     (m.mastery.levels[name]||1)+' → proposed Lv '+(proposal.mastery[name]||1)+'</p>').join(''):
+     '<p>No Mastery rank differences.</p>')+
+   '<h3>Stigmas</h3><p>Proposed loadout: '+esc(proposedStigmas.join(' · ')||'none')+'</p>'+
+   (stigmaDiff.length?stigmaDiff.map(name=>'<p>'+esc(name)+': current Lv '+
+     (m.stigma.levels[name]||0)+' → proposed Lv '+(proposal.stigma[name]||0)+'</p>').join(''):
+     '<p>No Stigma rank differences.</p>')+
+   '<h3>Daevanion</h3><p>'+esc(boardLine('PvE',proposal.customNodes))+
+     ' · '+esc(boardLine('Azphel',proposal.customAzphelNodes))+
+     ' · '+esc(boardLine('Ariel',proposal.customArielNodes))+'</p>'+
+   '<p>Current custom plan is kept until Apply. Recorded purchases, equipment and earned point budgets are never reset by Apply.</p>'+
+   '<h3>Scenario rationale</h3><p>'+esc(reason)+'</p>';
  modal.showModal();
 }
 function bind(){
@@ -564,7 +575,12 @@ function bind(){
  $('v2-share').addEventListener('click',()=>$('share-build-button').click());
  nav.addEventListener('click',e=>{const b=e.target.closest('[data-v2-tab]');if(!b)return;state.tab=b.dataset.v2Tab==='workspace'?'mastery':b.dataset.v2Tab;render();if(state.tab!=='mastery'&&!document.body.classList.contains('v5-active'))extra.scrollIntoView({block:'start',behavior:'smooth'})});
  $('v2-reset-allocations').addEventListener('click',restore);
- $('v2-master-restore').addEventListener('click',()=>{account().manualMastery=null;render()});
+ $('v2-preview-recommended').addEventListener('click',compare);
+ $('v2-new-blank').addEventListener('click',()=>{
+   if(!window.confirm('Start a completely blank custom build? This clears recorded equipment, purchased tiles, Mastery, Stigmas, Specialties and macros for this class. Earned point budgets, class, level and scenario are retained.'))return;
+   beginBlankBuild();message='Blank custom build created. Assign your own Mastery, Stigmas, boards, equipment and macros.';render();
+ });
+ $('v2-master-restore').addEventListener('click',()=>{account().manualMastery={};account().buildMode='custom';render()});
  for(const [id,tab] of [['v2-active-filter','active'],['v2-passive-filter','passive']]){
   $(id).addEventListener('click',()=>{skillTab=tab;specialtyOpen=false;sync(model())});
  }
@@ -586,11 +602,11 @@ function bind(){
  });
  $('v2-spec-panel').addEventListener('click',e=>{
  if(e.target.closest('#v2-spec-close')||e.target.closest('#v2-spec-done')){specialtyOpen=false;sync(model());return}
- if(e.target.closest('#v2-spec-restore')){delete account().customSpecialties?.[skill];render();return}
+ if(e.target.closest('#v2-spec-restore')){account().customSpecialties ||= {};account().customSpecialties[skill]=recommendedSpecPicks(skill,effective(skill,model()));render();return}
  const b=e.target.closest('[data-v2-spec]');if(!b)return;
  const n=Number(b.dataset.v2Spec),level=effective(skill,model()),min=n<=3?8:n===4?12:16;if(level<min)return;
  const a=account();a.customSpecialties ||= {};
- const selections=[...(a.customSpecialties[skill]||recommendedSpecPicks(skill,level))],index=selections.indexOf(n);
+ const selections=[...specPicks(skill,level)],index=selections.indexOf(n);
  if(index>=0)selections.splice(index,1);else if(selections.length<specialtySlots(level))selections.push(n);else {selections.shift();selections.push(n)}
  a.customSpecialties[skill]=selections;message='Edited '+skill+' specializations.';render();
  });
@@ -601,7 +617,7 @@ function bind(){
  });
  $('v2-stigma-panel').addEventListener('click',e=>{
   if(e.target.closest('#v2-stigma-close')||e.target.closest('#v2-stigma-done')){stigmaSlotOpen=-1;sync(model());return}
-  if(e.target.closest('#v2-stigma-restore')){account().manualStigma=null;account().customStigmas=null;render();return}
+  if(e.target.closest('#v2-stigma-restore')){const r=previewRecommendedBuild();account().buildMode='custom';account().manualStigma=r.stigma;account().customStigmas=r.stigmas;render();return}
   const select=e.target.closest('[data-v2-stigma-choice]');
   if(select){
    const index=Number(select.dataset.v2StigmaChoice),name=select.dataset.stigma;
@@ -619,7 +635,7 @@ function bind(){
   a.manualStigma ||= {...m.stigma.levels};a.manualStigma[name]=rank;
   message='Adjusted '+name+' to Stigma rank '+rank+'.';render();
  });
- $('v2-stigma-reset').addEventListener('click',()=>{account().manualStigma=null;account().customStigmas=null;stigmaSlotOpen=-1;render()});
+ $('v2-stigma-reset').addEventListener('click',()=>{account().manualStigma={};account().customStigmas=[null,null,null,null];account().buildMode='custom';stigmaSlotOpen=-1;render()});
  $('v2-board-toggle').addEventListener('click',()=>{
  const entry=nodeMap().get(state.node);if(!entry||!entry.node[5]){message='Select a purchasable node first.';sync(model());return}
  if(!boardOpen(entry.board)){message='This board is not unlocked.';sync(model());return}
@@ -636,9 +652,8 @@ function bind(){
   });
  }
  $('v2-board-restore').addEventListener('click',()=>{
-   const report=recalculateRecommendedBoards();
-   message=report.message;
-   render();
+   if(account().buildMode==='custom'){compare();return}
+   const report=recalculateRecommendedBoards();message=report.message;render();
  });
  $('v2-board-reset-selections').addEventListener('click',()=>{
    const a=account(),gold=obtainedNodes().size,
@@ -646,11 +661,10 @@ function bind(){
    if(!window.confirm(`Reset every Daevanion selection on Nezekan, Zikel, Vaizel, Triniel, Ariel and Azphel? This clears ${gold} gold obtained mark${gold===1?'':'s'} and ${custom} custom planned tile${custom===1?'':'s'}. Your earned crystals, level, gear, Mastery and Stigmas stay unchanged.`))return;
    storeObtained(new Set());
    a.customNodes=[];a.customAzphelNodes=[];a.customArielNodes=[];
-   a.boardMode='recommended';
+   a.boardMode='custom';a.buildMode='custom';
    a.recommendedRouteSnapshot=null;
    lastBoardRecalculation=null;
-   const report=recalculateRecommendedBoards();
-   report.message=`Reset selections: cleared ${gold} obtained gold tile${gold===1?'':'s'} and ${custom} custom tile${custom===1?'':'s'} across supported boards. Recalculated the recommended path from your current build. Earned points, equipment, Mastery and Stigmas were preserved.`;
+   const report={message:`Reset selections: cleared ${gold} obtained gold tile${gold===1?'':'s'} and ${custom} custom tile${custom===1?'':'s'} across supported boards. Your custom board plan is now empty; Mastery, Stigmas, equipment and point totals were preserved.`};
    lastBoardRecalculation=report;
    boardRecalculationNotice=report.message;
    message=report.message;

@@ -1,3 +1,4 @@
+import {useLegacyRecommendations} from './legacy_recommendation_test_setup.mjs';
 // Regression: character-first budgets remain editable on every page, and the
 // six Daevanion boards clearly distinguish recommendations from purchases.
 import assert from 'node:assert/strict';
@@ -13,6 +14,7 @@ try{
   const url=pathToFileURL(path.resolve('dist/index.html'));
   url.searchParams.set('layout','character');
   await page.goto(url.href);
+ await useLegacyRecommendations(page);
   if(!await page.locator('body.v5-active').count()){
     await page.locator('#class-buttons [data-class="templar"]').click();
   }
