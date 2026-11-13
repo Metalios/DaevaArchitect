@@ -60,6 +60,10 @@ const CustomMacroEditor = (() => {
     const custom = current();
     suggested = seed(stacks, steps, hotbar, weave);
     available = new Set(usableSkills);
+    if (!custom && account().buildMode === 'custom')
+      return {stacks:[],steps:[],
+        hotbar:Array.from({length:8},()=>[[],'Unassigned','utility']),
+        weave,delays:[],custom:false};
     if (!custom) return {stacks, steps, hotbar, weave,
       delays: steps.map(() => 10), custom: false};
     const saved = normalize(custom, state.class);
