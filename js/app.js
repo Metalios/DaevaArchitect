@@ -1984,6 +1984,10 @@ function renderRotation(m){
   $('manual-keys').innerHTML=levelingMode?hotbar.flatMap(([skills,cue],i)=>skills.length?[`<div class="manual-key"><b>${i+1} · ${esc(skills.join(' / '))}</b><small>${esc(cue)}</small></div>`]:[]).join('')+(level>=16?'<div class="manual-key"><b>Space · Defiance</b><small>Break control or answer danger manually.</small></div>':''):
     useActualManual?hotbar.flatMap(([skills,cue],i)=>skills.length?[`<div class="manual-key"><b>${i+1} · ${esc(skills.join(' / '))}</b><small>${esc(cue)}</small></div>`]:[]).join(''):
     p.manual.map(v=>`<div class="manual-key"><b>${esc(v.split(' — ')[0])}</b><small>${esc(v.split(' — ')[1]||'Manual timing')}</small></div>`).join('');
+  if(!levelingMode&&a.buildMode==='custom'&&!macroSteps.length){
+    $('rotation-quick-guide').innerHTML='<h3>No macro assigned</h3><p>This build has no active macro steps. Use <b>Start empty macro</b> to design your own stacks and hotbar, or <b>Copy suggested macro</b> to begin with an editable recommendation. Neither option edits Mastery, Stigmas or Daevanion selections.</p>';
+    $('setup-list').innerHTML='<li>No macro steps assigned. Use the editable macro panel to create your own in-game key sequence.</li>';
+  }
   renderRotationSkillCoverage(m,p,stacks,hotbar,physicalHotkey);
 }
 function renderBoards(m){
