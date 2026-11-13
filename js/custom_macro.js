@@ -119,8 +119,8 @@ const CustomMacroEditor = (() => {
     const user = current();
     if (!user) {
       host.innerHTML = '<div class="custom-macro-heading"><div><h3>Editable macro & hotbar</h3>' +
-        '<p>Recommendations are a starting point. Save your own Q/E/R stacks, repeated macro steps and manual keys for this mode.</p>' +
-        '</div><button type="button" class="primary" data-cmacro-action="enable">Customize macro</button></div>';
+        '<p>No macro is saved for this scenario. The rotation panel shows an optional suggested setup, not a recorded selection. Start empty or copy the suggestion to edit.</p>' +
+        '</div><button type="button" data-cmacro-action="enable-blank">Start empty macro</button><button type="button" class="primary" data-cmacro-action="enable">Copy suggested macro</button></div>';
       return;
     }
     const data = normalize(user, state.class);
@@ -130,7 +130,7 @@ const CustomMacroEditor = (() => {
     host.innerHTML =
       '<div class="custom-macro-heading"><div><h3>Custom macro · ' + esc(contextKey(account())) +
       '</h3><p>Changes save immediately. Each game stack tries row 0 first; macro steps press stack keys, not skills.</p>' +
-      '</div><button type="button" data-cmacro-action="reset">Restore recommendation</button></div>' +
+      '</div><button type="button" data-cmacro-action="reset">Clear saved macro</button></div>' +
       '<p class="custom-macro-warning">Custom timing and automation are not combat-simulated. Charges, movement, healing and defensive skills may require manual control. Test in game.</p>' +
       (unavailable.length ? '<p class="custom-macro-warning">Not currently equipped/unlocked (kept in the saved setup but omitted from active macro): ' +
         esc(unavailable.join(', ')) + '</p>' : '') +
@@ -184,6 +184,14 @@ const CustomMacroEditor = (() => {
       const button = event.target.closest('[data-cmacro-action]');
       if (!button) return;
       const action = button.dataset.cmacroAction;
+      if (action === 'enable-blank') {
+        account().customMacros ||= {};
+        account().customMacros[contextKey(account())] = normalize({
+          stacks:{Q:[],E:[],R:[]},steps:[],
+          hotbar:Array.from({length:8},()=>[]),weave:''
+        },state.class);
+        save();renderApplication();return;
+      }
       if (action === 'enable') {
         account().customMacros ||= {};
         account().customMacros[contextKey(account())] = normalize(suggested, state.class);
