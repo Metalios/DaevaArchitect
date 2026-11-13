@@ -49,7 +49,7 @@ try{
  const rotations=await page.evaluate(()=>{
   const failures=[];
   for(const cls of ['gladiator','templar','assassin','ranger','sorcerer','spiritmaster','cleric','chanter']){
-   state.class=cls;const a=account();a.journey='endgame';a.context='solo';a.boardMode='recommended';
+   state.class=cls;const a=account();a.journey='endgame';a.context='solo';a.buildMode='recommended';a.boardMode='recommended';a.manualMastery=null;a.manualStigma=null;a.customStigmas=null;
    state.tab='rotation';render();
    const summary=document.querySelector('#rotation-quick-guide')?.textContent||'';
    if(!summary.includes('Row 0 at the bottom')||!summary.includes('in-game Macro hotkey')||!summary.includes('two mouse buttons'))
