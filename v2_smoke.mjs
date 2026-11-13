@@ -184,7 +184,7 @@ try{
   const square=await page.locator('#board-grid .node').first().evaluate(el=>Math.abs(el.getBoundingClientRect().width-el.getBoundingClientRect().height)<1);
   assert(square,width+': Daevanion tiles must be square');
   assert((await page.locator('#board-grid .node.recommended').count())>0,width+': missing recommendation overlay');
-  assert.match(await page.locator('#v2-status').innerText(),/Following recommended/);
+  assert.match(await page.locator('#v2-status').innerText(),/Legacy recommended path/);
   // Medium widths have an explicit editor rail. Inspect Gear in its
   // visible editor instead of trying to click an intentionally hidden panel.
   if(width<1700)await page.locator('[data-v3-editor="gear"]').click();
@@ -236,7 +236,7 @@ try{
   // Inputs are not a build decision.
   await page.locator('#mastery-input').fill('220');
   await page.locator('#mastery-input').press('Tab');
-  assert.match(await page.locator('#v2-status').innerText(),/Following recommended/,width+': points marked custom');
+  assert.match(await page.locator('#v2-status').innerText(),/Legacy recommended path/,width+': points marked custom');
   if(width<1700)await page.locator('[data-v3-editor="mastery"]').click();
   if(width>=1920){
     const cardColumns=await page.locator('#v2-stigma-list').evaluate(el=>getComputedStyle(el).gridTemplateColumns.split(' ').length);
@@ -263,7 +263,7 @@ try{
   await page.locator('#v2-skill-list [data-v2-rank="Pummel"][data-dir="-1"]').click();
   assert.match(await page.locator('#v2-status').innerText(),/Modified progression/);
   await page.locator('#v2-reset-allocations').click();
-  assert.match(await page.locator('#v2-status').innerText(),/Following recommended/);
+  assert.match(await page.locator('#v2-status').innerText(),/Custom build/);
   if(width<1700){
    await page.locator('[data-v3-editor="stigma"]').click();
    assert.equal(await page.locator('#stigma').isVisible(),true);
