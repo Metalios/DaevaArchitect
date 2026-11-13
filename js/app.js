@@ -1070,7 +1070,11 @@ function model(){
   const a=account(),names=skillNames();
   // Custom allocations are user-owned. Never invoke an optimizer unless
   // the user explicitly previews or applies its recommendation.
-  if(a.buildMode==='custom'){
+  // Legacy saved/testing allocations use three nulls to mean auto-recommended.
+  // New and edited custom builds use owned objects (including empty objects),
+  // so this compatibility path never turns a new blank build into a preset.
+  const legacyAuto=a.manualMastery===null&&a.manualStigma===null&&a.customStigmas===null;
+  if(a.buildMode==='custom'&&!legacyAuto){
     const mastery=manualAllocation(a.manualMastery||{},names,budget('mastery'),masteryCost,1,masteryRankCap);
     const equipped=activeStigmas().filter(Boolean);
     const stigma=manualAllocation(a.manualStigma||{},equipped,budget('stigma'),stigmaCost,0,20);
