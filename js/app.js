@@ -53,7 +53,7 @@ const LEVELING_MASTERY_NEXT = {
   cleric:['Radiant Recovery','Condemnation',"Earth's Retribution",'Healing Light','Chain of Torment'],
   chanter:['Dark Crush','Onslaught','Recuperation','Spinning Strike','Incandescent Blow']
 };
-const DEFAULT_ACCOUNT = (cls='templar') => ({...FRESH_45,azphel:0,ariel:0,gearRating:0,pveObjective:'performance',context:'party',pvpOpponent:'all',journey:'endgame',endgameContext:'party',levelingContext:'solo',leveling:{level:1,extraByLevel:{}},gear:{},equipment:{},currentRanks:{},manualMastery:null,manualStigma:null,customStigmas:null,customSpecialties:{},customMacros:{},obtainedNodes:[],boardMode:'recommended',customNodes:[],customAzphelNodes:[],customArielNodes:[],titlesOwned:{},faction:'elyos',macroBind:'RMB',quickUse2Bind:'R',goalTarget:['cleric','chanter'].includes(cls)?0:cls==='templar'?60000:100000,goalObserved:0,gearCpTarget:0});
+const DEFAULT_ACCOUNT = (cls='templar') => ({...FRESH_45,azphel:0,ariel:0,gearRating:0,pveObjective:'performance',context:'party',pvpOpponent:'all',journey:'endgame',endgameContext:'party',levelingContext:'solo',leveling:{level:1,extraByLevel:{}},gear:{},equipment:{},currentRanks:{},buildMode:'custom',manualMastery:{},manualStigma:{},customStigmas:[null,null,null,null],customSpecialties:{},customMacros:{},obtainedNodes:[],boardMode:'custom',customNodes:[],customAzphelNodes:[],customArielNodes:[],titlesOwned:{},faction:'elyos',macroBind:'RMB',quickUse2Bind:'R',goalTarget:['cleric','chanter'].includes(cls)?0:cls==='templar'?60000:100000,goalObserved:0,gearCpTarget:0});
 let saved = {};
 try { saved = JSON.parse(localStorage.getItem('daeva-architect-all-v1') || localStorage.getItem('aion2-pathfinder-all-v3') || '{}') || {}; } catch (_) {}
 let state = {class:CLASS_ORDER.includes(saved.class)?saved.class:null,accounts:saved.accounts||{},gearView:['inventory','inspect'].includes(saved.gearView)?saved.gearView:null,tab:'overview',board:'Nezekan',preview:FRESH_45.crystals,node:null,titleSearch:'',titleSlot:'all',titleOwnership:'all',titleFaction:'all'};
@@ -63,6 +63,9 @@ function applyTheme(){document.body.dataset.theme=theme;document.querySelectorAl
 function account(){
   if(!state.accounts[state.class])state.accounts[state.class]=DEFAULT_ACCOUNT(state.class);
   const a=state.accounts[state.class];
+  // Older saved recommendations retain their settings until explicitly changed.
+  if(!['custom','recommended'].includes(a.buildMode))
+    a.buildMode=a.boardMode==='custom'?'custom':'recommended';
   if(typeof RoleBuildGoals!=='undefined'&&!appIsPvpContext(a.context))
     a.pveObjective=RoleBuildGoals.normalize(state.class,a.context,a.pveObjective);
   delete a.gearCombatPower; // Legacy manually entered CP is no longer a build input.
@@ -338,12 +341,13 @@ function recommendedStigmas(){
 }
 function activeStigmas(){
   const chosen=account().customStigmas;
-  if(Array.isArray(chosen)&&chosen.length===4&&new Set(chosen).size===4&&chosen.every(n=>STIGMAS[state.class]?.[n]))return chosen;
-  return recommendedStigmas();
+  if(Array.isArray(chosen)&&chosen.length===4&&chosen.every(n=>n===null||!!STIGMAS[state.class]?.[n])&&
+    new Set(chosen.filter(Boolean)).size===chosen.filter(Boolean).length)return chosen;
+  return account().buildMode==='custom'?[null,null,null,null]:recommendedStigmas();
 }
 function modifiedBuild(){
   const a=account();
-  return a.boardMode==='custom'||a.manualMastery!==null&&a.manualMastery!==undefined||
+  return a.buildMode==='custom'||a.boardMode==='custom'||a.manualMastery!==null&&a.manualMastery!==undefined||
     a.manualStigma!==null&&a.manualStigma!==undefined||
     !!a.customStigmas||Object.keys(a.customSpecialties||{}).length>0;
 }
@@ -1063,7 +1067,26 @@ function enhanceSorcererCombat(master,boardEffects,stigmas){
 }
 
 function model(){
-  const a=account(),names=skillNames(),recommendedMastery=allocate(masteryStages(),budget('mastery'),masteryCost,names,1,isLeveling()?masteryRankCap:null),
+  const a=account(),names=skillNames();
+  // Custom allocations are user-owned. Never invoke an optimizer unless
+  // the user explicitly previews or applies its recommendation.
+  if(a.buildMode==='custom'){
+    const mastery=manualAllocation(a.manualMastery||{},names,budget('mastery'),masteryCost,1,masteryRankCap);
+    const equipped=activeStigmas().filter(Boolean);
+    const stigma=manualAllocation(a.manualStigma||{},equipped,budget('stigma'),stigmaCost,0,20);
+    const boards=boardPlan(budget('crystals')),
+      azphel=boardPlan(isLeveling()?0:a.azphel||0,'azphel'),
+      ariel=boardPlan(isLeveling()?0:a.ariel||0,'ariel');
+    const plannedEffects=effects(boards.owned);
+    const acquiredEffects=effects(new Set([...obtainedNodes()]
+      .filter(id=>nodeMap().has(id)&&boardOpen(nodeMap().get(id).board))));
+    latestSpecialtyPlan={classId:state.class,picks:a.customSpecialties||{}};
+    lastOptimizedCombat=null;
+    return {mastery,stigma,boards,azphel,ariel,effects:plannedEffects,
+      acquiredEffects,combat:null,joint:null,specialtyOptimization:null,
+      arielEffects:effects(ariel.owned),azphelEffects:effects(azphel.owned)};
+  }
+  const recommendedMastery=allocate(masteryStages(),budget('mastery'),masteryCost,names,1,isLeveling()?masteryRankCap:null),
     mastery=a.manualMastery?manualAllocation(a.manualMastery,names,budget('mastery'),masteryCost,1,masteryRankCap):recommendedMastery,
     stigmaRecommendation=recommendedStigmaAllocation(),
     stigmas=stigmaRecommendation.names,
@@ -1508,7 +1531,7 @@ function recommendedSpecPicks(name,eff){const spec=SPECS[state.class]?.[name];if
   let picks=spec.picks[key]||[];return picks}
 function specPicks(name,eff){
   const spec=SPECS[state.class]?.[name],manual=account().customSpecialties?.[name];
-  if(!spec||!Array.isArray(manual))return recommendedSpecPicks(name,eff);
+  if(!spec||!Array.isArray(manual))return account().buildMode==='custom'?[]:recommendedSpecPicks(name,eff);
   return [...new Set(manual.map(Number))].filter(option=>spec.options[option]&&eff>=(option<=3?8:option===4?12:16)).slice(0,specialtySlots(eff));
 }
 function renderMastery(m){
@@ -1536,12 +1559,13 @@ function renderMastery(m){
   }).join('')||(query?`<div class="mastery-empty">No unlocked skills match “${esc(state.masterySearch)}” at level ${currentLevel()}. Clear the search or choose a higher level.</div>`:isLeveling()?`<div class="mastery-empty">No Mastery upgrades are available at level ${currentLevel()}. Mastery points begin at level 4; your unlocked skills start at rank 1.</div>`:'');
 }
 function renderStigma(m){
-  const p=profile(),a=account(),slots=isLeveling()?levelReward().slots:4,selected=activeStigmas().slice(0,slots),mode={party:'Group endgame PvE',solo:'Solo endgame PvE (Nightmare / Ascension)',...PVP_CONTEXT_LABELS}[a.context];$('stigma-spent').textContent=`${m.stigma.spent} / ${budget('stigma')} spent`;$('loadout-title').textContent=isLeveling()?`${p.name} · ${slots} of 4 slots open`:`${p.name} ${mode} bar`;$('loadout-text').textContent=slots?selected.join(', ')+'. '+(!isLeveling()&&!appIsPvpContext(a.context)&&state.class==='sorcerer'
+  const p=profile(),a=account(),slots=isLeveling()?levelReward().slots:4,selected=activeStigmas().slice(0,slots),mode={party:'Group endgame PvE',solo:'Solo endgame PvE (Nightmare / Ascension)',...PVP_CONTEXT_LABELS}[a.context];$('stigma-spent').textContent=`${m.stigma.spent} / ${budget('stigma')} spent`;$('loadout-title').textContent=isLeveling()?`${p.name} · ${slots} of 4 slots open`:`${p.name} ${mode} bar`;$('loadout-text').textContent=slots?selected.map(n=>n||'Empty slot').join(', ')+'. '+(!isLeveling()&&!appIsPvpContext(a.context)&&state.class==='sorcerer'
     ?(adviceFor(state.class,a.context,a.pveObjective)?.why||p.swap)
     :a.context==='party'?p.swap:'This is a context-specific starting set; compare your live tooltips and matchups.'):'Stigmas open at level 22. The first Stigma point comes at level 23; more slots open at 27, 32 and 37.';
   $('stigma-heading').textContent=isLeveling()?`Stigmas · ${slots} of 4 slots open`:'Four stigma slots';$('stigma-description').textContent=isLeveling()?'Slots open at levels 22, 27, 32 and 37. Leveling points start at 23.':'Points advance the four equipped choices to their 5, 10, 15 and 20 breakpoints.';
-  $('loadout-tags').innerHTML=selected.map(n=>`<span class="tag ${m.stigma.levels[n]>=5?'green':''}">${esc(n)} · Lv ${m.stigma.levels[n]||0}</span>`).join('');
-  $('stigma-grid').innerHTML=selected.map(name=>{const info=STIGMAS[state.class]?.[name],lv=m.stigma.levels[name]||0,perks=info?.perks||{};
+  $('loadout-tags').innerHTML=selected.map(n=>n?`<span class="tag ${m.stigma.levels[n]>=5?'green':''}">${esc(n)} · Lv ${m.stigma.levels[n]||0}</span>`:'<span class="tag">Empty slot · choose a Stigma</span>').join('');
+  $('stigma-grid').innerHTML=selected.map(name=>{if(!name)return '<article class="stigma-card"><h3>Empty Stigma slot</h3><p>Open the Stigma editor to equip a skill.</p></article>';
+    const info=STIGMAS[state.class]?.[name],lv=m.stigma.levels[name]||0,perks=info?.perks||{};
     return `<article class="stigma-card"><div class="stigma-head">${gameSkillIconMarkup(state.class,name,'stigma-card-game-icon')}<div><h3>${esc(name)}</h3><div class="sub">Equipped · ${esc(info?.base||'Class stigma')}</div></div><div class="lv">Lv ${lv}</div></div><div class="spec-row">${Object.entries(perks).map(([rank,label])=>`<span class="spec ${lv>=+rank?'on':'future'}">Lv ${rank}: ${esc(label)}</span>`).join('')}</div><div class="milestone">${Object.keys(perks).length?lv<20?`Next perk at Lv ${[5,10,15,20].find(x=>x>lv)}`:'All four perks unlocked':'Compare the level perks in game; this planner has not verified their text.'}</div></article>`}).join('');
 }
 function numbered(items){return items.map((v,i)=>`<li><span class="rotation-num">${String(i+1).padStart(2,'0')}</span><span>${esc(v)}</span></li>`).join('')}
