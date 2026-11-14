@@ -29,7 +29,7 @@ const CustomMacroEditor = (() => {
     const steps = Array.isArray(raw?.steps) ? raw.steps.slice(0, MAX_STEPS)
       .map(step => typeof step === 'string' ? {key: step, delay: 10} : step)
       .filter(step => step && KEYS.includes(step.key))
-      .map(step => ({key: step.key, delay: Math.min(1000, Math.max(10, Math.round(Number(step.delay) || 10)))})) : [];
+      .map(step => ({key: step.key, delay: Math.min(9900, Math.max(10, Math.round(Number(step.delay) || 10)))})) : [];
     const hotbar = Array.from({length: 8}, (_, i) => filterNames(raw?.hotbar?.[i]));
     return {stacks, steps, hotbar, weave: allowed.has(raw?.weave) ? raw.weave : ''};
   }
@@ -150,7 +150,7 @@ const CustomMacroEditor = (() => {
         '<select aria-label="Step ' + (i + 1) + ' stack" data-cmacro-field="step-key" data-cmacro-index="' + i + '">' +
         KEYS.map(key => '<option value="' + key + '"' + (key === step.key ? ' selected' : '') + '>' + key + '</option>').join('') +
         '</select><label class="custom-macro-delay">Delay <input aria-label="Step ' + (i + 1) +
-        ' delay milliseconds" type="number" min="10" max="1000" step="10" value="' + step.delay +
+        ' delay milliseconds" type="number" min="10" max="9900" step="10" value="' + step.delay +
         '" data-cmacro-field="delay" data-cmacro-index="' + i + '"> ms</label>' +
         moveButtons('step', '', i, data.steps.length) + '</div>').join('') +
       (data.steps.length < MAX_STEPS ? '<button type="button" class="custom-macro-add" data-cmacro-action="add" data-cmacro-kind="step">+ Add macro step</button>' : '') +
@@ -220,7 +220,7 @@ const CustomMacroEditor = (() => {
         arr[Number(target.dataset.cmacroIndex)] = target.value;
       } else if (field === 'step-key') data.steps[Number(target.dataset.cmacroIndex)].key = target.value;
       else if (field === 'delay') data.steps[Number(target.dataset.cmacroIndex)].delay =
-        Math.max(10, Math.min(1000, Math.round(Number(target.value) || 10)));
+        Math.max(10, Math.min(9900, Math.round(Number(target.value) || 10)));
       else return;
       account().customMacros[contextKey(account())] = data;
       save(); renderApplication();
