@@ -115,7 +115,7 @@ out_dir = root / 'dist'
 (out_dir / 'js').mkdir(parents=True, exist_ok=True)
 (out_dir / 'css').mkdir(parents=True, exist_ok=True)
 (out_dir / 'assets').mkdir(parents=True, exist_ok=True)
-for name in ('profiles.js', 'titles.js', 'ariel_data.js', 'ariel_progression.js', 'arcana_rules.js', 'stone_roll_rules.js', 'gear.js', 'amplification.js', 'cp.js', 'board_optimizer.js', 'icon_catalog.js', 'recommendations.js', 'progression.js', 'rotation_policy.js', 'leveling_rotation.js', 'custom_macro.js', 'app.js', 'build_modes.js', 'share.js', 'v2.js', 'character-first.js', 'character-overview.js', 'character-tabs.js'):
+for name in ('profiles.js', 'titles.js', 'ariel_data.js', 'ariel_progression.js', 'arcana_rules.js', 'stone_roll_rules.js', 'gear.js', 'amplification.js', 'cp.js', 'board_optimizer.js', 'icon_catalog.js', 'recommendations.js', 'progression.js', 'rotation_policy.js', 'leveling_rotation.js', 'custom_macro.js', 'app.js', 'build_modes.js', 'share.js', 'v2.js', 'character-first.js', 'character-overview.js', 'character-tabs.js', 'build_library.js'):
     shutil.copy2(root / 'js' / name, out_dir / 'js' / name)
 shutil.copy2(root / 'js' / 'board_budget.js', out_dir / 'js' / 'board_budget.js')
 (out_dir / 'js' / 'optimizer').mkdir(parents=True, exist_ok=True)
@@ -136,6 +136,7 @@ shutil.copy2(root / 'js' / 'engine' / 'pvp_models.js', out_dir / 'js' / 'engine'
 shutil.copy2(root / 'js' / 'engine' / 'class_models.js', out_dir / 'js' / 'engine' / 'class_models.js')
 shutil.copy2(root / 'css' / 'styles.css', out_dir / 'css' / 'styles.css')
 shutil.copy2(root / 'css' / 'v2.css', out_dir / 'css' / 'v2.css')
+shutil.copy2(root / 'css' / 'build_library.css', out_dir / 'css' / 'build_library.css')
 shutil.copy2(root / 'css' / 'leveling.css', out_dir / 'css' / 'leveling.css')
 shutil.copy2(root / 'css' / 'fidelity.css', out_dir / 'css' / 'fidelity.css')
 shutil.copy2(root / 'css' / 'approved-target.css', out_dir / 'css' / 'approved-target.css')
