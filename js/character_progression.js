@@ -24,7 +24,7 @@ function defaultState(){
   return {version:1,pets:{},extraPets:[],
     genus:Object.fromEntries(G.map(g=>[g,{level:0,lines:Array.from({length:9},
       ()=>({stat:'',value:'',grade:'Not recorded'}))}])),
-    wings:{owned:{},equipped:''},
+    wings:{owned:Object.create(null),equipped:''},
     monolith:{faction:0,reshanta:0,other:0,notes:''},
     pantheon:{slots:Object.fromEntries(Array.from({length:17},(_,i)=>[i+1,
       {name:'',owned:false,equipped:false}]))},
@@ -51,7 +51,7 @@ function normalize(raw){
   }
   for(const [name,record] of Object.entries(raw.wings?.owned||{}).slice(0,100)){
     const label=String(name).trim().slice(0,100);
-    if(!label)continue;
+    if(!label||['__proto__','constructor','prototype'].includes(label))continue;
     output.wings.owned[label]={enhancement:int(record?.enhancement,0,10)};
   }
   const equipped=String(raw.wings?.equipped||'');
@@ -316,7 +316,7 @@ function mount(){
      save();render();
    }else if(event.target.id==='ca-add-wing'){
      event.preventDefault();const name=String(new FormData(event.target).get('name')||'').trim().slice(0,100),s=current();
-     if(!name||Object.keys(s.wings.owned).length>=100)return;
+     if(!name||['__proto__','constructor','prototype'].includes(name)||Object.keys(s.wings.owned).length>=100)return;
      s.wings.owned[name] ||= {enhancement:0};save();render();
    }
  });
