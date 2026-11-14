@@ -128,6 +128,23 @@ const CustomMacroEditor = (() => {
       return;
     }
     const data = normalize(user, state.class);
+    // Saved user macros remain untouched, even if risky. Explain WHY an
+    // automated action is unsafe rather than silently deleting user edits.
+    const manualOnly = typeof GlobalRotationPolicy!=='undefined'
+      ?GlobalRotationPolicy.manualSkills(state.class,{
+        pvp:GlobalRotationPolicy.isPvp(account().context)}):new Set();
+    const unsafe = [...new Set(KEYS.flatMap(key=>data.stacks[key])
+      .filter(name=>manualOnly.has(name)))];
+    const starvation=typeof GlobalRotationPolicy!=='undefined'
+      ?KEYS.filter(key=>data.stacks[key].join('|')!==
+         GlobalRotationPolicy.prioritize(state.class,data.stacks[key]).join('|'))
+      :[];
+    const safetyMessage=[
+      unsafe.length?'Manually timed skills in auto stacks: '+unsafe.join(', ')+
+        '. Charge, heals, control, movement and toggles may be wasted or mistimed.':'',
+      starvation.length?'Priority warning in '+starvation.join(', ')+
+        ': put cooldown skills below unconditional fillers (row 0 first).':''
+    ].filter(Boolean);
     const unavailable = [...new Set([
       ...KEYS.flatMap(key => data.stacks[key]), ...data.hotbar.flat(), data.weave
     ].filter(name => name && !available.has(name)))];
@@ -135,7 +152,9 @@ const CustomMacroEditor = (() => {
       '<div class="custom-macro-heading"><div><h3>Custom macro · ' + esc(contextKey(account())) +
       '</h3><p>Changes save immediately. Each game stack tries row 0 first; macro steps press stack keys, not skills.</p>' +
       '</div><button type="button" data-cmacro-action="reset">Clear saved macro</button></div>' +
-      '<p class="custom-macro-warning">Custom timing and automation are not combat-simulated. Charges, movement, healing and defensive skills may require manual control. Test in game.</p>' +
+      '<p class="custom-macro-warning">Your custom macro is preserved exactly. AION 2 does not guarantee step order or hold charged skills for full charge. Test on a training target.</p>' +
+      (safetyMessage.length?'<p class="custom-macro-warning" role="alert">'+
+        esc(safetyMessage.join(' '))+'</p>':'') +
       (unavailable.length ? '<p class="custom-macro-warning">Not currently equipped/unlocked (kept in the saved setup but omitted from active macro): ' +
         esc(unavailable.join(', ')) + '</p>' : '') +
       '<label class="custom-macro-weave">Held basic / weave skill <select data-cmacro-field="weave">' +
