@@ -21,11 +21,15 @@ const validIds=new Set(DATASET.pets.map(p=>String(p.id)));
 const wingsCatalog=new Set(DATASET.wings);
 const genusCategories=new Set(G);
 function defaultState(){
-  return {version:1,pets:{},extraPets:[],genus:{},
+  return {version:1,pets:{},extraPets:[],
+    genus:Object.fromEntries(G.map(g=>[g,{level:0,lines:Array.from({length:9},
+      ()=>({stat:'',value:'',grade:'Not recorded'}))}])),
     wings:{owned:{},equipped:''},
     monolith:{faction:0,reshanta:0,other:0,notes:''},
-    pantheon:{slots:{}},
-    skins:{collectionPoints:0,registered:0,categories:{},notes:''}};
+    pantheon:{slots:Object.fromEntries(Array.from({length:17},(_,i)=>[i+1,
+      {name:'',owned:false,equipped:false}]))},
+    skins:{collectionPoints:0,registered:0,categories:Object.fromEntries(
+      Array.from({length:CATEGORIES},(_,i)=>[i+1,{name:'',complete:false}])),notes:''}};
 }
 function normalize(raw){
   const output=defaultState();
