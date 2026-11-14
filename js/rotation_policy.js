@@ -99,6 +99,13 @@ const GlobalRotationPolicy=(()=>{
       key,title:'PvP repeatable pressure · situational',skills:prioritize(cls,
         skills.filter(name=>usable.has(name)))
     })).filter(s=>s.skills.length);
+    // Templar Solo Abyss can use a manually tapped catch stack when the
+    // player actually owns both Stigmas. Never put charged Punishment in
+    // this stack: row priority cannot hold its charge to completion.
+    if(cls==='templar'&&mode==='pvp-abyss-solo'&&
+      ['Grapple','Executing Blade'].every(name=>(equippedStigmas||[]).includes(name)&&usable.has(name)))
+      stacks.push({key:'Q',title:'MANUAL catch · confirm range/CC',
+        skills:['Grapple','Executing Blade'],manual:true});
     const manual=[...new Set([...policy.manual,...(equippedStigmas||[])])]
       .filter(name=>usable.has(name));
     // Four equipped Stigmas have priority over flexible manual damage if
@@ -122,7 +129,7 @@ const GlobalRotationPolicy=(()=>{
       foe==='assassin'?'Against Assassin, retain a break/peel response for the first burst.':
       RANGED.has(foe)?'Against ranged pressure, keep line-of-sight and interrupt timing under manual control.':
       'Adjust control, defense and manual burst to the opponent; the macro is only your safe filler.';
-    return {...base,stacks,macro:stacks.map(x=>x.key),hotbar,
+    return {...base,stacks,macro:stacks.filter(x=>!x.manual).map(x=>x.key),hotbar,
       stigmas:[...equipped],
       rule:policy.rule,
       summary:modeCopy+' '+matchup,
