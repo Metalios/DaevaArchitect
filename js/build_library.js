@@ -240,9 +240,13 @@ const DaevaBuildLibrary = (() => {
       if(lv!==rv)rows.push({section,label,left:lv,right:rv});
     };
     for(const [key,label] of [['context','Scenario'],['pveObjective','Role'],['journey','Stage type'],
-      ['mastery','Earned Mastery'],['stigma','Earned Stigma'],['crystals','Daevanion Crystals'],
-      ['azphel','Azphel Crystals'],['ariel','Ariel Crystals'],['gearRating','Recorded GR']])
+      ['faction','Faction'],['mastery','Earned Mastery'],['stigma','Earned Stigma'],
+      ['crystals','Daevanion Crystals'],['azphel','Azphel Crystals'],
+      ['ariel','Ariel Crystals'],['gearRating','Recorded GR'],['goalTarget','Combat target'],
+      ['gearCpTarget','Gear CP target'],['macroBind','Macro binding']])
       pair('Resources',label,a[key],b[key]);
+    pair('Resources','Leveling level',a.leveling?.level||45,b.leveling?.level||45);
+    pair('Resources','Leveling bonus rewards',a.leveling?.extraByLevel||{},b.leveling?.extraByLevel||{});
     for(const [key,label] of [['manualMastery','Mastery'],['manualStigma','Stigma ranks']]){
       const left=skillMap(a[key]),right=skillMap(b[key]);
       for(const name of [...new Set([...Object.keys(left),...Object.keys(right)])].sort())
@@ -261,8 +265,8 @@ const DaevaBuildLibrary = (() => {
       const removed=[...left].filter(id=>!right.has(id));
       const added=[...right].filter(id=>!left.has(id));
       if(removed.length||added.length)pair('Boards',label+' · tile changes',
-        removed.length?`${removed.length} removed from left`:'No removals',
-        added.length?`${added.length} added to right`:'No additions');
+        removed.length?`Only left: ${removed.join(', ')}`:'No tiles unique to left',
+        added.length?`Only right: ${added.join(', ')}`:'No tiles unique to right');
     }
     const equipmentA=skillMap(a.equipment),equipmentB=skillMap(b.equipment);
     for(const slot of GEAR_SLOTS){
@@ -270,6 +274,13 @@ const DaevaBuildLibrary = (() => {
       const present=item=>item?.name?`${item.name} +${item.enhancement||0} · Amp ${item.amplification||0}`:'Empty';
       pair('Equipment',slot.name,present(first),present(second));
       if(first || second){
+        pair('Equipment',slot.name+' · rarity / item level',
+          `${first?.grade||'None'} · Lv ${first?.itemLevel||'—'}`,
+          `${second?.grade||'None'} · Lv ${second?.itemLevel||'—'}`);
+        pair('Equipment',slot.name+' · Arcana set',first?.arcanaSet||'None',second?.arcanaSet||'None');
+        pair('Equipment',slot.name+' · amplification effects',
+          first?.amplificationBonuses||{},second?.amplificationBonuses||{});
+        pair('Equipment',slot.name+' · stone type',first?.stoneType||'None',second?.stoneType||'None');
         pair('Equipment',slot.name+' · socket lines',
           (first?.stones||[]).map(st=>[st.stat,st.value,st.unit,st.grade].join(' ')).join(' | ')||'None',
           (second?.stones||[]).map(st=>[st.stat,st.value,st.unit,st.grade].join(' ')).join(' | ')||'None');
@@ -278,6 +289,7 @@ const DaevaBuildLibrary = (() => {
           (second?.skillBonuses||[]).map(x=>`${x.skill} +${x.levels}`).join(' | ')||'None');
         pair('Equipment',slot.name+' · Soul Binding',first?.statNotes||'None',second?.statNotes||'None');
         pair('Equipment',slot.name+' · Theostone',first?.theostone||'None',second?.theostone||'None');
+        pair('Equipment',slot.name+' · item notes',first?.notes||'None',second?.notes||'None');
       }
     }
     const macroA=skillMap(a.customMacros),macroB=skillMap(b.customMacros);
@@ -289,8 +301,11 @@ const DaevaBuildLibrary = (() => {
         `Weave: ${entry.weave||'Unassigned'}`:'None';
       pair('Macros',mode,format(macroA[mode]),format(macroB[mode]));
     }
-    pair('Collectibles','Owned titles',Object.values(a.titlesOwned||{}).filter(Boolean).length,
-      Object.values(b.titlesOwned||{}).filter(Boolean).length);
+    const ownedTitles=x=>Object.entries(x.titlesOwned||{})
+      .filter(([,owned])=>owned).map(([id])=>id).sort();
+    pair('Collectibles','Owned titles',ownedTitles(a).join(', ')||'None',ownedTitles(b).join(', ')||'None');
+    pair('Collectibles','Equipped title',a.equippedTitle||a.title||'None',
+      b.equippedTitle||b.title||'None');
     return rows;
   }
   function findOption(value) {
