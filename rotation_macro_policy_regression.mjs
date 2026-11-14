@@ -19,7 +19,8 @@ assert.equal(foes.length,11);
 let checks=0;
 for(const cls of classes){
  const skills=Object.values(DATA[cls].skills).slice(0,12).map(s=>s.name);
- const equipped=Object.keys(STIGMAS[cls]).slice(0,4);
+ const equipped=cls==='templar'?['Doom Shield','Grapple','Executing Blade','Shield of Protection']:
+   Object.keys(STIGMAS[cls]).slice(0,4);
  const available=new Set([...skills,...equipped]);
  for(const mode of modes)for(const foe of foes){
    const base={weave:skills[0],stacks:[],macro:[],hotbar:[],stigmas:equipped};
