@@ -50,7 +50,7 @@ const CustomMacroEditor = (() => {
   function seed(stacks, steps, hotbar, weave) {
     return normalize({
       stacks: Object.fromEntries(KEYS.map(key =>
-        [key, stacks.find(s => s.key === key && !s.manual)?.skills || []])),
+        [key, stacks.find(s => s.key === key)?.skills || []])),
       steps: steps.map(key => ({key, delay: 10})),
       hotbar: hotbar.map(slot => slot[0]),
       weave
@@ -67,15 +67,17 @@ const CustomMacroEditor = (() => {
     if (!custom) return {stacks, steps, hotbar, weave,
       delays: steps.map(() => 10), custom: false};
     const saved = normalize(custom, state.class);
+    const macroKeys = new Set(saved.steps.map(step => step.key));
     const auto = KEYS.map(key => ({
-      key, title: key + ' · Custom priority', manual: false,
-      skills: saved.stacks[key].filter(name => available.has(name))
-    })).filter(s => s.skills.length);
+      key,title:key+' · '+(macroKeys.has(key)?'Custom macro priority':'Manual priority stack'),
+      manual:!macroKeys.has(key),
+      skills:saved.stacks[key].filter(name=>available.has(name))
+    })).filter(s=>s.skills.length);
     const manual = saved.hotbar.map((names, i) => ({
       key: String(i + 1), title: 'Custom manual slot', manual: true,
       skills: names.filter(name => available.has(name))
     })).filter(s => s.skills.length > 1);
-    const actualSteps = saved.steps.filter(step => auto.some(stack => stack.key === step.key));
+    const actualSteps = saved.steps.filter(step => auto.some(stack => !stack.manual && stack.key === step.key));
     const actualHotbar = saved.hotbar.map(names =>
       [names.filter(name => available.has(name)), 'Custom manual hotbar', 'utility']);
     return {
@@ -160,7 +162,7 @@ const CustomMacroEditor = (() => {
       '<label class="custom-macro-weave">Held basic / weave skill <select data-cmacro-field="weave">' +
         optionList(data.weave) + '</select></label>' +
       '<div class="custom-macro-grid">' + KEYS.map(key =>
-        '<section class="custom-macro-column"><h4>' + key + ' stack</h4>' +
+        '<section class="custom-macro-column"><h4>' + key + (data.steps.some(step=>step.key===key)?' · macro':' · manual key') + ' stack</h4>' +
         '<small>Row 0 is the first attempted skill</small>' +
         skillRows('stack', key, data.stacks[key]) + '</section>').join('') + '</div>' +
       '<section class="custom-macro-steps"><h4>In-game macro steps</h4>' +
