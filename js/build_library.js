@@ -367,6 +367,9 @@ const DaevaBuildLibrary = (() => {
           `</div><div class="db-stage-actions"><button type="button" data-db-action="load" data-build="${build.id}" data-stage="${stage.id}" ${active?'aria-current="true"':''}>${active?'Editing':'Open'}</button>`+
           `<button type="button" data-db-action="compare" data-build="${build.id}" data-stage="${stage.id}">Compare</button>`+
           `<button type="button" data-db-action="edit" data-build="${build.id}" data-stage="${stage.id}">Details</button>`+
+          `<button type="button" data-db-action="duplicate-stage" data-build="${build.id}" data-stage="${stage.id}">Duplicate</button>`+
+          `<button type="button" data-db-action="move-up" data-build="${build.id}" data-stage="${stage.id}" title="Move stage earlier" aria-label="Move ${escapeHtml(stage.name)} earlier">↑</button>`+
+          `<button type="button" data-db-action="move-down" data-build="${build.id}" data-stage="${stage.id}" title="Move stage later" aria-label="Move ${escapeHtml(stage.name)} later">↓</button>`+
           `<button type="button" data-db-action="remove-stage" data-build="${build.id}" data-stage="${stage.id}" aria-label="Delete stage ${escapeHtml(stage.name)}">×</button></div></li>`;
       }).join('');
       return `<article class="db-build" data-db-build="${build.id}"><header><div><span class="db-class">${escapeHtml(PROFILES[build.cls].name)} · Global</span>`+
@@ -392,6 +395,7 @@ const DaevaBuildLibrary = (() => {
     if(!stage){host.hidden=true;return;}
     host.hidden=false;host.dataset.build=buildId;host.dataset.stage=stageId;
     host.querySelector('#db-detail-title').textContent=`${build.name} · ${stage.name}`;
+    host.querySelector('#db-detail-name').value=stage.name;
     host.querySelector('#db-detail-notes').value=stage.notes||'';
     host.querySelector('#db-detail-rating').value=stage.targetGearRating??'';
     host.scrollIntoView({block:'nearest',behavior:'smooth'});
@@ -412,6 +416,20 @@ const DaevaBuildLibrary = (() => {
           return;
         }
         case 'edit':renderDetails(buildId,stageId);return;
+        case 'duplicate-stage':
+          addStage(buildId,cleanText(stage.name+' (Copy)'),{sourceStageId:stage.id});
+          dialog.close();return;
+        case 'move-up':
+        case 'move-down':{
+          const current=build.stages.findIndex(entry=>entry.id===stageId);
+          const target=current+(action==='move-up'?-1:1);
+          if(current>=0&&target>=0&&target<build.stages.length){
+            const [moving]=build.stages.splice(current,1);
+            build.stages.splice(target,0,moving);
+            build.updatedAt=now();persist();
+          }
+          break;
+        }
         case 'rename': {
           const value=window.prompt('Rename this build:',build.name);
           if(value!==null)renameBuild(buildId,value);break;
@@ -499,6 +517,7 @@ const DaevaBuildLibrary = (() => {
         <span id="db-active-label"></span></div>
       <div class="db-build-list" id="db-build-list"></div>
       <section id="db-stage-detail" class="db-stage-detail" hidden><header><h3 id="db-detail-title"></h3><button id="db-detail-close" type="button">Close details</button></header>
+        <label>Stage name<input id="db-detail-name" type="text" maxlength="90"></label>
         <label>Progression goal (Gear Rating)<input id="db-detail-rating" type="number" min="0" max="10000" placeholder="Optional target"></label>
         <label>Stage notes<textarea id="db-detail-notes" maxlength="2500" rows="3" placeholder="Upgrades, next goals, boss-specific changes, or matchup notes"></textarea></label>
         <button id="db-detail-save" type="button">Save stage details</button></section>
@@ -545,10 +564,16 @@ const DaevaBuildLibrary = (() => {
     });
     dialog.querySelector('#db-detail-save').addEventListener('click',()=>{
       const section=dialog.querySelector('#db-stage-detail');
-      try{updateNotes(section.dataset.build,section.dataset.stage,{
-        notes:section.querySelector('#db-detail-notes').value,
-        targetGearRating:section.querySelector('#db-detail-rating').value
-      });renderList();report('Saved stage goals and notes.');}
+      try{
+        renameStage(section.dataset.build,section.dataset.stage,
+          section.querySelector('#db-detail-name').value);
+        updateNotes(section.dataset.build,section.dataset.stage,{
+          notes:section.querySelector('#db-detail-notes').value,
+          targetGearRating:section.querySelector('#db-detail-rating').value
+        });
+        renderList();renderDetails(section.dataset.build,section.dataset.stage);
+        report('Saved stage name, goals and notes.');
+      }
       catch(error){report(error.message,true);}
     });
     dialog.addEventListener('click',event=>{
