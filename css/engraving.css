@@ -1,0 +1,85 @@
+/* QuestLog-comparable, manually editable 4-socket engraving layout.
+ * Source-backed Global roll pools live in StoneRollRules, never CSS.
+ * Loaded after styles.css so the old cramped two-column socket rows are
+ * replaced without modifying any saved equipment data or input names.
+ */
+#gear-editor .gear-stones-editor:not(.gear-theostone-editor){
+  background:radial-gradient(circle at top right,#24353b,#0c1b26 65%);
+  border:1px solid #4a6672;border-radius:12px;padding:14px;min-width:0
+}
+#gear-editor .gear-stones-head{gap:16px;align-items:center}
+#gear-editor .gear-stones-head>b,#gear-editor .gear-stones-head b{
+  color:#f1d49a;font:normal 20px/1.3 Georgia,serif
+}
+#gear-editor .gear-stones-head label input{width:74px}
+#gear-editor .gear-stone-type{margin:12px 0 8px}
+#gear-editor .gear-stones-editor .gear-stone-help{font-size:11px;line-height:1.5}
+#gear-editor .gear-stone-progress{
+  display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;
+  padding:10px 12px;margin:12px 0;border:1px solid #446774;border-radius:8px;
+  background:#102936;color:#b8d4dd;font-size:11px
+}
+#gear-editor #gear-stone-summary{color:#f2d59b;font-weight:800}
+#gear-editor #gear-stone-effects{font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+#gear-editor .gear-stone-rows{display:grid;grid-template-columns:minmax(0,1fr);gap:10px}
+#gear-editor .gear-stone-row{
+  display:flex!important;flex-direction:column;align-items:stretch;gap:11px;
+  border:1px solid #395965;border-left:4px solid #647b85;
+  border-radius:10px;padding:12px;background:#102532;
+  min-width:0;box-shadow:inset 0 1px rgba(255,255,255,.035)
+}
+#gear-editor .gear-stone-row[data-grade="Common"]{border-left-color:#c6cdd4}
+#gear-editor .gear-stone-row[data-grade="Rare"]{border-left-color:#7cdba6}
+#gear-editor .gear-stone-row[data-grade="Epic"]{border-left-color:#70b7ec}
+#gear-editor .gear-stone-row[data-grade="Unique"]{border-left-color:#f1c473}
+#gear-editor .gear-stone-row[hidden]{display:none!important}
+#gear-editor .gear-stone-card-heading{display:flex;align-items:center;gap:10px;min-width:0}
+#gear-editor .gear-stone-card-heading .gear-stone-gem{
+  display:grid;place-items:center;flex:none;width:40px;height:40px;border-radius:9px;
+  color:#c2d7df;font-size:25px;line-height:1;background:linear-gradient(145deg,#2b4554,#152b38);
+  border:1px solid #516a75
+}
+#gear-editor .gear-stone-row[data-grade="Rare"] .gear-stone-gem{color:#a2f0c3}
+#gear-editor .gear-stone-row[data-grade="Epic"] .gear-stone-gem{color:#8cc9f5}
+#gear-editor .gear-stone-row[data-grade="Unique"] .gear-stone-gem{color:#f7d88f}
+#gear-editor .gear-stone-card-heading>div{display:grid;gap:3px;flex:1;min-width:0}
+#gear-editor .gear-stone-card-heading strong{font-size:13px;color:#f2f9fa}
+#gear-editor .gear-stone-card-heading small{font-size:10px;color:#9ebac8}
+#gear-editor .gear-stone-grade{
+  font-size:10px;font-weight:850;letter-spacing:.04em;color:#bcd1df;
+  background:#254252;border:1px solid #456c7d;border-radius:20px;padding:5px 8px
+}
+#gear-editor .gear-stone-row[data-grade="Unique"] .gear-stone-grade{
+  color:#ffe8b4;background:#5d4226;border-color:#b18e52}
+#gear-editor .gear-stone-row[data-grade="Epic"] .gear-stone-grade{
+  color:#bfe5ff;background:#233f5c;border-color:#5d90c7}
+#gear-editor .gear-stone-row[data-grade="Rare"] .gear-stone-grade{
+  color:#bdedcf;background:#244d39;border-color:#4c9970}
+#gear-editor .gear-stone-card-fields{
+  display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,.7fr);
+  gap:9px;min-width:0;align-items:end
+}
+#gear-editor .gear-stone-card-fields label{display:grid;gap:5px;min-width:0;color:#bfd7de;
+ font-size:11px;font-weight:800}
+#gear-editor .gear-stone-card-fields select{
+  display:block;min-width:0;width:100%;min-height:38px;background:#071b27;border-radius:6px;
+  border:1px solid #537280;color:#e8f7f9;padding:9px;font-size:12px
+}
+#gear-editor .gear-stone-card-fields select:focus-visible,
+#gear-editor .gear-stone-card-footer button:focus-visible{outline:2px solid #f0c779;outline-offset:2px}
+#gear-editor .gear-stone-card-footer{display:flex;justify-content:space-between;align-items:center;gap:10px;
+ border-top:1px solid #31525e;padding-top:9px}
+#gear-editor .gear-stone-card-footer .gear-stone-quality{font-size:11px;color:#bed4db;min-width:auto}
+#gear-editor .gear-stone-card-footer button{
+ color:#e8c2a4;background:#2c2930;border:1px solid #6c5456;border-radius:6px;
+ cursor:pointer;font-size:11px;font-weight:700;padding:7px 11px
+}
+#gear-editor .gear-stone-card-footer button:hover{background:#46333b;border-color:#c68f7a}
+#gear-editor .gear-stone-card-footer button:disabled{opacity:.5;cursor:not-allowed}
+@media(max-width:500px){
+ #gear-editor .gear-stone-card-fields{grid-template-columns:1fr}
+ #gear-editor .gear-stones-head{align-items:start}
+}
+@media(prefers-reduced-motion:reduce){
+ #gear-editor .gear-stone-row{transition:none!important}
+}
