@@ -50,8 +50,8 @@ try{
  const library=await page.evaluate(()=>{
    const b=DaevaBuildLibrary.addBuild('Templar collection test');
    const stageId=b.stages[0].id;
-   const a=account();a.characterProgression.pets['1002']=1;save();
    const second=DaevaBuildLibrary.addStage(b.id,'Solo Abyss');
+   const a=account();a.characterProgression.pets['1002']=1;save();
    return {buildId:b.id,firstId:stageId,secondId:second.id,
      firstPet:DaevaBuildLibrary.getData().builds[0].stages[0].account.characterProgression.pets['1002']};
  });
