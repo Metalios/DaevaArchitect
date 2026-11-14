@@ -137,6 +137,7 @@ shutil.copy2(root / 'js' / 'engine' / 'class_models.js', out_dir / 'js' / 'engin
 shutil.copy2(root / 'css' / 'styles.css', out_dir / 'css' / 'styles.css')
 shutil.copy2(root / 'css' / 'v2.css', out_dir / 'css' / 'v2.css')
 shutil.copy2(root / 'css' / 'build_library.css', out_dir / 'css' / 'build_library.css')
+shutil.copy2(root / 'css' / 'engraving.css', out_dir / 'css' / 'engraving.css')
 shutil.copy2(root / 'css' / 'leveling.css', out_dir / 'css' / 'leveling.css')
 shutil.copy2(root / 'css' / 'fidelity.css', out_dir / 'css' / 'fidelity.css')
 shutil.copy2(root / 'css' / 'approved-target.css', out_dir / 'css' / 'approved-target.css')
