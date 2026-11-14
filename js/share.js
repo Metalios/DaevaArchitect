@@ -112,7 +112,10 @@
   });
   $('share-dialog-close').addEventListener('click',()=>$('share-dialog').close());
   $('share-copy-button').addEventListener('click',async()=>{try{await navigator.clipboard.writeText($('share-url').value);$('share-status').textContent='Build link copied.'}catch(_){$('share-url').select();$('share-status').textContent='Select and copy the link from the field.'}});
-  $('shared-build-load').addEventListener('click',()=>{if(!incoming)return;const cls=incoming.cls;state.class=cls;state.accounts[cls]=safeAccount(incoming.account,cls);state.gearView=['inventory','inspect'].includes(incoming.gearView)?incoming.gearView:null;state.tab=['overview','gear','boards','mastery','stigma','rotation','titles','sources'].includes(incoming.tab)?incoming.tab:'overview';state.board=ALL_BOARD_NAMES.includes(incoming.board)?incoming.board:'Nezekan';theme=['aether','sanctum','abyss'].includes(incoming.theme)?incoming.theme:'aether';try{localStorage.setItem('daeva-architect-theme',theme)}catch(_){}if(!boardOpen(state.board))state.board='Nezekan';state.preview=['Azphel','Ariel'].includes(state.board)?(account()[state.board.toLowerCase()]||0):budget('crystals');state.node=null;
+  $('shared-build-load').addEventListener('click',()=>{if(!incoming)return;const cls=incoming.cls;
+    // An incoming link is an independent workspace, not an overwrite of a named library stage.
+    if(typeof DaevaBuildLibrary!=='undefined')DaevaBuildLibrary.detach(cls);
+    state.class=cls;state.accounts[cls]=safeAccount(incoming.account,cls);state.gearView=['inventory','inspect'].includes(incoming.gearView)?incoming.gearView:null;state.tab=['overview','gear','boards','mastery','stigma','rotation','titles','sources'].includes(incoming.tab)?incoming.tab:'overview';state.board=ALL_BOARD_NAMES.includes(incoming.board)?incoming.board:'Nezekan';theme=['aether','sanctum','abyss'].includes(incoming.theme)?incoming.theme:'aether';try{localStorage.setItem('daeva-architect-theme',theme)}catch(_){}if(!boardOpen(state.board))state.board='Nezekan';state.preview=['Azphel','Ariel'].includes(state.board)?(account()[state.board.toLowerCase()]||0):budget('crystals');state.node=null;
     if(account().buildMode==='recommended')applyRecommendedBuild();
     else {
       const a=account();
@@ -129,6 +132,8 @@
     }
     $('shared-build-banner').hidden=true;incoming=null;clearSharedFragment();render();document.querySelector('.tabs')?.scrollIntoView({behavior:'smooth',block:'start'})});
   $('shared-build-dismiss').addEventListener('click',()=>{incoming=null;$('shared-build-banner').hidden=true;clearSharedFragment()});
+  // Reuse exactly the validated shared-build import sanitizer for exported library JSON.
+  window.DaevaBuildSanitizer=Object.freeze({safeAccount});
   window.addEventListener('hashchange',inspectSharedFragment);
   inspectSharedFragment();
 })();
