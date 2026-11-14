@@ -13,7 +13,7 @@ const GlobalRotationPolicy=(()=>{
   const CHARGED=new Set(['Hellfire','Deadshot','Punishment','Bolt','Jointstrike: Destructive Attack']);
   const TOGGLES=new Set(['Undefeated Mantra','Sprint Mantra','Light of Protection']);
   const NEEDS_MANUAL=Object.freeze({
-    gladiator:['Leaping Slam','Rush Strike','Focused Block','Mocking Blade','Ruinous Blow'],
+    gladiator:['Leaping Slam','Rush Strike','Focused Block','Mocking Blade'],
     templar:['Poach','Shield Rush','Doom Shield','Grapple','Executing Blade','Shield of Protection','Taunt'],
     assassin:['Ambush','Shadowstrike','Flash Slice','Infiltrate','Shadow Fall','Swift Contract','Illusive Clone'],
     ranger:['Marking Shot','Suppressing Arrow','Arrow Scattershot','Explosion Trap'],
