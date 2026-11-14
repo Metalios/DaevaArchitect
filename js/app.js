@@ -1791,8 +1791,48 @@ function renderRotation(m){
     $('rotation').classList.add('leveling-view');
     $('rotation-level').textContent='Lv '+level+' · starter combat';
     $('leveling-rotation').hidden=false;
+    // Leveling is also a user-owned build. Allow manual editing at any
+    // level without leaking locked skills into active stacks. The macro
+    // snapshot is saved by journey+scenario and survives level-ups.
+    let customized=false;
+    if(typeof CustomMacroEditor!=='undefined'&&plan.macroUnlocked){
+      const available=[...Object.entries(SKILL_UNLOCKS[state.class])
+        .filter(([,unlocked])=>unlocked<=level).map(([name])=>name),
+        ...activeStigmas().filter(name=>(m.stigma.levels[name]||0)>0)];
+      const sourceStacks=plan.stacks.map(x=>({
+        key:x.key,title:x.label,manual:!x.macro,skills:[...x.stack]
+      }));
+      const manual=Array.from({length:8},(_,i)=>{
+        const entry=plan.manualKeys.find(k=>k.key===String(i+1));
+        return [entry?.name?[entry.name]:[],
+          entry?.tip||'Optional manual key','utility'];
+      });
+      const chosen=CustomMacroEditor.apply(sourceStacks,plan.steps,manual,
+        plan.weave,available);
+      customized=chosen.custom;
+      if(customized){
+        plan.stacks=chosen.stacks.map(x=>({
+          key:x.key,label:x.title,macro:!x.manual,
+          stack:[...x.skills],
+          rows:x.skills.map((name,row)=>({name,row}))
+        }));
+        plan.steps=[...chosen.steps];
+        plan.delays=[...chosen.delays];
+        plan.manualKeys=chosen.hotbar.map(([skills],i)=>({
+          key:String(i+1),name:skills[0]||null,
+          tip:skills.length>1?'Multiple custom skills on this key':'Custom manual hotbar'
+        }));
+        plan.weave=chosen.weave||plan.weave;
+        plan.key=plan.stacks.find(x=>x.macro)?.key||plan.key;
+      }
+    }
     $('leveling-rotation').innerHTML=renderLevelingCombatMarkup(plan,macroKey,quickUse2Bind);
-    $('custom-macro-editor').innerHTML='<p>Leveling uses its unlock-gated, level-specific combat setup. Endgame macros are editable independently for every combat mode.</p>';
+    if(typeof CustomMacroEditor!=='undefined'&&plan.macroUnlocked){
+      $('leveling-rotation').insertAdjacentHTML('afterbegin',customized
+        ?'<p class="leveling-setup-warning">This is your saved, editable leveling macro. Locked skills are skipped without deleting them from the saved preset.</p>'
+        :'<p class="leveling-setup-warning"><b>Suggested leveling layout only.</b> Your actual macro remains unassigned until you select Copy suggested macro or Start empty macro below.</p>');
+      CustomMacroEditor.render();CustomMacroEditor.listen();
+    }else $('custom-macro-editor').innerHTML='<p>In-game skill macros unlock at level 4. Your leveling selections remain editable afterward.</p>';
     return;
   }
   if(typeof GlobalCohortBenchmarks!=='undefined'){
