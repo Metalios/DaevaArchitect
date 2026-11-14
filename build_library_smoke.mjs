@@ -55,7 +55,7 @@ try {
   await trigger.click();
   assert.match(await page.locator('#db-build-list').innerText(),/Nightmare DPS/);
   // Compare must include Mastery, sockets and actual applied macro details.
-  await page.locator('#db-compare-panel summary').click();
+  await page.locator('#db-compare-panel > summary').click();
   await page.locator('#db-left').selectOption(`${original.buildId}::${original.stageId}`);
   await page.locator('#db-right').selectOption(`${original.buildId}::${stage.id}`);
   assert.match(await page.locator('#db-difference').innerText(),/Judgment/);
