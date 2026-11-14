@@ -282,9 +282,11 @@ const DaevaBuildLibrary = (() => {
     }
     const macroA=skillMap(a.customMacros),macroB=skillMap(b.customMacros);
     for(const mode of [...new Set([...Object.keys(macroA),...Object.keys(macroB)])].sort()){
-      const format=entry=>entry?`Steps: ${(entry.steps||[]).map(s=>s.key).join('→')||'None'}; `+
+      const format=entry=>entry?`Steps: ${(entry.steps||[]).map(s=>`${s.key}@${s.delay||10}ms`).join('→')||'None'}; `+
         `Q: ${(entry.stacks?.Q||[]).join('/')}; E: ${(entry.stacks?.E||[]).join('/')}; `+
-        `R: ${(entry.stacks?.R||[]).join('/')}`:'None';
+        `R: ${(entry.stacks?.R||[]).join('/')}; `+
+        `Manual 1–8: ${(entry.hotbar||[]).map((skills,i)=>skills?.length?`${i+1}:${skills.join('/')}`:'').filter(Boolean).join(' | ')||'None'}; `+
+        `Weave: ${entry.weave||'Unassigned'}`:'None';
       pair('Macros',mode,format(macroA[mode]),format(macroB[mode]));
     }
     pair('Collectibles','Owned titles',Object.values(a.titlesOwned||{}).filter(Boolean).length,
