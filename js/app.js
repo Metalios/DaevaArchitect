@@ -1686,6 +1686,18 @@ function renderRotationSkillCoverage(m,p,stacks,hotbar,physicalHotkey){
 function renderRotation(m){
   const a=account(),p=typeof progressionRotationProfile==='function' ? progressionRotationProfile(profile(),state.class,a.context,name=>skillLevelBreakdown(name,m).withOwned,activeStigmas().filter(name=>(m.stigma.levels[name]||0)>0),(name,option)=>specPicks(name,skillLevelBreakdown(name,m).withOwned).includes(option),a.pveObjective) : profile(),level=currentLevel(),levelingMode=isLeveling(),main=masteryStages()[0]?.[0]||skillNames()[0],macroKey=['RMB','Mouse 4','MMB','M'].includes(a.macroBind)?a.macroBind:'RMB',weaveKey=p.weaveKey||'LMB';
   const quickUse2Bind=a.quickUse2Bind==='T'?'T':'R';
+  if(!levelingMode&&typeof GlobalRotationPolicy!=='undefined'&&
+     GlobalRotationPolicy.isPvp(a.context)){
+    // All eight classes must use the chosen PvP venue and enemy matchup.
+    // Only the SAFE repeating pressure goes on held RMB. CC, heals,
+    // movement and charged finishers stay on deliberate manual keys.
+    const available=[...Object.values(data().skills).slice(0,12)
+      .map(skill=>skill.name),
+      ...activeStigmas().filter(name=>(m.stigma.levels[name]||0)>0)];
+    Object.assign(p,GlobalRotationPolicy.pvpProfile(p,state.class,
+      a.context,a.pvpOpponent||'all',activeStigmas().filter(name=>
+        (m.stigma.levels[name]||0)>0),available));
+  }
   if(m.combat?.macro?.stacks&&sorcererCombatEligible()){
     const chosen=m.combat.macro;
     const mobileSolo=a.context==='solo'&&!levelingMode;
@@ -1831,6 +1843,16 @@ function renderRotation(m){
   }
   const fusionCharged=state.class==='spiritmaster'&&specPicks('Elemental Fusion',skillLevelBreakdown('Elemental Fusion',m).withOwned).includes(4);
   let stacks=p.stacks.filter(s=>(!levelingMode||!s.manual)&&(!fusionCharged||s.key!=='E')).map(s=>({...s,skills:s.skills.filter(name=>usableSkills.has(name))})).filter(s=>s.skills.length);
+  if(!levelingMode&&typeof GlobalRotationPolicy!=='undefined'){
+    // Normalise the suggested stacks against the actual playable skill
+    // set. This keeps charge/defense/movement out, and moves always-ready
+    // filler skills behind cooldown actions, preventing priority starvation.
+    const clean=GlobalRotationPolicy.cleanSuggestedStacks(state.class,
+      a.context,stacks,usableSkills);
+    const byKey=new Map(clean.map(stack=>[stack.key,stack]));
+    stacks=stacks.map(stack=>stack.manual?stack:byKey.get(stack.key))
+      .filter(Boolean);
+  }
   const chanterReset=state.class==='chanter'&&specPicks('Dark Crush',skillLevelBreakdown('Dark Crush',m).withOwned).includes(5);
   // Before cooldown removal, avoid spending two Dark Crush triggers in one window.
   if(state.class==='chanter'&&!chanterReset)stacks=stacks.map(s=>s.key==='E'?{...s,skills:s.skills.filter(name=>name!=='Impactful Crush')}:s).filter(s=>s.skills.length);
