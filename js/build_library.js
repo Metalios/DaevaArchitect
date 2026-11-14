@@ -308,6 +308,52 @@ const DaevaBuildLibrary = (() => {
       b.equippedTitle||b.title||'None');
     return rows;
   }
+
+  // Targeted copying is intentionally finer-grained than loading a preset:
+  // it supports mixing a PvP Stigma setup with existing PvE equipment while
+  // preserving everything else in the destination progression stage.
+  const COPY_GROUPS=Object.freeze({
+    equipment:['equipment','gear'],
+    mastery:['manualMastery','currentRanks','customSpecialties'],
+    stigma:['manualStigma','customStigmas'],
+    boards:['customNodes','customAzphelNodes','customArielNodes','obtainedNodes'],
+    macros:['customMacros','macroBind','quickUse2Bind'],
+    titles:['titlesOwned','title','selectedTitle','equippedTitle'],
+    resources:['mastery','stigma','crystals','azphel','ariel','gearRating',
+      'journey','leveling','context','pvpOpponent','pveObjective','goalTarget','gearCpTarget']
+  });
+  function copySection(sourceBuildId,sourceStageId,targetBuildId,targetStageId,group){
+    const srcBuild=findBuild(sourceBuildId),dstBuild=findBuild(targetBuildId),
+      src=findStage(srcBuild,sourceStageId),dst=findStage(dstBuild,targetStageId);
+    if(!src||!dst)throw Error('Choose two saved stages.');
+    if(srcBuild.cls!==dstBuild.cls)throw Error('Copying between different classes is not supported.');
+    if(src===dst)throw Error('Choose a different destination stage.');
+    if(!Object.prototype.hasOwnProperty.call(COPY_GROUPS,group))
+      throw Error('Select a valid section to copy.');
+    syncActive(); // Capture any edits in the source and destination first.
+    for(const key of COPY_GROUPS[group]){
+      if(Object.prototype.hasOwnProperty.call(src.account,key))
+        dst.account[key]=clone(src.account[key]);
+      else delete dst.account[key];
+    }
+    dst.account.buildMode='custom';
+    if(group==='boards')dst.account.boardMode='custom';
+    dst.updatedAt=now();dstBuild.updatedAt=dst.updatedAt;
+    if(!persist())throw Error('Unable to save the copied section; export a backup first.');
+    const active=activeFor(dstBuild.cls);
+    if(active?.build.id===dstBuild.id&&active.stage.id===dst.id){
+      isRestoring=true;
+      try{
+        state.accounts[dstBuild.cls]=clone(dst.account);
+        if(typeof liveRoute!=='undefined')liveRoute=null;
+        if(typeof liveRouteKey!=='undefined')liveRouteKey='';
+        if(typeof liveRouteBasis!=='undefined')liveRouteBasis=null;
+        render();
+      }finally{isRestoring=false}
+    }
+    return dst;
+  }
+
   function findOption(value) {
     const [buildId,stageId]=String(value||'').split('::');
     const build=findBuild(buildId),stage=findStage(build,stageId);
@@ -523,6 +569,13 @@ const DaevaBuildLibrary = (() => {
         <button id="db-detail-save" type="button">Save stage details</button></section>
       <details id="db-compare-panel" class="db-compare-panel"><summary>Compare any two saved stages</summary>
         <div class="db-compare-selectors"><label>First stage<select id="db-left"></select></label><label>Second stage<select id="db-right"></select></label></div>
+        <div class="db-section-copy"><label>Copy one section from the first stage into the second
+          <select id="db-copy-group"><option value="equipment">Equipment and rolls</option><option value="mastery">Mastery and Specialties</option>
+          <option value="stigma">Stigmas and ranks</option><option value="boards">All Daevanion boards</option>
+          <option value="macros">Macros and keybindings</option><option value="titles">Titles</option>
+          <option value="resources">Resources and scenario</option></select></label>
+          <button type="button" id="db-copy-to-right">Copy into second stage</button>
+          <small>Only the selected section is replaced. No other character setup is changed.</small></div>
         <div id="db-difference" class="db-difference" aria-live="polite"></div>
       </details><footer class="db-footer"><span>No account required. Browser storage is device-specific; exported JSON is your backup.</span><button id="db-close-bottom" type="button">Done</button></footer>
     </div>`;
@@ -547,6 +600,20 @@ const DaevaBuildLibrary = (() => {
     dialog.querySelector('#db-class-filter').addEventListener('change',renderList);
     dialog.querySelector('#db-left').addEventListener('change',renderComparison);
     dialog.querySelector('#db-right').addEventListener('change',renderComparison);
+    dialog.querySelector('#db-copy-to-right').addEventListener('click',()=>{
+      const left=findOption(dialog.querySelector('#db-left').value);
+      const right=findOption(dialog.querySelector('#db-right').value);
+      const group=dialog.querySelector('#db-copy-group').value;
+      if(!left||!right){report('Select two saved stages first.',true);return}
+      if(!window.confirm('Replace '+group+' in "'+right.stage.name+
+        '" with the settings from "'+left.stage.name+
+        '"? The other sections remain unchanged.'))return;
+      try{
+        copySection(left.build.id,left.stage.id,right.build.id,right.stage.id,group);
+        renderList();report('Copied '+group+' into '+right.stage.name+
+          '. Other sections were preserved.');
+      }catch(error){report(error.message,true);}
+    });
     for(const [id,blank] of [['db-create-current',false],['db-create-blank',true]])
       dialog.querySelector('#'+id).addEventListener('click',()=>{
         try {const input=dialog.querySelector('#db-new-name');
@@ -591,7 +658,7 @@ const DaevaBuildLibrary = (() => {
   document.addEventListener('DOMContentLoaded',mount,{once:true});
   if(document.readyState!=='loading')mount();
   return Object.freeze({onWorkspaceSave:syncActive,detach,open,addBuild,
-    addStage,load,removeBuild,removeStage,duplicateBuild,renameBuild,renameStage,
+    addStage,load,copySection,removeBuild,removeStage,duplicateBuild,renameBuild,renameStage,
     updateNotes,differences,importJson,exportJson,getData:()=>clone(data),
     activeFor,summary});
 })();
