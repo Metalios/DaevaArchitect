@@ -123,7 +123,10 @@ function data(){const d=DATA[state.class];if(!d._arielStats){Object.assign(d.sta
 function profile(){return PROFILES[state.class]}
 function esc(value){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function clamp(v,min,max){v=Number(v);return Number.isFinite(v)?Math.max(min,Math.min(max,Math.floor(v))):min}
-function save(){try{localStorage.setItem('daeva-architect-all-v1',JSON.stringify({class:state.class,accounts:state.accounts,gearView:state.gearView}))}catch(_){}}
+function save(){try{localStorage.setItem('daeva-architect-all-v1',JSON.stringify({class:state.class,accounts:state.accounts,gearView:state.gearView}))}catch(_){}
+  // Auto-save only the stage explicitly loaded from the build library.
+  if(typeof DaevaBuildLibrary!=='undefined')try{DaevaBuildLibrary.onWorkspaceSave()}catch(_){}
+}
 function skillNames(){return Object.values(data().skills).map(s=>s.name)}
 function allBoards(){return [...data().boards,ARIEL[state.class],AZPHEL[state.class]]}
 function nodeMap(){return new Map(allBoards().flatMap(b=>b.nodes.map(n=>[n[0],{board:b.name,node:n}]))) }

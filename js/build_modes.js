@@ -60,6 +60,8 @@ function applyRecommendedBuild() {
   return proposed;
 }
 function beginBlankBuild() {
+  // Preserve named progression stages; a blank build is initially an unsaved workspace.
+  if(typeof DaevaBuildLibrary!=='undefined')DaevaBuildLibrary.detach(state.class);
   const a=account();
   a.buildMode='custom';a.boardMode='custom';
   a.manualMastery={};a.manualStigma={};
