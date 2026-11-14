@@ -29,7 +29,7 @@ const CustomMacroEditor = (() => {
     const steps = Array.isArray(raw?.steps) ? raw.steps.slice(0, MAX_STEPS)
       .map(step => typeof step === 'string' ? {key: step, delay: 10} : step)
       .filter(step => step && KEYS.includes(step.key))
-      .map(step => ({key: step.key, delay: Math.min(1000, Math.max(10, Math.round(Number(step.delay) || 10)))})) : [];
+      .map(step => ({key: step.key, delay: Math.min(9900, Math.max(10, Math.round(Number(step.delay) || 10)))})) : [];
     const hotbar = Array.from({length: 8}, (_, i) => filterNames(raw?.hotbar?.[i]));
     return {stacks, steps, hotbar, weave: allowed.has(raw?.weave) ? raw.weave : ''};
   }
@@ -50,7 +50,7 @@ const CustomMacroEditor = (() => {
   function seed(stacks, steps, hotbar, weave) {
     return normalize({
       stacks: Object.fromEntries(KEYS.map(key =>
-        [key, stacks.find(s => s.key === key && !s.manual)?.skills || []])),
+        [key, stacks.find(s => s.key === key)?.skills || []])),
       steps: steps.map(key => ({key, delay: 10})),
       hotbar: hotbar.map(slot => slot[0]),
       weave
@@ -67,15 +67,17 @@ const CustomMacroEditor = (() => {
     if (!custom) return {stacks, steps, hotbar, weave,
       delays: steps.map(() => 10), custom: false};
     const saved = normalize(custom, state.class);
+    const macroKeys = new Set(saved.steps.map(step => step.key));
     const auto = KEYS.map(key => ({
-      key, title: key + ' · Custom priority', manual: false,
-      skills: saved.stacks[key].filter(name => available.has(name))
-    })).filter(s => s.skills.length);
+      key,title:key+' · '+(macroKeys.has(key)?'Custom macro priority':'Manual priority stack'),
+      manual:!macroKeys.has(key),
+      skills:saved.stacks[key].filter(name=>available.has(name))
+    })).filter(s=>s.skills.length);
     const manual = saved.hotbar.map((names, i) => ({
       key: String(i + 1), title: 'Custom manual slot', manual: true,
       skills: names.filter(name => available.has(name))
     })).filter(s => s.skills.length > 1);
-    const actualSteps = saved.steps.filter(step => auto.some(stack => stack.key === step.key));
+    const actualSteps = saved.steps.filter(step => auto.some(stack => !stack.manual && stack.key === step.key));
     const actualHotbar = saved.hotbar.map(names =>
       [names.filter(name => available.has(name)), 'Custom manual hotbar', 'utility']);
     return {
@@ -128,6 +130,23 @@ const CustomMacroEditor = (() => {
       return;
     }
     const data = normalize(user, state.class);
+    // Saved user macros remain untouched, even if risky. Explain WHY an
+    // automated action is unsafe rather than silently deleting user edits.
+    const manualOnly = typeof GlobalRotationPolicy!=='undefined'
+      ?GlobalRotationPolicy.manualSkills(state.class,{
+        pvp:GlobalRotationPolicy.isPvp(account().context)}):new Set();
+    const unsafe = [...new Set(KEYS.flatMap(key=>data.stacks[key])
+      .filter(name=>manualOnly.has(name)))];
+    const starvation=typeof GlobalRotationPolicy!=='undefined'
+      ?KEYS.filter(key=>data.stacks[key].join('|')!==
+         GlobalRotationPolicy.prioritize(state.class,data.stacks[key]).join('|'))
+      :[];
+    const safetyMessage=[
+      unsafe.length?'Manually timed skills in auto stacks: '+unsafe.join(', ')+
+        '. Charge, heals, control, movement and toggles may be wasted or mistimed.':'',
+      starvation.length?'Priority warning in '+starvation.join(', ')+
+        ': put cooldown skills below unconditional fillers (row 0 first).':''
+    ].filter(Boolean);
     const unavailable = [...new Set([
       ...KEYS.flatMap(key => data.stacks[key]), ...data.hotbar.flat(), data.weave
     ].filter(name => name && !available.has(name)))];
@@ -135,13 +154,15 @@ const CustomMacroEditor = (() => {
       '<div class="custom-macro-heading"><div><h3>Custom macro · ' + esc(contextKey(account())) +
       '</h3><p>Changes save immediately. Each game stack tries row 0 first; macro steps press stack keys, not skills.</p>' +
       '</div><button type="button" data-cmacro-action="reset">Clear saved macro</button></div>' +
-      '<p class="custom-macro-warning">Custom timing and automation are not combat-simulated. Charges, movement, healing and defensive skills may require manual control. Test in game.</p>' +
+      '<p class="custom-macro-warning">Your custom macro is preserved exactly. AION 2 does not guarantee step order or hold charged skills for full charge. Test on a training target.</p>' +
+      (safetyMessage.length?'<p class="custom-macro-warning" role="alert">'+
+        esc(safetyMessage.join(' '))+'</p>':'') +
       (unavailable.length ? '<p class="custom-macro-warning">Not currently equipped/unlocked (kept in the saved setup but omitted from active macro): ' +
         esc(unavailable.join(', ')) + '</p>' : '') +
       '<label class="custom-macro-weave">Held basic / weave skill <select data-cmacro-field="weave">' +
         optionList(data.weave) + '</select></label>' +
       '<div class="custom-macro-grid">' + KEYS.map(key =>
-        '<section class="custom-macro-column"><h4>' + key + ' stack</h4>' +
+        '<section class="custom-macro-column"><h4>' + key + (data.steps.some(step=>step.key===key)?' · macro':' · manual key') + ' stack</h4>' +
         '<small>Row 0 is the first attempted skill</small>' +
         skillRows('stack', key, data.stacks[key]) + '</section>').join('') + '</div>' +
       '<section class="custom-macro-steps"><h4>In-game macro steps</h4>' +
@@ -150,7 +171,7 @@ const CustomMacroEditor = (() => {
         '<select aria-label="Step ' + (i + 1) + ' stack" data-cmacro-field="step-key" data-cmacro-index="' + i + '">' +
         KEYS.map(key => '<option value="' + key + '"' + (key === step.key ? ' selected' : '') + '>' + key + '</option>').join('') +
         '</select><label class="custom-macro-delay">Delay <input aria-label="Step ' + (i + 1) +
-        ' delay milliseconds" type="number" min="10" max="1000" step="10" value="' + step.delay +
+        ' delay milliseconds" type="number" min="10" max="9900" step="10" value="' + step.delay +
         '" data-cmacro-field="delay" data-cmacro-index="' + i + '"> ms</label>' +
         moveButtons('step', '', i, data.steps.length) + '</div>').join('') +
       (data.steps.length < MAX_STEPS ? '<button type="button" class="custom-macro-add" data-cmacro-action="add" data-cmacro-kind="step">+ Add macro step</button>' : '') +
@@ -220,7 +241,7 @@ const CustomMacroEditor = (() => {
         arr[Number(target.dataset.cmacroIndex)] = target.value;
       } else if (field === 'step-key') data.steps[Number(target.dataset.cmacroIndex)].key = target.value;
       else if (field === 'delay') data.steps[Number(target.dataset.cmacroIndex)].delay =
-        Math.max(10, Math.min(1000, Math.round(Number(target.value) || 10)));
+        Math.max(10, Math.min(9900, Math.round(Number(target.value) || 10)));
       else return;
       account().customMacros[contextKey(account())] = data;
       save(); renderApplication();
