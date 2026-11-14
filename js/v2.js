@@ -500,7 +500,7 @@ function sync(m){
   $('v4-progress-fill').style.width=(activeSteps.length?100*owned/activeSteps.length:0)+'%';
   $('v4-progress-caption').textContent=`${activeSteps.length-owned} funded tiles to obtain`;
  }
- const secondary=['rotation','titles','sources'].includes(state.tab);
+ const secondary=['rotation','titles','collections','sources'].includes(state.tab);
  document.body.classList.toggle('v2-secondary',secondary);
  nav.querySelectorAll('[data-v2-tab]').forEach(b=>b.classList.toggle('active',b.dataset.v2Tab===(secondary?state.tab:'workspace')));
  if(typeof window.syncV5==='function')window.syncV5(m);
