@@ -157,7 +157,7 @@ function mount(){
    if(part)gearDetails.append(part);
  }
  work.after(footer);footer.append(next,combatEvidence,note,full);full.append($('overview'));
- footer.after(extra);extra.append($('rotation'),$('titles'),$('sources'));
+ footer.after(extra);extra.append($('rotation'),$('titles'),$('collections'),$('sources'));
  $('mastery').insertBefore(master,$('mastery-visible'));
  master.querySelector('.v2-advanced-skills').append($('skill-grid'));
  const search=$('mastery').querySelector('.mastery-search');
