@@ -74,6 +74,14 @@ try {
   await page.locator('#db-right').selectOption(`${original.buildId}::${stage.id}`);
   assert.match(await page.locator('#db-difference').innerText(),/Judgment/);
   assert.match(await page.locator('#db-difference').innerText(),/socket lines/);
+
+  page.on('dialog',dialog=>dialog.accept());
+  await page.locator('#db-copy-group').selectOption('equipment');
+  await page.locator('#db-copy-to-right').click();
+  assert.equal(await page.evaluate(id=>{
+    const stage=DaevaBuildLibrary.getData().builds[0].stages.find(x=>x.id===id);
+    return stage.account.equipment.weapon.stones[0].value;
+  },stage.id),10,'Selective equipment copy did not preserve saved stage ownership');
   // Open original stage and make sure edits in Nightmare did not propagate.
   await page.locator(`[data-db-action="load"][data-stage="${original.stageId}"]`).click();
   const restored=await page.evaluate(()=>({
