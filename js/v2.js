@@ -27,7 +27,7 @@ settingsToggle.type='button';
 settingsToggle.setAttribute('aria-expanded','false');
 settingsToggle.setAttribute('aria-label','Show or hide character build settings');
 quick.append(settingsToggle);
-const nav=make('nav','v2-nav',`<button type="button" data-v2-tab="workspace">Build workspace</button><button type="button" data-v2-tab="rotation">Rotation & macro</button><button type="button" data-v2-tab="titles">Titles</button><button type="button" data-v2-tab="sources">Research notes</button><button type="button" id="v2-new-blank">New blank build</button><button type="button" id="v2-preview-recommended">Preview recommendation</button><button type="button" id="v2-reset-allocations">Apply recommendation</button>`);
+const nav=make('nav','v2-nav',`<button type="button" data-v2-tab="workspace">Build workspace</button><button type="button" data-v2-tab="rotation">Rotation & macro</button><button type="button" data-v2-tab="titles">Titles</button><button type="button" data-v2-tab="collections">Collections</button><button type="button" data-v2-tab="sources">Research notes</button><button type="button" id="v2-new-blank">New blank build</button><button type="button" id="v2-preview-recommended">Preview recommendation</button><button type="button" id="v2-reset-allocations">Apply recommendation</button>`);
 const work=make('div','v2-workspace');work.id='v2-workspace';
 // Approved target: keep all existing editors mounted and their state intact.
 // Only the panel visibility/layout changes when switching editors.
