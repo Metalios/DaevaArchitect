@@ -51,6 +51,15 @@ const changes=library.differences(snapshot.stages[0].account,snapshot.stages[1].
 assert(changes.some(x=>x.section==='Mastery'&&x.label==='Pummel'));
 assert(changes.some(x=>x.section==='Equipment'&&x.label.includes('socket')));
 assert(changes.some(x=>x.section==='Macros'&&x.label==='endgame:party'));
+
+library.copySection(main.id,first,main.id,second.id,'equipment');
+const changed=library.getData().builds.find(x=>x.id===main.id).stages.find(x=>x.id===second.id);
+assert.equal(changed.account.equipment.weapon.stones[0].value,10,
+  'Selective equipment copy did not replace socket rolls');
+assert.equal(changed.account.manualMastery.Pummel,20,
+  'Equipment copying unexpectedly overwrote Mastery');
+assert.equal(changed.account.customMacros['endgame:party'].steps[0].delay,100,
+  'Equipment copying unexpectedly overwrote custom macros');
 const copy=library.duplicateBuild(main.id);
 assert.equal(copy.stages.length,2);
 assert.notEqual(copy.id,main.id);
