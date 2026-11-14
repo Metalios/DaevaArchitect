@@ -54,6 +54,20 @@ try {
   assert.equal(stage.id,stage.active);
   await trigger.click();
   assert.match(await page.locator('#db-build-list').innerText(),/Nightmare DPS/);
+
+  // Stage details, rename and ordering all work without modifying build data.
+  await page.locator(`[data-db-action="edit"][data-stage="${stage.id}"]`).click();
+  await page.locator('#db-detail-name').fill('Nightmare Burst');
+  await page.locator('#db-detail-rating').fill('2800');
+  await page.locator('#db-detail-notes').fill('Preserve charge windows; prioritize CR upgrades.');
+  await page.locator('#db-detail-save').click();
+  assert.equal(await page.evaluate(id=>{
+    const stage=DaevaBuildLibrary.getData().builds[0].stages.find(x=>x.id===id);
+    return stage.name;
+  },stage.id),'Nightmare Burst');
+  await page.locator(`[data-db-action="move-up"][data-stage="${stage.id}"]`).click();
+  assert.equal(await page.evaluate(()=>DaevaBuildLibrary.getData().builds[0].stages[0].name),'Nightmare Burst');
+  await page.locator(`[data-db-action="move-down"][data-stage="${stage.id}"]`).click();
   // Compare must include Mastery, sockets and actual applied macro details.
   await page.locator('#db-compare-panel > summary').click();
   await page.locator('#db-left').selectOption(`${original.buildId}::${original.stageId}`);
