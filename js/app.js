@@ -1686,6 +1686,18 @@ function renderRotationSkillCoverage(m,p,stacks,hotbar,physicalHotkey){
 function renderRotation(m){
   const a=account(),p=typeof progressionRotationProfile==='function' ? progressionRotationProfile(profile(),state.class,a.context,name=>skillLevelBreakdown(name,m).withOwned,activeStigmas().filter(name=>(m.stigma.levels[name]||0)>0),(name,option)=>specPicks(name,skillLevelBreakdown(name,m).withOwned).includes(option),a.pveObjective) : profile(),level=currentLevel(),levelingMode=isLeveling(),main=masteryStages()[0]?.[0]||skillNames()[0],macroKey=['RMB','Mouse 4','MMB','M'].includes(a.macroBind)?a.macroBind:'RMB',weaveKey=p.weaveKey||'LMB';
   const quickUse2Bind=a.quickUse2Bind==='T'?'T':'R';
+  if(!levelingMode&&typeof GlobalRotationPolicy!=='undefined'&&
+     GlobalRotationPolicy.isPvp(a.context)){
+    // All eight classes must use the chosen PvP venue and enemy matchup.
+    // Only the SAFE repeating pressure goes on held RMB. CC, heals,
+    // movement and charged finishers stay on deliberate manual keys.
+    const available=[...Object.values(data().skills).slice(0,12)
+      .map(skill=>skill.name),
+      ...activeStigmas().filter(name=>(m.stigma.levels[name]||0)>0)];
+    Object.assign(p,GlobalRotationPolicy.pvpProfile(p,state.class,
+      a.context,a.pvpOpponent||'all',activeStigmas().filter(name=>
+        (m.stigma.levels[name]||0)>0),available));
+  }
   if(m.combat?.macro?.stacks&&sorcererCombatEligible()){
     const chosen=m.combat.macro;
     const mobileSolo=a.context==='solo'&&!levelingMode;
@@ -1779,8 +1791,48 @@ function renderRotation(m){
     $('rotation').classList.add('leveling-view');
     $('rotation-level').textContent='Lv '+level+' · starter combat';
     $('leveling-rotation').hidden=false;
+    // Leveling is also a user-owned build. Allow manual editing at any
+    // level without leaking locked skills into active stacks. The macro
+    // snapshot is saved by journey+scenario and survives level-ups.
+    let customized=false;
+    if(typeof CustomMacroEditor!=='undefined'&&plan.macroUnlocked){
+      const available=[...Object.entries(SKILL_UNLOCKS[state.class])
+        .filter(([,unlocked])=>unlocked<=level).map(([name])=>name),
+        ...activeStigmas().filter(name=>(m.stigma.levels[name]||0)>0)];
+      const sourceStacks=plan.stacks.map(x=>({
+        key:x.key,title:x.label,manual:!x.macro,skills:[...x.stack]
+      }));
+      const manual=Array.from({length:8},(_,i)=>{
+        const entry=plan.manualKeys.find(k=>k.key===String(i+1));
+        return [entry?.name?[entry.name]:[],
+          entry?.tip||'Optional manual key','utility'];
+      });
+      const chosen=CustomMacroEditor.apply(sourceStacks,plan.steps,manual,
+        plan.weave,available);
+      customized=chosen.custom;
+      if(customized){
+        plan.stacks=chosen.stacks.map(x=>({
+          key:x.key,label:x.title,macro:!x.manual,
+          stack:[...x.skills],
+          rows:x.skills.map((name,row)=>({name,row}))
+        }));
+        plan.steps=[...chosen.steps];
+        plan.delays=[...chosen.delays];
+        plan.manualKeys=chosen.hotbar.map(([skills],i)=>({
+          key:String(i+1),name:skills[0]||null,
+          tip:skills.length>1?'Multiple custom skills on this key':'Custom manual hotbar'
+        }));
+        plan.weave=chosen.weave||plan.weave;
+        plan.key=plan.stacks.find(x=>x.macro)?.key||plan.key;
+      }
+    }
     $('leveling-rotation').innerHTML=renderLevelingCombatMarkup(plan,macroKey,quickUse2Bind);
-    $('custom-macro-editor').innerHTML='<p>Leveling uses its unlock-gated, level-specific combat setup. Endgame macros are editable independently for every combat mode.</p>';
+    if(typeof CustomMacroEditor!=='undefined'&&plan.macroUnlocked){
+      $('leveling-rotation').insertAdjacentHTML('afterbegin',customized
+        ?'<p class="leveling-setup-warning">This is your saved, editable leveling macro. Locked skills are skipped without deleting them from the saved preset.</p>'
+        :'<p class="leveling-setup-warning"><b>Suggested leveling layout only.</b> Your actual macro remains unassigned until you select Copy suggested macro or Start empty macro below.</p>');
+      CustomMacroEditor.render();CustomMacroEditor.listen();
+    }else $('custom-macro-editor').innerHTML='<p>In-game skill macros unlock at level 4. Your leveling selections remain editable afterward.</p>';
     return;
   }
   if(typeof GlobalCohortBenchmarks!=='undefined'){
@@ -1831,6 +1883,16 @@ function renderRotation(m){
   }
   const fusionCharged=state.class==='spiritmaster'&&specPicks('Elemental Fusion',skillLevelBreakdown('Elemental Fusion',m).withOwned).includes(4);
   let stacks=p.stacks.filter(s=>(!levelingMode||!s.manual)&&(!fusionCharged||s.key!=='E')).map(s=>({...s,skills:s.skills.filter(name=>usableSkills.has(name))})).filter(s=>s.skills.length);
+  if(!levelingMode&&typeof GlobalRotationPolicy!=='undefined'){
+    // Normalise the suggested stacks against the actual playable skill
+    // set. This keeps charge/defense/movement out, and moves always-ready
+    // filler skills behind cooldown actions, preventing priority starvation.
+    const clean=GlobalRotationPolicy.cleanSuggestedStacks(state.class,
+      a.context,stacks,usableSkills);
+    const byKey=new Map(clean.map(stack=>[stack.key,stack]));
+    stacks=stacks.map(stack=>stack.manual?stack:byKey.get(stack.key))
+      .filter(Boolean);
+  }
   const chanterReset=state.class==='chanter'&&specPicks('Dark Crush',skillLevelBreakdown('Dark Crush',m).withOwned).includes(5);
   // Before cooldown removal, avoid spending two Dark Crush triggers in one window.
   if(state.class==='chanter'&&!chanterReset)stacks=stacks.map(s=>s.key==='E'?{...s,skills:s.skills.filter(name=>name!=='Impactful Crush')}:s).filter(s=>s.skills.length);
