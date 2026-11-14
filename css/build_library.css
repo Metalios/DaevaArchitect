@@ -1,0 +1,102 @@
+/* DaevaArchitect build library: independent snapshots and stage comparisons. */
+.db-launch{
+  display:inline-flex;align-items:center;justify-content:center;gap:.45rem;
+  border:1px solid #708a9c;border-radius:8px;padding:.55rem .8rem;
+  color:#f1e4cc;background:linear-gradient(125deg,#163142,#142533);
+  font:inherit;font-size:.8rem;cursor:pointer;min-height:36px;
+}
+.db-launch:focus-visible,#db-dialog :focus-visible{outline:2px solid #f1c781;outline-offset:3px}
+.db-launch:hover{border-color:#f5c875;color:#fff}
+.class-picker-head .db-launch{margin-left:auto}
+#db-dialog{width:min(1120px,calc(100vw - 22px));max-width:none;max-height:min(92dvh,1000px);padding:0;
+  border:1px solid #657b8a;border-radius:15px;background:#0b1622;color:#edf3f8;
+  box-shadow:0 24px 80px #000c;overflow:auto;font:400 14px/1.5 system-ui,sans-serif;color-scheme:dark}
+#db-dialog::backdrop{background:rgba(2,8,15,.82);backdrop-filter:blur(4px)}
+#db-dialog *{box-sizing:border-box}
+#db-dialog .db-shell{padding:clamp(14px,2.4vw,26px)}
+#db-dialog button,#db-dialog select,#db-dialog input,#db-dialog textarea{font:inherit}
+#db-dialog button{cursor:pointer;border:1px solid #526a7b;border-radius:7px;background:#172d3d;color:#ecf3f8;
+  padding:.45rem .68rem;min-height:35px;white-space:normal}
+#db-dialog button:hover{border-color:#d9ae67;background:#20394b}
+#db-dialog button:disabled{opacity:.5;cursor:not-allowed}
+#db-dialog input,#db-dialog select,#db-dialog textarea{display:block;width:100%;min-width:0;padding:.57rem .7rem;
+  margin-top:.25rem;border-radius:7px;border:1px solid #587084;background:#091924;color:#fff}
+#db-dialog input:focus,#db-dialog select:focus,#db-dialog textarea:focus{border-color:#f1c781}
+#db-dialog label{display:block;min-width:0;color:#cbd8e6;font-size:.86rem}
+#db-dialog .db-header{display:flex;align-items:flex-start;gap:1rem;justify-content:space-between;
+  border-bottom:1px solid #2c4354;padding-bottom:16px}
+#db-dialog .db-eyebrow,#db-dialog .db-class{display:block;font-size:.7rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#eec58e}
+#db-dialog h2{font-size:clamp(1.35rem,2.2vw,1.95rem);line-height:1.2;margin:.3rem 0;font-weight:700;color:#fff}
+#db-dialog .db-header p{color:#adbed1;max-width:660px;margin:.45rem 0 0}
+#db-dialog .db-close{font-size:1.6rem;padding:0;width:40px;min-width:40px;height:40px}
+#db-dialog .db-toolbar{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;margin:18px 0 10px}
+#db-dialog .db-create{flex:2 1 540px;display:flex;flex-wrap:wrap;align-items:end;gap:9px}
+#db-dialog .db-create label{flex:1 1 205px}
+#db-dialog #db-create-current{background:#7d5729;color:#fff4da;border-color:#bb8c4f}
+#db-dialog .db-file-actions{display:flex;align-items:end;gap:8px;flex:1 1 285px;justify-content:flex-end}
+#db-dialog .db-import{position:relative;display:flex;align-items:center;justify-content:center;padding:.52rem .7rem;
+  border:1px solid #526a7b;border-radius:7px;background:#172d3d;font-size:.83rem;cursor:pointer;min-height:35px}
+#db-dialog .db-import:focus-within{outline:2px solid #efc588}
+#db-dialog .db-import input{position:absolute;opacity:0;width:1px;height:1px;pointer-events:none}
+#db-dialog .db-message{margin:9px 0;padding:.58rem .8rem;border:1px solid #435d70;border-radius:7px;background:#152736;color:#bdd2e5}
+#db-dialog .db-message[data-problem="true"]{border-color:#b96061;color:#ffd6d6;background:#362021}
+#db-dialog .db-filter{display:flex;align-items:end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:11px}
+#db-dialog .db-filter label{width:min(240px,100%)}
+#db-dialog #db-active-label{font-size:.8rem;color:#eac18a}
+#db-dialog .db-build-list{display:grid;gap:13px}
+#db-dialog .db-empty{border:1px dashed #4c6578;padding:22px;border-radius:8px;color:#afc0cf;text-align:center}
+#db-dialog .db-build{background:linear-gradient(135deg,#142738,#101d29);border:1px solid #375167;border-radius:10px;overflow:hidden}
+#db-dialog .db-build>header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:15px}
+#db-dialog .db-build h3{font-size:1rem;color:#fff;margin:.15rem 0}
+#db-dialog .db-build header small{color:#a4b8c7}
+#db-dialog .db-build-actions,#db-dialog .db-stage-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+#db-dialog .db-build-actions button,#db-dialog .db-stage-actions button{font-size:.77rem;min-height:31px;padding:.35rem .5rem}
+#db-dialog .db-stages{list-style:none;margin:0;padding:0 15px 8px;display:grid;gap:7px}
+#db-dialog .db-stage{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px;
+  background:#0a1a27;border:1px solid #294459;border-radius:8px}
+#db-dialog .db-stage.is-active{border-color:#b68d51;background:#182b38}
+#db-dialog .db-stage-copy{min-width:0;display:grid;gap:1px}
+#db-dialog .db-stage-copy b{font-weight:650}
+#db-dialog .db-stage-copy small{font-size:.75rem;color:#9fb5c6}
+#db-dialog .db-stage-actions button[aria-current="true"]{border-color:#d7ad70;color:#ffe3a4}
+#db-dialog .db-stage-create{border-top:1px solid #2b465a;padding:9px 15px 13px}
+#db-dialog .db-stage-create summary{cursor:pointer;color:#efc98c;font-weight:650;font-size:.82rem}
+#db-dialog .db-stage-create>div{display:flex;align-items:end;flex-wrap:wrap;gap:10px;margin-top:10px}
+#db-dialog .db-stage-create label{flex:1 1 220px}
+#db-dialog .db-stage-create small{display:block;color:#9bb1c0;margin-top:6px}
+#db-dialog .db-stage-detail{margin-top:16px;padding:17px;border:1px solid #d0a363;border-radius:9px;background:#192c39;display:grid;gap:9px}
+#db-dialog .db-stage-detail[hidden]{display:none}
+#db-dialog .db-stage-detail header{display:flex;align-items:center;justify-content:space-between;gap:9px}
+#db-dialog .db-stage-detail h3{margin:0;font-size:1rem}
+#db-dialog .db-stage-detail textarea{resize:vertical}
+#db-dialog .db-stage-detail>button{justify-self:start}
+#db-dialog .db-compare-panel{margin-top:20px;border:1px solid #3a586d;border-radius:9px;padding:10px 14px;background:#0e2130}
+#db-dialog .db-compare-panel>summary{cursor:pointer;font-weight:700;color:#edd09d;padding:7px}
+#db-dialog .db-compare-selectors{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:12px 0}
+#db-dialog .db-delta-summary{color:#afc8db}
+#db-dialog .db-delta-summary strong{color:#f3ce92;font-size:1.15rem}
+#db-dialog .db-warning{color:#ffd5b2}
+#db-dialog .db-diff-group{margin:11px 0;border:1px solid #2b485c;border-radius:7px;overflow:hidden}
+#db-dialog .db-diff-group>summary{cursor:pointer;padding:9px 11px;background:#193346;color:#f5f0e8;font-weight:700}
+#db-dialog .db-diff-group>summary span{float:right;color:#b8cee0;font-weight:400;font-size:.77rem}
+#db-dialog .db-diff-scroll{overflow:auto;max-height:340px}
+#db-dialog table{width:100%;border-collapse:collapse;font-size:.79rem;min-width:510px}
+#db-dialog th,#db-dialog td{padding:.54rem .7rem;text-align:left;vertical-align:top;border-bottom:1px solid #234054;overflow-wrap:anywhere}
+#db-dialog th{color:#d8e6ef;font-weight:700;width:24%}
+#db-dialog td{color:#c7d8e6;width:38%}
+#db-dialog thead th{position:sticky;top:0;background:#183145;color:#f2d49e}
+#db-dialog tbody tr:nth-child(even){background:#122939}
+#db-dialog .db-footer{margin-top:18px;display:flex;justify-content:space-between;align-items:center;gap:10px;color:#9fb4c4;font-size:.8rem}
+@media(max-width:760px){
+  #db-dialog{max-height:96dvh;width:calc(100vw - 12px);border-radius:9px}
+  #db-dialog .db-shell{padding:12px}
+  #db-dialog .db-toolbar,#db-dialog .db-file-actions{display:grid;grid-template-columns:1fr;gap:8px}
+  #db-dialog .db-create{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+  #db-dialog .db-create label{grid-column:1/-1}
+  #db-dialog .db-build>header,#db-dialog .db-stage{display:grid;gap:9px}
+  #db-dialog .db-build-actions,#db-dialog .db-stage-actions{justify-content:flex-start}
+  #db-dialog .db-compare-selectors{grid-template-columns:1fr}
+  #db-dialog .db-footer{align-items:flex-start;flex-direction:column}
+  .v2-quickbar .db-launch{font-size:.74rem}
+}
+@media(prefers-reduced-motion:reduce){#db-dialog{scroll-behavior:auto}}
