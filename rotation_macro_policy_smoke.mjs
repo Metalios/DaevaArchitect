@@ -45,6 +45,14 @@ try{
      fail.push(cls+' PvP scenario macro overwritten');
    if(!document.querySelector('#custom-macro-editor [data-cmacro-action="enable-blank"]'))
      fail.push(cls+' no empty macro workflow in new scenario');
+   if(cls==='templar'){
+     document.querySelector('#custom-macro-editor [data-cmacro-action="enable"]')?.click();
+     const second=a.customMacros['endgame:pvp-abyss-solo'];
+     if(!second?.stacks?.Q?.includes('Grapple')||
+        !second?.stacks?.Q?.includes('Executing Blade')||
+        second.steps.some(step=>step.key==='Q'))
+       fail.push('Templar manual Q catch stack incorrectly added to held macro');
+   }
    matrix.push(cls);
   }
   state.class='ranger';const a=account();
