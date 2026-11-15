@@ -317,11 +317,16 @@ function gearStonesEditor(slot,item){
         legacy=!!stone.stat&&!result;
       const valueChoices=StoneRollRules.rollOptions(type,stone.stat,stone.value,stone.unit)+
         (legacy&&stone.value!==null&&stone.value!==undefined?'<option value="legacy" selected>Unverified '+esc(stone.value)+(stone.unit||'')+'</option>':'');
+      const quality=result?.grade||(legacy?'Unverified':'Empty');
       return '<div class="gear-stone-row" data-stone-row="'+i+'" data-grade="'+(result?.grade||'')+'">'+
-        '<b>Slot '+(i+1)+'</b><label>Stat<select name="stoneStat'+i+'" aria-label="'+family+' slot '+(i+1)+' stat">'+
-        makeStats(stone.stat,type)+'</select></label>'+
-        '<label>Result<select name="stoneValue'+i+'" aria-label="'+family+' slot '+(i+1)+' result">'+valueChoices+
-        '</select></label><span class="gear-stone-quality">'+(result?result.grade:legacy?'Unverified':'Empty')+'</span></div>';
+        '<div class="gear-stone-card-heading"><span class="gear-stone-gem" aria-hidden="true">◇</span>'+
+          '<div><strong>Socket '+(i+1)+'</strong><small>'+esc(family)+' · independently rolled</small></div>'+
+          '<span class="gear-stone-grade">'+esc(quality)+'</span></div>'+
+        '<div class="gear-stone-card-fields"><label>Stat<select name="stoneStat'+i+'" aria-label="'+family+' slot '+(i+1)+' stat">'+
+          makeStats(stone.stat,type)+'</select></label>'+
+          '<label>Roll<select name="stoneValue'+i+'" aria-label="'+family+' slot '+(i+1)+' result">'+valueChoices+'</select></label></div>'+
+        '<div class="gear-stone-card-footer"><span class="gear-stone-quality">'+esc(quality)+'</span>'+
+          '<button type="button" data-gear-clear-stone="'+i+'" aria-label="Clear '+family+' socket '+(i+1)+'">Clear socket</button></div></div>';
     }).join('');
     host.insertAdjacentHTML('beforeend','<section class="gear-stones-editor">'+
       '<div class="gear-stones-head"><div><b>'+family+' engraving</b><p>Record the actual rolls from one '+family+
@@ -330,6 +335,9 @@ function gearStonesEditor(slot,item){
       '<label class="gear-stone-type">Stone tier<select name="stoneType" aria-label="Stone tier"><option value="">Not recorded</option>'+
       StoneRollRules.TIERS.map(name=>'<option value="'+name+'"'+(type===name?' selected':'')+'>'+name+' '+family+'</option>').join('')+
       '</select></label><p class="gear-stone-help">Roll values and stat pools follow the selected tier. Imported unverified values remain preserved until changed.</p>'+
+      '<div class="gear-stone-progress" role="status" aria-live="polite">'+
+        '<span id="gear-stone-summary">0 / '+count+' sockets recorded</span>'+
+        '<span id="gear-stone-effects">No recorded effects yet</span></div>'+
       '<div class="gear-stone-rows">'+rows+'</div></section>');
     updateGearStoneRows();
   }
@@ -361,10 +369,45 @@ function gearUpdateStoneChoices(changed){
     row.querySelector('.gear-stone-quality').textContent=result?.grade||'Empty';
     row.dataset.grade=result?.grade||'';
   });
+  updateGearStonePreview();
+}
+function updateGearStonePreview(){
+  const host=$('gear-editor'),section=host.querySelector('.gear-stones-editor');
+  if(!section)return;
+  const tier=host.querySelector('[name="stoneType"]')?.value||'';
+  let filled=0;
+  const totals=new Map();
+  host.querySelectorAll('[data-stone-row]').forEach(row=>{
+    const name=row.querySelector('select[name^="stoneStat"]')?.value||'',
+      choice=row.querySelector('select[name^="stoneValue"]')?.value||'';
+    const result=choice!==''&&choice!=='legacy'?
+      StoneRollRules.outcome(tier,name,Number(choice),StoneRollRules.unit(name)):null;
+    const quality=result?.grade||(name&&choice==='legacy'?'Unverified':'Empty');
+    row.dataset.grade=result?.grade||'';
+    row.querySelector('.gear-stone-grade').textContent=quality;
+    row.querySelector('.gear-stone-quality').textContent=quality;
+    if(row.hidden||!result)return;
+    filled++;
+    const key=result.stat+'|'+result.unit;
+    totals.set(key,(totals.get(key)||0)+Number(result.value));
+  });
+  const limit=clamp(host.querySelector('[name="stoneSlots"]')?.value??0,0,4);
+  const summary=host.querySelector('#gear-stone-summary');
+  if(summary)summary.textContent=filled+' / '+limit+' sockets recorded';
+  const effects=host.querySelector('#gear-stone-effects');
+  if(effects)effects.textContent=totals.size?
+    [...totals].map(([key,value])=>{
+      const [name,unit]=key.split('|');
+      return name+' +'+Number(value.toFixed(4))+(unit||'');
+    }).join(' · '):'No verified rolls recorded';
 }
 function updateGearStoneRows(){
   const count=clamp($('gear-editor').querySelector('[name="stoneSlots"]')?.value??0,0,4);
-  $('gear-editor').querySelectorAll('[data-stone-row]').forEach(row=>{const active=Number(row.dataset.stoneRow)<count;row.hidden=!active;row.querySelectorAll('input,select').forEach(input=>input.disabled=!active)});
+  $('gear-editor').querySelectorAll('[data-stone-row]').forEach(row=>{
+    const active=Number(row.dataset.stoneRow)<count;
+    row.hidden=!active;row.querySelectorAll('input,select,button').forEach(input=>input.disabled=!active);
+  });
+  updateGearStonePreview();
 }
 function gearEditor(){
   const item=gearDraft||{},slot=gearSlot(gearSlotId),type=gearAllowedType(slot),isArcana=slot.area==='arcana',skills=gearSlotSkillPool(slot),lineCount=isArcana?arcanaLineCapacity(item.grade,item.enhancement):gearSkillLineCapacity(slot,item.grade),enhancementMax=isArcana?arcanaMaxEnhancement(item.grade):(item.grade==='Unique'?15:30);
@@ -426,8 +469,19 @@ function initGear(){
   });
   $('gear-cp-clear-calibration').addEventListener('click',()=>{delete account().cpAnchor;render()});
   $('gear-results').addEventListener('click',e=>{const result=e.target.closest('[data-gear-result]');if(result)selectGearResult(result.dataset.gearResult)});
+  $('gear-editor').addEventListener('click',e=>{
+    const control=e.target.closest('[data-gear-clear-stone]');
+    if(!control)return;
+    const row=control.closest('[data-stone-row]');
+    const stat=row?.querySelector('select[name^="stoneStat"]');
+    if(!stat||row.hidden)return;
+    stat.value='';
+    gearEditorDirty=true;
+    gearUpdateStoneChoices(stat);
+    updateGearStonePreview();
+  });
   $('gear-editor').addEventListener('input',e=>{gearEditorDirty=true;if(e.target.name==='stoneSlots')updateGearStoneRows();if(['enhancement'].includes(e.target.name)&&gearSlot(gearSlotId).area==='arcana'){const form=e.target.closest('form');if(form){const values=new FormData(form);gearDraft.enhancement=clamp(values.get('enhancement'),0,arcanaMaxEnhancement(gearDraft.grade));gearDraft.skillBonuses=Array.from({length:4},(_,i)=>({skill:String(values.get(`skill${i}`)||''),levels:clamp(values.get(`levels${i}`),0,4)})).filter(x=>x.skill&&x.levels);gearEditor()}}if(e.target.name==='theostone'){const stone=THEOSTONES.find(entry=>entry.name.toLowerCase()===e.target.value.trim().toLowerCase()),hint=$('gear-editor').querySelector('.gear-theostone-editor small');if(hint)hint.textContent=stone?`${stone.grade} · ${stone.effect} effect`:'Choose a Global Theostone or enter its exact in-game name.'}});
-  $('gear-editor').addEventListener('change',e=>{gearEditorDirty=true;if(['enhancement','amplification','amplificationCap'].includes(e.target.name))gearRefreshAmplificationEditor();if(e.target.name==='stoneType'||e.target.name?.startsWith('stoneStat'))gearUpdateStoneChoices(e.target);if(e.target.name?.startsWith('stoneValue')){const row=e.target.closest('.gear-stone-row'),type=$('gear-editor').querySelector('[name="stoneType"]').value,stat=row.querySelector('select[name^="stoneStat"]').value;row.querySelector('.gear-stone-quality').textContent=StoneRollRules.outcome(type,stat,e.target.value,StoneRollRules.unit(stat))?.grade||'Empty'}});
+  $('gear-editor').addEventListener('change',e=>{gearEditorDirty=true;if(['enhancement','amplification','amplificationCap'].includes(e.target.name))gearRefreshAmplificationEditor();if(e.target.name==='stoneType'||e.target.name?.startsWith('stoneStat'))gearUpdateStoneChoices(e.target);if(e.target.name?.startsWith('stoneValue')){updateGearStonePreview()}});
   $('gear-remove').addEventListener('click',()=>{delete gearEquipment()[gearSlotId];$('gear-dialog').close();render()});
   $('gear-form').addEventListener('submit',e=>{
     e.preventDefault();const values=new FormData(e.currentTarget),name=String(values.get('name')||'').trim();if(!name)return;

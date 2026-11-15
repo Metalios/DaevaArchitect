@@ -73,6 +73,7 @@ jobs:
           node custom_first_smoke.mjs
           node build_library_smoke.mjs
           node character_progression_smoke.mjs
+          node visual_engraving_smoke.mjs
           node rotation_macro_policy_smoke.mjs
           node budget_exhaustion_smoke.mjs
           node combat_optimizer_smoke.mjs
