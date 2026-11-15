@@ -1424,9 +1424,9 @@ $('pvp-mode-select').value=appIsPvpContext(a.context)?a.context:'pvp';
 $('pvp-opponent-select').value=['all','ranged','melee',...Object.keys(PvpCombatModels.OPPONENTS)].includes(a.pvpOpponent)?a.pvpOpponent:'all';
   $('azphel-input').value=a.azphel||0;$('ariel-input').value=a.ariel||0;$('gear-rating-input').value=a.gearRating||'';
   document.querySelectorAll('[data-tab]').forEach(b=>{b.classList.toggle('active',b.dataset.tab===state.tab);b.setAttribute('aria-current',b.dataset.tab===state.tab?'page':'false')});
-  $('mobile-more-button').classList.toggle('active',['stigma','rotation','titles','sources'].includes(state.tab));
+  $('mobile-more-button').classList.toggle('active',['stigma','rotation','titles','collections','sources'].includes(state.tab));
   document.querySelectorAll('.tab-panel').forEach(el=>el.classList.toggle('active',el.id===state.tab));
-  renderOverview(m);renderMobileNext(m);renderMastery(m);renderStigma(m);renderRotation(m);renderBoards(m);renderGear(m);renderTitles();renderSources();save();if(typeof syncV2==='function')syncV2(m);
+  renderOverview(m);renderMobileNext(m);renderMastery(m);renderStigma(m);renderRotation(m);renderBoards(m);renderGear(m);renderTitles();renderSources();if(window.CharacterProgression)window.CharacterProgression.render();save();if(typeof syncV2==='function')syncV2(m);
 }
 function renderMobileNext(m){
   const el=$('mobile-next');el.hidden=false;

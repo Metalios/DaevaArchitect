@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="./css/character-overview.css">
   <link rel="stylesheet" href="./css/character-tabs.css">
   <link rel="stylesheet" href="./css/build_library.css">
+  <link rel="stylesheet" href="./css/character_progression.css">
 </head>
 <body>
   <header class="hero"><div class="hero-inner">
@@ -62,10 +63,11 @@
       <button type="button" data-tab="stigma">Stigmas</button>
       <button type="button" data-tab="rotation">Rotation & macro</button>
       <button type="button" data-tab="titles">Titles</button>
+      <button type="button" data-tab="collections">Collections</button>
       <button type="button" data-tab="sources">Research notes</button>
       <button type="button" id="mobile-more-button" class="mobile-more-button" aria-expanded="false" aria-controls="mobile-more-menu"><span class="tab-icon" aria-hidden="true">☰</span>More</button>
     </nav>
-    <div id="mobile-more-menu" class="mobile-more-menu" hidden><button type="button" data-more-tab="stigma">Stigmas</button><button type="button" data-more-tab="rotation">Rotation & macro</button><button type="button" data-more-tab="titles">Titles</button><button type="button" data-more-tab="sources">Research notes</button></div>
+    <div id="mobile-more-menu" class="mobile-more-menu" hidden><button type="button" data-more-tab="stigma">Stigmas</button><button type="button" data-more-tab="rotation">Rotation & macro</button><button type="button" data-more-tab="titles">Titles</button><button type="button" data-more-tab="collections">Collections</button><button type="button" data-more-tab="sources">Research notes</button></div>
     <section id="overview" class="tab-panel active" aria-label="Build now">
       <div class="section-title"><div><h2 id="overview-title">Your current path</h2><p id="overview-subtitle"></p></div><span id="overview-role" class="tag gold"></span></div>
       <div id="leveling-guide" class="leveling-guide panel" hidden></div>
@@ -179,6 +181,7 @@
       <div id="title-catalog-list" class="title-catalog-list" aria-live="polite"></div>
       <div class="panel title-path"><h3>Fast collection wins</h3><ol><li>Finish the Hero Episode story and join a Legion for easy owned effects.</li><li>Use the Spacetime Rift 3 times for Hello There; 50 uses earns Nice to Meet You.</li><li>Find Empyrean Traces to raise your faction's Monolith to 20 for Guardian and 30 for Saint.</li><li>Clear the Sealed Dungeon Ruins of the Ancient City of Roah for Through Hell and Back.</li></ol><p>Longer goals: all Genus Insight at level 10 for Unbound by Genus; 200 pets for Rule All Creation; 25 wings for Dominator of Dimensions; 700 skins for Empty Closet.</p></div>
     </section>
+    <section id="collections" class="tab-panel" aria-label="Character collections and progression"><div class="section-title"><div><h2>Character Progression</h2><p>Pets &amp; Genus, Wings, Monolith, Pantheon and Skin Collection. All selections are yours to edit.</p></div></div><div id="ca-body" aria-live="polite"></div></section>
     <section id="sources" class="tab-panel" aria-label="Research notes"><div class="section-title"><div><h2>Research & limits</h2><p>Live links for the selected class and the assumptions behind the route.</p></div></div><div id="source-cards" class="sources"></div><div class="notice">These are context-specific research-weighted recommendations. PvP uses a matchup proxy, not measured engagement uptime, real win rates, or proven best-in-slot builds. Arena targets 1v1 Solitude; 5v5 Cooperation and normalized 10v10 Tactics require separate match-specific validation. The 1–8 hotbar placements are ergonomic suggestions. Specialty options were sourced from PvE guides; verify them before using a PvP preset. The 60k Templar tank and 100k damage Combat Power goals are editable planning benchmarks, not official dungeon requirements. Gear, boards, skills and other systems affect the in-game score; the game calculates the final number. Healers should measure effective healing and keep the party alive. Azphel PvP currency is separate.</div></section>
     </div>
   </main>
@@ -186,6 +189,7 @@
   <dialog id="share-dialog" class="share-dialog" aria-labelledby="share-dialog-title"><div class="share-dialog-head"><h2 id="share-dialog-title">Share this build</h2><button id="share-dialog-close" type="button" aria-label="Close share dialog">✕</button></div><p>The link includes this class's points, board plan, recorded gear and notes, and other planner choices. Your optional in-game CP baseline is kept private. Anyone with the link can view the included build. Opening it asks before replacing a saved build.</p><label for="share-url">Build link<input id="share-url" type="text" readonly></label><button id="share-copy-button" type="button">Copy link</button><span id="share-status" role="status"></span></dialog>
   <script defer src="./js/data.js"></script>
   <script defer src="./js/icon_catalog.js"></script>
+  <script defer src="./js/collections_data.js"></script>
   <script defer src="./js/profiles.js"></script>
   <script defer src="./js/titles.js"></script>
   <script defer src="./js/ariel_data.js"></script>
@@ -224,4 +228,5 @@
   <script defer src="./js/character-overview.js"></script>
   <script defer src="./js/character-tabs.js"></script>
   <script defer src="./js/build_library.js"></script>
+  <script defer src="./js/character_progression.js"></script>
 </body></html>
