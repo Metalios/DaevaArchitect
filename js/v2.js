@@ -27,7 +27,7 @@ settingsToggle.type='button';
 settingsToggle.setAttribute('aria-expanded','false');
 settingsToggle.setAttribute('aria-label','Show or hide character build settings');
 quick.append(settingsToggle);
-const nav=make('nav','v2-nav',`<button type="button" data-v2-tab="workspace">Build workspace</button><button type="button" data-v2-tab="rotation">Rotation & macro</button><button type="button" data-v2-tab="titles">Titles</button><button type="button" data-v2-tab="sources">Research notes</button><button type="button" id="v2-new-blank">New blank build</button><button type="button" id="v2-preview-recommended">Preview recommendation</button><button type="button" id="v2-reset-allocations">Apply recommendation</button>`);
+const nav=make('nav','v2-nav',`<button type="button" data-v2-tab="workspace">Build workspace</button><button type="button" data-v2-tab="rotation">Rotation & macro</button><button type="button" data-v2-tab="titles">Titles</button><button type="button" data-v2-tab="collections">Collections</button><button type="button" data-v2-tab="sources">Research notes</button><button type="button" id="v2-new-blank">New blank build</button><button type="button" id="v2-preview-recommended">Preview recommendation</button><button type="button" id="v2-reset-allocations">Apply recommendation</button>`);
 const work=make('div','v2-workspace');work.id='v2-workspace';
 // Approved target: keep all existing editors mounted and their state intact.
 // Only the panel visibility/layout changes when switching editors.
@@ -157,7 +157,7 @@ function mount(){
    if(part)gearDetails.append(part);
  }
  work.after(footer);footer.append(next,combatEvidence,note,full);full.append($('overview'));
- footer.after(extra);extra.append($('rotation'),$('titles'),$('sources'));
+ footer.after(extra);extra.append($('rotation'),$('titles'),$('collections'),$('sources'));
  $('mastery').insertBefore(master,$('mastery-visible'));
  master.querySelector('.v2-advanced-skills').append($('skill-grid'));
  const search=$('mastery').querySelector('.mastery-search');
@@ -500,7 +500,7 @@ function sync(m){
   $('v4-progress-fill').style.width=(activeSteps.length?100*owned/activeSteps.length:0)+'%';
   $('v4-progress-caption').textContent=`${activeSteps.length-owned} funded tiles to obtain`;
  }
- const secondary=['rotation','titles','sources'].includes(state.tab);
+ const secondary=['rotation','titles','collections','sources'].includes(state.tab);
  document.body.classList.toggle('v2-secondary',secondary);
  nav.querySelectorAll('[data-v2-tab]').forEach(b=>b.classList.toggle('active',b.dataset.v2Tab===(secondary?state.tab:'workspace')));
  if(typeof window.syncV5==='function')window.syncV5(m);

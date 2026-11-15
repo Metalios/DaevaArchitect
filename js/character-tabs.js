@@ -25,6 +25,9 @@
     titles:{
       kicker:'CHARACTER PROGRESSION',title:'Titles & Collection',
       description:'Track and select confirmed character titles; only available bonuses contribute to the planner model.'},
+    collections:{
+      kicker:'PERMANENT CHARACTER PROGRESSION',title:'Collections & Growth',
+      description:'Register actual Global pets and Genus analysis, wings, regional Monoliths, Pantheon artwork and Skin Collection. Your recorded ownership is preserved in saved builds.'},
     sources:{
       kicker:'GAME DATA & RESEARCH',title:'Evidence & Methodology',
       description:'Review the game-data snapshots, measured mechanics, known uncertainties and optimization evidence behind your build.'}

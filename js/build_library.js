@@ -247,6 +247,23 @@ const DaevaBuildLibrary = (() => {
       pair('Resources',label,a[key],b[key]);
     pair('Resources','Leveling level',a.leveling?.level||45,b.leveling?.level||45);
     pair('Resources','Leveling bonus rewards',a.leveling?.extraByLevel||{},b.leveling?.extraByLevel||{});
+    // Character collections are copied with the stage but individually
+    // comparable as registered pets, owned wings, Monolith, Pantheon and skins.
+    const collectionsA=a.characterProgression||{},collectionsB=b.characterProgression||{};
+    const counts=(x)=>({
+      pets:Object.values(x.pets||{}).filter(Number).length+
+        (x.extraPets||[]).filter(p=>p.level>0).length,
+      wings:Object.keys(x.wings?.owned||{}).length,
+      monolith:Object.values(x.monolith||{}).filter(Number).reduce((sum,n)=>sum+Number(n),0),
+      pantheon:Object.values(x.pantheon?.slots||{}).filter(v=>v.equipped).length,
+      skins:Number(x.skins?.collectionPoints||0)
+    });
+    const countA=counts(collectionsA),countB=counts(collectionsB);
+    for(const key of Object.keys(countA))pair('Collections',key,countA[key],countB[key]);
+    pair('Collections','Pet insight by ID',collectionsA.pets||{},collectionsB.pets||{});
+    pair('Collections','Genus analysis',collectionsA.genus||{},collectionsB.genus||{});
+    pair('Collections','Wing ownership and enhancement',collectionsA.wings||{},collectionsB.wings||{});
+    pair('Collections','Pantheon artwork',collectionsA.pantheon||{},collectionsB.pantheon||{});
     for(const [key,label] of [['manualMastery','Mastery'],['manualStigma','Stigma ranks']]){
       const left=skillMap(a[key]),right=skillMap(b[key]);
       for(const name of [...new Set([...Object.keys(left),...Object.keys(right)])].sort())
@@ -319,6 +336,7 @@ const DaevaBuildLibrary = (() => {
     boards:['customNodes','customAzphelNodes','customArielNodes','obtainedNodes'],
     macros:['customMacros','macroBind','quickUse2Bind'],
     titles:['titlesOwned','title','selectedTitle','equippedTitle'],
+    collections:['characterProgression'],
     resources:['mastery','stigma','crystals','azphel','ariel','gearRating',
       'journey','leveling','context','pvpOpponent','pveObjective','goalTarget','gearCpTarget']
   });
@@ -573,6 +591,7 @@ const DaevaBuildLibrary = (() => {
           <select id="db-copy-group"><option value="equipment">Equipment and rolls</option><option value="mastery">Mastery and Specialties</option>
           <option value="stigma">Stigmas and ranks</option><option value="boards">All Daevanion boards</option>
           <option value="macros">Macros and keybindings</option><option value="titles">Titles</option>
+          <option value="collections">Pets, Wings & Collections</option>
           <option value="resources">Resources and scenario</option></select></label>
           <button type="button" id="db-copy-to-right">Copy into second stage</button>
           <small>Only the selected section is replaced. No other character setup is changed.</small></div>

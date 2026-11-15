@@ -56,6 +56,7 @@ jobs:
           node pvp_matchup_regression.mjs
           node scenario_recalculation_regression.mjs
           node build_library_regression.mjs
+          node character_progression_regression.mjs
           node rotation_macro_policy_regression.mjs
           node templar_pvp_joint_regression.mjs
           node leveling_rotation_audit.mjs
@@ -71,6 +72,7 @@ jobs:
           npx playwright install --with-deps chromium
           node custom_first_smoke.mjs
           node build_library_smoke.mjs
+          node character_progression_smoke.mjs
           node visual_engraving_smoke.mjs
           node rotation_macro_policy_smoke.mjs
           node budget_exhaustion_smoke.mjs
